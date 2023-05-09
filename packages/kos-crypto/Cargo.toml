@@ -1,0 +1,20 @@
+[package]
+name = "kos-crypto"
+version = { workspace = true }
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+
+[dependencies]
+kos-types = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+log = { workspace = true }
+wasm-bindgen = { workspace = true }
+rand = { workspace = true }
+zeroize = { workspace = true }
+coins-bip32 = { workspace = true }
+coins-bip39 = { workspace = true }
+secp256k1 = { workspace = true, features = ["rand"] }
