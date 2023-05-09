@@ -1,15 +1,15 @@
 use core::convert::Infallible;
-use std::{error, fmt, str};
 use secp256k1::Error as Secp256k1Error;
+use std::{error, fmt, str};
 
 /// Crypto error variants
-#[derive(Debug, Clone,  PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Error {
     // UnsupportedChain,
     UnsupportedChain(&'static str),
     // InvalidMnemonic,
-    InvalidMnemonic(&'static str), 
+    InvalidMnemonic(&'static str),
     // InvalidPath,
     InvalidPath(&'static str),
     // InvalidPrivateKey,
@@ -47,7 +47,6 @@ impl fmt::Display for Error {
 
 impl From<Secp256k1Error> for Error {
     fn from(secp: Secp256k1Error) -> Self {
-        
         match secp {
             Secp256k1Error::IncorrectSignature
             | Secp256k1Error::InvalidSignature
@@ -71,7 +70,7 @@ impl From<coins_bip39::MnemonicError> for Error {
 }
 
 impl From<coins_bip32::Bip32Error> for Error {
-   fn from(_: coins_bip32::Bip32Error) -> Self {
+    fn from(_: coins_bip32::Bip32Error) -> Self {
         Self::InvalidPath("Invalid path")
     }
 }

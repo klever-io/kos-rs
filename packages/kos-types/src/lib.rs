@@ -1,11 +1,9 @@
-pub mod error;
-pub mod chain;
 pub mod bytes;
+pub mod chain;
+pub mod error;
 
 mod array_types;
 pub use array_types::*;
-
-
 
 pub(crate) const fn hex_val(c: u8) -> Option<u8> {
     match c {

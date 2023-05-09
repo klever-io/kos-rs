@@ -1,11 +1,10 @@
+use core::fmt;
 use serde::{Deserialize, Serialize};
-use core::{fmt};
 use strum::{EnumCount, IntoStaticStr};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
-#[derive(EnumCount, IntoStaticStr)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, EnumCount, IntoStaticStr)]
 pub enum Chain {
     NONE, // 0
     TRX,
