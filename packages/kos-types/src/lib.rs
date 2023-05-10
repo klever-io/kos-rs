@@ -1,5 +1,4 @@
 pub mod bytes;
-pub mod chain;
 pub mod error;
 
 mod array_types;

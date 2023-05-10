@@ -9,8 +9,6 @@ repository = { workspace = true }
 rust-version = { workspace = true }
 
 [dependencies]
-strum = { version = "0.24", features = ["derive"] }
-
 rand = { workspace = true }
 coins-bip32 = { workspace = true }
 coins-bip39 = { workspace = true }
