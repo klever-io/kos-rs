@@ -1,0 +1,42 @@
+[package]
+name = "kos"
+version = { workspace = true }
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+publish = false
+repository = { workspace = true }
+rust-version = { workspace = true }
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+# If you uncomment this line, it will enable `wee_alloc`:
+#default = ["wee_alloc"]
+
+
+[dependencies]
+wasm-bindgen = { workspace = true }
+
+# `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
+# compared to the default allocator's ~10K. However, it is slower than the default
+# allocator, so it's not enabled by default.
+
+kos-types = { workspace = true }
+kos-crypto = { workspace = true }
+kos-sdk = { workspace = true }
+
+
+# The `web-sys` crate allows you to interact with the various browser APIs,
+# like the DOM.
+[dependencies.web-sys]
+version = "0.3.22"
+features = ["console"]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.2.45"
+futures = "0.1.27"
+js-sys = "0.3.22"
+
