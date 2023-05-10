@@ -1,0 +1,48 @@
+[workspace]
+# https://doc.rust-lang.org/edition-guide/rust-2021/default-cargo-resolver.html#details
+resolver = "2"
+members = [
+    "packages/kos-types",
+    "packages/kos",
+    "packages/kos-crypto",
+    "packages/kos-sdk",
+]
+
+[profile.release]
+# This makes the compiled code faster and smaller, but it makes compiling slower,
+# so it's only enabled in release mode.
+# lto = true
+
+[workspace.package]
+authors = ["Klever <kos@klever.io>"]
+edition = "2021"
+homepage = "https://klever.org/"
+license = "Apache-2.0"
+repository = "https://github.com/kleverio/kos-rs"
+rust-version = "1.69.0"
+version = "0.1.0"
+
+[workspace.dependencies]
+bech32 = "0.9.1"
+base58 = "0.2.0"
+sha2 = { version = "0.10" }
+sha3 = { version = "0.10" }
+secp256k1 = { version = "0.27", features = ["recovery", "rand"] }
+coins-bip32 = { version = "0.8", default-features = false }
+coins-bip39 = { version = "0.8", default-features = false, features = ["english"] }
+bytes = { version = "1.4.0", default-features = false }
+elliptic-curve = { version = "0.13.4", default-features = false }
+hex = { version = "0.4.3", default-features = false }
+rand = "0.8"
+zeroize = { version = "1.5", features = ["derive"] }
+
+wasm-bindgen = "0.2"
+enum_delegate = "0.2"
+serde = { version = "1.0", default-features = false }
+serde_json = "1.0"
+log = "0.4"
+
+
+kos-types = { version = "0.1.0", path = "./packages/kos-types", default-features = false }
+kos-crypto = { version = "0.1.0", path = "./packages/kos-crypto", default-features = false }
+kos-sdk = { version = "0.1.0", path = "./packages/kos-sdk", default-features = false }
