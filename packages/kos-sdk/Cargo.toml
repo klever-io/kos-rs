@@ -1,0 +1,25 @@
+[package]
+name = "kos-sdk"
+version = { workspace = true }
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+
+[dependencies]
+strum = { version = "0.24", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
+enum_delegate = { workspace = true }
+enum_dispatch = "0.3"
+
+wasm-bindgen = { workspace = true }
+base58 = { workspace = true }
+sha2 = { workspace = true }
+sha3 = { workspace = true }
+hex = { workspace = true }
+rand = { workspace = true }
+
+kos-types = { workspace = true }
+kos-crypto = { workspace = true }
