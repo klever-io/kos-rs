@@ -2,14 +2,17 @@ use crate::secret::SecretKey;
 use core::{borrow::Borrow, fmt, ops::Deref, str};
 use kos_types::{error::Error, Bytes64};
 use secp256k1::{
-    constants::UNCOMPRESSED_PUBLIC_KEY_SIZE, Error as Secp256k1Error,
-    PublicKey as Secp256k1PublicKey, Secp256k1,
+    constants::UNCOMPRESSED_PUBLIC_KEY_SIZE,
+    ecdsa::{RecoverableSignature, RecoveryId},
+    Error as Secp256k1Error, Message, PublicKey as Secp256k1PublicKey, Secp256k1,
 };
+use wasm_bindgen::prelude::wasm_bindgen;
 
 /// Asymmetric public key
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
+#[wasm_bindgen]
 pub struct PublicKey(Bytes64);
 
 impl PublicKey {
@@ -103,6 +106,20 @@ impl PublicKey {
         let pk = Secp256k1PublicKey::from_slice(&pk)?;
 
         Ok(pk)
+    }
+
+    pub fn recovery_secp256k1(digest: &[u8], sig: &[u8]) -> Result<PublicKey, Error> {
+        // check signature length
+        if sig.len() != 65 {
+            return Err(Secp256k1Error::InvalidSignature.into());
+        }
+
+        let secp = secp256k1::Secp256k1::new();
+        let recid = RecoveryId::from_i32(sig[64] as i32)?;
+        let rec_sig = RecoverableSignature::from_compact(&sig[0..64], recid)?;
+        let message = Message::from_slice(digest)?;
+        let public_key = secp.recover_ecdsa(&message, &rec_sig)?;
+        Ok(PublicKey::from_secp(&public_key))
     }
 }
 
