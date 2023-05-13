@@ -1,7 +1,7 @@
 use core::convert::Infallible;
 use secp256k1::Error as Secp256k1Error;
-use wasm_bindgen::{JsValue};
 use std::{error, fmt, str};
+use wasm_bindgen::JsValue;
 
 /// Crypto error variants
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -87,7 +87,6 @@ impl From<Error> for JsValue {
         JsValue::from_str(&format!("{}", e))
     }
 }
-
 
 impl From<Error> for Infallible {
     fn from(_: Error) -> Infallible {

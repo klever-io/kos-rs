@@ -6,6 +6,7 @@ use core::borrow::BorrowMut;
 use core::convert::TryFrom;
 use core::ops::{Deref, DerefMut};
 use core::{fmt, str};
+use hex::{FromHex, FromHexError};
 
 #[cfg(feature = "random")]
 use rand::{
@@ -183,6 +184,15 @@ macro_rules! key_methods {
 
             fn try_from(bytes: &[u8]) -> Result<$i, TryFromSliceError> {
                 <[u8; $s]>::try_from(bytes).map(|b| b.into())
+            }
+        }
+
+        impl FromHex for $i {
+            type Error = FromHexError;
+
+            fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, FromHexError> {
+                let b: [u8; Self::LEN] = FromHex::from_hex(hex)?;
+                b.try_into().map_err(|_| FromHexError::InvalidStringLength)
             }
         }
 
