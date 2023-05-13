@@ -3,7 +3,9 @@ use kos_types::{error::Error, Bytes32};
 use coins_bip32::path::DerivationPath;
 use coins_bip39::{English, Mnemonic};
 use core::{borrow::Borrow, fmt, ops::Deref};
-use secp256k1::{Error as Secp256k1Error, SecretKey as Secp256k1SecretKey};
+use secp256k1::{
+    ecdsa::RecoverableSignature, Error as Secp256k1Error, Message, SecretKey as Secp256k1SecretKey,
+};
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 use zeroize::Zeroize;
@@ -23,6 +25,16 @@ impl SecretKey {
     #[inline]
     fn from_bytes_unchecked(bytes: [u8; Self::LEN]) -> Self {
         Self(bytes.into())
+    }
+
+    /// sign digest with secret key with secp256k1
+    #[inline]
+    pub fn sign_digest_secp256k1(&self, digest: &[u8]) -> Result<RecoverableSignature, Error> {
+        let secp = secp256k1::Secp256k1::new();
+        let secret_key: &Secp256k1SecretKey = self.borrow();
+        let message = Message::from_slice(digest).map_err(|_| Error::InvalidMessage(""))?;
+
+        Ok(secp.sign_ecdsa_recoverable(&message, secret_key))
     }
 }
 
