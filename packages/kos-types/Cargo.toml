@@ -13,6 +13,7 @@ rand = { workspace = true }
 coins-bip32 = { workspace = true }
 coins-bip39 = { workspace = true }
 secp256k1 = { workspace = true, features = ["recovery", "rand"] }
+ed25519-dalek = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 hex = { workspace = true }

@@ -1,4 +1,5 @@
 use core::convert::Infallible;
+use ed25519_dalek::SignatureError;
 use secp256k1::Error as Secp256k1Error;
 use std::{error, fmt, str};
 use wasm_bindgen::JsValue;
@@ -61,6 +62,12 @@ impl From<Secp256k1Error> for Error {
             Secp256k1Error::InvalidSecretKey => Self::InvalidPrivateKey("Secp256k1Error"),
             Secp256k1Error::NotEnoughMemory => Self::NotEnoughMemory("Secp256k1Error"),
         }
+    }
+}
+
+impl From<SignatureError> for Error {
+    fn from(_: SignatureError) -> Self {
+        Self::InvalidSignature("Invalid signature")
     }
 }
 
