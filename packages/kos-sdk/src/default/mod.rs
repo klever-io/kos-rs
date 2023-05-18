@@ -1,15 +1,86 @@
-use kos_crypto::{public::PublicKey, secret::SecretKey};
+use crate::chain::BaseChain;
+use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
 
+use wasm_bindgen::prelude::*;
+
 #[derive(Debug, Copy, Clone)]
+#[wasm_bindgen]
 pub struct NONE;
 
+#[wasm_bindgen]
 impl NONE {
-    pub fn get_address_from_private_key(_private: SecretKey) -> Result<String, Error> {
-        Err(Error::UnsupportedChain("NONE".into()))
+    #[wasm_bindgen(js_name = "baseChain")]
+    pub fn base_chain() -> BaseChain {
+        BaseChain {
+            name: "None",
+            symbol: "NONE",
+            precision: 0,
+            node_url: "NONE",
+        }
     }
 
-    pub fn get_address_from_public_key(_public: PublicKey) -> Result<String, Error> {
-        Err(Error::UnsupportedChain("NONE".into()))
+    #[wasm_bindgen(js_name = "random")]
+    pub fn random() -> Result<KeyPair, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "keypairFromMnemonic")]
+    pub fn keypair_from_mnemonic(
+        _mnemonic: &str,
+        _path: &str,
+        _password: Option<String>,
+    ) -> Result<KeyPair, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "getAddressFromKeyPair")]
+    pub fn get_address_from_keypair(_private_key: &KeyPair) -> Result<String, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "getPath")]
+    pub fn get_path(_index: u32) -> Result<String, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "signDigest")]
+    /// Sign digest data with the private key.
+    pub fn sign_digest(_digest: &[u8], _keypair: &KeyPair) -> Result<Vec<u8>, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "verifyDigest")]
+    /// Verify Message signature
+    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<(), Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "sign")]
+    /// Hash and Sign data with the private key.
+    pub fn sign(_data: &[u8], _keypair: &KeyPair) -> Result<Vec<u8>, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "messageHash")]
+    /// Append prefix and hash the message
+    pub fn message_hash(_message: &[u8]) -> Result<Vec<u8>, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "signMessage")]
+    /// Sign Message with the private key.
+    pub fn sign_message(_message: &[u8], _keypair: &KeyPair) -> Result<Vec<u8>, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "verifyMessageSignature")]
+    /// Verify Message signature
+    pub fn verify_message_signature(
+        _message: &[u8],
+        _signature: &[u8],
+        _address: &str,
+    ) -> Result<(), Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
     }
 }

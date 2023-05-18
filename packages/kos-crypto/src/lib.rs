@@ -1,3 +1,4 @@
+pub mod ed25519;
+pub mod keypair;
 pub mod mnemonic;
-pub mod public;
-pub mod secret;
+pub mod secp256k1;

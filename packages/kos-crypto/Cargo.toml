@@ -17,4 +17,8 @@ rand = { workspace = true }
 zeroize = { workspace = true }
 coins-bip32 = { workspace = true }
 coins-bip39 = { workspace = true }
+hex = { workspace = true }
+sha2 = { workspace = true }
+hmac = { workspace = true }
 secp256k1 = { workspace = true, features = ["rand"] }
+ed25519-dalek = { workspace = true }

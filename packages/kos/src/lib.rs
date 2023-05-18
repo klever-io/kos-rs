@@ -1,6 +1,7 @@
 use kos_crypto::mnemonic::generate_mnemonic;
 pub use kos_sdk::*;
 use kos_types::error::Error;
+
 use wasm_bindgen::prelude::*;
 
 /// Generates a random mnemonic phrase given the number of words to generate, `count`.

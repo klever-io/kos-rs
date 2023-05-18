@@ -1,7 +1,10 @@
-use crate::chain::Chain;
-use kos_crypto::{public::PublicKey, secret::SecretKey};
+use crate::chain::{BaseChain, Chain};
+use kos_crypto::keypair::KeyPair;
+use kos_types::error::Error;
+
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, IntoStaticStr};
+
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -20,116 +23,160 @@ pub struct Wallet {
     account_type: AccountType,
     mnemonic: String,
     path: String,
-    secret_key: SecretKey,
+    keypair: KeyPair,
     chain: Chain,
-    public_key: PublicKey,
     public_address: String,
+    node_url: String,
 }
 
 #[wasm_bindgen]
+// wallet contructors
 impl Wallet {
-    // locl wallet privatekey with password
+    // strean`() encode wallet pem
+
+    /// lock wallet privatekey with password
     pub fn lock(_password: String) {
         todo!()
     }
-    // unlock wallet privatekey with password
+    /// unlock wallet privatekey with password
     pub fn unlock(_password: String) {
         todo!()
     }
 
-    // create a random private key wallet
-    pub fn new(chain: Chain) -> Result<Wallet, JsError> {
-        let mut rng = rand::thread_rng();
-        let secret_key = SecretKey::random(&mut rng);
-        let public_key = PublicKey::from(&secret_key);
-        let address = chain.get_address_from_private_key(secret_key)?;
+    #[wasm_bindgen(constructor)]
+    /// create a random private key wallet
+    pub fn new(chain: Chain) -> Result<Wallet, Error> {
+        let kp = chain.new_keypair().unwrap();
+        let address = chain.get_address_from_keypair(&kp)?;
 
         Ok(Wallet {
             account_type: AccountType::PrivateKey,
             mnemonic: String::new(),
             path: String::new(),
-            secret_key: secret_key,
+            keypair: kp,
             chain: chain,
-            public_key: public_key,
             public_address: address,
+            node_url: chain.base_chain().node_url.to_string(),
         })
     }
 
-    #[wasm_bindgen(js_name = "fromSecretKey")]
-    // restore wallet from secrekey
-    pub fn from_secret_key(chain: Chain, secret_key: SecretKey) -> Result<Wallet, JsError> {
-        let public_key = PublicKey::from(&secret_key);
-        let address = chain.get_address_from_private_key(secret_key)?;
+    #[wasm_bindgen(js_name = "fromKeyPair")]
+    /// restore wallet from keypair
+    pub fn from_keypair(chain: Chain, kp: KeyPair) -> Result<Wallet, Error> {
+        let address = chain.get_address_from_keypair(&kp)?;
 
         Ok(Wallet {
             account_type: AccountType::PrivateKey,
             mnemonic: String::new(),
             path: String::new(),
-            secret_key: secret_key,
+            keypair: kp,
             chain: chain,
-            public_key: public_key,
             public_address: address,
+            node_url: chain.base_chain().node_url.to_string(),
         })
     }
 
     #[wasm_bindgen(js_name = "fromMnemonic")]
-    // restore wallet from mnemonic (todo!() add passphrase)
-    pub fn from_mnemonic(chain: Chain, mnemonic: String, path: String) -> Result<Wallet, JsError> {
-        let s = SecretKey::new_from_mnemonic_phrase_with_path(&mnemonic[..], &path[..]);
-        let secret_key = s.unwrap();
-        let public_key = PublicKey::from(&secret_key);
-        let address = chain.get_address_from_private_key(secret_key)?;
+    /// restore wallet from mnemonic
+    pub fn from_mnemonic(
+        chain: Chain,
+        mnemonic: &str,
+        path: &str,
+        password: Option<String>,
+    ) -> Result<Wallet, Error> {
+        let kp = chain
+            .keypair_from_mnemonic(mnemonic, path, password)
+            .unwrap();
+        let address = chain.get_address_from_keypair(&kp)?;
 
         Ok(Wallet {
             account_type: AccountType::Mnemonic,
-            mnemonic: mnemonic,
-            path: path,
-            secret_key: secret_key,
+            mnemonic: mnemonic.to_string(),
+            path: path.to_string(),
+            keypair: kp,
             chain: chain,
-            public_key: public_key,
             public_address: address,
+            node_url: chain.base_chain().node_url.to_string(),
         })
     }
+}
 
+#[wasm_bindgen]
+// wallet properties
+impl Wallet {
     #[wasm_bindgen(js_name = "getChain")]
-    // get chain type
+    /// get wallet chain type
     pub fn get_chain(&self) -> Chain {
         self.chain
     }
 
     #[wasm_bindgen(js_name = "getAccountType")]
-    // get account type
+    /// get wallet account type
     pub fn get_account_type(&self) -> AccountType {
         self.account_type
     }
 
     #[wasm_bindgen(js_name = "getAddress")]
-    // get address
+    /// get wallet address
     pub fn get_address(&self) -> String {
         self.public_address.clone()
     }
 
     #[wasm_bindgen(js_name = "getPublicKey")]
-    // get public key
+    /// get wallet public key
     pub fn get_public_key(&self) -> String {
-        self.public_key.to_string()
+        self.keypair.public_key_hex()
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    // get path
+    /// get wallet path if wallet is created from mnemonic
     pub fn get_path(&self) -> String {
         self.path.clone()
     }
 
     #[wasm_bindgen(js_name = "getPrivateKey")]
-    // get private key
+    /// get wallet private key
     pub fn get_private_key(&self) -> String {
-        self.secret_key.to_string()
+        self.keypair.secret_key_hex()
     }
 
     #[wasm_bindgen(js_name = "getMnemonic")]
-    // get mnemonic
+    /// get wallet mnemonic if wallet is created from mnemonic
     pub fn get_mnemonic(&self) -> String {
         self.mnemonic.clone()
+    }
+
+    #[wasm_bindgen(js_name = "getNodeUrl")]
+    /// get node url setting for wallet
+    pub fn get_node_url(&self) -> String {
+        self.node_url.clone()
+    }
+
+    #[wasm_bindgen(js_name = "setNodeUrl")]
+    /// set node url setting for wallet
+    pub fn set_node_url(&mut self, node_url: String) {
+        self.node_url = node_url.clone();
+    }
+}
+
+#[wasm_bindgen]
+// wallet methods
+impl Wallet {
+    #[wasm_bindgen(js_name = "getBaseChain")]
+    /// sign message with private key
+    pub fn base_chain(&self) -> Result<BaseChain, Error> {
+        Ok(self.chain.base_chain())
+    }
+
+    #[wasm_bindgen(js_name = "signMessage")]
+    /// sign message with keypair
+    pub fn sign_message(&self, message: &[u8]) -> Result<Vec<u8>, Error> {
+        self.chain.sign_message(message, &self.keypair)
+    }
+
+    #[wasm_bindgen(js_name = "sign")]
+    /// sign digest with keypait
+    pub fn sign(&self, hash: &[u8]) -> Result<Vec<u8>, Error> {
+        self.chain.sign(hash, &self.keypair)
     }
 }

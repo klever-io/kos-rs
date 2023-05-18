@@ -1,36 +1,38 @@
 pub mod address;
 use crate::chain::BaseChain;
-use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
+use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
 use kos_types::error::Error;
 
-use sha2::{Digest, Sha256};
-use sha3::Keccak256;
+use sha3::{Digest, Keccak256};
+use std::todo;
+
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
-#[wasm_bindgen]
-pub struct TRX {}
+#[wasm_bindgen()]
+pub struct KLV {}
 
-pub const SIGN_PREFIX: &[u8; 22] = b"\x19TRON Signed Message:\n";
-pub const BIP44_PATH: u32 = 195;
+pub const SIGN_PREFIX: &[u8; 24] = b"\x17Klever Signed Message:\n";
+pub const BIP44_PATH: u32 = 690;
+pub const BIP44_PATH_TESTNET: u32 = 620;
 
 #[wasm_bindgen]
-impl TRX {
+impl KLV {
     #[wasm_bindgen(js_name = "baseChain")]
     pub fn base_chain() -> BaseChain {
         BaseChain {
-            name: "Tron",
-            symbol: "TRX",
+            name: "Klever",
+            symbol: "KLV",
             precision: 6,
-            node_url: "grpc.trongrid.io:50051",
+            node_url: "node.mainnet.klever.finance",
         }
     }
 
     #[wasm_bindgen(js_name = "random")]
     pub fn random() -> Result<KeyPair, Error> {
         let mut rng = rand::thread_rng();
-        let kp = Secp256k1KeyPair::random(&mut rng);
-        Ok(KeyPair::new_secp256k1(kp))
+        let kp = Ed25519KeyPair::random(&mut rng);
+        Ok(KeyPair::new_ed25519(kp))
     }
 
     #[wasm_bindgen(js_name = "keypairFromMnemonic")]
@@ -39,31 +41,39 @@ impl TRX {
         path: &str,
         password: Option<String>,
     ) -> Result<KeyPair, Error> {
-        let kp = Secp256k1KeyPair::new_from_mnemonic_phrase_with_path(
-            mnemonic,
-            path,
-            password.as_deref(),
-        )
-        .unwrap();
+        let kp =
+            Ed25519KeyPair::new_from_mnemonic_phrase_with_path(mnemonic, path, password.as_deref())
+                .unwrap();
 
-        Ok(KeyPair::new_secp256k1(kp))
+        Ok(KeyPair::new_ed25519(kp))
     }
 
     #[wasm_bindgen(js_name = "getAddressFromKeyPair")]
-    pub fn get_address_from_keypair(kp: &KeyPair) -> Result<String, Error> {
-        Ok(address::Address::from_keypair(kp).to_string())
+    pub fn get_address_from_keypair(keypair: &KeyPair) -> Result<String, Error> {
+        Ok(address::Address::from_keypair(&keypair).to_string())
     }
+
+    // #[wasm_bindgen(js_name = "getAddressFromPublicKey")]
+    // pub fn get_address_from_public_key(public_key: PublicKey) -> Result<String, Error> {
+    //     //Ok(address::Address::from_public(&public_key).to_string())
+    //     todo!("getAddressFromPublicKey")
+    // }
 
     #[wasm_bindgen(js_name = "getPath")]
     pub fn get_path(index: u32) -> Result<String, Error> {
-        Ok(format!("m/44'/{}'/{}'/0/0", BIP44_PATH, index))
+        Ok(format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, index))
     }
+
+    // #[wasm_bindgen(js_name = "getPublicKeyFromPrivate")]
+    // pub fn get_public_key_from_private(private_key: SecretKey) -> Result<String, Error> {
+    //     Ok(PublicKey::from(&private_key).to_string())
+    // }
 
     #[wasm_bindgen(js_name = "signDigest")]
     /// Sign digest data with the private key.
     pub fn sign_digest(digest: &[u8], keypair: &KeyPair) -> Result<Vec<u8>, Error> {
-        let raw = keypair.sign_digest(digest);
-        Ok(raw)
+        let sig = keypair.sign_digest(digest);
+        Ok(sig)
     }
 
     #[wasm_bindgen(js_name = "verifyDigest")]
@@ -75,11 +85,7 @@ impl TRX {
     #[wasm_bindgen(js_name = "sign")]
     /// Hash and Sign data with the private key.
     pub fn sign(data: &[u8], keypair: &KeyPair) -> Result<Vec<u8>, Error> {
-        let mut hasher = Sha256::new();
-        hasher.update(data);
-        let digest = hasher.finalize();
-
-        TRX::sign_digest(&digest, keypair)
+        Ok(keypair.sign_digest(data))
     }
 
     #[wasm_bindgen(js_name = "messageHash")]
@@ -95,20 +101,18 @@ impl TRX {
 
     #[wasm_bindgen(js_name = "signMessage")]
     /// Sign Message with the private key.
-    pub fn sign_message(message: &[u8], keypair: &KeyPair) -> Result<Vec<u8>, Error> {
-        let m = TRX::message_hash(message)?;
-        TRX::sign_digest(&m, keypair)
+    pub fn sign_message(_message: &[u8], _keypair: &KeyPair) -> Result<Vec<u8>, Error> {
+        todo!()
     }
 
     #[wasm_bindgen(js_name = "verifyMessageSignature")]
     /// Verify Message signature
     pub fn verify_message_signature(
-        message: &[u8],
-        signature: &[u8],
-        address: &str,
+        _message: &[u8],
+        _signature: &[u8],
+        _address: &str,
     ) -> Result<(), Error> {
-        let m = TRX::message_hash(message)?;
-        TRX::verify_digest(&m, signature, address)
+        todo!()
     }
 }
 
@@ -121,28 +125,28 @@ mod tests {
     use kos_types::Bytes32;
 
     const DEFAULT_PRIVATE_KEY: &str =
-        "b5a4cea271ff424d7c31dc12a3e43e401df7a40d7412a15750f3f0b6b5449a28";
-    const DEFAULT_ADDRESS: &str = "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH";
+        "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d";
+    const DEFAULT_ADDRESS: &str = "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy";
 
     fn get_default_secret() -> KeyPair {
         let b = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
-        let kp = Secp256k1KeyPair::new(b.into());
-        KeyPair::new_secp256k1(kp)
+        let kp = Ed25519KeyPair::new(b.into());
+        KeyPair::from(kp)
     }
 
     #[test]
     fn test_address_from_mnemonic() {
-        let path = TRX::get_path(0).unwrap();
-        let kp = TRX::keypair_from_mnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", &path, None).unwrap();
-        let address = TRX::get_address_from_keypair(&kp).unwrap();
+        let path = KLV::get_path(0).unwrap();
+        let kp = KLV::keypair_from_mnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", &path, None).unwrap();
+        let address = KLV::get_address_from_keypair(&kp).unwrap();
 
         assert_eq!(DEFAULT_ADDRESS, address);
     }
 
     #[test]
     fn test_address_from_private_key() {
-        let address = TRX::get_address_from_keypair(&get_default_secret()).unwrap();
+        let address = KLV::get_address_from_keypair(&get_default_secret()).unwrap();
 
-        assert_eq!(DEFAULT_ADDRESS, address);
+        assert_eq!(DEFAULT_ADDRESS, address.to_string());
     }
 }
