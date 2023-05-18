@@ -2,27 +2,31 @@ console.log("AA")
 
 
 function debug(tag, w) {
-  let data = JSON.stringify({chain: w.getChain(), address: w.getAddress()})
+  let data = JSON.stringify({chain: w.getChain(), baseChain: w.getBaseChain().getName(), address: w.getAddress(), privateKey: w.getPrivateKey(), publicKey: w.getPublicKey(), mnemonic: w.getMnemonic(), path: w.getPath()})
   document.body.innerHTML += "<br><b>"+tag+":</b>"+data+"<br>";
   console.log(tag, data);
 }
 
 import("../kos/kos.js").then((kos) => {
   try {
-    // create random mnemonic
-    let m = kos.generateMnemonicPhrase(12);
-    console.log("mnemonic phrase", m);
-    // create new wallet from mnemonic
-    let w1 = kos.Wallet.fromMnemonic(
-      kos.Chain.TRX,
-      "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
-      "m/44'/195'/0'/0/0",
-    ) ;
-    debug("mnemonic", w1);
-    // create a random wallet
-    let w2 = kos.Wallet.new(kos.Chain.TRX);
-    debug("random", w2);
+    [
+      {chain: kos.Chain.TRX, model: kos.TRX},
+      {chain: kos.Chain.KLV, model: kos.KLV},
+    ].forEach((d) => {
+      // create new wallet from mnemonic
+      let w1 = kos.Wallet.fromMnemonic(
+        d.chain,
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        d.model.getPath(0),
+      ) ;
+      debug("mnemonic", w1);
+
+      // create a random wallet
+      let w2 = new kos.Wallet(d.chain);
+      debug("random", w2);
+    });
   } catch (e) {
     console.log("eeee",e);
+    document.body.innerHTML += "<br><br><br><b>error:</b>"+e+"<br>";
   }
 });
