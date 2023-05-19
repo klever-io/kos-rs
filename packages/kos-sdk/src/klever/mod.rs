@@ -1,7 +1,7 @@
 pub mod address;
 pub mod models;
 pub mod requests;
-use crate::chain::BaseChain;
+use crate::{chain::BaseChain, models::BroadcastResult};
 use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
 use kos_types::error::Error;
 use kos_types::number::BigNumber;
@@ -26,7 +26,7 @@ impl KLV {
             name: "Klever",
             symbol: "KLV",
             precision: 6,
-            node_url: "https://api.mainnet.klever.finance",
+            node_url: "https://node.mainnet.klever.finance",
         }
     }
 
@@ -125,6 +125,29 @@ impl KLV {
             None => Ok(BigNumber::from(acc.balance)),
         }
     }
+
+    #[wasm_bindgen(js_name = "broadcast")]
+    pub async fn broadcast(
+        data: Vec<u8>,
+        node_url: Option<String>,
+    ) -> Result<BroadcastResult, Error> {
+        let result = requests::broadcast(node_url, &data).await.unwrap();
+        match result.get("data") {
+            Some(v) => match v.as_object() {
+                Some(obj) => {
+                    let tx_hash = obj.get("txHash").unwrap().to_string();
+                    return Ok(BroadcastResult::new(tx_hash, data));
+                }
+                None => {}
+            },
+            None => {}
+        }
+
+        match result.get("error") {
+            Some(err) => return Err(Error::ReqwestError(err.to_string())),
+            None => Err(Error::ReqwestError("Unknown error".to_string())),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -157,6 +180,17 @@ mod tests {
         println!("balance: {}", balance.with_precision(6));
 
         assert_eq!("0", balance.to_string());
+    }
+
+    #[test]
+    fn test_broadcast() {
+        let result = tokio_test::block_on(
+            KLV::broadcast(
+                "{\"tx\":{\"RawData\":{\"Nonce\":13,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBIDS0xWGAo=\"}}],\"KAppFee\":500000,\"BandwidthFee\":1000000,\"Version\":1,\"ChainID\":\"MTAwNDIw\"},\"Signature\":[\"O7C2MjTUMauWl8kfeJjgwDnFLkiDqY2U23s6AWzTstut63FnZeKC3EcxY0DiAgzf5PQ1+jeC2dIx3+pP7BHlBQ==\"]}}"
+                .as_bytes().to_vec(),
+                Some("https://node.testnet.klever.finance".to_string()),
+        ));
+        println!("result: {:?}", result);
     }
 
     #[test]

@@ -1,4 +1,8 @@
-use crate::chain::{BaseChain, Chain};
+use crate::{
+    chain::{BaseChain, Chain},
+    models::BroadcastResult,
+};
+
 use kos_crypto::keypair::KeyPair;
 use kos_types::{error::Error, number::BigNumber};
 
@@ -174,15 +178,16 @@ impl Wallet {
         self.chain.sign_message(message, &self.keypair)
     }
 
-    #[wasm_bindgen(js_name = "sign")]
+    #[wasm_bindgen(js_name = "signDigest")]
     /// sign digest with keypait
-    pub fn sign(&self, hash: &[u8]) -> Result<Vec<u8>, Error> {
-        self.chain.sign(hash, &self.keypair)
+    pub fn sign_digest(&self, hash: &[u8]) -> Result<Vec<u8>, Error> {
+        self.chain.sign_digest(hash, &self.keypair)
     }
 }
 
 #[wasm_bindgen]
 impl Wallet {
+    #[wasm_bindgen(js_name = "getBalance")]
     pub async fn get_balance(
         &self,
         address: &str,
@@ -190,6 +195,14 @@ impl Wallet {
     ) -> Result<BigNumber, Error> {
         self.chain
             .get_balance(address, token, Some(self.node_url.clone()))
+            .await
+    }
+
+    #[wasm_bindgen(js_name = "broadcast")]
+    /// boradcast transaction to network
+    pub async fn broadcast(&self, data: Vec<u8>) -> Result<BroadcastResult, Error> {
+        self.chain
+            .broadcast(data, Some(self.node_url.clone()))
             .await
     }
 }

@@ -1,5 +1,6 @@
 pub mod address;
 use crate::chain::BaseChain;
+use crate::models::BroadcastResult;
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
 use kos_types::error::Error;
 use kos_types::number::BigNumber;
@@ -122,6 +123,14 @@ impl TRX {
         _token: Option<String>,
         _node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
+        todo!()
+    }
+
+    #[wasm_bindgen(js_name = "broadcast")]
+    pub async fn broadcast(
+        _data: Vec<u8>,
+        _node_url: Option<String>,
+    ) -> Result<BroadcastResult, Error> {
         todo!()
     }
 }

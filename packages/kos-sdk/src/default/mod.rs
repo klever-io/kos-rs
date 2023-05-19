@@ -1,4 +1,5 @@
 use crate::chain::BaseChain;
+use crate::models::BroadcastResult;
 use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
 use kos_types::number::BigNumber;
@@ -95,6 +96,14 @@ impl NONE {
         _token: Option<String>,
         _node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "broadcast")]
+    pub async fn broadcast(
+        _data: Vec<u8>,
+        _node_url: Option<String>,
+    ) -> Result<BroadcastResult, Error> {
         Err(Error::UnsupportedChain("NONE".into()).into())
     }
 }

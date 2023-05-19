@@ -14,3 +14,17 @@ pub async fn http_get<T: DeserializeOwned>(url: String) -> Result<T, Error> {
     let body = reqwest::get(url).await.unwrap();
     body.json::<T>().await.map_err(|e| Error::from(e))
 }
+
+pub async fn http_post<T: DeserializeOwned>(url: String, data: &Vec<u8>) -> Result<T, Error> {
+    let client = reqwest::Client::new();
+    client
+        .post(url)
+        .body(data.to_vec())
+        .send()
+        .await
+        .map_err(|e| Error::from(e))
+        .unwrap()
+        .json::<T>()
+        .await
+        .map_err(|e| Error::from(e))
+}

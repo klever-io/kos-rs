@@ -1,3 +1,4 @@
+use crate::models::BroadcastResult;
 use crate::{default::NONE, klever::KLV, tron::TRX};
 use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
@@ -96,6 +97,12 @@ macro_rules! createChains {
             pub async fn get_balance(&self, address: &str, token: Option<String>, node_url: Option<String>) -> Result<BigNumber, Error> {
                 match self {
                     $(Chain::$name => $name::get_balance(address, token, node_url).await,)*
+                }
+            }
+
+            pub async fn broadcast(&self, data: Vec<u8>, node_url: Option<String>) -> Result<BroadcastResult, Error> {
+                match self {
+                    $(Chain::$name => $name::broadcast(data, node_url).await,)*
                 }
             }
         }
