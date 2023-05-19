@@ -19,3 +19,4 @@ serde_json = { workspace = true }
 hex = { workspace = true }
 reqwest = { workspace = true }
 wasm-bindgen = { workspace = true }
+num-bigint = "0.4"
