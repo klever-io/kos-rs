@@ -1,5 +1,6 @@
 use core::convert::Infallible;
 use ed25519_dalek::SignatureError;
+use reqwest::Error as ReqwestError;
 use secp256k1::Error as Secp256k1Error;
 use std::{error, fmt, str};
 use wasm_bindgen::JsValue;
@@ -28,6 +29,8 @@ pub enum Error {
     InvalidMessage(&'static str),
     /// Out of preallocated memory
     NotEnoughMemory(&'static str),
+    /// Reqwest error
+    ReqwestError(String),
 }
 
 impl fmt::Display for Error {
@@ -43,6 +46,7 @@ impl fmt::Display for Error {
             Error::InvalidSignature(e) => write!(f, "Invalid signature: {}", e),
             Error::InvalidMessage(e) => write!(f, "Invalid message: {}", e),
             Error::NotEnoughMemory(e) => write!(f, "Not enough memory: {}", e),
+            Error::ReqwestError(e) => write!(f, "Reqwest error: {}", e),
         }
     }
 }
@@ -92,6 +96,12 @@ impl error::Error for Error {
 impl From<Error> for JsValue {
     fn from(e: Error) -> Self {
         JsValue::from_str(&format!("{}", e))
+    }
+}
+
+impl From<ReqwestError> for Error {
+    fn from(e: ReqwestError) -> Self {
+        Self::ReqwestError(e.to_string())
     }
 }
 

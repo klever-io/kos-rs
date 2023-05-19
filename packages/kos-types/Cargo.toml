@@ -17,4 +17,5 @@ ed25519-dalek = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 hex = { workspace = true }
+reqwest = { workspace = true }
 wasm-bindgen = { workspace = true }
