@@ -1,11 +1,13 @@
 pub mod address;
+pub mod models;
+pub mod requests;
 use crate::chain::BaseChain;
 use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
 use kos_types::error::Error;
+use kos_types::number::BigNumber;
 
 use sha3::{Digest, Keccak256};
 use std::todo;
-
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -24,7 +26,7 @@ impl KLV {
             name: "Klever",
             symbol: "KLV",
             precision: 6,
-            node_url: "node.mainnet.klever.finance",
+            node_url: "https://api.mainnet.klever.finance",
         }
     }
 
@@ -53,21 +55,10 @@ impl KLV {
         Ok(address::Address::from_keypair(&keypair).to_string())
     }
 
-    // #[wasm_bindgen(js_name = "getAddressFromPublicKey")]
-    // pub fn get_address_from_public_key(public_key: PublicKey) -> Result<String, Error> {
-    //     //Ok(address::Address::from_public(&public_key).to_string())
-    //     todo!("getAddressFromPublicKey")
-    // }
-
     #[wasm_bindgen(js_name = "getPath")]
     pub fn get_path(index: u32) -> Result<String, Error> {
         Ok(format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, index))
     }
-
-    // #[wasm_bindgen(js_name = "getPublicKeyFromPrivate")]
-    // pub fn get_public_key_from_private(private_key: SecretKey) -> Result<String, Error> {
-    //     Ok(PublicKey::from(&private_key).to_string())
-    // }
 
     #[wasm_bindgen(js_name = "signDigest")]
     /// Sign digest data with the private key.
@@ -114,6 +105,26 @@ impl KLV {
     ) -> Result<(), Error> {
         todo!()
     }
+
+    #[wasm_bindgen(js_name = "getBalance")]
+    /// Get balance of address and token
+    /// If token is None, it will return balance of native token
+    /// If token is Some, it will return balance of token
+    /// If node_url is None, it will use default node url
+    pub async fn get_balance(
+        address: &str,
+        token: Option<String>,
+        node_url: Option<String>,
+    ) -> Result<BigNumber, Error> {
+        let acc = requests::get_account(node_url, address).await.unwrap();
+        match token {
+            Some(key) => match acc.assets.get(&key) {
+                Some(asset) => Ok(BigNumber::from(asset.balance)),
+                None => Ok(BigNumber::from(0)),
+            },
+            None => Ok(BigNumber::from(acc.balance)),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -132,6 +143,20 @@ mod tests {
         let b = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
         let kp = Ed25519KeyPair::new(b.into());
         KeyPair::from(kp)
+    }
+
+    #[test]
+    fn test_get_galance() {
+        let balance = tokio_test::block_on(KLV::get_balance(
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            Some("KLV".to_string()),
+            None,
+        ))
+        .unwrap();
+        println!("balance: {}", balance.to_string());
+        println!("balance: {}", balance.with_precision(6));
+
+        assert_eq!("0", balance.to_string());
     }
 
     #[test]

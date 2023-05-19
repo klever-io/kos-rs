@@ -1,6 +1,7 @@
 use crate::{default::NONE, klever::KLV, tron::TRX};
 use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
+use kos_types::number::BigNumber;
 
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, IntoStaticStr};
@@ -85,6 +86,16 @@ macro_rules! createChains {
             pub fn verify_message_signature(&self, message: &[u8], signature: &[u8], address: &str) -> Result<(), Error> {
                 match self {
                     $(Chain::$name => $name::verify_message_signature(message, signature, address),)*
+                }
+            }
+
+            /// Get balance of address and token
+            /// If token is None, it will return balance of native token
+            /// If token is Some, it will return balance of token
+            /// If node_url is None, it will use default node url
+            pub async fn get_balance(&self, address: &str, token: Option<String>, node_url: Option<String>) -> Result<BigNumber, Error> {
+                match self {
+                    $(Chain::$name => $name::get_balance(address, token, node_url).await,)*
                 }
             }
         }

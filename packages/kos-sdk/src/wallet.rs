@@ -1,6 +1,6 @@
 use crate::chain::{BaseChain, Chain};
 use kos_crypto::keypair::KeyPair;
-use kos_types::error::Error;
+use kos_types::{error::Error, number::BigNumber};
 
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, IntoStaticStr};
@@ -178,5 +178,18 @@ impl Wallet {
     /// sign digest with keypait
     pub fn sign(&self, hash: &[u8]) -> Result<Vec<u8>, Error> {
         self.chain.sign(hash, &self.keypair)
+    }
+}
+
+#[wasm_bindgen]
+impl Wallet {
+    pub async fn get_balance(
+        &self,
+        address: &str,
+        token: Option<String>,
+    ) -> Result<BigNumber, Error> {
+        self.chain
+            .get_balance(address, token, Some(self.node_url.clone()))
+            .await
     }
 }

@@ -45,7 +45,6 @@ impl BigNumber {
         s.insert(index, '.');
         s
     }
-
 }
 
 macro_rules! impl_from {

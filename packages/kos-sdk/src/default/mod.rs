@@ -1,6 +1,7 @@
 use crate::chain::BaseChain;
 use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
+use kos_types::number::BigNumber;
 
 use wasm_bindgen::prelude::*;
 
@@ -81,6 +82,19 @@ impl NONE {
         _signature: &[u8],
         _address: &str,
     ) -> Result<(), Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
+    #[wasm_bindgen(js_name = "getBalance")]
+    /// Get balance of address and token
+    /// If token is None, it will return balance of native token
+    /// If token is Some, it will return balance of token
+    /// If node_url is None, it will use default node url
+    pub async fn get_balance(
+        _address: &str,
+        _token: Option<String>,
+        _node_url: Option<String>,
+    ) -> Result<BigNumber, Error> {
         Err(Error::UnsupportedChain("NONE".into()).into())
     }
 }
