@@ -10,6 +10,7 @@ pub struct BroadcastResult {
 
 #[wasm_bindgen]
 impl BroadcastResult {
+    #[wasm_bindgen(constructor)]
     pub fn new(hash: String, raw: Vec<u8>) -> Self {
         Self { hash, raw }
     }
@@ -20,5 +21,10 @@ impl BroadcastResult {
 
     pub fn raw(&self) -> Vec<u8> {
         self.raw.clone()
+    }
+
+    #[wasm_bindgen(js_name = toString)]
+    pub fn to_string(&self) -> String {
+        serde_json::to_string(&self).unwrap()
     }
 }

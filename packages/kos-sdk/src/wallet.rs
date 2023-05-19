@@ -200,9 +200,13 @@ impl Wallet {
 
     #[wasm_bindgen(js_name = "broadcast")]
     /// boradcast transaction to network
-    pub async fn broadcast(&self, data: Vec<u8>) -> Result<BroadcastResult, Error> {
+    pub async fn broadcast(
+        &self,
+        data: Vec<u8>,
+        node_url: Option<String>,
+    ) -> Result<BroadcastResult, Error> {
         self.chain
-            .broadcast(data, Some(self.node_url.clone()))
+            .broadcast(data, node_url.or(Some(self.node_url.clone())))
             .await
     }
 }
