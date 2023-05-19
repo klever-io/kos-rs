@@ -38,11 +38,14 @@ pub struct Asset {
 #[serde(rename_all = "camelCase")]
 #[wasm_bindgen(getter_with_clone)]
 pub struct Account {
-    pub address: String,
-    pub nonce: u64,
-    pub balance: u64,
-    pub frozen_balance: u64,
-    pub allowance: u64,
+    // pub address: String,
+    #[serde(rename = "Nonce")]
+    pub nonce: Option<u64>,
+    #[serde(rename = "Balance")]
+    pub balance: Option<u64>,
+    // pub frozen_balance: u64,
+    #[serde(rename = "Allowance")]
+    pub allowance: Option<u64>,
     #[wasm_bindgen(skip)]
-    pub assets: collections::HashMap<String, Asset>,
+    pub assets: Option<collections::HashMap<String, Asset>>,
 }

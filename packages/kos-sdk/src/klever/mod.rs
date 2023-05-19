@@ -118,11 +118,17 @@ impl KLV {
     ) -> Result<BigNumber, Error> {
         let acc = requests::get_account(node_url, address).await.unwrap();
         match token {
-            Some(key) => match acc.assets.get(&key) {
-                Some(asset) => Ok(BigNumber::from(asset.balance)),
-                None => Ok(BigNumber::from(0)),
-            },
-            None => Ok(BigNumber::from(acc.balance)),
+            Some(key) => {
+                if key == "KLV" {
+                    return Ok(BigNumber::from(acc.balance.unwrap_or(0)));
+                }
+
+                match acc.assets.unwrap().get(&key) {
+                    Some(asset) => Ok(BigNumber::from(asset.balance)),
+                    None => Ok(BigNumber::from(0)),
+                }
+            }
+            None => Ok(BigNumber::from(acc.balance.unwrap_or(0))),
         }
     }
 
