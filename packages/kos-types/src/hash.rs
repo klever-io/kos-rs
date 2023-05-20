@@ -1,8 +1,8 @@
 use crate::error::Error;
 use crate::Bytes32;
 
-use std::str::FromStr;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

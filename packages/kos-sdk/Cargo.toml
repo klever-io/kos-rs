@@ -18,6 +18,7 @@ serde_json = { workspace = true }
 enum_delegate = { workspace = true }
 enum_dispatch = "0.3"
 
+log = { workspace = true }
 wasm-bindgen = { workspace = true }
 base58 = { workspace = true }
 bech32 = { workspace = true }
@@ -31,7 +32,7 @@ coins-bip39 = { workspace = true }
 reqwest = { workspace = true, features = ["blocking", "json"] }
 wasm-bindgen-futures = "0.4"
 
-kos-types = { workspace = true }
+kos-types = { workspace = true, features = ["serde"] }
 kos-crypto = { workspace = true }
 
 [dev-dependencies]

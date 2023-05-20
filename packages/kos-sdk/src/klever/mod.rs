@@ -3,8 +3,7 @@ pub mod models;
 pub mod requests;
 use crate::{chain::BaseChain, models::BroadcastResult};
 use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
-use kos_types::error::Error;
-use kos_types::number::BigNumber;
+use kos_types::{error::Error, hash::Hash, number::BigNumber};
 
 use sha3::{Digest, Keccak256};
 use std::todo;
@@ -141,7 +140,7 @@ impl KLV {
         match result.get("data") {
             Some(v) => match v.as_object() {
                 Some(obj) => {
-                    let tx_hash = obj.get("txHash").unwrap().to_string();
+                    let tx_hash = Hash::new(obj.get("txHash").unwrap().as_str().unwrap())?;
                     return Ok(BroadcastResult::new(tx_hash, data));
                 }
                 None => {}
