@@ -50,7 +50,7 @@ impl Wallet {
     #[wasm_bindgen(constructor)]
     /// create a random private key wallet
     pub fn new(chain: Chain) -> Result<Wallet, Error> {
-        let kp = chain.new_keypair().unwrap();
+        let kp = chain.new_keypair()?;
         let address = chain.get_address_from_keypair(&kp)?;
 
         Ok(Wallet {
@@ -88,9 +88,7 @@ impl Wallet {
         path: &str,
         password: Option<String>,
     ) -> Result<Wallet, Error> {
-        let kp = chain
-            .keypair_from_mnemonic(mnemonic, path, password)
-            .unwrap();
+        let kp = chain.keypair_from_mnemonic(mnemonic, path, password)?;
         let address = chain.get_address_from_keypair(&kp)?;
 
         Ok(Wallet {

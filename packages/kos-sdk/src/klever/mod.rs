@@ -42,9 +42,11 @@ impl KLV {
         path: &str,
         password: Option<String>,
     ) -> Result<KeyPair, Error> {
-        let kp =
-            Ed25519KeyPair::new_from_mnemonic_phrase_with_path(mnemonic, path, password.as_deref())
-                .unwrap();
+        let kp = Ed25519KeyPair::new_from_mnemonic_phrase_with_path(
+            mnemonic,
+            path,
+            password.as_deref(),
+        )?;
 
         Ok(KeyPair::new_ed25519(kp))
     }
@@ -136,7 +138,8 @@ impl KLV {
         data: Vec<u8>,
         node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        let result = requests::broadcast(node_url, &data).await.unwrap();
+        let result = requests::broadcast(node_url, &data).await?;
+
         match result.get("data") {
             Some(v) => match v.as_object() {
                 Some(obj) => {

@@ -63,7 +63,7 @@ impl Secp256k1KeyPair {
         let key: &coins_bip32::prelude::SigningKey = derived_priv_key.as_ref();
 
         let secp = Secp256k1::new();
-        let secret_key = SecretKey::from_slice(key.to_bytes().as_mut()).unwrap();
+        let secret_key = SecretKey::from_slice(key.to_bytes().as_mut())?;
         let public_key = PublicKey::from_secret_key(&secp, &secret_key);
 
         Ok(Self {

@@ -11,7 +11,7 @@ pub fn http_get_block<T: DeserializeOwned>(url: String) -> Result<T, Error> {
 }
 
 pub async fn http_get<T: DeserializeOwned>(url: String) -> Result<T, Error> {
-    let body = reqwest::get(url).await.unwrap();
+    let body = reqwest::get(url).await?;
     body.json::<T>().await.map_err(|e| Error::from(e))
 }
 
@@ -22,8 +22,7 @@ pub async fn http_post<T: DeserializeOwned>(url: String, data: &Vec<u8>) -> Resu
         .body(data.to_vec())
         .send()
         .await
-        .map_err(|e| Error::from(e))
-        .unwrap()
+        .map_err(|e| Error::from(e))?
         .json::<T>()
         .await
         .map_err(|e| Error::from(e))

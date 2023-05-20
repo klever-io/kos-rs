@@ -99,7 +99,9 @@ impl Ed25519KeyPair {
             chain_code = intermediary[SECRET_KEY_LENGTH..].to_vec();
         }
 
-        Ok(Self::new(key.try_into().unwrap()))
+        Ok(Self::new(key.try_into().map_err(|_e| {
+            Error::InvalidMnemonic("Error convert vec into slice")
+        })?))
     }
 }
 

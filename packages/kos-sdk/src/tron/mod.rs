@@ -45,8 +45,7 @@ impl TRX {
             mnemonic,
             path,
             password.as_deref(),
-        )
-        .unwrap();
+        )?;
 
         Ok(KeyPair::new_secp256k1(kp))
     }
