@@ -49,3 +49,4 @@ log = "0.4"
 kos-types = { version = "0.1.0", path = "./packages/kos-types", default-features = false }
 kos-crypto = { version = "0.1.0", path = "./packages/kos-crypto", default-features = false }
 kos-sdk = { version = "0.1.0", path = "./packages/kos-sdk", default-features = false }
+kos-utils = { version = "0.1.0", path = "./packages/kos-utils", default-features = false }

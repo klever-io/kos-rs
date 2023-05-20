@@ -19,6 +19,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 wasm-bindgen = { workspace = true }
+console_error_panic_hook = "0.1"
+log = "0.4"
 
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
 # compared to the default allocator's ~10K. However, it is slower than the default
@@ -27,6 +29,7 @@ wasm-bindgen = { workspace = true }
 kos-types = { workspace = true }
 kos-crypto = { workspace = true }
 kos-sdk = { workspace = true }
+kos-utils = { workspace = true }
 
 
 # The `web-sys` crate allows you to interact with the various browser APIs,
