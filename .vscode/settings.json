@@ -4,6 +4,7 @@
         "./packages/kos-sdk/Cargo.toml",
         "./packages/kos-types/Cargo.toml",
         "./packages/kos/Cargo.toml",
-        "./packages/kos-sdk/Cargo.toml"
+        "./packages/kos-sdk/Cargo.toml",
+        "./packages/kos-utils/Cargo.toml"
     ]
 }

@@ -115,7 +115,7 @@ async function signAndBroadcast(tx, wallet) {
     const toSend = {...tx.raw, Signature: [Buffer.from(signature).toString('base64')]};
     console.log({toSend});
     const result = await wallet.broadcast(Buffer.from(JSON.stringify({tx: toSend})), "https://node.testnet.klever.finance");
-    console.log("TXHash:", result.hash());
+    console.log("TXHash:", result.hash().toString());
   }catch(e){
     console.log(e)
   }
