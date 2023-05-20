@@ -1,6 +1,7 @@
 pub mod bytes;
 pub mod error;
 pub mod number;
+pub mod hash;
 
 mod array_types;
 pub use array_types::*;

@@ -8,6 +8,9 @@ use core::ops::{Deref, DerefMut};
 use core::{fmt, str};
 use hex::{FromHex, FromHexError};
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 #[cfg(feature = "random")]
 use rand::{
     distributions::{Distribution, Standard},
@@ -19,7 +22,7 @@ use crate::hex_val;
 macro_rules! key {
     ($i:ident, $s:expr) => {
         #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        /// FuelVM atomic array type.
+        /// atomic array type.
         #[repr(transparent)]
         pub struct $i([u8; $s]);
 
@@ -37,7 +40,7 @@ macro_rules! key {
 macro_rules! key_with_big_array {
     ($i:ident, $s:expr) => {
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        /// FuelVM atomic type.
+        /// atomic type.
         #[repr(transparent)]
         pub struct $i([u8; $s]);
 

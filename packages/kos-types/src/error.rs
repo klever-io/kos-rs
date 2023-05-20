@@ -9,6 +9,8 @@ use wasm_bindgen::JsValue;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Error {
+    // Invalid string
+    InvalidString(&'static str),
     // UnsupportedChain,
     UnsupportedChain(&'static str),
     // InvalidMnemonic,
@@ -36,6 +38,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Error::InvalidString(e) => write!(f, "Invalid string: {}", e),
             Error::UnsupportedChain(e) => write!(f, "Unsupported chain: {}", e),
             Error::InvalidMnemonic(e) => write!(f, "Invalid mnemonic: {}", e),
             Error::InvalidPath(e) => write!(f, "Invalid path: {}", e),

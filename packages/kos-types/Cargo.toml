@@ -8,13 +8,19 @@ license = { workspace = true }
 repository = { workspace = true }
 rust-version = { workspace = true }
 
+[features]
+alloc = ["hex/alloc"]
+serde = ["dep:serde", "alloc"]
+std = ["alloc", "serde?/std"]
+
 [dependencies]
 rand = { workspace = true }
 coins-bip32 = { workspace = true }
 coins-bip39 = { workspace = true }
 secp256k1 = { workspace = true, features = ["recovery", "rand"] }
 ed25519-dalek = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
+log = { workspace = true }
+serde = { workspace = true, features = ["derive", "alloc"], optional = true }
 serde_json = { workspace = true }
 hex = { workspace = true }
 reqwest = { workspace = true }
