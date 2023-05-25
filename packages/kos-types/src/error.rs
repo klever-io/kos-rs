@@ -11,6 +11,8 @@ use wasm_bindgen::JsValue;
 pub enum Error {
     // Invalid string
     InvalidString(&'static str),
+    // JSON serialization error
+    JSONSerde(String),
     // UnsupportedChain,
     UnsupportedChain(&'static str),
     // InvalidMnemonic,
@@ -39,6 +41,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::InvalidString(e) => write!(f, "Invalid string: {}", e),
+            Error::JSONSerde(e) => write!(f, "JSON serialization: {}", e),
             Error::UnsupportedChain(e) => write!(f, "Unsupported chain: {}", e),
             Error::InvalidMnemonic(e) => write!(f, "Invalid mnemonic: {}", e),
             Error::InvalidPath(e) => write!(f, "Invalid path: {}", e),
@@ -87,6 +90,12 @@ impl From<coins_bip39::MnemonicError> for Error {
 impl From<coins_bip32::Bip32Error> for Error {
     fn from(_: coins_bip32::Bip32Error) -> Self {
         Self::InvalidPath("Invalid path")
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(e: serde_json::Error) -> Self {
+        Self::JSONSerde(e.to_string())
     }
 }
 
