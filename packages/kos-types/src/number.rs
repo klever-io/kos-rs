@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use num_bigint::BigInt;
+use num_traits::ToPrimitive;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -28,10 +29,15 @@ impl BigNumber {
         format!("{:#x}", self.v)
     }
 
-    // #[wasm_bindgen(js_name = "toNumber")]
-    // pub fn to_number(&self) -> f64 {
-    //     self.v.to_f64().unwrap_or(0.0)
-    // }
+    #[wasm_bindgen(js_name = "toNumber")]
+    pub fn to_number(&self) -> f64 {
+        self.v.to_f64().unwrap_or(0.0)
+    }
+
+    #[wasm_bindgen(js_name = "toI64")]
+    pub fn to_i64(&self) -> i64 {
+        self.v.to_i64().unwrap_or(0)
+    }
 
     #[wasm_bindgen(js_name = "withPrecision")]
     pub fn with_precision(&self, precision: u32) -> String {

@@ -26,3 +26,4 @@ hex = { workspace = true }
 reqwest = { workspace = true }
 wasm-bindgen = { workspace = true }
 num-bigint = "0.4"
+num-traits = "0.2"
