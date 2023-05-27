@@ -15,7 +15,6 @@ pub(crate) const fn hex_val(c: u8) -> Option<u8> {
     }
 }
 
-
 #[macro_export]
 macro_rules! enum_thing {
     (
@@ -29,15 +28,13 @@ macro_rules! enum_thing {
         }
 
         $(
-            use kos_types::error::Error as KOSError;
-
             impl TryFrom<$EnumName> for $EnumType {
-                type Error = KOSError;
+                type Error = kos_types::error::Error;
 
                 fn try_from(other: $EnumName) -> Result<Self, Self::Error> {
                     match other {
                         $EnumName::$EnumVariant(v) => Ok(v),
-                        _ => Err(KOSError::InvalidEnumVariant(stringify!($EnumName).to_string())),
+                        _ => Err(kos_types::error::Error::InvalidEnumVariant(stringify!($EnumName).to_string())),
                     }
                 }
             }

@@ -31,6 +31,26 @@ impl Hash {
     pub fn bytes(&self) -> Vec<u8> {
         self.data.to_vec()
     }
+
+    #[wasm_bindgen(js_name = fromSlice)]
+    pub fn from_slice(data: &[u8]) -> Result<Hash, Error> {
+        // check length
+        if data.len() != Bytes32::LEN {
+            return Err(Error::InvalidLen(format!(
+                "expected {}, found {}",
+                Bytes32::LEN,
+                data.len()
+            )));
+        }
+        let value = unsafe { Bytes32::from_slice_unchecked(data) };
+
+        Ok(Self { data: value })
+    }
+
+    #[wasm_bindgen(js_name = fromVec)]
+    pub fn from_vec(data: Vec<u8>) -> Result<Hash, Error> {
+        Hash::from_slice(data.as_slice())
+    }
 }
 
 impl From<Bytes32> for Hash {

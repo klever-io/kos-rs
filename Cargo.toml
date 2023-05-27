@@ -38,6 +38,11 @@ hex = { version = "0.4.3", default-features = false }
 rand = "0.8"
 zeroize = { version = "1.5", features = ["derive"] }
 
+prost = "0.11"
+prost-types = "0.11"
+pbjson = "0.5"
+pbjson-types = "0.5"
+
 reqwest = { version = "0.11", feature = ["blocking", "json"] }
 wasm-bindgen = "0.2"
 enum_delegate = "0.2"
@@ -50,3 +55,4 @@ kos-types = { version = "0.1.0", path = "./packages/kos-types", default-features
 kos-crypto = { version = "0.1.0", path = "./packages/kos-crypto", default-features = false }
 kos-sdk = { version = "0.1.0", path = "./packages/kos-sdk", default-features = false }
 kos-utils = { version = "0.1.0", path = "./packages/kos-utils", default-features = false }
+kos-proto = { version = "0.1.0", path = "./packages/kos-proto", default-features = false }

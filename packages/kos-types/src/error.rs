@@ -35,8 +35,10 @@ pub enum Error {
     NotEnoughMemory(&'static str),
     /// Reqwest error
     ReqwestError(String),
-    /// Invalid Enum Variant 
+    /// Invalid Enum Variant
     InvalidEnumVariant(String),
+    /// Invalid Len
+    InvalidLen(String),
 }
 
 impl fmt::Display for Error {
@@ -56,6 +58,7 @@ impl fmt::Display for Error {
             Error::NotEnoughMemory(e) => write!(f, "Not enough memory: {}", e),
             Error::ReqwestError(e) => write!(f, "Reqwest error: {}", e),
             Error::InvalidEnumVariant(e) => write!(f, "Invalid Enum Variant error: {}", e),
+            Error::InvalidLen(e) => write!(f, "Invalid Len: {}", e),
         }
     }
 }

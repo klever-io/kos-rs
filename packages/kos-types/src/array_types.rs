@@ -81,7 +81,6 @@ macro_rules! key_methods {
                 $i([0; $s])
             }
 
-            #[cfg(feature = "unsafe")]
             #[allow(unsafe_code)]
             /// Add a conversion from arbitrary slices into owned
             ///
