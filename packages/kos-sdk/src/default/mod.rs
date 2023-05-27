@@ -1,5 +1,5 @@
 use crate::chain::BaseChain;
-use crate::models::BroadcastResult;
+use crate::models::{self, BroadcastResult, Transaction};
 use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
 use kos_types::number::BigNumber;
@@ -60,7 +60,7 @@ impl NONE {
 
     #[wasm_bindgen(js_name = "sign")]
     /// Hash and Sign data with the private key.
-    pub fn sign(_data: &[u8], _keypair: &KeyPair) -> Result<Vec<u8>, Error> {
+    pub fn sign(_data: Transaction, _keypair: &KeyPair) -> Result<Transaction, Error> {
         Err(Error::UnsupportedChain("NONE".into()).into())
     }
 
@@ -99,9 +99,19 @@ impl NONE {
         Err(Error::UnsupportedChain("NONE".into()).into())
     }
 
+    pub async fn send(
+        _sender: String,
+        _receiver: String,
+        _amount: BigNumber,
+        _options: Option<models::SendOptions>,
+        _node_url: Option<String>,
+    ) -> Result<Transaction, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
     #[wasm_bindgen(js_name = "broadcast")]
     pub async fn broadcast(
-        _data: Vec<u8>,
+        _data: crate::models::Transaction,
         _node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
         Err(Error::UnsupportedChain("NONE".into()).into())

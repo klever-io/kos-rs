@@ -1,4 +1,4 @@
-use crate::models::BroadcastResult;
+use crate::models::{self, BroadcastResult, Transaction};
 use crate::{default::NONE, klever::KLV, tron::TRX};
 use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
@@ -63,7 +63,7 @@ macro_rules! createChains {
             }
 
             /// Hash and Sign data with the private key.
-            pub fn sign(&self, data: &[u8], keypair: &KeyPair) -> Result<Vec<u8>, Error> {
+            pub fn sign(&self, data: Transaction, keypair: &KeyPair) -> Result<Transaction, Error> {
                 match self {
                     $(Chain::$name => $name::sign(data, keypair),)*
                 }
@@ -100,7 +100,20 @@ macro_rules! createChains {
                 }
             }
 
-            pub async fn broadcast(&self, data: Vec<u8>, node_url: Option<String>) -> Result<BroadcastResult, Error> {
+            pub async fn send(
+                &self,
+                sender: String,
+                receiver: String,
+                amount: BigNumber,
+                options: Option<models::SendOptions>,
+                node_url: Option<String>,
+            ) -> Result<Transaction, Error> {
+                match self {
+                    $(Chain::$name => $name::send(sender, receiver, amount, options, node_url).await,)*
+                }
+            }
+
+            pub async fn broadcast(&self, data: Transaction, node_url: Option<String>) -> Result<BroadcastResult, Error> {
                 match self {
                     $(Chain::$name => $name::broadcast(data, node_url).await,)*
                 }

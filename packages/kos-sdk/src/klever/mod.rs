@@ -1,7 +1,10 @@
 pub mod address;
 pub mod models;
 pub mod requests;
-use crate::{chain::BaseChain, models::BroadcastResult};
+use crate::{
+    chain::BaseChain,
+    models::{BroadcastResult, Transaction, TransactionRaw},
+};
 use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
 use kos_types::{error::Error, hash::Hash, number::BigNumber};
 
@@ -76,8 +79,35 @@ impl KLV {
 
     #[wasm_bindgen(js_name = "sign")]
     /// Hash and Sign data with the private key.
-    pub fn sign(data: &[u8], keypair: &KeyPair) -> Result<Vec<u8>, Error> {
-        Ok(keypair.sign_digest(data))
+    pub fn sign(tx: Transaction, keypair: &KeyPair) -> Result<Transaction, Error> {
+        match tx.data {
+            Some(TransactionRaw::Klever(klv_tx)) => {
+                let mut new_tx = kos_proto::clone(&klv_tx).unwrap();
+                let raw = klv_tx.raw_data.unwrap();
+                let bytes = kos_proto::write_message(raw);
+                let digest = KLV::hash(&bytes)?;
+                let sig = KLV::sign_digest(digest.as_slice(), keypair)?;
+
+                new_tx.signature.push(sig);
+                let result = Transaction {
+                    chain: tx.chain,
+                    hash: Hash::from_vec(digest)?,
+                    data: Some(TransactionRaw::Klever(new_tx)),
+                };
+
+                Ok(result)
+            }
+            _ => return Err(Error::InvalidMessage("not a klever transaction")),
+        }
+    }
+
+    #[wasm_bindgen(js_name = "hash")]
+    /// Append prefix and hash the message
+    pub fn hash(message: &[u8]) -> Result<Vec<u8>, Error> {
+        let mut hasher = kos_crypto::blake2b::Blake2b::new(32);
+        hasher.update(message);
+        let digest = hasher.finalize();
+        Ok(digest)
     }
 
     #[wasm_bindgen(js_name = "messageHash")]
@@ -117,44 +147,78 @@ impl KLV {
         token: Option<String>,
         node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
-        let acc = requests::get_account(node_url, address).await.unwrap();
-        match token {
-            Some(key) => {
-                if key == "KLV" {
-                    return Ok(BigNumber::from(acc.balance.unwrap_or(0)));
-                }
+        let node = node_url.unwrap_or_else(|| KLV::base_chain().node_url.to_string());
+        let acc = requests::get_account(node.as_str(), address).await?;
 
-                match acc.assets.unwrap().get(&key) {
-                    Some(asset) => Ok(BigNumber::from(asset.balance)),
-                    None => Ok(BigNumber::from(0)),
-                }
-            }
-            None => Ok(BigNumber::from(acc.balance.unwrap_or(0))),
-        }
+        Ok(match token {
+            Some(key) if key != "KLV" => match acc.assets.unwrap().get(&key) {
+                Some(asset) => BigNumber::from(asset.balance),
+                None => BigNumber::from(0),
+            },
+            _ => BigNumber::from(acc.balance.unwrap_or(0)),
+        })
     }
 
     #[wasm_bindgen(js_name = "broadcast")]
     pub async fn broadcast(
-        data: Vec<u8>,
+        tx: crate::models::Transaction,
         node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        let result = requests::broadcast(node_url, &data).await?;
+        let mut new_tx = tx.clone();
+        let node = node_url.unwrap_or_else(|| KLV::base_chain().node_url.to_string());
 
-        match result.get("data") {
-            Some(v) => match v.as_object() {
-                Some(obj) => {
-                    let tx_hash = Hash::new(obj.get("txHash").unwrap().as_str().unwrap())?;
-                    return Ok(BroadcastResult::new(tx_hash, data));
-                }
-                None => {}
+        let raw = tx
+            .data
+            .ok_or(Error::ReqwestError("Missing transaction data".to_string()))?;
+        let result = requests::broadcast(node.as_str(), raw.try_into()?).await?;
+
+        if let Some(v) = result.get("data").and_then(|v| v.as_object()) {
+            let tx_hash_str = v
+                .get("txHash")
+                .and_then(|v| v.as_str())
+                .ok_or(Error::ReqwestError("Missing transaction hash".to_string()))?;
+            let tx_hash = Hash::new(tx_hash_str)?;
+            new_tx.hash = tx_hash.clone();
+            return Ok(BroadcastResult::new(new_tx));
+        }
+
+        if let Some(err) = result.get("error") {
+            return Err(Error::ReqwestError(err.to_string()));
+        }
+
+        Err(Error::ReqwestError("Unknown error".to_string()))
+    }
+
+    fn get_options(options: Option<crate::models::SendOptions>) -> kos_proto::options::KLVOptions {
+        match options {
+            Some(options) => match options.data {
+                Some(crate::models::Options::Klever(op)) => op,
+                _ => kos_proto::options::KLVOptions::default(),
             },
-            None => {}
+            None => kos_proto::options::KLVOptions::default(),
         }
+    }
 
-        match result.get("error") {
-            Some(err) => return Err(Error::ReqwestError(err.to_string())),
-            None => Err(Error::ReqwestError("Unknown error".to_string())),
-        }
+    /// create a send transaction network
+    #[wasm_bindgen(js_name = "send")]
+    pub async fn send(
+        sender: String,
+        receiver: String,
+        amount: BigNumber,
+        options: Option<crate::models::SendOptions>,
+        node_url: Option<String>,
+    ) -> Result<crate::models::Transaction, Error> {
+        let node = node_url.unwrap_or_else(|| KLV::base_chain().node_url.to_string());
+        let options = KLV::get_options(options);
+
+        let contract = models::TransferTXRequest {
+            receiver: receiver,
+            amount: amount.to_i64(),
+            kda: options.kda.clone(),
+            kda_royalties: options.kda_royalties,
+        };
+
+        requests::make_request(sender, contract, &options, node.as_str()).await
     }
 }
 
@@ -192,13 +256,53 @@ mod tests {
 
     #[test]
     fn test_broadcast() {
-        let result = tokio_test::block_on(
-            KLV::broadcast(
-                "{\"tx\":{\"RawData\":{\"Nonce\":13,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBIDS0xWGAo=\"}}],\"KAppFee\":500000,\"BandwidthFee\":1000000,\"Version\":1,\"ChainID\":\"MTAwNDIw\"},\"Signature\":[\"O7C2MjTUMauWl8kfeJjgwDnFLkiDqY2U23s6AWzTstut63FnZeKC3EcxY0DiAgzf5PQ1+jeC2dIx3+pP7BHlBQ==\"]}}"
-                .as_bytes().to_vec(),
-                Some("https://node.testnet.klever.finance".to_string()),
+        let klv_tx: kos_proto::klever::Transaction = serde_json::from_str(
+            "{\"RawData\":{\"Nonce\":13,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBIDS0xWGAo=\"}}],\"KAppFee\":500000,\"BandwidthFee\":1000000,\"Version\":1,\"ChainID\":\"MTAwNDIw\"},\"Signature\":[\"O7C2MjTUMauWl8kfeJjgwDnFLkiDqY2U23s6AWzTstut63FnZeKC3EcxY0DiAgzf5PQ1+jeC2dIx3+pP7BHlBQ==\"]}",
+        ).unwrap();
+
+        let to_broadcast = crate::models::Transaction {
+            chain: crate::chain::Chain::KLV,
+            hash: Hash::new("0x0000000000000000000000000000000000000000000000000000000000000000")
+                .unwrap(),
+            data: Some(TransactionRaw::Klever(klv_tx)),
+        };
+
+        let result = tokio_test::block_on(KLV::broadcast(
+            to_broadcast,
+            Some("https://node.testnet.klever.finance".to_string()),
         ));
-        println!("result: {:?}", result);
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("lowerNonceInTx: true"))
+    }
+
+    #[test]
+    fn test_send() {
+        let result = tokio_test::block_on(KLV::send(
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy".to_string(),
+            "klv1x2ejsdqz8uccl7htu4cef63z0cqnydhkd8g36tgk6qdv94hu7syqms3spm".to_string(),
+            BigNumber::from(10),
+            None,
+            Some("https://node.testnet.klever.finance".to_string()),
+        ));
+
+        assert!(result.is_ok());
+        match result.unwrap().data {
+            Some(TransactionRaw::Klever(tx)) => {
+                let raw = &tx.raw_data.unwrap();
+                assert!(raw.nonce > 0);
+                assert_eq!(raw.contract.len(), 1);
+                let c: kos_proto::klever::TransferContract =
+                    kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
+                        .unwrap();
+
+                assert_eq!(c.amount, 10);
+            }
+            _ => assert!(false),
+        }
     }
 
     #[test]

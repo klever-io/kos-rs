@@ -1,6 +1,6 @@
 use crate::{
     chain::{BaseChain, Chain},
-    models::BroadcastResult,
+    models::{self, BroadcastResult, Transaction},
 };
 
 use kos_crypto::keypair::KeyPair;
@@ -196,15 +196,70 @@ impl Wallet {
             .await
     }
 
+    #[wasm_bindgen(js_name = "send")]
+    /// create a send transaction network
+    pub async fn send(
+        &self,
+        receiver: String,
+        amount: BigNumber,
+        options: Option<models::SendOptions>,
+        node_url: Option<String>,
+    ) -> Result<Transaction, Error> {
+        self.chain
+            .send(
+                self.get_address(),
+                receiver,
+                amount,
+                options,
+                node_url.or(Some(self.node_url.clone())),
+            )
+            .await
+    }
+
+    #[wasm_bindgen(js_name = "sign")]
+    pub fn sign(&self, tx: Transaction) -> Result<Transaction, Error> {
+        self.chain.sign(tx, &self.keypair)
+    }
+
     #[wasm_bindgen(js_name = "broadcast")]
     /// boradcast transaction to network
     pub async fn broadcast(
         &self,
-        data: Vec<u8>,
+        data: Transaction,
         node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
         self.chain
             .broadcast(data, node_url.or(Some(self.node_url.clone())))
             .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sign_broadcast() {
+        let mut w1 = Wallet::from_mnemonic(
+            Chain::KLV,
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        Chain::KLV.get_path(0).unwrap().as_str(),
+            None,
+        ).unwrap();
+
+        w1.set_node_url("https://node.testnet.klever.finance".to_string());
+
+        let tx = tokio_test::block_on(w1.send(
+            "klv1x2ejsdqz8uccl7htu4cef63z0cqnydhkd8g36tgk6qdv94hu7syqms3spm".to_string(),
+            BigNumber::from(10),
+            None,
+            None,
+        ))
+        .unwrap();
+
+        let to_broadcast = w1.sign(tx).unwrap();
+        let result = tokio_test::block_on(w1.broadcast(to_broadcast, None));
+
+        assert!(result.is_ok())
     }
 }

@@ -40,8 +40,9 @@ zeroize = { version = "1.5", features = ["derive"] }
 
 prost = "0.11"
 prost-types = "0.11"
-pbjson = "0.5"
-pbjson-types = "0.5"
+pbjson = { version = "0.5", git = "https://github.com/klever-io/pbjson" }
+pbjson-types = { version = "0.5", git = "https://github.com/klever-io/pbjson" }
+pbjson-build = { version = "0.5", git = "https://github.com/klever-io/pbjson" }
 
 reqwest = { version = "0.11", feature = ["blocking", "json"] }
 wasm-bindgen = "0.2"

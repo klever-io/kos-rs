@@ -1,12 +1,14 @@
 pub mod address;
-use crate::chain::BaseChain;
-use crate::models::BroadcastResult;
+use crate::{
+    chain::BaseChain,
+    models::{self, BroadcastResult, Transaction, TransactionRaw},
+};
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
 use kos_types::error::Error;
+use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
-use sha2::{Digest, Sha256};
-use sha3::Keccak256;
+use sha3::{Digest, Keccak256};
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -75,12 +77,35 @@ impl TRX {
 
     #[wasm_bindgen(js_name = "sign")]
     /// Hash and Sign data with the private key.
-    pub fn sign(data: &[u8], keypair: &KeyPair) -> Result<Vec<u8>, Error> {
-        let mut hasher = Sha256::new();
-        hasher.update(data);
-        let digest = hasher.finalize();
+    pub fn sign(tx: Transaction, keypair: &KeyPair) -> Result<Transaction, Error> {
+        match tx.data {
+            Some(TransactionRaw::Tron(trx_tx)) => {
+                let mut new_tx = kos_proto::clone(&trx_tx).unwrap();
+                let raw = trx_tx.raw_data.unwrap();
+                let bytes = kos_proto::write_message(raw);
+                let digest = TRX::hash(&bytes)?;
+                let sig = TRX::sign_digest(digest.as_slice(), keypair)?;
 
-        TRX::sign_digest(&digest, keypair)
+                new_tx.signature.push(sig);
+                let result = Transaction {
+                    chain: tx.chain,
+                    hash: Hash::from_vec(digest)?,
+                    data: Some(TransactionRaw::Tron(new_tx)),
+                };
+
+                Ok(result)
+            }
+            _ => return Err(Error::InvalidMessage("not a klever transaction")),
+        }
+    }
+
+    #[wasm_bindgen(js_name = "hash")]
+    /// Append prefix and hash the message
+    pub fn hash(message: &[u8]) -> Result<Vec<u8>, Error> {
+        let mut hasher = Keccak256::new();
+        hasher.update(message);
+        let digest = hasher.finalize();
+        Ok(digest.to_vec())
     }
 
     #[wasm_bindgen(js_name = "messageHash")]
@@ -88,10 +113,7 @@ impl TRX {
     pub fn message_hash(message: &[u8]) -> Result<Vec<u8>, Error> {
         let to_sign = [SIGN_PREFIX, message.len().to_string().as_bytes(), message].concat();
 
-        let mut hasher = Keccak256::new();
-        hasher.update(to_sign);
-        let digest = hasher.finalize();
-        Ok(digest.to_vec())
+        TRX::hash(&to_sign)
     }
 
     #[wasm_bindgen(js_name = "signMessage")]
@@ -125,9 +147,21 @@ impl TRX {
         todo!()
     }
 
+    /// create a send transaction network
+    #[wasm_bindgen(js_name = "send")]
+    pub async fn send(
+        _sender: String,
+        _receiver: String,
+        _amount: BigNumber,
+        _options: Option<models::SendOptions>,
+        _node_url: Option<String>,
+    ) -> Result<crate::models::Transaction, Error> {
+        todo!()
+    }
+
     #[wasm_bindgen(js_name = "broadcast")]
     pub async fn broadcast(
-        _data: Vec<u8>,
+        _data: models::Transaction,
         _node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
         todo!()
