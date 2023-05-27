@@ -39,6 +39,8 @@ pub enum Error {
     InvalidEnumVariant(String),
     /// Invalid Len
     InvalidLen(String),
+    /// InvalidNumberParse
+    InvalidNumberParse(String),
 }
 
 impl fmt::Display for Error {
@@ -59,6 +61,7 @@ impl fmt::Display for Error {
             Error::ReqwestError(e) => write!(f, "Reqwest error: {}", e),
             Error::InvalidEnumVariant(e) => write!(f, "Invalid Enum Variant error: {}", e),
             Error::InvalidLen(e) => write!(f, "Invalid Len: {}", e),
+            Error::InvalidNumberParse(e) => write!(f, "Invalid number parse: {}", e),
         }
     }
 }

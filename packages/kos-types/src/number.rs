@@ -1,4 +1,6 @@
-use std::ops::Deref;
+use crate::error::Error;
+
+use std::{ops::Deref, str::FromStr};
 
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
@@ -19,6 +21,14 @@ impl Deref for BigNumber {
 
 #[wasm_bindgen]
 impl BigNumber {
+    #[wasm_bindgen(js_name = "fromString")]
+    pub fn from_string(value: String) -> Result<BigNumber, Error> {
+        Ok(BigNumber {
+            v: BigInt::from_str(value.as_str())
+                .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+        })
+    }
+
     #[wasm_bindgen(js_name = "toString")]
     pub fn to_string(&self) -> String {
         self.v.to_string()
