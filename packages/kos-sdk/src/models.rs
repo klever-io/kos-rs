@@ -63,6 +63,7 @@ pub struct Transaction {
     #[wasm_bindgen(js_name = hash)]
     pub hash: Hash,
     #[wasm_bindgen(skip)]
+    // TODO!()
     #[serde(skip)]
     pub data: Option<TransactionRaw>,
 }

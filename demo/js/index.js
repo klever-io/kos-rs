@@ -58,43 +58,7 @@ window.onload = function(){
   };
 }
 
-// create TX with API (TODO: move to kos)
 async function sendKLV(address, to, amount, token = "KLV") {
-  const acc = await getAccount(address);
-  const tx = await fetch(`${NODE}/transaction/send`, {
-    method: 'POST',
-    mode: 'cors',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      type: 0,
-      sender: address,
-      nonce: acc.nonce,
-      contracts: [
-        {
-          kda: token,
-          receiver: to,
-          amount: amount,
-        }
-      ]
-    }),
-  })
-    .then(function(response) {
-      if (response.ok) {
-        return response.json(); // Parse response as JSON
-      }
-      console.log(response)
-      throw new Error('Network response was not ok.');
-    })
-    .then(function(data) {
-      console.log({data});
-      return {txHash: data.data.txHash, raw: data.data.result};
-    })
-    .catch(function(error) {
-      console.log('Error:', error.message);
-    });
-
     const kos = window.kos;
     let klvWallet = kos.Wallet.fromMnemonic(
       kos.Chain.KLV,
@@ -102,44 +66,21 @@ async function sendKLV(address, to, amount, token = "KLV") {
       kos.KLV.getPath(0),
     );
 
+    klvWallet.setNodeUrl(NODE);
+
+    const tx = await klvWallet.send(to, kos.BigNumber.fromString("10"));
+
     await signAndBroadcast(tx, klvWallet);
 }
 
 async function signAndBroadcast(tx, wallet) {
   try {
-    console.log({tx});
-    const digest = Uint8Array.from(Buffer.from(tx.txHash, 'hex'))
-    console.log({digest});
-    const signature = wallet.signDigest(digest);
-    console.log({signature});
-    const toSend = {...tx.raw, Signature: [Buffer.from(signature).toString('base64')]};
-    console.log({toSend});
-    const result = await wallet.broadcast(Buffer.from(JSON.stringify({tx: toSend})), "https://node.testnet.klever.finance");
+    console.log({tx: tx.toString()});
+    const toSend = wallet.sign(tx);
+    console.log({txSigned: toSend.toString()});
+    const result = await wallet.broadcast(toSend);
     console.log("TXHash:", result.hash().toString());
   }catch(e){
     console.log(e)
   }
-}
-
-// get account from API (TODO: move to kos)
-function getAccount(address) {
-  return fetch(`${API}/address/${address}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-    .then(function(response) {
-      if (response.ok) {
-        return response.json(); // Parse response as JSON
-      }
-      throw new Error('Network response was not ok.');
-    })
-    .then(function(data) {
-      // Process the parsed JSON data here
-      return data.data.account;
-    })
-    .catch(function(error) {
-      console.log('Error:', error.message);
-    });
 }
