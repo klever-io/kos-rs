@@ -3,6 +3,8 @@ use kos_types::error::Error;
 use reqwest;
 use serde::de::DeserializeOwned;
 
+static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
+
 #[allow(dead_code)]
 #[cfg(not(target_arch = "wasm32"))]
 pub fn http_get_block<T: DeserializeOwned>(url: String) -> Result<T, Error> {
@@ -11,10 +13,17 @@ pub fn http_get_block<T: DeserializeOwned>(url: String) -> Result<T, Error> {
 }
 
 pub fn get_client() -> Result<reqwest::Client, Error> {
-    reqwest::Client::builder()
-        .user_agent("kos-rs/0.0.1")
-        .connect_timeout(std::time::Duration::from_secs(20))
-        .timeout(std::time::Duration::from_secs(100))
+    let mut client = reqwest::Client::builder();
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        client = client
+            .user_agent(APP_USER_AGENT)
+            .connect_timeout(std::time::Duration::from_secs(20))
+            .timeout(std::time::Duration::from_secs(100));
+    }
+
+    client
         .build()
         .map_err(|e| Error::ReqwestError(e.to_string()))
 }
