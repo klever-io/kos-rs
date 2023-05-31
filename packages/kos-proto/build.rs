@@ -1,17 +1,26 @@
+use glob::glob;
 use heck::CamelCase;
 use prost_wkt_build::*;
 use quote::{format_ident, quote};
 use std::fs::{self, File, OpenOptions};
+use std::io::Error;
 use std::io::Write;
 use std::path::Path;
 use std::{env, path::PathBuf};
 
-fn build_pbjson(pacakge_name: &str, protos: &[impl AsRef<Path>], includes: &[impl AsRef<Path>]) {
+fn build_pbjson(
+    pacakge_name: &str,
+    proto_serde: &[impl AsRef<str>],
+    protos: &[impl AsRef<Path>],
+    includes: &[impl AsRef<Path>],
+    use_number_for_ui64: bool,
+    use_hex_for_bytes: bool,
+) -> Result<(), Error> {
     let full_path = format!("{}/{}", env::var("OUT_DIR").unwrap().as_str(), pacakge_name);
     fs::create_dir_all(&full_path).unwrap();
 
     let out_dir = PathBuf::from(&full_path);
-    let descriptor_file = out_dir.join("descriptors.bin");
+    let descriptor_file = out_dir.join(format!("{}.descriptors.bin", pacakge_name));
     let mut prost_build = prost_build::Config::new();
     prost_build
         .extern_path(".google.protobuf", "::pbjson_types")
@@ -28,33 +37,56 @@ fn build_pbjson(pacakge_name: &str, protos: &[impl AsRef<Path>], includes: &[imp
     let descriptor = FileDescriptorSet::decode(&descriptor_bytes[..]).unwrap();
 
     pbjson_build::Builder::new()
-        .register_descriptors(&descriptor_bytes)
-        .unwrap()
+        .register_descriptors(&descriptor_bytes)?
+        .use_number_for_ui64(use_number_for_ui64)
+        .use_hex_for_bytes(use_hex_for_bytes)
         .out_dir(&full_path)
-        .build(&[".proto"])
-        .unwrap();
+        .build(proto_serde)?;
 
     generate_extras(&out_dir, &descriptor);
+
+    println!("cargo:warning={}", full_path);
+
+    Ok(())
 }
 
-fn main() {
+fn get_files(dir: &str) -> Vec<String> {
+    let mut list: Vec<String> = vec![];
+    for entry in glob(dir).expect("Failed to read glob pattern") {
+        if let Ok(st) = entry {
+            list.push(format!("./{:}", st.display()));
+        }
+    }
+    list
+}
+
+fn main() -> Result<(), Error> {
     // kleverchain
     build_pbjson(
         "klever",
-        &[
-            "proto/klever/transaction.proto",
-            "proto/klever/contracts.proto",
-            "proto/klever/userAccountData.proto",
-        ],
+        &[".proto"],
+        get_files("proto/klever/*.proto").as_slice(),
         &["proto/klever"],
-    );
+        true,
+        false,
+    )?;
 
     // Tron protocol
+    let mut list = get_files("proto/tron/core/contract/*.proto");
+    list.push("proto/tron/core/Tron.proto".to_string());
+    list.push("proto/tron/core/Discover.proto".to_string());
+    list.push("proto/tron/api/api.proto".to_string());
+
     build_pbjson(
         "tron",
-        &["proto/tron/core/Tron.proto", "proto/tron/api/api.proto"],
+        &[".protocol"],
+        list.as_slice(),
         &["proto/include", "proto/tron"],
-    );
+        false,
+        true,
+    )?;
+
+    Ok(())
 }
 
 fn generate_extras(out_dir: &Path, file_descriptor_set: &FileDescriptorSet) {
