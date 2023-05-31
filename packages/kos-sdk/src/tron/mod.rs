@@ -1,4 +1,8 @@
 pub mod address;
+pub mod requests;
+
+use std::str::FromStr;
+
 use crate::{
     chain::BaseChain,
     models::{self, BroadcastResult, Transaction, TransactionRaw},
@@ -26,7 +30,7 @@ impl TRX {
             name: "Tron",
             symbol: "TRX",
             precision: 6,
-            node_url: "grpc.trongrid.io:50051",
+            node_url: "https://api.trongrid.io",
         }
     }
 
@@ -80,7 +84,7 @@ impl TRX {
     pub fn sign(tx: Transaction, keypair: &KeyPair) -> Result<Transaction, Error> {
         match tx.data {
             Some(TransactionRaw::Tron(trx_tx)) => {
-                let mut new_tx = kos_proto::clone(&trx_tx).unwrap();
+                let mut new_tx = trx_tx.clone();
                 let raw = trx_tx.raw_data.unwrap();
                 let bytes = kos_proto::write_message(raw);
                 let digest = TRX::hash(&bytes)?;
@@ -140,11 +144,23 @@ impl TRX {
     /// If token is Some, it will return balance of token
     /// If node_url is None, it will use default node url
     pub async fn get_balance(
-        _address: &str,
-        _token: Option<String>,
-        _node_url: Option<String>,
+        addr: &str,
+        token: Option<String>,
+        node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
-        todo!()
+        let node = node_url.unwrap_or_else(|| TRX::base_chain().node_url.to_string());
+        let acc_address = address::Address::from_str(addr)?;
+
+        // check if TRC20 -> trigger contract instead todo!()
+        let acc = requests::get_account(node.as_str(), &acc_address.to_hex_address()).await?;
+
+        Ok(match token {
+            Some(key) if key != "TRX" => match acc.asset_v2.get(&key) {
+                Some(value) => BigNumber::from(*value),
+                None => BigNumber::from(0),
+            },
+            _ => BigNumber::from(acc.balance),
+        })
     }
 
     /// create a send transaction network
@@ -200,5 +216,18 @@ mod tests {
         let address = TRX::get_address_from_keypair(&get_default_secret()).unwrap();
 
         assert_eq!(DEFAULT_ADDRESS, address);
+    }
+
+    #[test]
+    fn test_get_balance() {
+        let balance = tokio_test::block_on(TRX::get_balance(
+            "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH",
+            Some("TRX".to_string()),
+            None,
+        ))
+        .unwrap();
+        println!("balance: {}", balance.to_string());
+
+        assert_eq!("2", balance.to_string());
     }
 }

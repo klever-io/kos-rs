@@ -82,7 +82,7 @@ impl KLV {
     pub fn sign(tx: Transaction, keypair: &KeyPair) -> Result<Transaction, Error> {
         match tx.data {
             Some(TransactionRaw::Klever(klv_tx)) => {
-                let mut new_tx = kos_proto::clone(&klv_tx).unwrap();
+                let mut new_tx = klv_tx.clone();
                 let raw = klv_tx.raw_data.unwrap();
                 let bytes = kos_proto::write_message(raw);
                 let digest = KLV::hash(&bytes)?;
