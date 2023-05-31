@@ -37,6 +37,7 @@ fn build_pbjson(
     let descriptor = FileDescriptorSet::decode(&descriptor_bytes[..]).unwrap();
 
     pbjson_build::Builder::new()
+        .preserve_proto_field_names()
         .register_descriptors(&descriptor_bytes)?
         .use_number_for_ui64(use_number_for_ui64)
         .use_hex_for_bytes(use_hex_for_bytes)
@@ -82,7 +83,7 @@ fn main() -> Result<(), Error> {
         &[".protocol"],
         list.as_slice(),
         &["proto/include", "proto/tron"],
-        false,
+        true,
         true,
     )?;
 

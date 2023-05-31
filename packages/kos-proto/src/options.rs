@@ -16,3 +16,18 @@ impl Default for KLVOptions {
         }
     }
 }
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TRXOptions {
+    pub token: Option<String>,
+    pub fee_limit: Option<i64>,
+}
+
+impl Default for TRXOptions {
+    fn default() -> Self {
+        Self {
+            token: None,
+            fee_limit: Some(10_000_000),
+        }
+    }
+}
