@@ -6,6 +6,7 @@ pub mod klever {
 
 pub mod tron {
     include!(concat!(env!("OUT_DIR"), "/tron/protocol.rs"));
+    include!(concat!(env!("OUT_DIR"), "/tron/protocol.serde.rs"));
 }
 
 pub fn write_message<M: prost::Message>(message: M) -> Vec<u8> {
