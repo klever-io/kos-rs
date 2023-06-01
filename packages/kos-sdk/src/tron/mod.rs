@@ -31,6 +31,7 @@ impl TRX {
             symbol: "TRX",
             precision: 6,
             node_url: "https://api.trongrid.io",
+            chain_code: 1,
         }
     }
 

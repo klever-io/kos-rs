@@ -29,6 +29,7 @@ impl KLV {
             symbol: "KLV",
             precision: 6,
             node_url: "https://node.mainnet.klever.finance",
+            chain_code: 38,
         }
     }
 

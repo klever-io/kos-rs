@@ -19,6 +19,7 @@ impl NONE {
             symbol: "NONE",
             precision: 0,
             node_url: "NONE",
+            chain_code: 0,
         }
     }
 
