@@ -15,6 +15,7 @@ fn build_pbjson(
     includes: &[impl AsRef<Path>],
     use_number_for_ui64: bool,
     use_hex_for_bytes: bool,
+    btree_map: bool,
 ) -> Result<(), Error> {
     let full_path = format!("{}/{}", env::var("OUT_DIR").unwrap().as_str(), pacakge_name);
     fs::create_dir_all(&full_path).unwrap();
@@ -27,7 +28,13 @@ fn build_pbjson(
         .file_descriptor_set_path(&descriptor_file)
         .protoc_arg("--experimental_allow_proto3_optional")
         // Override prost-types with pbjson-types
-        .compile_well_known_types()
+        .compile_well_known_types();
+
+    if btree_map {
+        prost_build.btree_map(["."]);
+    }
+
+    prost_build
         .out_dir(&full_path)
         .compile_protos(protos, includes)
         .unwrap();
@@ -36,13 +43,18 @@ fn build_pbjson(
 
     let descriptor = FileDescriptorSet::decode(&descriptor_bytes[..]).unwrap();
 
-    pbjson_build::Builder::new()
+    let mut binding = pbjson_build::Builder::new();
+    binding
         .preserve_proto_field_names()
         .register_descriptors(&descriptor_bytes)?
         .use_number_for_ui64(use_number_for_ui64)
-        .use_hex_for_bytes(use_hex_for_bytes)
-        .out_dir(&full_path)
-        .build(proto_serde)?;
+        .use_hex_for_bytes(use_hex_for_bytes);
+
+    if btree_map {
+        binding.btree_map(["."]);
+    }
+
+    binding.out_dir(&full_path).build(proto_serde)?;
 
     generate_extras(&out_dir, &descriptor);
 
@@ -61,6 +73,40 @@ fn get_files(dir: &str) -> Vec<String> {
     list
 }
 
+// save for futher use?
+#[allow(dead_code)]
+fn build_prost_serde(
+    pacakge_name: &str,
+    protos: &[impl AsRef<Path>],
+    includes: &[impl AsRef<Path>],
+) -> Result<(), Error> {
+    let full_path = format!("{}/{}", env::var("OUT_DIR").unwrap().as_str(), pacakge_name);
+    fs::create_dir_all(&full_path).unwrap();
+
+    let out_dir = PathBuf::from(&full_path);
+    let descriptor_file = out_dir.join(format!("{}.descriptors.bin", pacakge_name));
+    let mut prost_build = prost_build::Config::new();
+    prost_build
+        .type_attribute(".", "#[derive(serde::Serialize,serde::Deserialize)]")
+        .compile_well_known_types()
+        .extern_path(".google.protobuf.Any", "::prost_wkt_types::Any")
+        .extern_path(".google.protobuf.Timestamp", "::prost_wkt_types::Timestamp")
+        .extern_path(".google.protobuf.Value", "::prost_wkt_types::Value")
+        .out_dir(&out_dir)
+        .file_descriptor_set_path(&descriptor_file)
+        .compile_protos(protos, includes)?;
+
+    let descriptor_bytes = std::fs::read(descriptor_file)?;
+
+    let descriptor = FileDescriptorSet::decode(&descriptor_bytes[..])?;
+
+    prost_wkt_build::add_serde(out_dir, descriptor);
+
+    println!("cargo:warning={}", full_path);
+
+    Ok(())
+}
+
 fn main() -> Result<(), Error> {
     // kleverchain
     build_pbjson(
@@ -69,6 +115,7 @@ fn main() -> Result<(), Error> {
         get_files("proto/klever/*.proto").as_slice(),
         &["proto/klever"],
         true,
+        false,
         false,
     )?;
 
@@ -85,6 +132,7 @@ fn main() -> Result<(), Error> {
         &["proto/include", "proto/tron"],
         true,
         true,
+        false,
     )?;
 
     Ok(())

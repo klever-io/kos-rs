@@ -9,10 +9,16 @@ pub mod tron {
     include!(concat!(env!("OUT_DIR"), "/tron/protocol.serde.rs"));
 }
 
-pub fn write_message<M: prost::Message>(message: M) -> Vec<u8> {
+pub fn write_message<M: prost::Message>(message: &M) -> Vec<u8> {
     let mut buf: Vec<u8> = Vec::with_capacity(message.encoded_len());
     message.encode(&mut buf).unwrap();
     buf
+}
+
+pub fn from_bytes<M: prost::Message + Default>(buffer: Vec<u8>) -> Result<M, prost::DecodeError> {
+    let mut r = M::default();
+    r.merge(buffer.as_slice())?;
+    Ok(r)
 }
 
 pub fn clone<M>(msg: &M) -> Result<M, prost::DecodeError>

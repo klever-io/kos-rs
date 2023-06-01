@@ -10,7 +10,7 @@ use wasm_bindgen::JsValue;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Error {
     // Invalid string
-    InvalidString(&'static str),
+    InvalidString(String),
     // JSON serialization error
     JSONSerde(String),
     // UnsupportedChain,
@@ -41,6 +41,8 @@ pub enum Error {
     InvalidLen(String),
     /// InvalidNumberParse
     InvalidNumberParse(String),
+    /// InvalidTransaction
+    InvalidTransaction(String),
 }
 
 impl fmt::Display for Error {
@@ -62,6 +64,7 @@ impl fmt::Display for Error {
             Error::InvalidEnumVariant(e) => write!(f, "Invalid Enum Variant error: {}", e),
             Error::InvalidLen(e) => write!(f, "Invalid Len: {}", e),
             Error::InvalidNumberParse(e) => write!(f, "Invalid number parse: {}", e),
+            Error::InvalidTransaction(e) => write!(f, "Invalid transaction: {}", e),
         }
     }
 }
@@ -123,6 +126,12 @@ impl From<Error> for JsValue {
 impl From<ReqwestError> for Error {
     fn from(e: ReqwestError) -> Self {
         Self::ReqwestError(e.to_string())
+    }
+}
+
+impl From<hex::FromHexError> for Error {
+    fn from(e: hex::FromHexError) -> Self {
+        Self::InvalidString(e.to_string())
     }
 }
 

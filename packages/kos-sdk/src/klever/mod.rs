@@ -83,9 +83,7 @@ impl KLV {
         match tx.data {
             Some(TransactionRaw::Klever(klv_tx)) => {
                 let mut new_tx = klv_tx.clone();
-                let raw = klv_tx.raw_data.unwrap();
-                let bytes = kos_proto::write_message(raw);
-                let digest = KLV::hash(&bytes)?;
+                let digest = KLV::hash_transaction(&klv_tx)?;
                 let sig = KLV::sign_digest(digest.as_slice(), keypair)?;
 
                 new_tx.signature.push(sig);
@@ -101,8 +99,17 @@ impl KLV {
         }
     }
 
+    fn hash_transaction(tx: &kos_proto::klever::Transaction) -> Result<Vec<u8>, Error> {
+        if let Some(raw_data) = &tx.raw_data {
+            let bytes = kos_proto::write_message(raw_data);
+            KLV::hash(&bytes)
+        } else {
+            Err(Error::InvalidTransaction("klv raw".to_string()))
+        }
+    }
+
     #[wasm_bindgen(js_name = "hash")]
-    /// Append prefix and hash the message
+    /// hash digest
     pub fn hash(message: &[u8]) -> Result<Vec<u8>, Error> {
         let mut hasher = kos_crypto::blake2b::Blake2b::new(32);
         hasher.update(message);
@@ -164,38 +171,40 @@ impl KLV {
         tx: crate::models::Transaction,
         node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        let mut new_tx = tx.clone();
         let node = node_url.unwrap_or_else(|| KLV::base_chain().node_url.to_string());
-
         let raw = tx
             .data
-            .ok_or(Error::ReqwestError("Missing transaction data".to_string()))?;
+            .clone()
+            .ok_or_else(|| Error::ReqwestError("Missing transaction data".into()))?;
+
         let result = requests::broadcast(node.as_str(), raw.try_into()?).await?;
 
-        if let Some(v) = result.get("data").and_then(|v| v.as_object()) {
-            let tx_hash_str = v
-                .get("txHash")
-                .and_then(|v| v.as_str())
-                .ok_or(Error::ReqwestError("Missing transaction hash".to_string()))?;
-            let tx_hash = Hash::new(tx_hash_str)?;
-            new_tx.hash = tx_hash.clone();
-            return Ok(BroadcastResult::new(new_tx));
-        }
+        match result.get("data").and_then(|v| v.as_object()) {
+            Some(v) => {
+                let tx_hash_str = v
+                    .get("txHash")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| Error::ReqwestError("Missing transaction hash".into()))?;
 
-        if let Some(err) = result.get("error") {
-            return Err(Error::ReqwestError(err.to_string()));
-        }
+                let tx_hash = Hash::new(tx_hash_str)?;
 
-        Err(Error::ReqwestError("Unknown error".to_string()))
+                Ok(BroadcastResult::new(crate::models::Transaction {
+                    chain: tx.chain,
+                    hash: tx_hash,
+                    data: tx.data,
+                }))
+            }
+            None => match result.get("error") {
+                Some(err) => Err(Error::ReqwestError(err.to_string())),
+                None => Err(Error::ReqwestError("Unknown error".into())),
+            },
+        }
     }
 
     fn get_options(options: Option<crate::models::SendOptions>) -> kos_proto::options::KLVOptions {
-        match options {
-            Some(options) => match options.data {
-                Some(crate::models::Options::Klever(op)) => op,
-                _ => kos_proto::options::KLVOptions::default(),
-            },
-            None => kos_proto::options::KLVOptions::default(),
+        match options.and_then(|opt| opt.data) {
+            Some(crate::models::Options::Klever(op)) => op,
+            _ => kos_proto::options::KLVOptions::default(),
         }
     }
 

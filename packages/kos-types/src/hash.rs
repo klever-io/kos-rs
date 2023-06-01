@@ -17,7 +17,7 @@ impl Hash {
     pub fn new(data: &str) -> Result<Hash, Error> {
         log::debug!("Hash::new({})", data);
 
-        let value = Bytes32::from_str(data).map_err(|e| Error::InvalidString(e))?;
+        let value = Bytes32::from_str(data).map_err(|e| Error::InvalidString(e.to_string()))?;
 
         Ok(Self { data: value })
     }

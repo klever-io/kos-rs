@@ -4,15 +4,15 @@ pub mod requests;
 use std::str::FromStr;
 
 use crate::{
-    chain::BaseChain,
-    models::{self, BroadcastResult, Transaction, TransactionRaw},
+    chain::{self, BaseChain},
+    models::{BroadcastResult, Transaction, TransactionRaw},
 };
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
 use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
-use sha3::{Digest, Keccak256};
+use sha2::{Digest, Sha256};
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -31,6 +31,13 @@ impl TRX {
             symbol: "TRX",
             precision: 6,
             node_url: "https://api.trongrid.io",
+        }
+    }
+
+    fn get_options(options: Option<crate::models::SendOptions>) -> kos_proto::options::TRXOptions {
+        match options.and_then(|opt| opt.data) {
+            Some(crate::models::Options::Tron(op)) => op,
+            _ => kos_proto::options::TRXOptions::default(),
         }
     }
 
@@ -85,9 +92,7 @@ impl TRX {
         match tx.data {
             Some(TransactionRaw::Tron(trx_tx)) => {
                 let mut new_tx = trx_tx.clone();
-                let raw = trx_tx.raw_data.unwrap();
-                let bytes = kos_proto::write_message(raw);
-                let digest = TRX::hash(&bytes)?;
+                let digest = TRX::hash_transaction(&trx_tx)?;
                 let sig = TRX::sign_digest(digest.as_slice(), keypair)?;
 
                 new_tx.signature.push(sig);
@@ -103,10 +108,19 @@ impl TRX {
         }
     }
 
+    fn hash_transaction(tx: &kos_proto::tron::Transaction) -> Result<Vec<u8>, Error> {
+        if let Some(raw_data) = &tx.raw_data {
+            let bytes = kos_proto::write_message(raw_data);
+            TRX::hash(&bytes)
+        } else {
+            Err(Error::InvalidTransaction("trx raw_data".to_string()))
+        }
+    }
+
     #[wasm_bindgen(js_name = "hash")]
-    /// Append prefix and hash the message
+    /// hash digest
     pub fn hash(message: &[u8]) -> Result<Vec<u8>, Error> {
-        let mut hasher = Keccak256::new();
+        let mut hasher = Sha256::new();
         hasher.update(message);
         let digest = hasher.finalize();
         Ok(digest.to_vec())
@@ -152,7 +166,7 @@ impl TRX {
         let acc_address = address::Address::from_str(addr)?;
 
         // check if TRC20 -> trigger contract instead todo!()
-        let acc = requests::get_account(node.as_str(), &acc_address.to_hex_address()).await?;
+        let acc = requests::get_account(&node, &acc_address.to_hex_address()).await?;
 
         Ok(match token {
             Some(key) if key != "TRX" => match acc.asset_v2.get(&key) {
@@ -166,21 +180,79 @@ impl TRX {
     /// create a send transaction network
     #[wasm_bindgen(js_name = "send")]
     pub async fn send(
-        _sender: String,
-        _receiver: String,
-        _amount: BigNumber,
-        _options: Option<models::SendOptions>,
-        _node_url: Option<String>,
+        sender: String,
+        receiver: String,
+        amount: BigNumber,
+        options: Option<crate::models::SendOptions>,
+        node_url: Option<String>,
     ) -> Result<crate::models::Transaction, Error> {
-        todo!()
+        let node = node_url.unwrap_or_else(|| TRX::base_chain().node_url.to_string());
+        let addr_sender = address::Address::from_str(&sender)?;
+        let addr_receiver = address::Address::from_str(&receiver)?;
+
+        let options = TRX::get_options(options);
+
+        let tx: kos_proto::tron::Transaction;
+        match options.token {
+            Some(token) if token != "TRX" => {
+                // todo!() check if TRC20 transfer
+                let mut contract = kos_proto::tron::TransferAssetContract::default();
+                contract.owner_address = addr_sender.as_bytes().to_vec();
+                contract.to_address = addr_receiver.as_bytes().to_vec();
+                contract.amount = amount.to_i64();
+                contract.asset_name = token.as_bytes().to_vec();
+
+                tx = requests::create_asset_transfer(&node, contract).await?;
+            }
+            _ => {
+                let mut contract = kos_proto::tron::TransferContract::default();
+                contract.owner_address = addr_sender.as_bytes().to_vec();
+                contract.to_address = addr_receiver.as_bytes().to_vec();
+                contract.amount = amount.to_i64();
+
+                tx = requests::create_transfer(&node, contract).await?;
+            }
+        }
+
+        let digest = TRX::hash_transaction(&tx)?;
+
+        Ok(crate::models::Transaction {
+            chain: chain::Chain::TRX,
+            hash: Hash::from_vec(digest)?,
+            data: Some(TransactionRaw::Tron(tx)),
+        })
     }
 
     #[wasm_bindgen(js_name = "broadcast")]
     pub async fn broadcast(
-        _data: models::Transaction,
-        _node_url: Option<String>,
+        tx: crate::models::Transaction,
+        node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        todo!()
+        let node = node_url.unwrap_or_else(|| TRX::base_chain().node_url.to_string());
+
+        let raw = tx
+            .data
+            .clone()
+            .ok_or_else(|| Error::ReqwestError("Missing transaction data".into()))?;
+
+        let result = requests::broadcast(node.as_str(), raw.try_into()?).await?;
+
+        if let Some(false) = result.get("result").and_then(|v| v.as_bool()) {
+            let error_message = result
+                .get("message")
+                .and_then(|m| m.as_str())
+                .unwrap_or("no message");
+            return Err(Error::InvalidTransaction(format!(
+                "Expected successful broadcast, got: {:?}",
+                error_message
+            )));
+        }
+
+        Ok(BroadcastResult::new(crate::models::Transaction {
+            chain: tx.chain,
+            hash: tx.hash,
+            data: tx.data,
+        }))
     }
 }
 
@@ -229,5 +301,31 @@ mod tests {
         println!("balance: {}", balance.to_string());
 
         assert_eq!("2", balance.to_string());
+    }
+
+    #[test]
+    fn test_send() {
+        let result = tokio_test::block_on(TRX::send(
+            "TAUN6FwrnwwmaEqYcckffC7wYmbaS6cBiX".to_string(),
+            DEFAULT_ADDRESS.to_string(),
+            BigNumber::from(10),
+            None,
+            None,
+        ));
+
+        assert!(result.is_ok());
+        let t = result.unwrap().clone();
+        match t.clone().data {
+            Some(TransactionRaw::Tron(tx)) => {
+                let raw = &tx.raw_data.unwrap();
+                assert_eq!(raw.contract.len(), 1);
+                let c: kos_proto::tron::TransferContract =
+                    kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
+                        .unwrap();
+
+                assert_eq!(c.amount, 10);
+            }
+            _ => assert!(false),
+        }
     }
 }

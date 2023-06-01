@@ -42,6 +42,7 @@ kos_types::enum_thing! {
 kos_types::enum_thing! {
     enum Options {
         Klever(kos_proto::options::KLVOptions),
+        Tron(kos_proto::options::TRXOptions),
     }
 }
 
