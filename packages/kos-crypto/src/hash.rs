@@ -1,5 +1,5 @@
 use crate::blake2b::Blake2b;
-use sha2::{Digest, Sha256};
+use sha2::{Digest, Sha256, Sha512};
 use sha3::Keccak256;
 
 #[inline]
@@ -21,4 +21,11 @@ pub fn blake2b256(input: &[u8]) -> [u8; 32] {
     let mut hasher = Blake2b::new(32);
     hasher.update(input);
     hasher.finalize().try_into().unwrap()
+}
+
+#[inline]
+pub fn sha512(input: &[u8]) -> [u8; 64] {
+    let mut hasher = Sha512::new();
+    hasher.update(input);
+    hasher.finalize().into()
 }
