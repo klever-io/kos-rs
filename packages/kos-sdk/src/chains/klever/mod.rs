@@ -17,7 +17,8 @@ pub struct KLV {}
 
 pub const SIGN_PREFIX: &[u8; 24] = b"\x17Klever Signed Message:\n";
 pub const BIP44_PATH: u32 = 690;
-pub const BIP44_PATH_TESTNET: u32 = 620;
+// todo!() check if needed
+// pub const BIP44_PATH_TESTNET: u32 = 620;
 
 #[wasm_bindgen]
 impl KLV {
