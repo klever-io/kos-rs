@@ -2,6 +2,7 @@ pub mod bytes;
 pub mod error;
 pub mod hash;
 pub mod number;
+pub mod vectorize;
 
 mod array_types;
 pub use array_types::*;

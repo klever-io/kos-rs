@@ -1,11 +1,11 @@
 use crate::error::Error;
 use crate::Bytes32;
 
-use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[wasm_bindgen]
 pub struct Hash {
     data: Bytes32,

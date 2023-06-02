@@ -43,6 +43,10 @@ pub enum Error {
     InvalidNumberParse(String),
     /// InvalidTransaction
     InvalidTransaction(String),
+    /// WalletManagerError
+    WalletManagerError(String),
+    /// CipherError
+    CipherError(String),
 }
 
 impl fmt::Display for Error {
@@ -65,6 +69,8 @@ impl fmt::Display for Error {
             Error::InvalidLen(e) => write!(f, "Invalid Len: {}", e),
             Error::InvalidNumberParse(e) => write!(f, "Invalid number parse: {}", e),
             Error::InvalidTransaction(e) => write!(f, "Invalid transaction: {}", e),
+            Error::WalletManagerError(e) => write!(f, "WalletManager error: {}", e),
+            Error::CipherError(e) => write!(f, "Cipher error: {}", e),
         }
     }
 }
