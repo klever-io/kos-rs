@@ -10,8 +10,7 @@ use std::{fmt, str::FromStr};
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
-#[derive(Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[wasm_bindgen]
 pub struct Secp256k1KeyPair {
     secret_key: SecretKey,

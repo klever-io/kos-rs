@@ -11,7 +11,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 type HmacSha521 = Hmac<Sha512>;
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(serde::Serialize, serde::Deserialize)]
 #[wasm_bindgen]
 pub struct Ed25519KeyPair {
     secret_key: SecretKey,

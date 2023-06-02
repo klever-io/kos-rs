@@ -5,14 +5,13 @@ use std::fmt;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 enum KeyType {
     Ed25519,
     Secp256k1,
 }
 
-#[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[wasm_bindgen]
 pub struct KeyPair {
     key_type: KeyType,
