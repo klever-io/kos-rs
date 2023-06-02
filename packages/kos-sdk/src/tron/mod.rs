@@ -12,7 +12,6 @@ use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
-use sha2::{Digest, Sha256};
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -121,9 +120,7 @@ impl TRX {
     #[wasm_bindgen(js_name = "hash")]
     /// hash digest
     pub fn hash(message: &[u8]) -> Result<Vec<u8>, Error> {
-        let mut hasher = Sha256::new();
-        hasher.update(message);
-        let digest = hasher.finalize();
+        let digest = kos_crypto::hash::sha256(message);
         Ok(digest.to_vec())
     }
 

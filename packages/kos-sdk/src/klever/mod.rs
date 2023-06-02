@@ -8,7 +8,6 @@ use crate::{
 use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
 use kos_types::{error::Error, hash::Hash, number::BigNumber};
 
-use sha3::{Digest, Keccak256};
 use std::todo;
 use wasm_bindgen::prelude::*;
 
@@ -112,10 +111,8 @@ impl KLV {
     #[wasm_bindgen(js_name = "hash")]
     /// hash digest
     pub fn hash(message: &[u8]) -> Result<Vec<u8>, Error> {
-        let mut hasher = kos_crypto::blake2b::Blake2b::new(32);
-        hasher.update(message);
-        let digest = hasher.finalize();
-        Ok(digest)
+        let digest = kos_crypto::hash::blake2b256(message);
+        Ok(digest.to_vec())
     }
 
     #[wasm_bindgen(js_name = "messageHash")]
@@ -123,9 +120,7 @@ impl KLV {
     pub fn message_hash(message: &[u8]) -> Result<Vec<u8>, Error> {
         let to_sign = [SIGN_PREFIX, message.len().to_string().as_bytes(), message].concat();
 
-        let mut hasher = Keccak256::new();
-        hasher.update(to_sign);
-        let digest = hasher.finalize();
+        let digest = kos_crypto::hash::keccak256(&to_sign);
         Ok(digest.to_vec())
     }
 

@@ -22,8 +22,6 @@ log = { workspace = true }
 wasm-bindgen = { workspace = true }
 base58 = { workspace = true }
 bech32 = { workspace = true }
-sha2 = { workspace = true }
-sha3 = { workspace = true }
 hmac = { workspace = true }
 hex = { workspace = true }
 rand = { workspace = true }

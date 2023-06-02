@@ -3,8 +3,6 @@ use kos_types::error::Error;
 
 use base58::{FromBase58, ToBase58};
 use hex::FromHex;
-use sha2::Sha256;
-use sha3::{Digest, Keccak256};
 use std::{fmt, str::FromStr};
 
 use wasm_bindgen::prelude::*;
@@ -23,9 +21,7 @@ pub struct Address([u8; ADDRESS_LEN]);
 impl Address {
     /// Address of a public key.
     pub fn from_public(public: [u8; 64]) -> Address {
-        let mut hasher = Keccak256::new();
-        hasher.update(public);
-        let digest = hasher.finalize();
+        let digest = kos_crypto::hash::keccak256(&public);
 
         let mut raw = [ADDRESS_TYPE_PREFIX; ADDRESS_LEN];
         raw[1..ADDRESS_LEN].copy_from_slice(&digest[digest.len() - 20..]);
@@ -169,13 +165,8 @@ impl AsRef<[u8]> for Address {
 
 /// Base58check encode.
 pub fn b58encode_check<T: AsRef<[u8]>>(raw: T) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(raw.as_ref());
-    let digest1 = hasher.finalize();
-
-    let mut hasher = Sha256::new();
-    hasher.update(digest1);
-    let digest2 = hasher.finalize();
+    let digest1 = kos_crypto::hash::sha256(raw.as_ref());
+    let digest2 = kos_crypto::hash::sha256(&digest1);
 
     let mut raw = raw.as_ref().to_owned();
     raw.extend(&digest2[..4]);
@@ -187,14 +178,8 @@ pub fn b58decode_check(s: &str) -> Result<Vec<u8>, Error> {
     let mut result = s.from_base58().map_err(|_| Error::InvalidAddress(""))?;
 
     let check = result.split_off(result.len() - 4);
-
-    let mut hasher = Sha256::new();
-    hasher.update(&result);
-    let digest1 = hasher.finalize();
-
-    let mut hasher = Sha256::new();
-    hasher.update(&digest1);
-    let digest2 = hasher.finalize();
+    let digest1 = kos_crypto::hash::sha256(&result);
+    let digest2 = kos_crypto::hash::sha256(&digest1);
 
     if check != &digest2[..4] {
         Err(Error::InvalidChecksum("base58check"))
