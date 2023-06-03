@@ -8,6 +8,10 @@ use aes_gcm::{
 };
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
+use pbkdf2::{
+    password_hash::{PasswordHash, PasswordHasher, SaltString},
+    Pbkdf2,
+};
 use pem::Pem;
 use rand::Rng;
 use sha2::Sha256;
@@ -25,6 +29,22 @@ pub fn from_pem(pem: Pem) -> Vec<u8> {
     pem.contents().to_vec()
 }
 
+pub fn create_checksum(password: &str) -> String {
+    let rng = rand::thread_rng();
+    let salt = SaltString::generate(rng);
+    let password_hash = pbkdf2::Pbkdf2
+        .hash_password(password.as_bytes(), &salt)
+        .unwrap();
+
+    password_hash.to_string()
+}
+
+pub fn check_checksum(password: &str, checksum: String) -> bool {
+    let parsed_hash = PasswordHash::new(&checksum).unwrap();
+    let result = parsed_hash.verify_password(&[&Pbkdf2], password);
+
+    result.is_ok()
+}
 
 pub fn derive_key(salt: &[u8], password: &str) -> Vec<u8> {
     let mut key = vec![0u8; KEY_SIZE];
@@ -121,5 +141,12 @@ mod tests {
         let pem = to_pem(tag.to_owned(), data).unwrap();
         let pem_data = from_pem(pem);
         assert_eq!(pem_data, data);
+    }
+
+    #[test]
+    fn test_create_checksum() {
+        let password = "password";
+        let checksum = create_checksum(password);
+        assert!(check_checksum(password, checksum));
     }
 }
