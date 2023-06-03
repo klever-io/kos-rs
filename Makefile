@@ -1,5 +1,8 @@
 .PHONY: all fmt webpack webpack-npm
 
+all: fmt
+	cargo build
+
 fmt:
 	cargo fmt --all -- --check
 
