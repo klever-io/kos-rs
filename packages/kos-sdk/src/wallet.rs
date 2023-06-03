@@ -45,6 +45,11 @@ impl Wallet {
 
     /// lock wallet privatekey with password
     pub fn lock(&mut self, password: String) -> Result<(), Error> {
+        // return if is locked
+        if self.is_locked {
+            return Ok(());
+        }
+
         if let Some(ref encrypted_data) = self.encrypted_data {
             // verify password
             // decrypt encrypted_data
@@ -71,6 +76,11 @@ impl Wallet {
 
     /// unlock wallet privatekey with password
     pub fn unlock(&mut self, password: String) -> Result<(), Error> {
+        // return if is unlocked
+        if !self.is_locked {
+            return Ok(());
+        }
+
         // check if is locked and data exists
         if !self.is_locked {
             return Err(Error::WalletManagerError(
@@ -390,7 +400,6 @@ impl Wallet {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str::from_utf8;
 
     #[test]
     fn test_sign_broadcast() {
