@@ -1,11 +1,16 @@
 use kos_types::error::Error;
 
+use aes::cipher::{
+    block_padding::Pkcs7, generic_array::GenericArray, AsyncStreamCipher, BlockDecryptMut,
+    BlockEncryptMut, KeyIvInit,
+};
 use aes_gcm::{
-    aead::{Aead, AeadCore, KeyInit, OsRng},
+    aead::{Aead, AeadCore, KeyInit as GCMKeyInit, OsRng},
     Aes256Gcm,
     Key, // Or `Aes128Gcm`
     Nonce,
 };
+
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
 use pbkdf2::{
@@ -18,8 +23,52 @@ use sha2::Sha256;
 
 const KEY_SIZE: usize = 32; // SALTSIZE
 const NONCE_SIZE: usize = 12; // NONCESIZE
+const IV_SIZE: usize = 16; // IVSIZE
+const BLOCK_SIZE: usize = 16; // BLOCKSIZE
 
 const ITERATIONS: u32 = 10000;
+
+#[derive(Debug, Clone)]
+pub enum CipherAlgo {
+    GMC = 0,
+    CBC = 1,
+    CFB = 2,
+}
+// todo!("build with macro")
+impl CipherAlgo {
+    fn to_vec(&self) -> Vec<u8> {
+        match self {
+            CipherAlgo::GMC => vec![0],
+            CipherAlgo::CBC => vec![1],
+            CipherAlgo::CFB => vec![2],
+        }
+    }
+
+    fn from_u8(value: u8) -> Result<Self, Error> {
+        match value {
+            0 => Ok(CipherAlgo::GMC),
+            1 => Ok(CipherAlgo::CBC),
+            2 => Ok(CipherAlgo::CFB),
+            _ => Err(Error::CipherError("Invalid cipher algorithm".to_owned())),
+        }
+    }
+
+    fn encrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+        match self {
+            CipherAlgo::GMC => gcm_encrypt(data, password),
+            CipherAlgo::CBC => cbc_encrypt(data, password),
+            CipherAlgo::CFB => cfb_encrypt(data, password),
+        }
+    }
+
+    fn decrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+        match self {
+            CipherAlgo::GMC => gcm_decrypt(data, password),
+            CipherAlgo::CBC => cbc_decrypt(data, password),
+            CipherAlgo::CFB => cfb_decrypt(data, password),
+        }
+    }
+}
 
 pub fn to_pem(tag: String, data: &[u8]) -> Result<Pem, Error> {
     Ok(Pem::new(tag, data))
@@ -53,7 +102,21 @@ pub fn derive_key(salt: &[u8], password: &str) -> Vec<u8> {
     key
 }
 
-pub fn encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+pub fn encrypt(algo: CipherAlgo, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    algo.encrypt(data, password)
+}
+
+pub fn decrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    if data.len() < 1 {
+        return Err(Error::CipherError("Invalid PEM data".to_owned()));
+    }
+
+    // get algo
+    let algo = CipherAlgo::from_u8(data[0])?;
+    algo.decrypt(&data[1..], password)
+}
+
+pub fn gcm_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     // Derive key from password
     let salt: [u8; 32] = rand::thread_rng().gen();
     let derived_key = derive_key(&salt, password);
@@ -69,14 +132,15 @@ pub fn encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
         .map_err(|e| Error::CipherError(format!("encryption failed: {}", e)))?;
 
     // Create PEM
-    let mut result = salt.to_vec();
+    let mut result = CipherAlgo::GMC.to_vec();
+    result.extend_from_slice(&salt);
     result.extend_from_slice(&nonce);
     result.extend_from_slice(&ciphertext);
 
     Ok(result)
 }
 
-pub fn decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+pub fn gcm_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     if encrypted.len() < KEY_SIZE + NONCE_SIZE {
         return Err(Error::CipherError("Invalid PEM data".to_owned()));
     }
@@ -91,38 +155,134 @@ pub fn decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
         .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))
 }
 
+type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
+type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
+pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    let iv: [u8; IV_SIZE] = rand::thread_rng().gen();
+    let derived_key = derive_key(&iv, password); //  KeySize [u8; 32]
+    let key = GenericArray::from_slice(&derived_key);
+
+    let padding_size = BLOCK_SIZE - data.len() % BLOCK_SIZE;
+    let buf_len = data.len() + padding_size;
+
+    let mut buf = Vec::with_capacity(buf_len);
+    for _ in 0..buf_len {
+        buf.push(0);
+    }
+    buf[..data.len()].copy_from_slice(&data);
+
+    let ct = Aes256CbcEnc::new(key, &iv.into())
+        .encrypt_padded_mut::<Pkcs7>(&mut buf, data.len())
+        .map_err(|e| Error::CipherError(format!("encryption failed: {}", e)))?;
+
+    // Create PEM
+    let mut result = CipherAlgo::CBC.to_vec();
+    result.extend_from_slice(&iv);
+    result.extend_from_slice(&ct);
+
+    Ok(result)
+}
+
+pub fn cbc_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    if encrypted.len() < IV_SIZE {
+        return Err(Error::CipherError("Invalid PEM data".to_owned()));
+    }
+
+    let iv = GenericArray::from_slice(&encrypted[..IV_SIZE]);
+    let encrypted_data = &encrypted[IV_SIZE..];
+    let derived_key = derive_key(&iv, password);
+    let key = GenericArray::from_slice(&derived_key);
+
+    let mut buf = encrypted_data.to_vec();
+    let pt: &[u8] = Aes256CbcDec::new(key, iv)
+        .decrypt_padded_mut::<Pkcs7>(&mut buf)
+        .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))?;
+
+    Ok(pt.to_vec())
+}
+
+type Aes256CfbEnc = cfb_mode::Encryptor<aes::Aes256>;
+type Aes256CfbDec = cfb_mode::Decryptor<aes::Aes256>;
+pub fn cfb_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    let iv: [u8; IV_SIZE] = rand::thread_rng().gen();
+    let derived_key = derive_key(&iv, password); //  KeySize [u8; 32]
+    let key = GenericArray::from_slice(&derived_key);
+
+    let mut buf = data.to_vec();
+    Aes256CfbEnc::new(key, &iv.into()).encrypt(&mut buf);
+
+    // Create PEM
+    let mut result = CipherAlgo::CFB.to_vec();
+    result.extend_from_slice(&iv);
+    result.extend_from_slice(&buf);
+
+    Ok(result)
+}
+
+pub fn cfb_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    if encrypted.len() < IV_SIZE {
+        return Err(Error::CipherError("Invalid PEM data".to_owned()));
+    }
+
+    let iv = GenericArray::from_slice(&encrypted[..IV_SIZE]);
+    let encrypted_data = &encrypted[IV_SIZE..];
+    let derived_key = derive_key(&iv, password);
+    let key = GenericArray::from_slice(&derived_key);
+
+    let mut buf = encrypted_data.to_vec();
+    Aes256CfbDec::new(key, iv).decrypt(&mut buf);
+
+    Ok(buf)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_encrypt_decrypt() {
-        let data = b"hello world";
-        let password = "password";
+        for algo in vec![CipherAlgo::GMC, CipherAlgo::CBC, CipherAlgo::CFB] {
+            let data = b"hello world";
+            let password = "password";
 
-        let encrypted = encrypt(data, password).unwrap();
-        let decrypted = decrypt(&encrypted, password).unwrap();
-        assert_eq!(data, decrypted.as_slice());
+            let encrypted = encrypt(algo.to_owned(), data, password).unwrap();
+            let decrypted = decrypt(&encrypted, password).unwrap();
+            assert_eq!(data, decrypted.as_slice());
+        }
     }
 
     #[test]
     fn test_encrypt_decrypt_invalid_password() {
-        let data = b"hello world";
-        let password = "password";
+        for algo in vec![CipherAlgo::GMC, CipherAlgo::CBC, CipherAlgo::CFB] {
+            let data = b"hello world";
+            let password = "password";
 
-        let encrypted = encrypt(data, password).unwrap();
-        let decrypted = decrypt(&encrypted, "invalid password");
-        assert!(decrypted.is_err());
+            let encrypted = encrypt(algo, data, password).unwrap();
+            let decrypted = decrypt(&encrypted, "invalid password");
+            match decrypted {
+                Ok(decrypted) => {
+                    assert_ne!(data, decrypted.as_slice());
+                }
+                _ => {}
+            }
+        }
     }
 
     #[test]
     fn test_encrypt_decrypt_invalid_data() {
-        let data = b"hello world";
-        let password = "password";
+        for algo in vec![CipherAlgo::GMC, CipherAlgo::CBC, CipherAlgo::CFB] {
+            let data = b"hello world";
+            let password = "password";
 
-        let encrypted = encrypt(data, password).unwrap();
-        let decrypted = decrypt(&encrypted[..encrypted.len() - 1], password);
-        assert!(decrypted.is_err());
+            let encrypted = encrypt(algo.clone(), data, password).unwrap();
+            let decrypted = decrypt(&encrypted[..encrypted.len() - 1], password);
+            match decrypted {
+                Ok(decrypted) => {
+                    assert_ne!(data, decrypted.as_slice());
+                }
+                _ => {}
+            }
+        }
     }
 
     #[test]

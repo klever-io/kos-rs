@@ -12,7 +12,10 @@ use serde::{Deserialize, Serialize};
 use strum::{EnumCount, IntoStaticStr};
 
 use wasm_bindgen::prelude::*;
+use kos_crypto::cipher::CipherAlgo;
 
+// todo!("allow change of default algo")
+const DEFAULT_ALGO: CipherAlgo = kos_crypto::cipher::CipherAlgo::GMC;
 // todo!("implement wallet auto lock")
 
 #[wasm_bindgen]
@@ -64,7 +67,7 @@ impl Wallet {
             None => {
                 let serialized =
                     bincode::serialize(self).map_err(|e| Error::CipherError(e.to_string()))?;
-                let encrypted_data = kos_crypto::cipher::encrypt(&serialized, &password)?;
+                let encrypted_data = kos_crypto::cipher::encrypt(DEFAULT_ALGO, &serialized, &password)?;
                 self.encrypted_data = Some(encrypted_data);
             }
         }

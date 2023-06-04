@@ -24,5 +24,8 @@ hmac = { workspace = true }
 secp256k1 = { workspace = true, features = ["rand", "serde"] }
 ed25519-dalek = { workspace = true, features = ["serde"]  }
 aes-gcm = "0.10"
+aes = { version = "0.8" }
+cfb-mode = "0.8"
+cbc = { version = "0.1", feature = ["block-padding", "std"] }
 pem = "2"
 pbkdf2 = { version = "0.12", features = ["simple"] }
