@@ -13,6 +13,8 @@ use strum::{EnumCount, IntoStaticStr};
 
 use wasm_bindgen::prelude::*;
 
+// todo!("implement wallet auto lock")
+
 #[wasm_bindgen]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, EnumCount, IntoStaticStr)]
 pub enum AccountType {
@@ -41,7 +43,13 @@ pub struct Wallet {
 #[wasm_bindgen]
 // wallet contructors
 impl Wallet {
-    // strean`() encode wallet pem
+    pub fn wallet_key(chain: crate::chain::Chain, address: &str) -> String {
+        format!("{}-{}", chain.base_chain().symbol, address)
+    }
+
+    pub fn get_key(&self) -> String {
+        Wallet::wallet_key(self.chain, &self.public_address)
+    }
 
     /// lock wallet privatekey with password
     pub fn lock(&mut self, password: String) -> Result<(), Error> {
@@ -50,18 +58,15 @@ impl Wallet {
             return Ok(());
         }
 
-        if let Some(ref encrypted_data) = self.encrypted_data {
-            // verify password
-            // decrypt encrypted_data
-            _ = kos_crypto::cipher::decrypt(encrypted_data, &password)?;
-        } else {
-            // encrypt if encrypted_data is none serialize wallet
-            let serialized =
-                bincode::serialize(&self).map_err(|e| Error::CipherError(e.to_string()))?;
-            // encrypt and encode
-            let data = kos_crypto::cipher::encrypt(&serialized, &password)?;
-            // save to encrypted_data
-            self.encrypted_data = Some(data.clone());
+        // Verify password if encrypted_data is present, else serialize and encrypt wallet
+        match &self.encrypted_data {
+            Some(_) => self.verify_password(password.clone())?,
+            None => {
+                let serialized =
+                    bincode::serialize(self).map_err(|e| Error::CipherError(e.to_string()))?;
+                let encrypted_data = kos_crypto::cipher::encrypt(&serialized, &password)?;
+                self.encrypted_data = Some(encrypted_data);
+            }
         }
 
         // reset secrets
@@ -81,12 +86,6 @@ impl Wallet {
             return Ok(());
         }
 
-        // check if is locked and data exists
-        if !self.is_locked {
-            return Err(Error::WalletManagerError(
-                "Wallet is not locked".to_string(),
-            ));
-        }
         let encrypted_data = match self.encrypted_data {
             Some(ref data) => data,
             None => return Err(Error::WalletManagerError("No encrypted data".to_string())),
@@ -95,7 +94,7 @@ impl Wallet {
         let data = kos_crypto::cipher::decrypt(encrypted_data, &password)?;
         // resore values
         let wallet: Wallet = bincode::deserialize(&data)
-            .map_err(|e| Error::CipherError("deserialize data".to_string()))?;
+            .map_err(|e| Error::CipherError(format!("deserialize data: {}", e.to_string())))?;
         // restore secrets
         self.keypair = wallet.keypair;
         self.mnemonic = wallet.mnemonic;
@@ -120,11 +119,11 @@ impl Wallet {
                 // verify password
                 // decrypt encrypted_data
                 _ = kos_crypto::cipher::decrypt(encrypted_data, &password)?;
+
+                Ok(())
             }
             None => return Err(Error::WalletManagerError("No encrypted data".to_string())),
         }
-
-        Ok(())
     }
 
     #[wasm_bindgen(constructor)]
@@ -204,7 +203,7 @@ impl Wallet {
             .map_err(|e| Error::CipherError(format!("deserialize data: {}", e.to_string())))?;
 
         //check tag
-        if pem.tag() != wallet.public_address {
+        if pem.tag() != wallet.get_key() {
             return Err(Error::WalletManagerError("Invalid PEM tag".to_string()));
         }
 
@@ -223,7 +222,7 @@ impl Wallet {
 
         // serialize wallet manager
         let serialized = bincode::serialize(self).map_err(|e| Error::CipherError(e.to_string()))?;
-        let pem = kos_crypto::cipher::to_pem(self.public_address.to_owned(), &serialized)?;
+        let pem = kos_crypto::cipher::to_pem(self.get_key(), &serialized)?;
 
         Ok(pem)
     }
@@ -480,19 +479,19 @@ mod tests {
     #[test]
     fn test_import_pem() {
         let pem_str =
-            "-----BEGIN klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy-----
+            "-----BEGIN KLV-klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy-----
 AQAAAAAAAAA+AAAAAAAAAGtsdjF1c2RueXdqaHJsdjR0Y3l1NnN0eHBsNnl2aHBs
-ZzM1bmVwbGpsdDR5NXI3eXBwZThlcjRxdWpsYXp5AQGRAQAAAAAAAIGO1zP0NFHP
-eWqKpFirMyd6447Ru4Ge+QQUcvJ+7BiZvKWrmOsmovHNsNPl36Nep8Jt9meVY49b
-eZDvpgEu8dqIgC9FPzasv+4Ba043sPdbakGpXjD7eNQtWuq0thh8sNQDnu49LlA7
-X8iUZYBjglGbhXpqvTKRTQ4nlHCqw5M5zE2eLxXZcUQ381FGWIXzAhRe5Ya9G++/
-K8z5qqJ6j8oyG1lmkFygaXWbTakrOplppRR7fm627LtFqJ3CIAGq0sY1VDbtw6tH
-Zq13rjzHYE3ld+ZP+5ZNo4VX4EBnpROXzQ+E0+kswfF0fSi5xAtX8j/MVeAK8cp1
-6pplxOwH5Fi3xQlnjxz0DtyBkk9CFW2ZlOIQMxJeupwGGxHWNq/Z4S7c0yQNO6WP
-AG7td4nq+/6KDJBXO2vBEzxwPIXks8kJ62QPJJ2SjgJzHnv6DE+8l8W/xQi/t4/R
-h0IUcrx6pulH79PWNPby8Rim03BXsDpPTUbLNARd6JG/vam/zHMMq54wAvEL2gqE
-edMBaWzIqLE5AAAAAA==
------END klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy-----";
+ZzM1bmVwbGpsdDR5NXI3eXBwZThlcjRxdWpsYXp5AQGRAQAAAAAAAN7JFfoJnI2p
+hhO/PEQjzdyO040nDLRmj7P5B3FBEFRl6my+7/RJPKgB+GVY6aHJIehX8lG0JjeG
+05iEzNsHEBcUOYbsGalck14gGdf+Ga90Y4J+JVLzH76jPWnYgA3ppeaxeRy1fIZS
+nnJbPi001+ijh1gsOigZjiAt7U5YeqbPuPz5K5MFuFBXDTXgX0rPvH+YD+bD5MaL
+n2+Ox5eFxEIBuAAhSfGzRbDjuWuJpXtjR+sIqH4Mn+nugwJRiWVkIyzEEoRunKoq
+ptMZtxhcPNP+wXaUkjE+Tw/yvjm4LYMSj97ADkYyWWzemySUoRyT9AY0BaoprGyu
+TnDjV5SOu+dV/8fNWXoiq4uwZ0PfMbGvX2cx8icUGVsDrN+ymHNtE0gg8FRT6eLf
+X9hvD50kX74oFzVrFUvCrUsLqTptRkSFTQl7Dhic6LL9AXye29YL30Khsfdoykwj
+wpl+S2ZDVyAUoU+F0hyP3uimbpjR/QLcPjetQ1Hl0ztxIzVaIUXD1ZQc+E+OxGxf
+Y1TU+mKRdqq+AAAAAA==
+-----END KLV-klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy-----";
 
         let wallet = Wallet::from_pem(pem_str.to_owned()).unwrap();
         assert!(wallet.is_locked());
