@@ -1,3 +1,4 @@
+pub use kos_crypto::cipher::*;
 use kos_crypto::mnemonic::generate_mnemonic;
 pub use kos_sdk::*;
 use kos_types::error::Error;
