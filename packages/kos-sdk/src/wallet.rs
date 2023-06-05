@@ -166,6 +166,9 @@ impl Wallet {
         path: String,
         password: Option<String>,
     ) -> Result<Wallet, Error> {
+        // validate mnemonic entropy
+        kos_crypto::mnemonic::validate_mnemonic(&mnemonic)?;
+
         let kp = chain.keypair_from_mnemonic(&mnemonic, &path, password)?;
         let address = chain.get_address_from_keypair(&kp)?;
 
@@ -222,11 +225,6 @@ impl Wallet {
         // Deserialize decrypted bytes to WalletManager
         let wallet: Wallet = ciborium::from_reader(pem.contents())
             .map_err(|e| Error::CipherError(format!("deserialize data: {}", e.to_string())))?;
-
-        //check tag
-        if pem.tag() != wallet.get_key() {
-            return Err(Error::WalletManagerError("Invalid PEM tag".to_string()));
-        }
 
         Ok(wallet)
     }

@@ -34,12 +34,12 @@ impl NONE {
         _path: &str,
         _password: Option<String>,
     ) -> Result<KeyPair, Error> {
-        Err(Error::UnsupportedChain("NONE".into()).into())
+        Ok(KeyPair::new_default())
     }
 
     #[wasm_bindgen(js_name = "getAddressFromKeyPair")]
     pub fn get_address_from_keypair(_private_key: &KeyPair) -> Result<String, Error> {
-        Err(Error::UnsupportedChain("NONE".into()).into())
+        Ok("NONE".into())
     }
 
     #[wasm_bindgen(js_name = "getPath")]
