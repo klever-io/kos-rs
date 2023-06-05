@@ -153,8 +153,8 @@ impl WalletManager {
         }
 
         // Deserialize decrypted bytes to WalletManager
-        let wm: WalletManager = bincode::deserialize(pem.contents())
-            .map_err(|e| Error::CipherError(format!("deserialize data: {}", e.to_string())))?;
+        let wm: WalletManager = ciborium::from_reader(pem.contents())
+            .map_err(|e| Error::CipherError(format!("deserialize wm: {}", e.to_string())))?;
 
         Ok(wm)
     }
@@ -169,8 +169,10 @@ impl WalletManager {
 
         self.verify_password(password.clone())?;
 
-        // serialize wallet manager
-        let data = bincode::serialize(self).map_err(|e| Error::CipherError(e.to_string()))?;
+        let mut data = Vec::new();
+        ciborium::into_writer(&self, &mut data)
+            .map_err(|e| Error::CipherError(format!("serialize wm: {}", e.to_string())))?;
+
         let pem = kos_crypto::cipher::to_pem(KOS_WM_TAG.to_owned(), &data)?;
 
         Ok(pem)

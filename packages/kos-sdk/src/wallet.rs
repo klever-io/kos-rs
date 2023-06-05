@@ -6,7 +6,6 @@ use crate::{
 use kos_crypto::keypair::KeyPair;
 use kos_types::{error::Error, number::BigNumber};
 
-use bincode;
 use pem::{encode as encode_pem, parse as parse_pem, Pem};
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, IntoStaticStr};
@@ -35,12 +34,12 @@ pub struct Wallet {
     account_type: AccountType,
     public_address: String,
     is_locked: bool,
+    node_url: Option<String>,
 
     encrypted_data: Option<Vec<u8>>,
     mnemonic: Option<String>,
     path: Option<String>,
     keypair: Option<KeyPair>,
-    node_url: Option<String>,
 }
 
 #[wasm_bindgen]
@@ -65,8 +64,10 @@ impl Wallet {
         match &self.encrypted_data {
             Some(_) => self.verify_password(password.clone())?,
             None => {
-                let serialized =
-                    bincode::serialize(self).map_err(|e| Error::CipherError(e.to_string()))?;
+                let mut serialized = Vec::new();
+                ciborium::into_writer(&self, &mut serialized)
+                    .map_err(|e| Error::CipherError(format!("deserialize: {}", e.to_string())))?;
+
                 let encrypted_data =
                     kos_crypto::cipher::encrypt(DEFAULT_ALGO, &serialized, &password)?;
                 self.encrypted_data = Some(encrypted_data);
@@ -77,7 +78,6 @@ impl Wallet {
         self.keypair = None;
         self.mnemonic = None;
         self.path = None;
-        self.node_url = None;
         self.is_locked = true;
 
         Ok(())
@@ -97,14 +97,13 @@ impl Wallet {
         // decrypt encrypted_data
         let data = kos_crypto::cipher::decrypt(encrypted_data, &password)?;
         // resore values
-        let wallet: Wallet = bincode::deserialize(&data)
-            .map_err(|e| Error::CipherError(format!("deserialize data: {}", e.to_string())))?;
+        let wallet: Wallet = ciborium::from_reader(&data[..])
+            .map_err(|e| Error::CipherError(format!("deserialize: {}", e.to_string())))?;
+
         // restore secrets
         self.keypair = wallet.keypair;
         self.mnemonic = wallet.mnemonic;
         self.path = wallet.path;
-        self.node_url = wallet.node_url;
-        self.is_locked = true;
         self.is_locked = false;
 
         Ok(())
@@ -148,12 +147,12 @@ impl Wallet {
             account_type: AccountType::PrivateKey,
             public_address: address,
             is_locked: false,
+            node_url: None,
 
             encrypted_data: None,
             mnemonic: Some(String::new()),
             path: Some(String::new()),
             keypair: Some(kp),
-            node_url: Some(chain.base_chain().node_url.to_string()),
         })
     }
 
@@ -173,12 +172,12 @@ impl Wallet {
             account_type: AccountType::Mnemonic,
             public_address: address,
             is_locked: false,
+            node_url: None,
 
             encrypted_data: None,
             mnemonic: Some(mnemonic),
             path: Some(path),
             keypair: Some(kp),
-            node_url: Some(chain.base_chain().node_url.to_string()),
         })
     }
 
@@ -203,7 +202,7 @@ impl Wallet {
 impl Wallet {
     pub fn import(pem: Pem) -> Result<Wallet, Error> {
         // Deserialize decrypted bytes to WalletManager
-        let wallet: Wallet = bincode::deserialize(pem.contents())
+        let wallet: Wallet = ciborium::from_reader(pem.contents())
             .map_err(|e| Error::CipherError(format!("deserialize data: {}", e.to_string())))?;
 
         //check tag
@@ -225,7 +224,10 @@ impl Wallet {
         self.verify_password(password)?;
 
         // serialize wallet manager
-        let serialized = bincode::serialize(self).map_err(|e| Error::CipherError(e.to_string()))?;
+        let mut serialized = Vec::new();
+        ciborium::into_writer(&self, &mut serialized)
+            .map_err(|e| Error::CipherError(format!("serialize data: {}", e.to_string())))?;
+
         let pem = kos_crypto::cipher::to_pem(self.get_key(), &serialized)?;
 
         Ok(pem)
@@ -294,7 +296,7 @@ impl Wallet {
     pub fn get_node_url(&self) -> String {
         match self.node_url {
             Some(ref node_url) => node_url.clone(),
-            None => String::new(),
+            None => self.chain.base_chain().node_url.to_string(),
         }
     }
 
@@ -484,17 +486,31 @@ mod tests {
     fn test_import_pem() {
         let pem_str =
             "-----BEGIN KLV-klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy-----
-AQAAAAAAAAA+AAAAAAAAAGtsdjF1c2RueXdqaHJsdjR0Y3l1NnN0eHBsNnl2aHBs
-ZzM1bmVwbGpsdDR5NXI3eXBwZThlcjRxdWpsYXp5AQGRAQAAAAAAAN7JFfoJnI2p
-hhO/PEQjzdyO040nDLRmj7P5B3FBEFRl6my+7/RJPKgB+GVY6aHJIehX8lG0JjeG
-05iEzNsHEBcUOYbsGalck14gGdf+Ga90Y4J+JVLzH76jPWnYgA3ppeaxeRy1fIZS
-nnJbPi001+ijh1gsOigZjiAt7U5YeqbPuPz5K5MFuFBXDTXgX0rPvH+YD+bD5MaL
-n2+Ox5eFxEIBuAAhSfGzRbDjuWuJpXtjR+sIqH4Mn+nugwJRiWVkIyzEEoRunKoq
-ptMZtxhcPNP+wXaUkjE+Tw/yvjm4LYMSj97ADkYyWWzemySUoRyT9AY0BaoprGyu
-TnDjV5SOu+dV/8fNWXoiq4uwZ0PfMbGvX2cx8icUGVsDrN+ymHNtE0gg8FRT6eLf
-X9hvD50kX74oFzVrFUvCrUsLqTptRkSFTQl7Dhic6LL9AXye29YL30Khsfdoykwj
-wpl+S2ZDVyAUoU+F0hyP3uimbpjR/QLcPjetQ1Hl0ztxIzVaIUXD1ZQc+E+OxGxf
-Y1TU+mKRdqq+AAAAAA==
+qWVjaGFpbmNLTFZsYWNjb3VudF90eXBlaE1uZW1vbmljbnB1YmxpY19hZGRyZXNz
+eD5rbHYxdXNkbnl3amhybHY0dGN5dTZzdHhwbDZ5dmhwbGczNW5lcGxqbHQ0eTVy
+N3lwcGU4ZXI0cXVqbGF6eWlpc19sb2NrZWT1aG5vZGVfdXJseCNodHRwczovL25v
+ZGUubWFpbm5ldC5rbGV2ZXIuZmluYW5jZW5lbmNyeXB0ZWRfZGF0YZkB/wAYlxhH
+GJkDGHcYixjLGMEYfRjfGLoY5xhjGNsYshglGPcYbhgeGEwYaxhTGHMYHhixGDsY
+uQoYXBjbGFQYYRivGGEYeQ8YnRixGDsYRxg2GPwYuBhuGNcY1xjlGIwYkxj6GL4Y
+ShjWGB4Yjhj7Chg6GJsYwRgxGIgY4QQYTRiuGLcYdRiuGGkYVxjVGGwNGFoYIBj0
+GEAYrgYLGD8Y7Bh7GIQY4AUY2AAY+BjcGLMYhxhnGDoYJRjwGNkYfxi4Dxg8GEYY
+KhgnGFQYphgkGP4YqxjiGMQY8xh0GHQRGJgYrRi5GMAYkBgdGKcYyRhWGNwYVRhJ
+GBsYLhgbGEwYcxipGIgCGEsYRxiNGG8Y2Bj8GNYVGGYYfhgsGCIQGHYYKhi2GEoY
+pBjFGF4YmRgeGFYY+xgpGMwYiRixAxizAxiSFRiHGEwYZBhQGCIYdRhyGEwYcRhA
+GOgYzBhyGDYUGOIYrhgrGC8YfRg0GCEYohjcAhhIGCEYjxhrGHcY+hg1GK4Yzhhv
+GKEYPRjoGGUY9BhbGLQYkBgYGGgY6RiEGFIYHxhAGM8Y2RhkGGgY0hhkGHcYzAoY
+/BjaGPIYhxipGN0FGGwYiRhqGPEYfxhCGNwYaRQYeQYYshjdGKEYzxi6GKsY2RjW
+GF8YzxitGFoYXBjWAhi8CBiPGGEYshjEGFgYoRizGFIYNBjLGDkY2Bh+GKwY3Bg1
+GEoY/BjEGPoYdBjfGO0Y9hhSGJUYeRi2GJwRGFYYbRhuGHgYjRjKGDsYtxj+GPcY
+IBh4GHEYgxi6GDMYVRibGKgY4hh5GJ0YfBjJGIkYaBiQGHIYPhgzGKgY1BheGG8Y
+GhjsGK4YdxiGGJoYiRhJGLIXGDoY6hiLGFYYjRhXGCMYOBhNGGEYORhQERg3GKMY
+KBhAGNgY1hilGDEYJhgbGLcY8RisGCUY/Bg6GKEYjRjZGF4YWhjyGCMYiBiiDRhc
+GFAYjhgZGP4YhBjrFhi5GDkYuhiNGGwYYAoYhgQY9hioGLcYqxhTGGkY+hjyGLwK
+ERhTGMoY8RghGGoYVhhPGO4Y9BiKAxhBGNcYYRhCGJQYVwoMGGQYIBiWGPsYUxg9
+GOEYKBiaGJ8Y8RhaGCoY/hivGKAY9BixGMIYUxgxGCQY4xhEGOIY3hg7GGYYhBiv
+GFYYXBhXGO0YsRhKGIQYvRh/GMgY2Rj8GJIYXhhsGOwYGRiDGBoYcxiWGH0Y3Bh8
+DxjeGMoYbRhWGCQYZhjGGHgYtxhpGHIYgxiqGLQYRxUHGOYYIRiNGNIY8xhxCBj9
+GFcYRRj0GIIYkhiQGJNobW5lbW9uaWP2ZHBhdGj2Z2tleXBhaXL2
 -----END KLV-klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy-----";
 
         let wallet = Wallet::from_pem(pem_str.to_owned()).unwrap();

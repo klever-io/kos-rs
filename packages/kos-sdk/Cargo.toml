@@ -27,7 +27,7 @@ hex = { workspace = true }
 rand = { workspace = true }
 coins-bip39 = { workspace = true }
 pem = "2"
-bincode = "1.3"
+ciborium = "0.2"
 
 reqwest = { workspace = true, features = ["blocking", "json"] }
 wasm-bindgen-futures = "0.4"
