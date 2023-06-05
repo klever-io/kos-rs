@@ -80,7 +80,7 @@ impl WalletManager {
 
     #[wasm_bindgen(js_name = "unlock")]
     pub fn unlock(&mut self, password: String) -> Result<(), Error> {
-        // reutrn if already unlocked
+        // return if already unlocked
         if !self.is_locked() {
             return Ok(());
         }
@@ -92,7 +92,7 @@ impl WalletManager {
         let wallets = parse_many_pem(self.encrypted_data.as_ref().unwrap())
             .map_err(|_| Error::WalletManagerError("Invalid encrypted data".to_string()))?;
 
-        // deerialize all wallets and save to encrypted_data
+        // deserialize all wallets and save to encrypted_data
         for pem in wallets.iter() {
             let wallet = Wallet::import(pem.clone())?;
             self.wallets.insert(pem.tag().to_string(), wallet);
