@@ -18,7 +18,7 @@ const DEFAULT_ALGO: CipherAlgo = kos_crypto::cipher::CipherAlgo::GMC;
 // todo!("implement wallet auto lock")
 
 #[wasm_bindgen]
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, EnumCount, IntoStaticStr)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy, EnumCount, IntoStaticStr)]
 pub enum AccountType {
     Mnemonic,
     PrivateKey,
@@ -35,6 +35,7 @@ pub struct Wallet {
     public_address: String,
     is_locked: bool,
     node_url: Option<String>,
+    index: Option<u32>,
 
     encrypted_data: Option<Vec<u8>>,
     mnemonic: Option<String>,
@@ -148,6 +149,7 @@ impl Wallet {
             public_address: address,
             is_locked: false,
             node_url: None,
+            index: None,
 
             encrypted_data: None,
             mnemonic: Some(String::new()),
@@ -173,12 +175,28 @@ impl Wallet {
             public_address: address,
             is_locked: false,
             node_url: None,
+            index: None,
 
             encrypted_data: None,
             mnemonic: Some(mnemonic),
             path: Some(path),
             keypair: Some(kp),
         })
+    }
+
+    #[wasm_bindgen(js_name = "fromMnemonicIndex")]
+    /// restore wallet from mnemonic
+    pub fn from_mnemonic_index(
+        chain: Chain,
+        mnemonic: String,
+        index: u32,
+        password: Option<String>,
+    ) -> Result<Wallet, Error> {
+        let path = chain.get_path(index)?;
+        let mut wallet = Wallet::from_mnemonic(chain, mnemonic, path, password)?;
+        wallet.index = Some(index);
+
+        Ok(wallet)
     }
 
     #[wasm_bindgen(js_name = "fromPem")]
@@ -271,6 +289,14 @@ impl Wallet {
             Some(ref path) => path.clone(),
             None => String::new(),
         }
+    }
+
+    #[wasm_bindgen(js_name = "getIndex")]
+    /// get wallet index if wallet is created from mnemonic index
+    pub fn get_index(&self) -> Result<u32, Error> {
+        self.index.ok_or(Error::WalletManagerError(
+            "Wallet is not created from mnemonic index".to_string(),
+        ))
     }
 
     #[wasm_bindgen(js_name = "getPrivateKey")]
@@ -519,5 +545,31 @@ GFcYRRj0GIIYkhiQGJNobW5lbW9uaWP2ZHBhdGj2Z2tleXBhaXL2
             wallet.get_address(),
             "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
         )
+    }
+
+    #[test]
+    fn test_wallet_mnemonic_without_index() {
+        let w1 = Wallet::from_mnemonic(
+            Chain::KLV,
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+        Chain::KLV.get_path(0).unwrap(),
+            None,
+        ).unwrap();
+
+        let result = w1.get_index();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_wallet_mnemonic_with_index() {
+        let w1 = Wallet::from_mnemonic_index(
+            Chain::KLV,
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+        10,
+            None,
+        ).unwrap();
+        let result = w1.get_index();
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 10);
     }
 }

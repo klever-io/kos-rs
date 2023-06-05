@@ -12,7 +12,7 @@ use wasm_bindgen::prelude::*;
 macro_rules! createChains {
     ($($name:ident),*) => {
         #[wasm_bindgen]
-        #[derive(Serialize, Deserialize, Debug, Copy, Clone, EnumCount, IntoStaticStr)]
+        #[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone, EnumCount, IntoStaticStr)]
         pub enum Chain {
             $($name,)*
         }
