@@ -9,7 +9,7 @@ use std::path::Path;
 use std::{env, path::PathBuf};
 
 fn build_pbjson(
-    pacakge_name: &str,
+    package_name: &str,
     proto_serde: &[impl AsRef<str>],
     protos: &[impl AsRef<Path>],
     includes: &[impl AsRef<Path>],
@@ -17,11 +17,11 @@ fn build_pbjson(
     use_hex_for_bytes: bool,
     btree_map: bool,
 ) -> Result<(), Error> {
-    let full_path = format!("{}/{}", env::var("OUT_DIR").unwrap().as_str(), pacakge_name);
+    let full_path = format!("{}/{}", env::var("OUT_DIR").unwrap().as_str(), package_name);
     fs::create_dir_all(&full_path).unwrap();
 
     let out_dir = PathBuf::from(&full_path);
-    let descriptor_file = out_dir.join(format!("{}.descriptors.bin", pacakge_name));
+    let descriptor_file = out_dir.join(format!("{}.descriptors.bin", package_name));
     let mut prost_build = prost_build::Config::new();
     prost_build
         .extern_path(".google.protobuf", "::pbjson_types")
@@ -73,18 +73,17 @@ fn get_files(dir: &str) -> Vec<String> {
     list
 }
 
-// save for futher use?
 #[allow(dead_code)]
 fn build_prost_serde(
-    pacakge_name: &str,
+    package_name: &str,
     protos: &[impl AsRef<Path>],
     includes: &[impl AsRef<Path>],
 ) -> Result<(), Error> {
-    let full_path = format!("{}/{}", env::var("OUT_DIR").unwrap().as_str(), pacakge_name);
+    let full_path = format!("{}/{}", env::var("OUT_DIR").unwrap().as_str(), package_name);
     fs::create_dir_all(&full_path).unwrap();
 
     let out_dir = PathBuf::from(&full_path);
-    let descriptor_file = out_dir.join(format!("{}.descriptors.bin", pacakge_name));
+    let descriptor_file = out_dir.join(format!("{}.descriptors.bin", package_name));
     let mut prost_build = prost_build::Config::new();
     prost_build
         .type_attribute(".", "#[derive(serde::Serialize,serde::Deserialize)]")

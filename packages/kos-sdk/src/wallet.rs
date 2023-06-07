@@ -44,7 +44,6 @@ pub struct Wallet {
 }
 
 #[wasm_bindgen]
-// wallet contructors
 impl Wallet {
     pub fn wallet_key(chain: crate::chain::Chain, address: &str) -> String {
         format!("{}-{}", chain.base_chain().symbol, address)
@@ -97,7 +96,7 @@ impl Wallet {
         };
         // decrypt encrypted_data
         let data = kos_crypto::cipher::decrypt(encrypted_data, &password)?;
-        // resore values
+        // restore values
         let wallet: Wallet = ciborium::from_reader(&data[..])
             .map_err(|e| Error::CipherError(format!("deserialize: {}", e.to_string())))?;
 
@@ -354,7 +353,7 @@ impl Wallet {
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
-    /// sign digest with keypait
+    /// sign digest with raw keypair
     pub fn sign_digest(&self, hash: &[u8]) -> Result<Vec<u8>, Error> {
         if self.is_locked {
             return Err(Error::WalletManagerError("Wallet is locked".to_string()));
@@ -414,7 +413,7 @@ impl Wallet {
     }
 
     #[wasm_bindgen(js_name = "broadcast")]
-    /// boradcast transaction to network
+    /// broadcast transaction to network
     pub async fn broadcast(
         &self,
         data: Transaction,
