@@ -1,0 +1,17 @@
+[package]
+name = "kos-utils"
+version = { workspace = true }
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+log = { workspace = true, features=["std"] }
+wasm-bindgen = { workspace = true }
+web-sys = { version="0.3", features=["console"] }
