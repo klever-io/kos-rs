@@ -70,7 +70,8 @@ impl TRX {
 
     #[wasm_bindgen(js_name = "getPath")]
     pub fn get_path(index: u32) -> Result<String, Error> {
-        Ok(format!("m/44'/{}'/{}'/0/0", BIP44_PATH, index))
+        // use account 0 index X
+        Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index))
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
@@ -104,7 +105,7 @@ impl TRX {
 
                 Ok(result)
             }
-            _ => return Err(Error::InvalidMessage("not a klever transaction")),
+            _ => return Err(Error::InvalidMessage("not a tron transaction")),
         }
     }
 
@@ -324,6 +325,26 @@ mod tests {
                 assert_eq!(c.amount, 10);
             }
             _ => assert!(false),
+        }
+    }
+
+    #[test]
+    fn test_validate_tron_bip44() {
+        let default_mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+        let v = vec![
+            (0, "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH"),
+            (1, "TSeJkUh4Qv67VNFwY8LaAxERygNdy6NQZK"),
+            (2, "TYJPRrdB5APNeRs4R7fYZSwW3TcrTKw2gx"),
+            (3, "TRhVWK5XEDkQBDevcdCWW7RW51aRncty4W"),
+            (4, "TT2X2yyubp7qpAWYYNE5JQWBtoZ7ikQFsY"),
+        ];
+
+        for (index, expected_addr) in v {
+            let path = TRX::get_path(index).unwrap();
+            let kp = TRX::keypair_from_mnemonic(default_mnemonic, &path, None).unwrap();
+            let addr = TRX::get_address_from_keypair(&kp).unwrap();
+
+            assert_eq!(expected_addr, addr);
         }
     }
 }
