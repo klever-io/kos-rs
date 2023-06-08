@@ -45,7 +45,9 @@ impl<'de> Deserialize<'de> for BigNumber {
 
 impl Default for BigNumber {
     fn default() -> Self {
-        Self { v: BigInt::default() }
+        Self {
+            v: BigInt::default(),
+        }
     }
 }
 

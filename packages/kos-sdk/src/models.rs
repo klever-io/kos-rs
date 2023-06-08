@@ -44,6 +44,7 @@ kos_types::enum_thing! {
     enum Options {
         Klever(kos_proto::options::KLVOptions),
         Tron(kos_proto::options::TRXOptions),
+        Ethereum(kos_proto::options::ETHOptions),
     }
 }
 
@@ -62,6 +63,8 @@ pub struct SendOptions {
 pub struct Transaction {
     #[wasm_bindgen(skip)]
     pub chain: Chain,
+    #[wasm_bindgen(skip)]
+    pub sender: String,
     #[wasm_bindgen(js_name = hash)]
     pub hash: Hash,
     #[wasm_bindgen(skip)]

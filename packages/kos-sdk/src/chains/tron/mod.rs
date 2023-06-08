@@ -99,6 +99,7 @@ impl TRX {
                 new_tx.signature.push(sig);
                 let result = Transaction {
                     chain: tx.chain,
+                    sender: tx.sender,
                     hash: Hash::from_vec(digest)?,
                     data: Some(TransactionRaw::Tron(new_tx)),
                 };
@@ -217,6 +218,7 @@ impl TRX {
 
         Ok(crate::models::Transaction {
             chain: chain::Chain::TRX,
+            sender: sender,
             hash: Hash::from_vec(digest)?,
             data: Some(TransactionRaw::Tron(tx)),
         })
@@ -249,6 +251,7 @@ impl TRX {
 
         Ok(BroadcastResult::new(crate::models::Transaction {
             chain: tx.chain,
+            sender: tx.sender,
             hash: tx.hash,
             data: tx.data,
         }))

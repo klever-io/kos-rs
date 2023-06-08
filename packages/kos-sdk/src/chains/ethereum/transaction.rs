@@ -49,7 +49,7 @@ impl Transaction {
 
         if let Some(signature) = self.signature {
             self.rlp_append_signature(&mut stream, signature);
-        }else{
+        } else {
             stream.append(&self.chain_id.unwrap_or(0));
             stream.append(&0u8);
             stream.append(&0u8);
@@ -97,15 +97,14 @@ impl Transaction {
     }
 
     fn rlp_append_signature(&self, stream: &mut RlpStream, signature: RecoverableSignature) {
-            // Deconstruct the signature into r, s, and v
-            let (rec_id, raw_sig) = signature.serialize_compact();
-            let v = self.rlp_adjust_v_value(rec_id.to_i32());
-            let r = &raw_sig[0..32];
-            let s = &raw_sig[32..64];
-            stream.append(&v);
-            stream.append(&U256::from_big_endian(r));
-            stream.append(&U256::from_big_endian(s));
-        
+        // Deconstruct the signature into r, s, and v
+        let (rec_id, raw_sig) = signature.serialize_compact();
+        let v = self.rlp_adjust_v_value(rec_id.to_i32());
+        let r = &raw_sig[0..32];
+        let s = &raw_sig[32..64];
+        stream.append(&v);
+        stream.append(&U256::from_big_endian(r));
+        stream.append(&U256::from_big_endian(s));
     }
 
     fn rlp_adjust_v_value(&self, v: i32) -> u64 {
@@ -114,7 +113,7 @@ impl Transaction {
                 let chain_id = self.chain_id.unwrap_or(0);
                 chain_id * 2 + 35 + (v as u64)
             }
-            _ => v as u64
+            _ => v as u64,
         }
     }
 
@@ -138,8 +137,6 @@ mod tests {
     use super::*;
     use crate::chains::ethereum::address::Address;
     use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
-
-    
 
     #[test]
     fn test_encode_legacy() {

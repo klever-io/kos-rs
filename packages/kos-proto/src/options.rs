@@ -1,3 +1,4 @@
+use kos_types::number::BigNumber;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -30,4 +31,18 @@ impl Default for TRXOptions {
             fee_limit: Some(10_000_000),
         }
     }
+}
+
+#[derive(Deserialize, Serialize, Default, Clone, Debug)]
+pub struct ETHOptions {
+    pub legacy_type: Option<bool>,
+    pub nonce: Option<u64>,
+    pub chain_id: Option<u64>,
+    pub contract: Option<String>,
+    pub gas_limit: Option<BigNumber>,
+    pub gas_price: Option<BigNumber>,
+    pub contract_data: Option<Vec<u8>>,
+    pub max_fee_per_gas: Option<BigNumber>,
+    pub max_priority_fee_per_gas: Option<BigNumber>,
+    pub data: Option<Vec<u8>>,
 }

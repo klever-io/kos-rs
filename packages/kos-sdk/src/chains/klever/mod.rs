@@ -90,6 +90,7 @@ impl KLV {
                 new_tx.signature.push(sig);
                 let result = Transaction {
                     chain: tx.chain,
+                    sender: tx.sender,
                     hash: Hash::from_vec(digest)?,
                     data: Some(TransactionRaw::Klever(new_tx)),
                 };
@@ -187,6 +188,7 @@ impl KLV {
 
                 Ok(BroadcastResult::new(crate::models::Transaction {
                     chain: tx.chain,
+                    sender: tx.sender,
                     hash: tx_hash,
                     data: tx.data,
                 }))
@@ -268,6 +270,7 @@ mod tests {
 
         let to_broadcast = crate::models::Transaction {
             chain: crate::chain::Chain::KLV,
+            sender: "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy".to_string(),
             hash: Hash::new("0x0000000000000000000000000000000000000000000000000000000000000000")
                 .unwrap(),
             data: Some(TransactionRaw::Klever(klv_tx)),
