@@ -4,8 +4,11 @@ use std::{ops::Deref, str::FromStr};
 
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
+use serde::{Deserialize, Serialize, Serializer};
+
 use wasm_bindgen::prelude::*;
 
+#[derive(Debug, Clone)]
 #[wasm_bindgen]
 pub struct BigNumber {
     v: BigInt,
@@ -16,6 +19,33 @@ impl Deref for BigNumber {
 
     fn deref(&self) -> &Self::Target {
         &self.v
+    }
+}
+
+impl Serialize for BigNumber {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.v.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for BigNumber {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        String::deserialize(deserializer)?
+            .parse()
+            .map_err(serde::de::Error::custom)
+            .map(|v| BigNumber { v })
+    }
+}
+
+impl Default for BigNumber {
+    fn default() -> Self {
+        Self { v: BigInt::default() }
     }
 }
 
