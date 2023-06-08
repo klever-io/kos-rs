@@ -35,6 +35,7 @@ kos_types::enum_thing! {
     enum TransactionRaw {
         Klever(kos_proto::klever::Transaction),
         Tron(kos_proto::tron::Transaction),
+        Ethereum(super::chains::ETHTransaction),
     }
 }
 
@@ -48,7 +49,7 @@ kos_types::enum_thing! {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[wasm_bindgen]
-/// Transcation Handler
+/// Transaction Handler
 pub struct SendOptions {
     #[wasm_bindgen(skip)]
     #[serde(skip)]
@@ -57,7 +58,7 @@ pub struct SendOptions {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[wasm_bindgen]
-/// Transcation Handler
+/// Transaction Handler
 pub struct Transaction {
     #[wasm_bindgen(skip)]
     pub chain: Chain,
