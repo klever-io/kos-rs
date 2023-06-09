@@ -3,6 +3,7 @@ use kos_types::error::Error;
 
 use hex::FromHex;
 use std::{fmt, str::FromStr};
+use web3::types::Address as Web3Address;
 
 use wasm_bindgen::prelude::*;
 
@@ -156,5 +157,19 @@ impl FromStr for Address {
 impl AsRef<[u8]> for Address {
     fn as_ref(&self) -> &[u8] {
         &self.0
+    }
+}
+
+impl TryFrom<&Web3Address> for Address {
+    type Error = Error;
+
+    fn try_from(value: &Web3Address) -> Result<Self, Self::Error> {
+        Address::try_from(value.as_bytes())
+    }
+}
+
+impl From<Address> for Web3Address {
+    fn from(value: Address) -> Self {
+        Web3Address::from(value.0)
     }
 }
