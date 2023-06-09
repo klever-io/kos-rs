@@ -165,6 +165,13 @@ impl ETH {
         }
     }
 
+    #[wasm_bindgen(js_name = "getGasPrice")]
+    pub async fn gas_price(node_url: Option<String>) -> Result<BigNumber, Error> {
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("ETH"));
+        let gas_price = request::gas_price(&node).await?;
+        gas_price.try_into()
+    }
+
     fn get_options(options: Option<crate::models::SendOptions>) -> kos_proto::options::ETHOptions {
         match options.and_then(|opt| opt.data) {
             Some(crate::models::Options::Ethereum(op)) => op,
@@ -371,5 +378,12 @@ mod tests {
             signed.unwrap().hash.to_string(),
             "d0fc214979d5be4dfd7e9a3d87a09dd0da9f2cd0fb431564c3193aa04bd99bb6"
         );
+    }
+
+    #[test]
+    fn test_get_balance() {
+        let balance = tokio_test::block_on(ETH::get_balance(DEFAULT_ADDRESS, None, None)).unwrap();
+
+        assert!(balance.to_i64() > 100);
     }
 }

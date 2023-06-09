@@ -162,7 +162,7 @@ impl TRX {
         node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
         let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("TRX"));
-;
+
         let acc_address = address::Address::from_str(addr)?;
 
         // check if TRC20 -> trigger contract instead todo!()
