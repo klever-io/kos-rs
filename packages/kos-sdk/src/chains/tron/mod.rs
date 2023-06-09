@@ -29,7 +29,6 @@ impl TRX {
             name: "Tron",
             symbol: "TRX",
             precision: 6,
-            node_url: "https://api.trongrid.io",
             chain_code: 1,
         }
     }
@@ -162,7 +161,8 @@ impl TRX {
         token: Option<String>,
         node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
-        let node = node_url.unwrap_or_else(|| TRX::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("TRX"));
+;
         let acc_address = address::Address::from_str(addr)?;
 
         // check if TRC20 -> trigger contract instead todo!()
@@ -186,7 +186,7 @@ impl TRX {
         options: Option<crate::models::SendOptions>,
         node_url: Option<String>,
     ) -> Result<crate::models::Transaction, Error> {
-        let node = node_url.unwrap_or_else(|| TRX::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("TRX"));
         let addr_sender = address::Address::from_str(&sender)?;
         let addr_receiver = address::Address::from_str(&receiver)?;
 
@@ -229,7 +229,7 @@ impl TRX {
         tx: crate::models::Transaction,
         node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        let node = node_url.unwrap_or_else(|| TRX::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("TRX"));
 
         let raw = tx
             .data

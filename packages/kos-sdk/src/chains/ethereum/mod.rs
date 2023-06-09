@@ -41,7 +41,6 @@ impl ETH {
             name: "Ethereum",
             symbol: "ETH",
             precision: 18,
-            node_url: "NONE",
             chain_code: 3,
         }
     }
@@ -156,7 +155,7 @@ impl ETH {
         token: Option<String>,
         node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
-        let node = node_url.unwrap_or_else(|| ETH::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("ETH"));
 
         match token {
             Some(key) if key != "ETH" => {
@@ -180,7 +179,7 @@ impl ETH {
         options: Option<models::SendOptions>,
         node_url: Option<String>,
     ) -> Result<Transaction, Error> {
-        let node = node_url.unwrap_or_else(|| ETH::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("ETH"));
 
         // validate sender address
         let addr_sender = address::Address::from_str(&sender)?;
@@ -214,6 +213,9 @@ impl ETH {
         amount: BigNumber,
         options: ETHOptions,
     ) -> Result<transaction::Transaction, Error> {
+        // update chain id if none
+        let chain_id = options.chain_id.unwrap_or_else(|| CHAIN_ID.into());
+
         // compute nonce if none
         let nonce = match options.nonce {
             Some(value) if value != 0 => U256::from_dec_str(&value.to_string())
@@ -273,7 +275,7 @@ impl ETH {
             } else {
                 transaction::TransactionType::EIP1559
             }),
-            chain_id: options.chain_id,
+            chain_id: Some(chain_id),
             nonce: nonce,
             to: Some(receiver),
             value: value,

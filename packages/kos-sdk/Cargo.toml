@@ -44,3 +44,6 @@ prost = { workspace = true }
 
 [dev-dependencies]
 tokio-test = "*"
+
+[build-dependencies]
+dotenv-build = "0.1"

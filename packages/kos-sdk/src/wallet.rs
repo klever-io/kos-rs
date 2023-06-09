@@ -319,7 +319,9 @@ impl Wallet {
     pub fn get_node_url(&self) -> String {
         match self.node_url {
             Some(ref node_url) => node_url.clone(),
-            None => self.chain.base_chain().node_url.to_string(),
+            None =>  crate::utils::get_node_url(
+                self.chain.base_chain().symbol,
+            ),
         }
     }
 

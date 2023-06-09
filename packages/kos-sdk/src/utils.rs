@@ -49,3 +49,7 @@ pub async fn http_post<T: DeserializeOwned>(url: String, data: &Vec<u8>) -> Resu
         .await
         .map_err(|e| Error::from(e))
 }
+
+pub fn get_node_url(name: &str) -> String {
+    std::env::var(format!("NODE.{}", name)).unwrap_or("".to_string())
+}

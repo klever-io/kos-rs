@@ -28,7 +28,6 @@ impl KLV {
             name: "Klever",
             symbol: "KLV",
             precision: 6,
-            node_url: "https://node.mainnet.klever.finance",
             chain_code: 38,
         }
     }
@@ -152,7 +151,7 @@ impl KLV {
         token: Option<String>,
         node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
-        let node = node_url.unwrap_or_else(|| KLV::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("KLV"));
         let acc = requests::get_account(node.as_str(), address).await?;
 
         Ok(match token {
@@ -169,7 +168,7 @@ impl KLV {
         tx: crate::models::Transaction,
         node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        let node = node_url.unwrap_or_else(|| KLV::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("KLV"));
         let raw = tx
             .data
             .clone()
@@ -216,7 +215,7 @@ impl KLV {
         options: Option<crate::models::SendOptions>,
         node_url: Option<String>,
     ) -> Result<crate::models::Transaction, Error> {
-        let node = node_url.unwrap_or_else(|| KLV::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("KLV"));
         let options = KLV::get_options(options);
 
         let contract = models::TransferTXRequest {
