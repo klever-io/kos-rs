@@ -38,11 +38,10 @@ pub struct ETHOptions {
     pub legacy_type: Option<bool>,
     pub nonce: Option<u64>,
     pub chain_id: Option<u64>,
-    pub contract: Option<String>,
+    pub token: Option<String>,
     pub gas_limit: Option<BigNumber>,
     pub gas_price: Option<BigNumber>,
     pub contract_data: Option<Vec<u8>>,
     pub max_fee_per_gas: Option<BigNumber>,
     pub max_priority_fee_per_gas: Option<BigNumber>,
-    pub data: Option<Vec<u8>>,
 }

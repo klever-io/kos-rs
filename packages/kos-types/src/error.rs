@@ -47,6 +47,8 @@ pub enum Error {
     WalletManagerError(String),
     /// CipherError
     CipherError(String),
+    /// TransportError
+    TransportError(String),
 }
 
 impl fmt::Display for Error {
@@ -71,6 +73,7 @@ impl fmt::Display for Error {
             Error::InvalidTransaction(e) => write!(f, "Invalid transaction: {}", e),
             Error::WalletManagerError(e) => write!(f, "WalletManager error: {}", e),
             Error::CipherError(e) => write!(f, "Cipher error: {}", e),
+            Error::TransportError(e) => write!(f, "Transport error: {}", e),
         }
     }
 }

@@ -2,9 +2,9 @@ use super::address::Address;
 
 use kos_types::error::Error;
 
-use ethereum_types::U256;
 use rlp::RlpStream;
 use secp256k1::ecdsa::RecoverableSignature;
+use web3::types::U256;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TransactionType {
