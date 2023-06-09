@@ -1,25 +1,37 @@
 pub mod address;
+pub mod request;
 pub mod transaction;
 
-use crate::chain::BaseChain;
+use crate::chain::{self, BaseChain};
 use crate::models::{self, BroadcastResult, Transaction, TransactionRaw};
+
 use kos_crypto::keypair::KeyPair;
 use kos_crypto::secp256k1::Secp256k1KeyPair;
+use kos_proto::options::ETHOptions;
 use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
 use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
+use web3::types::U256;
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
-pub struct ETH {
-    pub chain_id: u64,
-}
+pub struct ETH {}
 
 pub const SIGN_PREFIX: &[u8; 26] = b"\x19Ethereum Signed Message:\n";
 pub const BIP44_PATH: u32 = 60;
+pub const CHAIN_ID: u64 = 1;
+pub const DEFAULT_GAS_TRANSFER: u64 = 21000;
+
+/// hash digest
+pub fn hash_transaction(eth_tx: &transaction::Transaction) -> Result<Vec<u8>, Error> {
+    let bytes = eth_tx.encode()?;
+    let digest = ETH::hash(&bytes)?;
+    Ok(digest)
+}
 
 #[wasm_bindgen]
 impl ETH {
@@ -85,8 +97,7 @@ impl ETH {
         match tx.data {
             Some(TransactionRaw::Ethereum(eth_tx)) => {
                 let mut new_tx = eth_tx.clone();
-                let bytes = eth_tx.encode()?;
-                let digest = ETH::hash(&bytes)?;
+                let digest = hash_transaction(&eth_tx)?;
                 let sig = ETH::sign_digest(digest.as_slice(), keypair)?;
 
                 new_tx.signature = Some(RecoverableSignature::from_compact(
@@ -95,6 +106,7 @@ impl ETH {
                 )?);
                 let result = Transaction {
                     chain: tx.chain,
+                    sender: tx.sender,
                     hash: Hash::from_vec(digest)?,
                     data: Some(TransactionRaw::Ethereum(new_tx)),
                 };
@@ -140,21 +152,138 @@ impl ETH {
 
     #[wasm_bindgen(js_name = "getBalance")]
     pub async fn get_balance(
-        _address: &str,
-        _token: Option<String>,
-        _node_url: Option<String>,
+        address: &str,
+        token: Option<String>,
+        node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
-        todo!()
+        let node = node_url.unwrap_or_else(|| ETH::base_chain().node_url.to_string());
+
+        match token {
+            Some(key) if key != "ETH" => {
+                todo!("get token balance")
+            }
+            _ => request::get_balance(&node, address.try_into()?).await,
+        }
+    }
+
+    fn get_options(options: Option<crate::models::SendOptions>) -> kos_proto::options::ETHOptions {
+        match options.and_then(|opt| opt.data) {
+            Some(crate::models::Options::Ethereum(op)) => op,
+            _ => kos_proto::options::ETHOptions::default(),
+        }
     }
 
     pub async fn send(
-        _sender: String,
-        _receiver: String,
-        _amount: BigNumber,
-        _options: Option<models::SendOptions>,
-        _node_url: Option<String>,
+        sender: String,
+        receiver: String,
+        amount: BigNumber,
+        options: Option<models::SendOptions>,
+        node_url: Option<String>,
     ) -> Result<Transaction, Error> {
-        todo!()
+        let node = node_url.unwrap_or_else(|| ETH::base_chain().node_url.to_string());
+
+        // validate sender address
+        let addr_sender = address::Address::from_str(&sender)?;
+        let addr_receiver = address::Address::from_str(&receiver)?;
+        let mut options = ETH::get_options(options);
+
+        // if base token transfer, set ges limit
+        let should_set_gas_limit =
+            options.gas_limit.is_none() && options.token.as_deref().unwrap_or("ETH") == "ETH";
+
+        if should_set_gas_limit {
+            options.gas_limit = Some(DEFAULT_GAS_TRANSFER.into());
+        }
+
+        let tx = ETH::build_tx(&node, addr_sender, addr_receiver, amount, options).await?;
+
+        let digest = hash_transaction(&tx)?;
+
+        Ok(crate::models::Transaction {
+            chain: chain::Chain::ETH,
+            sender: sender,
+            hash: Hash::from_vec(digest)?,
+            data: Some(TransactionRaw::Ethereum(tx)),
+        })
+    }
+
+    async fn build_tx(
+        node: &str,
+        sender: address::Address,
+        receiver: address::Address,
+        amount: BigNumber,
+        options: ETHOptions,
+    ) -> Result<transaction::Transaction, Error> {
+        // compute nonce if none
+        let nonce = match options.nonce {
+            Some(value) if value != 0 => U256::from_dec_str(&value.to_string())
+                .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+            _ => {
+                let nonce = request::get_nonce(node, sender).await?;
+                U256::from(nonce)
+            }
+        };
+
+        let gas_price: Option<U256> = match options.gas_price {
+            Some(value) => Some(
+                U256::from_dec_str(&value.to_string())
+                    .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+            ),
+            None => None,
+        };
+
+        let value = U256::from_dec_str(&amount.to_string())
+            .map_err(|e| Error::InvalidNumberParse(e.to_string()))?;
+
+        let gas_limit: U256 = match options.gas_limit {
+            Some(value) => U256::from_dec_str(&value.to_string())
+                .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+            None => {
+                request::estimate_gas(
+                    &node,
+                    sender,
+                    receiver,
+                    gas_price,
+                    Some(value),
+                    options.contract_data.to_owned(),
+                )
+                .await?
+            }
+        };
+
+        let max_fee_per_gas: Option<U256> = match options.max_fee_per_gas {
+            Some(value) => Some(
+                U256::from_dec_str(&value.to_string())
+                    .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+            ),
+            None => None,
+        };
+
+        let max_priority_fee_per_gas: Option<U256> = match options.max_priority_fee_per_gas {
+            Some(value) => Some(
+                U256::from_dec_str(&value.to_string())
+                    .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+            ),
+            None => None,
+        };
+
+        Ok(transaction::Transaction {
+            transaction_type: Some(if options.legacy_type.unwrap_or(false) {
+                transaction::TransactionType::Legacy
+            } else {
+                transaction::TransactionType::EIP1559
+            }),
+            chain_id: options.chain_id,
+            nonce: nonce,
+            to: Some(receiver),
+            value: value,
+            data: options.contract_data.unwrap_or_default(),
+            gas: gas_limit,
+            gas_price: gas_price,
+            max_fee_per_gas: max_fee_per_gas,
+            max_priority_fee_per_gas: max_priority_fee_per_gas,
+            signature: None,
+        })
     }
 
     #[wasm_bindgen(js_name = "broadcast")]
@@ -208,5 +337,37 @@ mod tests {
 
             assert_eq!(expected_addr, addr);
         }
+    }
+
+    #[test]
+    fn test_send_end_sign() {
+        let options = models::SendOptions {
+            data: Some(models::Options::Ethereum(kos_proto::options::ETHOptions {
+                chain_id: Some(1),
+                nonce: Some(100),
+                ..Default::default()
+            })),
+        };
+
+        let tx = tokio_test::block_on(ETH::send(
+            DEFAULT_ADDRESS.to_string(),
+            "0x6Fac4D18c912343BF86fa7049364Dd4E424Ab9C0".to_string(),
+            "1000".try_into().unwrap(),
+            Some(options),
+            None,
+        ))
+        .unwrap();
+
+        assert_eq!(
+            tx.hash.to_string(),
+            "d0fc214979d5be4dfd7e9a3d87a09dd0da9f2cd0fb431564c3193aa04bd99bb6"
+        );
+
+        let signed = ETH::sign(tx, &get_default_secret());
+        assert!(signed.is_ok());
+        assert_eq!(
+            signed.unwrap().hash.to_string(),
+            "d0fc214979d5be4dfd7e9a3d87a09dd0da9f2cd0fb431564c3193aa04bd99bb6"
+        );
     }
 }
