@@ -105,7 +105,7 @@ impl TRX {
 
                 Ok(result)
             }
-            _ => return Err(Error::InvalidMessage("not a tron transaction")),
+            _ => return Err(Error::InvalidMessage("not a tron transaction".to_string())),
         }
     }
 

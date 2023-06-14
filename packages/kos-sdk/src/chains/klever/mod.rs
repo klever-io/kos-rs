@@ -96,7 +96,11 @@ impl KLV {
 
                 Ok(result)
             }
-            _ => return Err(Error::InvalidMessage("not a klever transaction")),
+            _ => {
+                return Err(Error::InvalidMessage(
+                    "not a klever transaction".to_string(),
+                ))
+            }
         }
     }
 

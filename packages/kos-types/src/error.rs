@@ -30,9 +30,9 @@ pub enum Error {
     /// Invalid secp256k1 signature
     InvalidSignature(&'static str),
     /// Invalid secp256k1 signature message
-    InvalidMessage(&'static str),
+    InvalidMessage(String),
     /// Out of preallocated memory
-    NotEnoughMemory(&'static str),
+    NotEnoughMemory(String),
     /// Reqwest error
     ReqwestError(String),
     /// Invalid Enum Variant
@@ -88,10 +88,10 @@ impl From<Secp256k1Error> for Error {
             | Secp256k1Error::InvalidPublicKeySum
             | Secp256k1Error::InvalidParityValue(_)
             | Secp256k1Error::InvalidRecoveryId => Self::InvalidSignature("Secp256k1Error"),
-            Secp256k1Error::InvalidMessage => Self::InvalidMessage("Secp256k1Error"),
+            Secp256k1Error::InvalidMessage => Self::InvalidMessage(secp.to_string()),
             Secp256k1Error::InvalidPublicKey => Self::InvalidPublicKey("Secp256k1Error"),
             Secp256k1Error::InvalidSecretKey => Self::InvalidPrivateKey("Secp256k1Error"),
-            Secp256k1Error::NotEnoughMemory => Self::NotEnoughMemory("Secp256k1Error"),
+            Secp256k1Error::NotEnoughMemory => Self::NotEnoughMemory(secp.to_string()),
         }
     }
 }

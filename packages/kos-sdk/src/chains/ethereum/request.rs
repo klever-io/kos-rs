@@ -2,7 +2,11 @@ use super::address::Address;
 
 use kos_types::{error::Error, number::BigNumber};
 
-use web3::{transports::Http, types::U256, Web3};
+use web3::{
+    transports::Http,
+    types::{CallRequest, U256},
+    Web3,
+};
 
 pub fn new_transport(url: &str) -> Result<Http, Error> {
     let transport =
@@ -14,6 +18,27 @@ pub fn get_web3(url: &str) -> Result<Web3<Http>, Error> {
     let transport = new_transport(url)?;
     let web3 = Web3::new(transport);
     Ok(web3)
+}
+
+pub async fn call(url: &str, from: Address, to: Address, data: Vec<u8>) -> Result<Vec<u8>, Error> {
+    let call = web3::types::CallRequest {
+        from: Some(from.into()),
+        to: Some(to.into()),
+        gas: None,
+        gas_price: None,
+        value: None,
+        data: Some(data.into()),
+        ..Default::default()
+    };
+
+    let web3 = get_web3(url)?;
+    let result = web3
+        .eth()
+        .call(call, None)
+        .await
+        .map_err(|e| Error::TransportError(e.to_string()))?;
+
+    Ok(result.0)
 }
 
 pub async fn get_balance(url: &str, address: Address) -> Result<BigNumber, Error> {

@@ -1,4 +1,5 @@
 pub mod address;
+mod erc20;
 pub mod request;
 pub mod transaction;
 
@@ -15,6 +16,7 @@ use kos_types::number::BigNumber;
 use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
+use web3::ethabi;
 use web3::types::U256;
 
 #[derive(Debug, Copy, Clone)]
@@ -112,7 +114,11 @@ impl ETH {
 
                 Ok(result)
             }
-            _ => return Err(Error::InvalidMessage("not a ethereum transaction")),
+            _ => {
+                return Err(Error::InvalidMessage(
+                    "not a ethereum transaction".to_string(),
+                ))
+            }
         }
     }
 
@@ -157,11 +163,31 @@ impl ETH {
     ) -> Result<BigNumber, Error> {
         let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("ETH"));
 
+        let from: address::Address = address.try_into()?;
+
         match token {
             Some(key) if key != "ETH" => {
-                todo!("get token balance")
+                let contract_address: address::Address = key.as_str().try_into()?;
+                let contract = erc20::get_contract_erc20();
+                let func = contract.function("balanceOf").map_err(|e| {
+                    Error::InvalidMessage(format!("failed to get balanceOf function: {}", e))
+                })?;
+
+                let data = func
+                    .encode_input(&[ethabi::Token::Address(from.into())])
+                    .map_err(|e| Error::InvalidMessage(format!("failed to encode input: {}", e)))?;
+
+                let result = request::call(&node, from, contract_address, data).await?;
+
+                // Decode the output (the balance).
+                let balance = match func.decode_output(&result).unwrap()[0].clone().into_uint() {
+                    Some(b) => b,
+                    _ => return Err(Error::ReqwestError("failed to decode output".to_string())),
+                };
+
+                Ok(balance.to_string().try_into()?)
             }
-            _ => request::get_balance(&node, address.try_into()?).await,
+            _ => request::get_balance(&node, from).await,
         }
     }
 
@@ -190,18 +216,40 @@ impl ETH {
 
         // validate sender address
         let addr_sender = address::Address::from_str(&sender)?;
-        let addr_receiver = address::Address::from_str(&receiver)?;
+        let mut addr_receiver = address::Address::from_str(&receiver)?;
         let mut options = ETH::get_options(options);
 
-        // if base token transfer, set ges limit
-        let should_set_gas_limit =
-            options.gas_limit.is_none() && options.token.as_deref().unwrap_or("ETH") == "ETH";
+        let token = options.token.as_deref().unwrap_or("ETH");
+        let is_eth_token = token == "ETH";
 
-        if should_set_gas_limit {
-            options.gas_limit = Some(DEFAULT_GAS_TRANSFER.into());
+        let mut amount_eth = amount.clone();
+        // Update addr_receiver for non-ETH token.
+        if !is_eth_token {
+            // update contract data for token transfer
+            let contract = erc20::get_contract_erc20();
+            let func = contract.function("transferFrom").map_err(|e| {
+                Error::InvalidMessage(format!("failed to get transferFrom function: {}", e))
+            })?;
+
+            let encoded = func
+                .encode_input(&[
+                    ethabi::Token::Address(addr_sender.into()),
+                    ethabi::Token::Address(addr_receiver.into()),
+                    ethabi::Token::Uint(
+                        U256::from_dec_str(&amount.to_string())
+                            .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+                    ),
+                ])
+                .map_err(|e| Error::InvalidTransaction(e.to_string()))?;
+
+            addr_receiver = address::Address::from_str(&token)?;
+            options.contract_data = Some(encoded);
+            amount_eth = 0.into();
+        } else if options.gas_limit.is_none() {
+            options.gas_limit = Some(BigNumber::from(DEFAULT_GAS_TRANSFER));
         }
 
-        let tx = ETH::build_tx(&node, addr_sender, addr_receiver, amount, options).await?;
+        let tx = ETH::build_tx(&node, addr_sender, addr_receiver, amount_eth, options).await?;
 
         let digest = hash_transaction(&tx)?;
 
@@ -381,9 +429,56 @@ mod tests {
     }
 
     #[test]
+    fn test_send_erc20() {
+        let options = models::SendOptions {
+            data: Some(models::Options::Ethereum(kos_proto::options::ETHOptions {
+                chain_id: Some(1),
+                nonce: Some(100),
+                token: Some("0xc12d1c73ee7dc3615ba4e37e4abfdbddfa38907e".to_string()),
+                gas_limit: Some(1000000.into()),
+                ..Default::default()
+            })),
+        };
+
+        let tx = tokio_test::block_on(ETH::send(
+            DEFAULT_ADDRESS.to_string(),
+            "0x6Fac4D18c912343BF86fa7049364Dd4E424Ab9C0".to_string(),
+            "1000".try_into().unwrap(),
+            Some(options),
+            None,
+        ))
+        .unwrap();
+
+        assert_eq!(
+            tx.hash.to_string(),
+            "cfdce06009f951cb21def52873925b7cf81e41392ca01c03c9c728d66165a51c"
+        );
+
+        let eth_tx = match tx.data {
+            Some(models::TransactionRaw::Ethereum(tx)) => tx,
+            _ => panic!("invalid tx"),
+        };
+
+        assert_eq!(eth_tx.value.to_string(), "0");
+        assert_eq!(hex::encode(eth_tx.data), "23b872dd0000000000000000000000009858effd232b4033e47d90003d41ec34ecaeda940000000000000000000000006fac4d18c912343bf86fa7049364dd4e424ab9c000000000000000000000000000000000000000000000000000000000000003e8");
+    }
+
+    #[test]
     fn test_get_balance() {
         let balance = tokio_test::block_on(ETH::get_balance(DEFAULT_ADDRESS, None, None)).unwrap();
 
         assert!(balance.to_i64() > 100);
+    }
+
+    #[test]
+    fn test_get_balance_erc20() {
+        let balance = tokio_test::block_on(ETH::get_balance(
+            DEFAULT_ADDRESS,
+            Some("0xc12d1c73ee7dc3615ba4e37e4abfdbddfa38907e".to_string()),
+            None,
+        ));
+        assert!(balance.is_ok());
+
+        assert!(balance.unwrap().to_i64() > 100);
     }
 }
