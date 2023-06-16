@@ -4,7 +4,7 @@ use crate::Bytes32;
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[wasm_bindgen]
 pub struct Hash {

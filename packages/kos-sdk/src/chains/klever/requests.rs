@@ -60,7 +60,7 @@ pub async fn make_request(
 ) -> Result<crate::models::Transaction, Error> {
     let mut tx_request = models::SendTXRequest {
         tx_type: 0,
-        sender,
+        sender: sender.to_owned(),
         nonce: options.nonce,
         perm_id: None,
         data: None,
@@ -75,6 +75,7 @@ pub async fn make_request(
 
     Ok(crate::models::Transaction {
         chain: chain::Chain::KLV,
+        sender: sender,
         hash: Hash::new(&tx.tx_hash)?,
         data: Some(TransactionRaw::Klever(tx.tx)),
     })

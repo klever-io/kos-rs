@@ -29,7 +29,6 @@ impl TRX {
             name: "Tron",
             symbol: "TRX",
             precision: 6,
-            node_url: "https://api.trongrid.io",
             chain_code: 1,
         }
     }
@@ -70,7 +69,8 @@ impl TRX {
 
     #[wasm_bindgen(js_name = "getPath")]
     pub fn get_path(index: u32) -> Result<String, Error> {
-        Ok(format!("m/44'/{}'/{}'/0/0", BIP44_PATH, index))
+        // use account 0 index X
+        Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index))
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
@@ -98,13 +98,14 @@ impl TRX {
                 new_tx.signature.push(sig);
                 let result = Transaction {
                     chain: tx.chain,
+                    sender: tx.sender,
                     hash: Hash::from_vec(digest)?,
                     data: Some(TransactionRaw::Tron(new_tx)),
                 };
 
                 Ok(result)
             }
-            _ => return Err(Error::InvalidMessage("not a klever transaction")),
+            _ => return Err(Error::InvalidMessage("not a tron transaction".to_string())),
         }
     }
 
@@ -160,7 +161,8 @@ impl TRX {
         token: Option<String>,
         node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
-        let node = node_url.unwrap_or_else(|| TRX::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("TRX"));
+
         let acc_address = address::Address::from_str(addr)?;
 
         // check if TRC20 -> trigger contract instead todo!()
@@ -184,7 +186,7 @@ impl TRX {
         options: Option<crate::models::SendOptions>,
         node_url: Option<String>,
     ) -> Result<crate::models::Transaction, Error> {
-        let node = node_url.unwrap_or_else(|| TRX::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("TRX"));
         let addr_sender = address::Address::from_str(&sender)?;
         let addr_receiver = address::Address::from_str(&receiver)?;
 
@@ -216,6 +218,7 @@ impl TRX {
 
         Ok(crate::models::Transaction {
             chain: chain::Chain::TRX,
+            sender: sender,
             hash: Hash::from_vec(digest)?,
             data: Some(TransactionRaw::Tron(tx)),
         })
@@ -226,7 +229,7 @@ impl TRX {
         tx: crate::models::Transaction,
         node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        let node = node_url.unwrap_or_else(|| TRX::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("TRX"));
 
         let raw = tx
             .data
@@ -248,6 +251,7 @@ impl TRX {
 
         Ok(BroadcastResult::new(crate::models::Transaction {
             chain: tx.chain,
+            sender: tx.sender,
             hash: tx.hash,
             data: tx.data,
         }))
@@ -324,6 +328,26 @@ mod tests {
                 assert_eq!(c.amount, 10);
             }
             _ => assert!(false),
+        }
+    }
+
+    #[test]
+    fn test_validate_tron_bip44() {
+        let default_mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+        let v = vec![
+            (0, "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH"),
+            (1, "TSeJkUh4Qv67VNFwY8LaAxERygNdy6NQZK"),
+            (2, "TYJPRrdB5APNeRs4R7fYZSwW3TcrTKw2gx"),
+            (3, "TRhVWK5XEDkQBDevcdCWW7RW51aRncty4W"),
+            (4, "TT2X2yyubp7qpAWYYNE5JQWBtoZ7ikQFsY"),
+        ];
+
+        for (index, expected_addr) in v {
+            let path = TRX::get_path(index).unwrap();
+            let kp = TRX::keypair_from_mnemonic(default_mnemonic, &path, None).unwrap();
+            let addr = TRX::get_address_from_keypair(&kp).unwrap();
+
+            assert_eq!(expected_addr, addr);
         }
     }
 }

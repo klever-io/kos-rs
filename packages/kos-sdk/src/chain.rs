@@ -122,7 +122,7 @@ macro_rules! createChains {
     }
 }
 
-createChains!(NONE, KLV, TRX);
+createChains!(NONE, KLV, TRX, ETH);
 
 // pub enum Chain {
 //     NONE, // 0
@@ -187,8 +187,6 @@ pub struct BaseChain {
     #[wasm_bindgen(skip)]
     pub precision: u8,
     #[wasm_bindgen(skip)]
-    pub node_url: &'static str,
-    #[wasm_bindgen(skip)]
     pub chain_code: u8,
 }
 
@@ -207,11 +205,6 @@ impl BaseChain {
     #[wasm_bindgen(js_name = getPrecision)]
     pub fn get_precision(&self) -> u8 {
         self.precision
-    }
-
-    #[wasm_bindgen(js_name = getNodeUrl)]
-    pub fn get_node_url(&self) -> String {
-        self.node_url.to_string()
     }
 
     #[wasm_bindgen(js_name = getChainCode)]

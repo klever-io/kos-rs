@@ -28,7 +28,6 @@ impl KLV {
             name: "Klever",
             symbol: "KLV",
             precision: 6,
-            node_url: "https://node.mainnet.klever.finance",
             chain_code: 38,
         }
     }
@@ -90,13 +89,18 @@ impl KLV {
                 new_tx.signature.push(sig);
                 let result = Transaction {
                     chain: tx.chain,
+                    sender: tx.sender,
                     hash: Hash::from_vec(digest)?,
                     data: Some(TransactionRaw::Klever(new_tx)),
                 };
 
                 Ok(result)
             }
-            _ => return Err(Error::InvalidMessage("not a klever transaction")),
+            _ => {
+                return Err(Error::InvalidMessage(
+                    "not a klever transaction".to_string(),
+                ))
+            }
         }
     }
 
@@ -151,7 +155,7 @@ impl KLV {
         token: Option<String>,
         node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
-        let node = node_url.unwrap_or_else(|| KLV::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("KLV"));
         let acc = requests::get_account(node.as_str(), address).await?;
 
         Ok(match token {
@@ -168,7 +172,7 @@ impl KLV {
         tx: crate::models::Transaction,
         node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        let node = node_url.unwrap_or_else(|| KLV::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("KLV"));
         let raw = tx
             .data
             .clone()
@@ -187,6 +191,7 @@ impl KLV {
 
                 Ok(BroadcastResult::new(crate::models::Transaction {
                     chain: tx.chain,
+                    sender: tx.sender,
                     hash: tx_hash,
                     data: tx.data,
                 }))
@@ -214,7 +219,7 @@ impl KLV {
         options: Option<crate::models::SendOptions>,
         node_url: Option<String>,
     ) -> Result<crate::models::Transaction, Error> {
-        let node = node_url.unwrap_or_else(|| KLV::base_chain().node_url.to_string());
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("KLV"));
         let options = KLV::get_options(options);
 
         let contract = models::TransferTXRequest {
@@ -268,6 +273,7 @@ mod tests {
 
         let to_broadcast = crate::models::Transaction {
             chain: crate::chain::Chain::KLV,
+            sender: "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy".to_string(),
             hash: Hash::new("0x0000000000000000000000000000000000000000000000000000000000000000")
                 .unwrap(),
             data: Some(TransactionRaw::Klever(klv_tx)),

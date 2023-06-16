@@ -28,6 +28,9 @@ rand = { workspace = true }
 coins-bip39 = { workspace = true }
 pem = "2"
 ciborium = "0.2"
+web3 = "0.18"
+secp256k1 = { workspace = true, default-features = false }
+rlp = "0.5"
 
 reqwest = { workspace = true, features = ["blocking", "json"] }
 wasm-bindgen-futures = "0.4"
@@ -41,3 +44,6 @@ prost = { workspace = true }
 
 [dev-dependencies]
 tokio-test = "*"
+
+[build-dependencies]
+dotenv-build = "0.1"

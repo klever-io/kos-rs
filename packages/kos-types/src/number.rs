@@ -4,8 +4,11 @@ use std::{ops::Deref, str::FromStr};
 
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
+use serde::{Deserialize, Serialize, Serializer};
+
 use wasm_bindgen::prelude::*;
 
+#[derive(Debug, Clone)]
 #[wasm_bindgen]
 pub struct BigNumber {
     v: BigInt,
@@ -19,10 +22,65 @@ impl Deref for BigNumber {
     }
 }
 
+impl Serialize for BigNumber {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.v.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for BigNumber {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        String::deserialize(deserializer)?
+            .parse()
+            .map_err(serde::de::Error::custom)
+            .map(|v| BigNumber { v })
+    }
+}
+
+impl Default for BigNumber {
+    fn default() -> Self {
+        Self {
+            v: BigInt::default(),
+        }
+    }
+}
+
+impl FromStr for BigNumber {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        BigNumber::from_string(s)
+    }
+}
+
+impl TryInto<BigNumber> for &str {
+    type Error = Error;
+
+    fn try_into(self) -> Result<BigNumber, Self::Error> {
+        BigNumber::from_str(self)
+    }
+}
+
+impl TryFrom<String> for BigNumber {
+    type Error = Error;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        BigNumber::from_str(&s)
+    }
+}
+
 #[wasm_bindgen]
 impl BigNumber {
     #[wasm_bindgen(js_name = "fromString")]
-    pub fn from_string(value: String) -> Result<BigNumber, Error> {
+    pub fn from_string(value: &str) -> Result<BigNumber, Error> {
+        let value = value.trim().replace("_", "");
+
         Ok(BigNumber {
             v: BigInt::from_str(value.as_str())
                 .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,

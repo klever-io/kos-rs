@@ -11,6 +11,8 @@ rust-version = { workspace = true }
 [features]
 
 [dependencies]
+kos-types = { workspace = true }
+
 bytes = { workspace = true }
 prost = { workspace = true }
 prost-types = { workspace = true }
