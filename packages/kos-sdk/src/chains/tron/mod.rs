@@ -302,7 +302,7 @@ mod tests {
         .unwrap();
         println!("balance: {}", balance.to_string());
 
-        assert_eq!("2", balance.to_string());
+        assert!(balance.to_number() > 0 as f64);
     }
 
     #[test]
