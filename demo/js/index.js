@@ -141,7 +141,7 @@ async function wmFlow() {
   console.log("pem", String.fromCharCode(...pem));
   
   // load wallet manager  
-  const wm2 = kos.WalletManager.fromPem(pem, WMPass);
+  const wm2 = kos.WalletManager.fromPem(pem);
   console.log({wm2});
 
   let walletsLoaded = wm.viewWallets();
