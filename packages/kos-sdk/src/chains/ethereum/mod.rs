@@ -14,7 +14,7 @@ use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
 use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
-use std::str::FromStr;
+use std::{ops::Div, str::FromStr};
 use wasm_bindgen::prelude::*;
 use web3::ethabi;
 use web3::types::U256;
@@ -89,6 +89,15 @@ impl ETH {
     #[wasm_bindgen(js_name = "verifyDigest")]
     /// Verify Message signature
     pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<(), Error> {
+        // let message = Message::from_slice(message).map_err(|_| RecoveryError::InvalidMessage)?;
+        // let recovery_id = RecoveryId::from_i32(recovery_id).map_err(|_| RecoveryError::InvalidSignature)?;
+        // let signature =
+        //     RecoverableSignature::from_compact(signature, recovery_id).map_err(|_| RecoveryError::InvalidSignature)?;
+        // let public_key = CONTEXT
+        //     .recover_ecdsa(&message, &signature)
+        //     .map_err(|_| RecoveryError::InvalidSignature)?;
+
+        // Ok(public_key_address(&public_key))
         todo!()
     }
 
@@ -98,6 +107,11 @@ impl ETH {
         match tx.data {
             Some(TransactionRaw::Ethereum(eth_tx)) => {
                 let mut new_tx = eth_tx.clone();
+
+                // remove signature if any
+                let mut eth_tx = eth_tx.clone();
+                eth_tx.signature = None;
+
                 let digest = hash_transaction(&eth_tx)?;
                 let sig = ETH::sign_digest(digest.as_slice(), keypair)?;
 
@@ -105,10 +119,12 @@ impl ETH {
                     &sig[..64],
                     RecoveryId::from_i32(sig[64] as i32)?,
                 )?);
+
+                let new_hash = hash_transaction(&new_tx)?;
                 let result = Transaction {
                     chain: tx.chain,
                     sender: tx.sender,
-                    hash: Hash::from_vec(digest)?,
+                    hash: Hash::from_vec(new_hash)?,
                     data: Some(TransactionRaw::Ethereum(new_tx)),
                 };
 
@@ -125,7 +141,7 @@ impl ETH {
     #[wasm_bindgen(js_name = "hash")]
     /// hash digest
     pub fn hash(message: &[u8]) -> Result<Vec<u8>, Error> {
-        let digest = kos_crypto::hash::sha256(message);
+        let digest = kos_crypto::hash::keccak256(message);
         Ok(digest.to_vec())
     }
 
@@ -195,7 +211,7 @@ impl ETH {
     pub async fn gas_price(node_url: Option<String>) -> Result<BigNumber, Error> {
         let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("ETH"));
         let gas_price = request::gas_price(&node).await?;
-        gas_price.try_into()
+        BigNumber::from_string(&gas_price.to_string())
     }
 
     fn get_options(options: Option<crate::models::SendOptions>) -> kos_proto::options::ETHOptions {
@@ -286,7 +302,13 @@ impl ETH {
                 U256::from_dec_str(&value.to_string())
                     .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
             ),
-            None => None,
+            None => {
+                if options.legacy_type.unwrap_or(false) {
+                    Some(request::gas_price(node).await?)
+                } else {
+                    None
+                }
+            }
         };
 
         let value = U256::from_dec_str(&amount.to_string())
@@ -313,7 +335,13 @@ impl ETH {
                 U256::from_dec_str(&value.to_string())
                     .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
             ),
-            None => None,
+            None => {
+                if !options.legacy_type.unwrap_or(false) {
+                    Some(request::base_fee(node).await?)
+                } else {
+                    None
+                }
+            }
         };
 
         let max_priority_fee_per_gas: Option<U256> = match options.max_priority_fee_per_gas {
@@ -321,7 +349,14 @@ impl ETH {
                 U256::from_dec_str(&value.to_string())
                     .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
             ),
-            None => None,
+            None => {
+                if !options.legacy_type.unwrap_or(false) {
+                    // use 10% of max_fee_per_gas for max_priority_fee_per_gas as default
+                    Some(max_fee_per_gas.unwrap_or_default().div(U256::from(10)))
+                } else {
+                    None
+                }
+            }
         };
 
         Ok(transaction::Transaction {
@@ -345,10 +380,19 @@ impl ETH {
 
     #[wasm_bindgen(js_name = "broadcast")]
     pub async fn broadcast(
-        _data: crate::models::Transaction,
-        _node_url: Option<String>,
+        tx: crate::models::Transaction,
+        node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        todo!()
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("ETH"));
+
+        let eth_tx = match tx.data.to_owned() {
+            Some(TransactionRaw::Ethereum(tx)) => tx,
+            _ => return Err(Error::InvalidTransaction("Invalid transaction type".into())),
+        };
+
+        _ = request::broadcast(node.as_str(), eth_tx.encode()?).await?;
+
+        Ok(BroadcastResult::new(tx))
     }
 }
 
@@ -402,6 +446,8 @@ mod tests {
             data: Some(models::Options::Ethereum(kos_proto::options::ETHOptions {
                 chain_id: Some(1),
                 nonce: Some(100),
+                max_fee_per_gas: Some("1000000000".try_into().unwrap()),
+                max_priority_fee_per_gas: Some("1000000000".try_into().unwrap()),
                 ..Default::default()
             })),
         };
@@ -417,14 +463,14 @@ mod tests {
 
         assert_eq!(
             tx.hash.to_string(),
-            "d0fc214979d5be4dfd7e9a3d87a09dd0da9f2cd0fb431564c3193aa04bd99bb6"
+            "c2c9b955cf8394fa9434ba812e69f2297c23c16a261a915fa3f1a18adf3fae63"
         );
 
         let signed = ETH::sign(tx, &get_default_secret());
         assert!(signed.is_ok());
         assert_eq!(
             signed.unwrap().hash.to_string(),
-            "d0fc214979d5be4dfd7e9a3d87a09dd0da9f2cd0fb431564c3193aa04bd99bb6"
+            "87eab8c8201462ac4872200dfebe841aa77bdc0cc0e5310542c7f319dd304fdf"
         );
     }
 
@@ -436,6 +482,9 @@ mod tests {
                 nonce: Some(100),
                 token: Some("0xc12d1c73ee7dc3615ba4e37e4abfdbddfa38907e".to_string()),
                 gas_limit: Some(1000000.into()),
+                gas_price: Some(0.into()),
+                max_fee_per_gas: Some(0.into()),
+                max_priority_fee_per_gas: Some(0.into()),
                 ..Default::default()
             })),
         };
@@ -451,16 +500,23 @@ mod tests {
 
         assert_eq!(
             tx.hash.to_string(),
-            "cfdce06009f951cb21def52873925b7cf81e41392ca01c03c9c728d66165a51c"
+            "8fa67a23aa532d7a844abe36f028a87b897cb3a3e53c66c7402ad4c766cd49d8"
         );
 
-        let eth_tx = match tx.data {
+        let eth_tx = match tx.data.clone() {
             Some(models::TransactionRaw::Ethereum(tx)) => tx,
             _ => panic!("invalid tx"),
         };
 
         assert_eq!(eth_tx.value.to_string(), "0");
         assert_eq!(hex::encode(eth_tx.data), "23b872dd0000000000000000000000009858effd232b4033e47d90003d41ec34ecaeda940000000000000000000000006fac4d18c912343bf86fa7049364dd4e424ab9c000000000000000000000000000000000000000000000000000000000000003e8");
+
+        let signed = ETH::sign(tx, &get_default_secret());
+        assert!(signed.is_ok());
+        assert_eq!(
+            signed.unwrap().hash.to_string(),
+            "df35692c5d74f0d0cdc29f6c0067e32294902f414b7b8a08992557f05794470c"
+        );
     }
 
     #[test]

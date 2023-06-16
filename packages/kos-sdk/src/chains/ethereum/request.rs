@@ -2,11 +2,7 @@ use super::address::Address;
 
 use kos_types::{error::Error, number::BigNumber};
 
-use web3::{
-    transports::Http,
-    types::{CallRequest, U256},
-    Web3,
-};
+use web3::{transports::Http, types::U256, Web3};
 
 pub fn new_transport(url: &str) -> Result<Http, Error> {
     let transport =
@@ -92,11 +88,38 @@ pub async fn estimate_gas(
 }
 
 /// Get current recommended gas price
-pub async fn gas_price(url: &str) -> Result<String, Error> {
+pub async fn gas_price(url: &str) -> Result<U256, Error> {
     let web3 = get_web3(url)?;
     Ok(web3
         .eth()
         .gas_price()
+        .await
+        .map_err(|e| Error::TransportError(e.to_string()))?)
+}
+
+pub async fn base_fee(url: &str) -> Result<U256, Error> {
+    let web3 = get_web3(url)?;
+    let block = web3
+        .eth()
+        .block(web3::types::BlockId::Number(
+            web3::types::BlockNumber::Pending,
+        ))
+        .await
+        .map_err(|e| Error::TransportError(e.to_string()))?
+        .unwrap();
+
+    // get block base fee
+    let base_fee = block.base_fee_per_gas.unwrap_or(U256::zero());
+
+    Ok(base_fee)
+}
+
+/// Broadcast ETH transaction
+pub async fn broadcast(url: &str, tx_raw: Vec<u8>) -> Result<String, Error> {
+    let web3 = get_web3(url)?;
+    Ok(web3
+        .eth()
+        .send_raw_transaction(tx_raw.into())
         .await
         .map_err(|e| Error::TransportError(e.to_string()))?
         .to_string())
