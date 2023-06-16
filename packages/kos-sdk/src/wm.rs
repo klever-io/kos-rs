@@ -95,7 +95,8 @@ impl WalletManager {
         // deserialize all wallets and save to encrypted_data
         for pem in wallets.iter() {
             let wallet = Wallet::import(pem.clone())?;
-            self.wallets.insert(pem.tag().to_string(), wallet.to_owned());
+            self.wallets
+                .insert(pem.tag().to_string(), wallet.to_owned());
         }
 
         // unlock status
