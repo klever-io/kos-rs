@@ -37,6 +37,12 @@ impl Config {
         }
     }
 
+    /// Initialize the logger with the given config
+    pub fn with_prefix(level: Level, prefix: &str) -> Self {
+        Config::new(level).module_prefix(prefix)
+    }
+
+
     /// Configure the `target` of the logger. If specified, the logger
     /// only output for `log`s in module that its path starts with
     /// `module_prefix`. logger only supports single prefix. Only
@@ -152,10 +158,12 @@ impl Log for Logger {
 ///
 /// ## Examples
 /// ```rust
+/// use kos_utils::logger::*;
 /// init(Config::new(log::Level::Debug));
 /// ```
 /// or
 /// ```rust
+/// use kos_utils::logger::*;
 /// init(Config::with_prefix(log::Level::Debug, "some::module"));
 /// ```
 pub fn init(config: Config) {
