@@ -202,7 +202,7 @@ impl Wallet {
     }
 
     #[wasm_bindgen(js_name = "fromPem")]
-    pub fn from_pem(data: String) -> Result<Wallet, Error> {
+    pub fn from_pem(data: &[u8]) -> Result<Wallet, Error> {
         // parse pem
         let pem = parse_pem(&data)
             .map_err(|_| Error::WalletManagerError("Invalid PEM data".to_string()))?;
@@ -240,7 +240,7 @@ impl Wallet {
 
         // serialize wallet manager
         let mut serialized = Vec::new();
-        ciborium::into_writer(&self, &mut serialized)
+        ciborium::into_writer(self, &mut serialized)
             .map_err(|e| Error::CipherError(format!("serialize data: {}", e.to_string())))?;
 
         let pem = kos_crypto::cipher::to_pem(self.get_key(), &serialized)?;
@@ -536,7 +536,7 @@ DxjeGMoYbRhWGCQYZhjGGHgYtxhpGHIYgxiqGLQYRxUHGOYYIRiNGNIY8xhxCBj9
 GFcYRRj0GIIYkhiQGJNobW5lbW9uaWP2ZHBhdGj2Z2tleXBhaXL2
 -----END KLV-klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy-----";
 
-        let wallet = Wallet::from_pem(pem_str.to_owned()).unwrap();
+        let wallet = Wallet::from_pem(pem_str.as_bytes()).unwrap();
         assert!(wallet.is_locked());
         assert_eq!(
             wallet.get_address(),

@@ -15,6 +15,7 @@ crate-type = ["cdylib", "rlib"]
 strum = { version = "0.24", features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+serde-wasm-bindgen = "0.5"
 enum_delegate = { workspace = true }
 enum_dispatch = "0.3"
 
@@ -28,7 +29,7 @@ rand = { workspace = true }
 coins-bip39 = { workspace = true }
 pem = "2"
 ciborium = "0.2"
-web3 = "0.18"
+web3 = { version = "0.18", default-features = false, features = ["http-tls", "wasm"] }
 secp256k1 = { workspace = true, default-features = false }
 rlp = "0.5"
 

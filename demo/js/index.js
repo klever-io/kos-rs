@@ -52,9 +52,14 @@ async function deriveAccounts(){
 deriveAccounts();
 
 window.onload = function(){
-  var button = document.getElementById('btnSendKLV');
-  button.onclick = function() {
+  var buttonSend = document.getElementById('btnSendKLV');
+  buttonSend.onclick = function() {
     sendKLV("klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy", "klv1x2ejsdqz8uccl7htu4cef63z0cqnydhkd8g36tgk6qdv94hu7syqms3spm", 10)
+  };
+
+  var buttonWM = document.getElementById('btnWMFlow');
+  buttonWM.onclick = function() {
+    wmFlow()
   };
 }
 
@@ -84,3 +89,75 @@ async function signAndBroadcast(tx, wallet) {
     console.log(e)
   }
 }
+
+async function wmFlow() {
+  const WMPass = "12345678";
+  console.log("loading kos...");
+  const kos = await waitForKOS();
+  console.log("loaded kos", kos);
+
+  // new mnemonic
+  const mnemonic = kos.generateMnemonicPhrase(12);
+  console.log({mnemonic});
+  // init wallet manager
+  const wm = new kos.WalletManager();
+  console.log("WM Is Locked:", wm.isLocked());
+  
+  try {
+    // should give error as default mnemonic not exists yet
+    wm.newWallet(kos.Chain.KLV, WMPass);
+  } catch (e) {
+    console.log("expected error:", e);
+  }
+
+  // set default mnemonic
+  wm.setMnemonic(mnemonic, WMPass);
+
+  const w1 = wm.newWallet(kos.Chain.KLV, WMPass);
+  let wallets = wm.viewWallets();
+  console.log({wallets, w1, "w1Address": w1.getAddress()});
+
+  try {
+    // try lock with different password
+    wm.lock("1234");
+  } catch (e) {
+    console.log("expected error:", e);
+  }
+
+  console.log("WM Is Locked:", wm.isLocked());
+  // lock with correct password
+  wm.lock(WMPass);
+  console.log("WM Is Locked:", wm.isLocked());
+  
+  try {
+    // save wallet manager wrong password
+    wm.toPem("1234");
+  } catch (e) {
+    console.log("expected error:", e);
+  }
+
+  //save wallet manager
+  const pem = wm.toPem(WMPass);
+  console.log("pem", String.fromCharCode(...pem));
+  
+  // load wallet manager  
+  const wm2 = kos.WalletManager.fromPem(pem);
+  console.log({wm2});
+
+  let walletsLoaded = wm.viewWallets();
+  console.log({"isLocked": wm2.isLocked(), walletsLoaded});
+
+  // unlock wallet manager
+  wm2.unlock(WMPass);
+  walletsLoaded = wm2.viewWallets();
+  console.log({"isLocked": wm2.isLocked(), walletsLoaded});
+
+  // get wallet from loaded wallet manager
+  const w2 = wm2.getWallet(w1.getChain(), w1.getAddress());
+  console.log({w2, "w2Address": w2.getAddress(), "privateKey": w2.getPrivateKey(), "publicKey": w2.getPublicKey(), "mnemonic": w2.getMnemonic(), "path": w2.getPath()});
+  // unlock wallet to access secrets
+  w2.unlock(WMPass);
+  console.log({w2, "w2Address": w2.getAddress(), "privateKey": w2.getPrivateKey(), "publicKey": w2.getPublicKey(), "mnemonic": w2.getMnemonic(), "path": w2.getPath()});
+}
+
+wmFlow();

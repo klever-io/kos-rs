@@ -58,7 +58,7 @@ impl WalletManager {
     }
 
     #[wasm_bindgen(js_name = "fromPem")]
-    pub fn from_pem(data: String) -> Result<WalletManager, Error> {
+    pub fn from_pem(data: &[u8]) -> Result<WalletManager, Error> {
         // parse pem
         let pem = parse_pem(&data)
             .map_err(|_| Error::WalletManagerError("Invalid PEM data".to_string()))?;
@@ -95,7 +95,8 @@ impl WalletManager {
         // deserialize all wallets and save to encrypted_data
         for pem in wallets.iter() {
             let wallet = Wallet::import(pem.clone())?;
-            self.wallets.insert(pem.tag().to_string(), wallet);
+            self.wallets
+                .insert(pem.tag().to_string(), wallet.to_owned());
         }
 
         // unlock status
@@ -174,7 +175,7 @@ impl WalletManager {
         self.verify_password(password.clone())?;
 
         let mut data = Vec::new();
-        ciborium::into_writer(&self, &mut data)
+        ciborium::into_writer(self, &mut data)
             .map_err(|e| Error::CipherError(format!("serialize wm: {}", e.to_string())))?;
 
         let pem = kos_crypto::cipher::to_pem(KOS_WM_TAG.to_owned(), &data)?;
@@ -339,6 +340,39 @@ impl WalletManager {
 
         Ok(())
     }
+
+    #[wasm_bindgen(js_name = "viewWallets")]
+    pub fn view_wallets(&self) -> Result<JsValue, Error> {
+        let wallets = self.list_wallets();
+        serde_wasm_bindgen::to_value(&wallets).map_err(|e| Error::JSONSerde(e.to_string()))
+    }
+}
+
+impl WalletManager {
+    pub fn list_wallets(&self) -> Vec<WalletView> {
+        let mut wallets = Vec::new();
+        for w in self.wallets.values() {
+            // skip default mnemonic wallet
+            if w.get_chain() == crate::chain::Chain::NONE {
+                continue;
+            }
+
+            wallets.push(WalletView {
+                chain: w.get_chain(),
+                address: w.get_address(),
+                // todo!("add name to wallet struct")
+                name: w.get_key(),
+            });
+        }
+        wallets
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct WalletView {
+    pub chain: crate::chain::Chain,
+    pub address: String,
+    pub name: String,
 }
 
 #[cfg(test)]
