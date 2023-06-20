@@ -42,7 +42,6 @@ impl Config {
         Config::new(level).module_prefix(prefix)
     }
 
-
     /// Configure the `target` of the logger. If specified, the logger
     /// only output for `log`s in module that its path starts with
     /// `module_prefix`. logger only supports single prefix. Only
