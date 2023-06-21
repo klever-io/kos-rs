@@ -160,4 +160,38 @@ async function wmFlow() {
   console.log({w2, "w2Address": w2.getAddress(), "privateKey": w2.getPrivateKey(), "publicKey": w2.getPublicKey(), "mnemonic": w2.getMnemonic(), "path": w2.getPath()});
 }
 
-wmFlow();
+
+async function cipherFlow() {
+  const kos = await waitForKOS();
+  const algo = kos.CipherAlgo.GMC;
+
+  const plainText = "Hello World!";
+  // can use either of these
+  const utf8Encode = new TextEncoder();
+  const encoded = utf8Encode.encode(plainText);
+  const plainTextBytes = kos.toBytes(plainText);
+  console.log({plainTextBytes, encoded});
+
+  
+  const encrypted = kos.encrypt(algo, plainTextBytes, "12345678");
+  console.log({encrypted});
+
+   // create pem file with encrypted data
+   const pem = kos.toPem("MY WALLET", encrypted);
+   console.log({pem});
+
+  try {
+    // decrypt with wrong password
+    kos.decrypt(encrypted, "1234");
+  } catch (e) {
+    console.log("expected error:", e);
+  }
+  
+  const decrypted = kos.decrypt(encrypted, "12345678");
+  console.log({decrypted});
+
+  // compare decrypted data with original data
+  const decryptedText = kos.toString(decrypted);
+  console.log({decryptedText, plainText});
+}
+cipherFlow();
