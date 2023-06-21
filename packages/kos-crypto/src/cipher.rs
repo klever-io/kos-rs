@@ -21,6 +21,8 @@ use pem::Pem;
 use rand::Rng;
 use sha2::Sha256;
 
+use wasm_bindgen::prelude::*;
+
 const KEY_SIZE: usize = 32; // SALTSIZE
 const NONCE_SIZE: usize = 12; // NONCESIZE
 const IV_SIZE: usize = 16; // IVSIZE
@@ -29,6 +31,7 @@ const BLOCK_SIZE: usize = 16; // BLOCKSIZE
 const ITERATIONS: u32 = 10000;
 
 #[derive(Debug, Clone)]
+#[wasm_bindgen]
 pub enum CipherAlgo {
     GMC = 0,
     CBC = 1,
@@ -36,7 +39,7 @@ pub enum CipherAlgo {
 }
 // todo!("build with macro")
 impl CipherAlgo {
-    fn to_vec(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> Vec<u8> {
         match self {
             CipherAlgo::GMC => vec![0],
             CipherAlgo::CBC => vec![1],
@@ -44,7 +47,7 @@ impl CipherAlgo {
         }
     }
 
-    fn from_u8(value: u8) -> Result<Self, Error> {
+    pub fn from_u8(value: u8) -> Result<Self, Error> {
         match value {
             0 => Ok(CipherAlgo::GMC),
             1 => Ok(CipherAlgo::CBC),
@@ -53,7 +56,7 @@ impl CipherAlgo {
         }
     }
 
-    fn encrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    pub fn encrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
         match self {
             CipherAlgo::GMC => gcm_encrypt(data, password),
             CipherAlgo::CBC => cbc_encrypt(data, password),
@@ -61,7 +64,7 @@ impl CipherAlgo {
         }
     }
 
-    fn decrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    pub fn decrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
         match self {
             CipherAlgo::GMC => gcm_decrypt(data, password),
             CipherAlgo::CBC => cbc_decrypt(data, password),
