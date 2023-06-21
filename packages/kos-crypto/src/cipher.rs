@@ -17,7 +17,7 @@ use pbkdf2::{
     password_hash::{PasswordHash, PasswordHasher, SaltString},
     Pbkdf2,
 };
-use pem::Pem;
+use pem::{parse as parse_pem, Pem};
 use rand::Rng;
 use sha2::Sha256;
 
@@ -79,6 +79,10 @@ pub fn to_pem(tag: String, data: &[u8]) -> Result<Pem, Error> {
 
 pub fn from_pem(pem: Pem) -> Vec<u8> {
     pem.contents().to_vec()
+}
+
+pub fn string_to_pem(data: &str) -> Result<Pem, Error> {
+    parse_pem(data.as_bytes()).map_err(|e| Error::CipherError(format!("{}", e)))
 }
 
 pub fn create_checksum(password: &str) -> String {
