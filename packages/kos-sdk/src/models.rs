@@ -36,6 +36,7 @@ kos_types::enum_thing! {
         Klever(kos_proto::klever::Transaction),
         Tron(kos_proto::tron::Transaction),
         Ethereum(super::chains::ETHTransaction),
+        Polygon(super::chains::MATICTransaction),
     }
 }
 
@@ -45,6 +46,7 @@ kos_types::enum_thing! {
         Klever(kos_proto::options::KLVOptions),
         Tron(kos_proto::options::TRXOptions),
         Ethereum(kos_proto::options::ETHOptions),
+        Polygon(kos_proto::options::MATICOptions),
     }
 }
 
@@ -55,6 +57,12 @@ pub struct SendOptions {
     #[wasm_bindgen(skip)]
     #[serde(skip)]
     pub data: Option<Options>,
+}
+
+impl SendOptions {
+    pub fn new(data: Options) -> Self {
+        Self { data: Some(data) }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -82,5 +90,13 @@ impl Transaction {
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> Result<String, Error> {
         serde_json::to_string(&self).map_err(|e| e.into())
+    }
+}
+
+impl Transaction {
+    pub fn new_data(&self, data: TransactionRaw) -> Transaction {
+        let mut tx = self.clone();
+        tx.data = Some(data);
+        tx
     }
 }
