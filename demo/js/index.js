@@ -57,6 +57,19 @@ window.onload = function(){
     sendKLV("klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy", "klv1x2ejsdqz8uccl7htu4cef63z0cqnydhkd8g36tgk6qdv94hu7syqms3spm", 10)
   };
 
+  var btnCreateMnemonic = document.getElementById('btnCreateMnemonic');
+  btnCreateMnemonic.onclick = function() {
+    createMnemonicAndExport()
+  };
+
+  var btnLoadMnemonic = document.getElementById('btnLoadMnemonic');
+  btnLoadMnemonic.onclick = function() {
+    document.getElementById('fileInput').click();
+  };
+
+  document.getElementById('fileInput').addEventListener('change', loadMnemonicFromFile, false);
+
+
   var buttonWM = document.getElementById('btnWMFlow');
   buttonWM.onclick = function() {
     wmFlow()
@@ -160,7 +173,6 @@ async function wmFlow() {
   console.log({w2, "w2Address": w2.getAddress(), "privateKey": w2.getPrivateKey(), "publicKey": w2.getPublicKey(), "mnemonic": w2.getMnemonic(), "path": w2.getPath()});
 }
 
-
 async function cipherFlow() {
   const kos = await waitForKOS();
   const algo = kos.CipherAlgo.GMC;
@@ -195,3 +207,69 @@ async function cipherFlow() {
   console.log({decryptedText, plainText});
 }
 cipherFlow();
+
+async function createMnemonicAndExport() {
+  const kos = await waitForKOS();
+  const mnemonic = kos.generateMnemonicPhrase(12);
+
+  await exportMnemonic("my wallet", mnemonic);
+}
+
+async function exportMnemonic(name, mnemonic) {
+  const kos = await waitForKOS();
+
+  try {
+    const encrypted = kos.encrypt(kos.CipherAlgo.GMC, kos.toBytes(mnemonic), "12345678");
+    const pem = kos.toPem(name, encrypted);
+
+    const qrCode = kos.generateQR(pem);
+    const url = URL.createObjectURL(new Blob([qrCode], { type: 'image/png' }));
+    document.getElementById('qrCode').src = url;
+    console.log({pem, url});
+  }catch(e){
+    console.log(e)
+  }
+}
+
+
+async function loadMnemonicFromFile(e) {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+
+  reader.onloadend = function() {
+      const img = new Image();
+      img.onload = function(){
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+
+          canvas.width = img.width;
+          canvas.height = img.height;
+          context.drawImage(img, 0, 0, img.width, img.height);
+
+          const imageData = context.getImageData(0, 0, img.width, img.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          console.log({code});
+
+          // decrypt data
+          if (code) {
+            // get password from user
+            const password = prompt("Please enter password", "");
+            // convert code to pem and decrypt
+            const mnemonic = kos.fromPem(code.data, password);
+            alert("recovered mnemonic: " + kos.toString(mnemonic));
+              
+          } else {
+              alert("QR Code not detected");
+          }
+      }
+
+      img.src = reader.result;
+  }
+
+  if (file) {
+      reader.readAsDataURL(file);
+  } else {
+      alert("No file selected.");
+  }
+
+}
