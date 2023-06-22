@@ -122,7 +122,7 @@ macro_rules! createChains {
     }
 }
 
-createChains!(NONE, KLV, TRX, ETH);
+createChains!(NONE, KLV, TRX, ETH, MATIC);
 
 // pub enum Chain {
 //     NONE, // 0
@@ -179,6 +179,7 @@ createChains!(NONE, KLV, TRX, ETH);
 // }
 
 #[wasm_bindgen]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BaseChain {
     #[wasm_bindgen(skip)]
     pub name: &'static str,

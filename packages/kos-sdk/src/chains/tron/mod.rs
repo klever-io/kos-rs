@@ -20,17 +20,18 @@ pub struct TRX {}
 
 pub const SIGN_PREFIX: &[u8; 22] = b"\x19TRON Signed Message:\n";
 pub const BIP44_PATH: u32 = 195;
+pub const BASE_CHAIN: BaseChain = BaseChain {
+    name: "Tron",
+    symbol: "TRX",
+    precision: 6,
+    chain_code: 1,
+};
 
 #[wasm_bindgen]
 impl TRX {
     #[wasm_bindgen(js_name = "baseChain")]
     pub fn base_chain() -> BaseChain {
-        BaseChain {
-            name: "Tron",
-            symbol: "TRX",
-            precision: 6,
-            chain_code: 1,
-        }
+        BASE_CHAIN
     }
 
     fn get_options(options: Option<crate::models::SendOptions>) -> kos_proto::options::TRXOptions {

@@ -17,19 +17,18 @@ pub struct KLV {}
 
 pub const SIGN_PREFIX: &[u8; 24] = b"\x17Klever Signed Message:\n";
 pub const BIP44_PATH: u32 = 690;
-// todo!() check if needed
-// pub const BIP44_PATH_TESTNET: u32 = 620;
+pub const BASE_CHAIN: BaseChain = BaseChain {
+    name: "Klever",
+    symbol: "KLV",
+    precision: 6,
+    chain_code: 38,
+};
 
 #[wasm_bindgen]
 impl KLV {
     #[wasm_bindgen(js_name = "baseChain")]
     pub fn base_chain() -> BaseChain {
-        BaseChain {
-            name: "Klever",
-            symbol: "KLV",
-            precision: 6,
-            chain_code: 38,
-        }
+        BASE_CHAIN
     }
 
     #[wasm_bindgen(js_name = "random")]

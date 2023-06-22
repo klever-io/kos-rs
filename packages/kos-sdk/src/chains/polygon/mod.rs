@@ -16,6 +16,13 @@ pub struct MATIC {}
 
 pub const CHAIN_ID: u64 = 137;
 
+pub const BASE_CHAIN: BaseChain = BaseChain {
+    name: "Polygon",
+    symbol: "MATIC",
+    precision: 18,
+    chain_code: 28,
+};
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Transaction {
     pub eth: ETHTransaction,
@@ -56,12 +63,7 @@ fn convert_transaction(tx: models::Transaction) -> Result<models::Transaction, E
 impl MATIC {
     #[wasm_bindgen(js_name = "baseChain")]
     pub fn base_chain() -> BaseChain {
-        BaseChain {
-            name: "Polygon",
-            symbol: "MATIC",
-            precision: 18,
-            chain_code: 28,
-        }
+        BASE_CHAIN
     }
 
     #[wasm_bindgen(js_name = "random")]

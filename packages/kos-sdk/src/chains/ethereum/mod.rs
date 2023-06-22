@@ -35,16 +35,18 @@ pub fn hash_transaction(eth_tx: &transaction::Transaction) -> Result<Vec<u8>, Er
     Ok(digest)
 }
 
+pub const BASE_CHAIN: BaseChain = BaseChain {
+    name: "Ethereum",
+    symbol: "ETH",
+    precision: 18,
+    chain_code: 3,
+};
+
 #[wasm_bindgen]
 impl ETH {
     #[wasm_bindgen(js_name = "baseChain")]
     pub fn base_chain() -> BaseChain {
-        BaseChain {
-            name: "Ethereum",
-            symbol: "ETH",
-            precision: 18,
-            chain_code: 3,
-        }
+        BASE_CHAIN
     }
 
     #[wasm_bindgen(js_name = "random")]
