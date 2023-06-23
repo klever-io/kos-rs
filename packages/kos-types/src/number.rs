@@ -1,5 +1,6 @@
 use crate::error::Error;
 
+use core::cmp::Ordering;
 use std::{ops::Deref, str::FromStr};
 
 use num_bigint::BigInt;
@@ -118,6 +119,89 @@ impl BigNumber {
         let index = len - precision as usize;
         s.insert(index, '.');
         s
+    }
+
+    pub fn self_add(mut self, other: &BigNumber) -> Self {
+        self.v += &other.v;
+        self
+    }
+
+    pub fn self_sub(mut self, other: &BigNumber) -> Self {
+        self.v -= &other.v;
+        self
+    }
+
+    pub fn self_mul(mut self, other: &BigNumber) -> Self {
+        self.v *= &other.v;
+        self
+    }
+
+    pub fn self_div(mut self, other: &BigNumber) -> Self {
+        self.v /= &other.v;
+        self
+    }
+
+    pub fn add(self, other: &BigNumber) -> Self {
+        BigNumber {
+            v: self.v + &other.v,
+        }
+    }
+
+    pub fn sub(self, other: &BigNumber) -> Self {
+        BigNumber {
+            v: self.v - &other.v,
+        }
+    }
+
+    pub fn mul(self, other: &BigNumber) -> Self {
+        BigNumber {
+            v: self.v * &other.v,
+        }
+    }
+
+    pub fn div(self, other: &BigNumber) -> Self {
+        BigNumber {
+            v: self.v / &other.v,
+        }
+    }
+
+    pub fn gt(&self, other: &BigNumber) -> bool {
+        self.v > other.v
+    }
+
+    pub fn gte(&self, other: &BigNumber) -> bool {
+        self.v >= other.v
+    }
+
+    pub fn lt(&self, other: &BigNumber) -> bool {
+        self.v < other.v
+    }
+
+    pub fn lte(&self, other: &BigNumber) -> bool {
+        self.v <= other.v
+    }
+}
+
+impl PartialEq for BigNumber {
+    #[inline]
+    fn eq(&self, other: &BigNumber) -> bool {
+        self.v.eq(&other.v)
+    }
+}
+
+impl Eq for BigNumber {}
+
+impl PartialOrd for BigNumber {
+    #[inline]
+    fn partial_cmp(&self, other: &BigNumber) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for BigNumber {
+    #[inline]
+    fn cmp(&self, other: &BigNumber) -> Ordering {
+        self.v.cmp(&other.v)
     }
 }
 
