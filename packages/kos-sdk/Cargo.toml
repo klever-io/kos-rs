@@ -30,6 +30,7 @@ coins-bip39 = { workspace = true }
 pem = "2"
 ciborium = "0.2"
 web3 = { version = "0.18", default-features = false, features = ["http-tls", "wasm"] }
+bitcoin = "0.30"
 secp256k1 = { workspace = true, default-features = false }
 rlp = "0.5"
 

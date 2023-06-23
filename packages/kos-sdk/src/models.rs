@@ -37,6 +37,7 @@ kos_types::enum_thing! {
         Tron(kos_proto::tron::Transaction),
         Ethereum(super::chains::ETHTransaction),
         Polygon(super::chains::MATICTransaction),
+        Bitcoin(super::chains::BTCTransaction),
     }
 }
 
