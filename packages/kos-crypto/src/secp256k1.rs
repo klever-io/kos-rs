@@ -15,6 +15,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 pub struct Secp256k1KeyPair {
     secret_key: SecretKey,
     public_key: PublicKey,
+    compressed: bool,
 }
 
 impl Secp256k1KeyPair {
@@ -27,6 +28,7 @@ impl Secp256k1KeyPair {
         Self {
             secret_key,
             public_key,
+            compressed: false,
         }
     }
 
@@ -39,6 +41,7 @@ impl Secp256k1KeyPair {
         Self {
             secret_key,
             public_key,
+            compressed: false,
         }
     }
 
@@ -68,18 +71,31 @@ impl Secp256k1KeyPair {
         Ok(Self {
             secret_key,
             public_key,
+            compressed: false,
         })
     }
 }
 
 impl Secp256k1KeyPair {
     pub fn public_key(&self) -> Vec<u8> {
-        let bytes = self.public_key.serialize_uncompressed();
-        bytes[1..].to_vec()
+        if self.compressed {
+            self.public_key.serialize().to_vec()
+        } else {
+            self.public_key.serialize_uncompressed()[1..].to_vec()
+        }
     }
 
     pub fn secret_key(&self) -> Vec<u8> {
         self.secret_key[..].to_vec()
+    }
+
+    pub fn is_compressed(&self) -> bool {
+        self.compressed
+    }
+
+    pub fn set_compressed(mut self, compressed: bool) -> Self {
+        self.compressed = compressed;
+        self
     }
 }
 
