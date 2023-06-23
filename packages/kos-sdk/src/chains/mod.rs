@@ -15,4 +15,4 @@ pub use tron::TRX;
 pub use ethereum::transaction::Transaction as ETHTransaction;
 pub use polygon::Transaction as MATICTransaction;
 
-pub use self::bitcoin::BTCTransaction;
+pub use self::bitcoin::transaction::BTCTransaction;

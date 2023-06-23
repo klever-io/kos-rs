@@ -50,3 +50,11 @@ pub struct ETHOptions {
 pub struct MATICOptions {
     pub eth: ETHOptions,
 }
+#[derive(Deserialize, Serialize, Default, Clone, Debug)]
+pub struct BTCOptions {
+    pub stats_per_bytes: Option<u64>,
+    pub dust_value: Option<BigNumber>,
+    pub send_all: Option<bool>,
+    pub change_address: Option<String>,
+    pub receivers: Option<Vec<(String, BigNumber)>>,
+}

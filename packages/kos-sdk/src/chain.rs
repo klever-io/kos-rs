@@ -122,7 +122,7 @@ macro_rules! createChains {
     }
 }
 
-createChains!(NONE, KLV, TRX, ETH, MATIC);
+createChains!(NONE, KLV, TRX, BTC, ETH, MATIC);
 
 // pub enum Chain {
 //     NONE, // 0

@@ -48,6 +48,7 @@ kos_types::enum_thing! {
         Tron(kos_proto::options::TRXOptions),
         Ethereum(kos_proto::options::ETHOptions),
         Polygon(kos_proto::options::MATICOptions),
+        Bitcoin(kos_proto::options::BTCOptions),
     }
 }
 
@@ -95,8 +96,9 @@ impl Transaction {
 }
 
 impl Transaction {
-    pub fn new_data(&self, data: TransactionRaw) -> Transaction {
+    pub fn new_data(&self, chain: Chain, data: TransactionRaw) -> Transaction {
         let mut tx = self.clone();
+        tx.chain = chain;
         tx.data = Some(data);
         tx
     }

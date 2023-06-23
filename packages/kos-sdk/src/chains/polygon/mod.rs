@@ -1,7 +1,7 @@
 use super::ETHTransaction;
 use super::ETH;
 
-use crate::chain::BaseChain;
+use crate::chain::{BaseChain, Chain};
 use crate::models::{self, BroadcastResult, TransactionRaw};
 
 use kos_crypto::keypair::KeyPair;
@@ -48,11 +48,12 @@ fn convert_options(
 fn convert_transaction(tx: models::Transaction) -> Result<models::Transaction, Error> {
     match tx.data.clone() {
         Some(TransactionRaw::Polygon(tx_polygon)) => {
-            Ok(tx.new_data(TransactionRaw::Ethereum(tx_polygon.eth)))
+            Ok(tx.new_data(Chain::MATIC, TransactionRaw::Ethereum(tx_polygon.eth)))
         }
-        Some(TransactionRaw::Ethereum(tx_eth)) => {
-            Ok(tx.new_data(TransactionRaw::Polygon(Transaction { eth: tx_eth })))
-        }
+        Some(TransactionRaw::Ethereum(tx_eth)) => Ok(tx.new_data(
+            Chain::MATIC,
+            TransactionRaw::Polygon(Transaction { eth: tx_eth }),
+        )),
         _ => Err(Error::InvalidTransaction(
             "Invalid Transaction Type".to_string(),
         )),

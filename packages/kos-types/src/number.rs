@@ -108,6 +108,11 @@ impl BigNumber {
         self.v.to_i64().unwrap_or(0)
     }
 
+    #[wasm_bindgen(js_name = "toU64")]
+    pub fn to_u64(&self) -> u64 {
+        self.v.to_u64().unwrap_or(0)
+    }
+
     #[wasm_bindgen(js_name = "withPrecision")]
     pub fn with_precision(&self, precision: u32) -> String {
         let mut s = self.v.to_string();

@@ -1,18 +1,15 @@
-use crate::chain::BaseChain;
+mod requests;
+pub mod transaction;
+
+use crate::chain::{BaseChain, Chain};
 use crate::models::{self, BroadcastResult, Transaction, TransactionRaw};
 
-use kos_crypto::keypair::KeyPair;
-use kos_crypto::secp256k1::Secp256k1KeyPair;
-use kos_types::error::Error;
-use kos_types::number::BigNumber;
+use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
+use kos_types::{error::Error, hash::Hash, number::BigNumber};
 
-use bitcoin::Address;
-
+use bitcoin::{Address, Network};
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
-
-#[derive(Debug, Copy, Clone)]
-#[wasm_bindgen]
-pub struct BTCTransaction {} // todo!()
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
@@ -27,6 +24,17 @@ pub const BASE_CHAIN: BaseChain = BaseChain {
     precision: 8,
     chain_code: 2,
 };
+
+pub fn get_network() -> Network {
+    Network::Bitcoin
+}
+
+fn get_options(options: Option<crate::models::SendOptions>) -> kos_proto::options::BTCOptions {
+    match options.and_then(|opt| opt.data) {
+        Some(crate::models::Options::Bitcoin(op)) => op,
+        _ => kos_proto::options::BTCOptions::default(),
+    }
+}
 
 #[wasm_bindgen]
 impl BTC {
@@ -64,7 +72,7 @@ impl BTC {
             Error::InvalidPublicKey(format!("Invalid public key: {}", e.to_string()))
         })?;
 
-        Address::p2wpkh(&pubkey, bitcoin::Network::Bitcoin)
+        Address::p2wpkh(&pubkey, get_network())
             .map(|a| a.to_string())
             .map_err(|e| Error::InvalidAddress(e.to_string()).into())
     }
@@ -94,11 +102,9 @@ impl BTC {
             Some(TransactionRaw::Bitcoin(btc_tx)) => {
                 todo!()
             }
-            _ => {
-                return Err(Error::InvalidMessage(
-                    "not a bitcoin transaction".to_string(),
-                ))
-            }
+            _ => Err(Error::InvalidMessage(
+                "not a bitcoin transaction".to_string(),
+            )),
         }
     }
 
@@ -138,16 +144,21 @@ impl BTC {
     #[wasm_bindgen(js_name = "getBalance")]
     pub async fn get_balance(
         address: &str,
-        token: Option<String>,
+        _token: Option<String>,
         node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
-        // bitcoin balance are based on UTXOs, so we need to get all UTXOs and sum them up
-        // bitcoin node only list unspent UTXOs of an address
-        todo!()
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("BTC"));
+        requests::balance(&node, address, 0).await
     }
 
-    fn get_options(options: Option<crate::models::SendOptions>) -> kos_proto::options::ETHOptions {
-        todo!()
+    fn get_receiver(receiver: String, amount: &BigNumber) -> Result<(Address, BigNumber), Error> {
+        let addr =
+            Address::from_str(&receiver).map_err(|e| Error::InvalidAddress(e.to_string()))?;
+        Ok((
+            addr.require_network(get_network())
+                .map_err(|e| Error::InvalidAddress(e.to_string()))?,
+            amount.clone(),
+        ))
     }
 
     pub async fn send(
@@ -157,7 +168,48 @@ impl BTC {
         options: Option<models::SendOptions>,
         node_url: Option<String>,
     ) -> Result<Transaction, Error> {
-        todo!()
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("BTC"));
+        let options = get_options(options);
+
+        let mut total_amount = amount.clone();
+
+        let mut receivers: Vec<(Address, BigNumber)> = Vec::new();
+        if !receiver.is_empty() {
+            receivers.push(Self::get_receiver(receiver, &amount)?);
+        }
+        // add outputs from options
+        for output in options.receivers.unwrap_or(vec![]) {
+            receivers.push(Self::get_receiver(output.0, &output.1)?);
+            total_amount = total_amount.add(&output.1);
+        }
+
+        // todo!() compute fee
+        let sats_per_bytes = options.stats_per_bytes.unwrap_or_default();
+
+        let change_address = Address::from_str(&options.change_address.unwrap_or(sender.clone()))
+            .map_err(|e| Error::InvalidAddress(e.to_string()))?
+            .require_network(get_network())
+            .map_err(|e| Error::InvalidAddress(e.to_string()))?;
+
+        // get utoxs
+        let sender_utxos =
+            requests::select_utxos(&node, &sender, &total_amount, 1, 1, 10, false, false).await?;
+
+        // create transaction
+        let tx = transaction::create_transaction(
+            sender_utxos,
+            receivers,
+            sats_per_bytes,
+            change_address,
+            options.dust_value,
+        )?;
+
+        Ok(crate::models::Transaction {
+            chain: Chain::BTC,
+            sender: sender,
+            hash: Hash::new(&tx.ntxid().to_string())?,
+            data: Some(TransactionRaw::Bitcoin(tx)),
+        })
     }
 
     #[wasm_bindgen(js_name = "broadcast")]
@@ -215,7 +267,12 @@ mod tests {
 
     #[test]
     fn test_get_balance() {
-        let balance = tokio_test::block_on(BTC::get_balance(DEFAULT_ADDRESS, None, None)).unwrap();
+        let balance = tokio_test::block_on(BTC::get_balance(
+            "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo",
+            None,
+            None,
+        ))
+        .unwrap();
 
         assert!(balance.to_i64() > 100);
     }
