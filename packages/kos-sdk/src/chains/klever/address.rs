@@ -63,7 +63,10 @@ impl TryFrom<&[u8]> for Address {
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         if value.len() != ADDRESS_LEN {
-            Err(Error::InvalidAddress("invalid length"))
+            Err(Error::InvalidAddress(format!(
+                "invalid length: {}",
+                value.len()
+            )))
         } else {
             let mut raw = [0u8; ADDRESS_LEN];
             raw[..ADDRESS_LEN].copy_from_slice(value);
@@ -113,23 +116,23 @@ impl FromStr for Address {
     {
         if s.starts_with(ADDRESS_HRP) {
             return bech32::decode(s)
-                .map_err(|_| Error::InvalidAddress(""))
+                .map_err(|e| Error::InvalidAddress(e.to_string()))
                 .and_then(|(_, data, _)| {
                     Vec::from_base32(&data)
-                        .map_err(|_| Error::InvalidAddress(""))
+                        .map_err(|e| Error::InvalidAddress(e.to_string()))
                         .and_then(Address::try_from)
                 });
         }
 
         if s.len() == 64 {
             return Vec::from_hex(s)
-                .map_err(|_| Error::InvalidAddress(""))
+                .map_err(|e| Error::InvalidAddress(e.to_string()))
                 .and_then(Address::try_from);
         }
 
         if s.len() == 66 && (s.starts_with("0x") || s.starts_with("0X")) {
             return Vec::from_hex(&s.as_bytes()[2..])
-                .map_err(|_| Error::InvalidAddress(""))
+                .map_err(|e| Error::InvalidAddress(e.to_string()))
                 .and_then(Address::try_from);
         }
 
@@ -138,7 +141,7 @@ impl FromStr for Address {
         }
 
         eprintln!("len={} prefix={:x}", s.len(), s.as_bytes()[0]);
-        Err(Error::InvalidAddress("other"))
+        Err(Error::InvalidAddress("invalid klever address".to_string()))
     }
 }
 

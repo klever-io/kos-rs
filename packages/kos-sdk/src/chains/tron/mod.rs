@@ -333,7 +333,7 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_tron_bip44() {
+    fn test_validate_bip44() {
         let default_mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
         let v = vec![
             (0, "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH"),

@@ -87,7 +87,10 @@ impl TryFrom<&[u8]> for Address {
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         if value.len() != ADDRESS_LEN {
-            Err(Error::InvalidAddress("invalid length"))
+            Err(Error::InvalidAddress(format!(
+                "invalid length, {}",
+                value.len()
+            )))
         } else {
             let mut raw = [0u8; ADDRESS_LEN];
             raw[..ADDRESS_LEN].copy_from_slice(value);
@@ -144,12 +147,14 @@ impl FromStr for Address {
 
         if s.len() == 40 {
             return Vec::from_hex(s)
-                .map_err(|_| Error::InvalidAddress(""))
+                .map_err(|e| Error::InvalidAddress(e.to_string()))
                 .and_then(Address::try_from);
         }
 
         eprintln!("len={} prefix={:x}", s.len(), s.as_bytes()[0]);
-        Err(Error::InvalidAddress("other"))
+        Err(Error::InvalidAddress(
+            "invalid ethereum address".to_string(),
+        ))
     }
 }
 

@@ -424,7 +424,7 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_tron_bip44() {
+    fn test_validate_bip44() {
         let v = vec![
             (0, "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"),
             (1, "0x6Fac4D18c912343BF86fa7049364Dd4E424Ab9C0"),

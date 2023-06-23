@@ -22,9 +22,9 @@ pub enum Error {
     // InvalidPrivateKey,
     InvalidPrivateKey(&'static str),
     // InvalidPublicKey,
-    InvalidPublicKey(&'static str),
+    InvalidPublicKey(String),
     // InvalidAddress,
-    InvalidAddress(&'static str),
+    InvalidAddress(String),
     // InvalidChecksum,
     InvalidChecksum(&'static str),
     /// Invalid secp256k1 signature
@@ -89,7 +89,7 @@ impl From<Secp256k1Error> for Error {
             | Secp256k1Error::InvalidParityValue(_)
             | Secp256k1Error::InvalidRecoveryId => Self::InvalidSignature("Secp256k1Error"),
             Secp256k1Error::InvalidMessage => Self::InvalidMessage(secp.to_string()),
-            Secp256k1Error::InvalidPublicKey => Self::InvalidPublicKey("Secp256k1Error"),
+            Secp256k1Error::InvalidPublicKey => Self::InvalidPublicKey(secp.to_string()),
             Secp256k1Error::InvalidSecretKey => Self::InvalidPrivateKey("Secp256k1Error"),
             Secp256k1Error::NotEnoughMemory => Self::NotEnoughMemory(secp.to_string()),
         }

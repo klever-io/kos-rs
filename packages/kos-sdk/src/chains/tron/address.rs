@@ -83,7 +83,10 @@ impl TryFrom<&[u8]> for Address {
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         if value.len() != ADDRESS_LEN {
-            Err(Error::InvalidAddress("invalid length"))
+            Err(Error::InvalidAddress(format!(
+                "invalid length: {}",
+                value.len()
+            )))
         } else {
             let mut raw = [0u8; ADDRESS_LEN];
             raw[..ADDRESS_LEN].copy_from_slice(value);
@@ -137,13 +140,13 @@ impl FromStr for Address {
 
         if s.len() == 42 && s[..2] == hex::encode(&[ADDRESS_TYPE_PREFIX]) {
             return Vec::from_hex(s)
-                .map_err(|_| Error::InvalidAddress(""))
+                .map_err(|e| Error::InvalidAddress(e.to_string()))
                 .and_then(Address::try_from);
         }
 
         if s.len() == 44 && (s.starts_with("0x") || s.starts_with("0X")) {
             return Vec::from_hex(&s.as_bytes()[2..])
-                .map_err(|_| Error::InvalidAddress(""))
+                .map_err(|e| Error::InvalidAddress(e.to_string()))
                 .and_then(Address::try_from);
         }
 
@@ -152,7 +155,7 @@ impl FromStr for Address {
         }
 
         eprintln!("len={} prefix={:x}", s.len(), s.as_bytes()[0]);
-        Err(Error::InvalidAddress("other"))
+        Err(Error::InvalidAddress("invalid tron address".to_string()))
     }
 }
 
@@ -175,7 +178,9 @@ pub fn b58encode_check<T: AsRef<[u8]>>(raw: T) -> String {
 
 /// Base58check decode.
 pub fn b58decode_check(s: &str) -> Result<Vec<u8>, Error> {
-    let mut result = s.from_base58().map_err(|_| Error::InvalidAddress(""))?;
+    let mut result = s
+        .from_base58()
+        .map_err(|e| Error::InvalidAddress(format!("base58: {:?}", e)))?;
 
     let check = result.split_off(result.len() - 4);
     let digest1 = kos_crypto::hash::sha256(&result);
