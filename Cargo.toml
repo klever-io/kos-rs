@@ -7,6 +7,7 @@ members = [
     "packages/kos-crypto",
     "packages/kos-sdk",
     "packages/kos-ios",
+    "packages/kos-android",
 ]
 
 [profile.release]

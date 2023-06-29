@@ -14,3 +14,6 @@ webpack-npm:
 
 ios:
 	cd packages/kos-ios && cargo lipo --release
+
+android:
+	cd packages/kos-android && cargo lipo --release
