@@ -42,4 +42,3 @@ features = ["console"]
 wasm-bindgen-test = "0.2.45"
 futures = "0.1.27"
 js-sys = "0.3.22"
-

@@ -1,3 +1,4 @@
+use kos_crypto::cipher::Cipher;
 pub use kos_crypto::cipher::*;
 use kos_crypto::mnemonic::generate_mnemonic;
 pub use kos_sdk::*;
@@ -23,3 +24,11 @@ pub fn main() -> Result<(), JsValue> {
 pub fn generate_mnemonic_phrase(count: usize) -> Result<String, Error> {
     Ok(generate_mnemonic(count)?.to_phrase())
 }
+
+#[wasm_bindgen(js_name = "encrypt")]
+pub fn encrypt(value: JsValue, password: String) -> Result<String, Error> {
+    OK(("".to_owned()))
+}
+
+#[wasm_bindgen(js_name = "generateMnemonicPhrase")]
+pub fn encrypt(value: JsValue) -> Result<String, Error> {}
