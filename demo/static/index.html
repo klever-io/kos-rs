@@ -6,11 +6,17 @@
   </head>
   <body>
     <script src="index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     
+    <button id="btnCreateMnemonic">Create Mnemonic</button>
+    <button id="btnLoadMnemonic">Load Mnemonic</button>
     <button id="btnSendKLV">Send KLV</button>
-    
+    <button id="btnWMFlow">Wallet Manager Flow</button>
+    <hr>
+    <img id="qrCode"  alt="Encrypted Mnemonic" style="width:50%;display: none;" />
+    <hr>
     <p id="demo"></p>
 
-    <button id="btnWMFlow">Wallet Manager Flow</button>
+    <input type="file" id="fileInput" accept="image/*" style="display: none;">
   </body>
 </html>

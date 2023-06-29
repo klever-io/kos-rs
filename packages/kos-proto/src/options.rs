@@ -45,3 +45,8 @@ pub struct ETHOptions {
     pub max_fee_per_gas: Option<BigNumber>,
     pub max_priority_fee_per_gas: Option<BigNumber>,
 }
+
+#[derive(Deserialize, Serialize, Default, Clone, Debug)]
+pub struct MATICOptions {
+    pub eth: ETHOptions,
+}
