@@ -103,6 +103,32 @@ pub async fn select_utxos(
     Ok(selected_utxos)
 }
 
+// Broadcast raw hex transaction to Bitcoin node.
+pub async fn broadcast(node_url: &str, hex_tx: &str) -> Result<String, Error> {
+    let url = format!("{}/api/v2/sendtx/", node_url);
+    let data = hex_tx.as_bytes().to_vec();
+
+    let result = utils::http_post::<serde_json::Value>(url, &data).await;
+
+    let result = result?;
+
+    if let Some(err) = result.get("error") {
+        if let Some(err) = err.as_str() {
+            return Err(Error::ReqwestError(err.to_string()));
+        }
+    }
+
+    if let Some(txid_value) = result.get("result") {
+        if let Some(txid) = txid_value.as_str() {
+            return Ok(txid.to_string());
+        } else {
+            return Err(Error::ReqwestError("txid is not a string".to_string()));
+        }
+    }
+
+    return Err(Error::ReqwestError("missing txid".to_string()));
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

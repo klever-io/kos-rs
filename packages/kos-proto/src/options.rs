@@ -52,9 +52,30 @@ pub struct MATICOptions {
 }
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 pub struct BTCOptions {
-    pub stats_per_bytes: Option<u64>,
+    /// hex magic from network (default is bitcoin mainnet)
+    pub network: Option<String>,
+    pub sats_per_bytes: Option<u64>,
     pub dust_value: Option<BigNumber>,
     pub send_all: Option<bool>,
     pub change_address: Option<String>,
     pub receivers: Option<Vec<(String, BigNumber)>>,
+    pub rbf: Option<bool>,
+}
+
+impl BTCOptions {
+    pub fn dust_value(&self) -> BigNumber {
+        self.dust_value
+            .clone()
+            .unwrap_or_else(|| BigNumber::from(546))
+    }
+    pub fn sats_per_bytes(&self) -> u64 {
+        self.sats_per_bytes.clone().unwrap_or_else(|| 1)
+    }
+    pub fn receivers(&self) -> Vec<(String, BigNumber)> {
+        self.receivers.clone().unwrap_or_else(|| Vec::new())
+    }
+
+    pub fn rbf(&self) -> bool {
+        self.rbf.clone().unwrap_or_else(|| false)
+    }
 }

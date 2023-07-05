@@ -5,9 +5,11 @@ use crate::chain::{BaseChain, Chain};
 use crate::models::{self, BroadcastResult, Transaction, TransactionRaw};
 
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
+use kos_proto::options::BTCOptions;
 use kos_types::{error::Error, hash::Hash, number::BigNumber};
 
-use bitcoin::{Address, Network};
+use bitcoin::{network::constants::Magic, Address, Network};
+
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
@@ -25,14 +27,35 @@ pub const BASE_CHAIN: BaseChain = BaseChain {
     chain_code: 2,
 };
 
-pub fn get_network() -> Network {
-    Network::Bitcoin
+const DEFAULT_NETWORK: Network = Network::Bitcoin;
+
+pub fn get_network(option: &BTCOptions) -> Result<Network, Error> {
+    match option.network.clone() {
+        Some(hex_magic) => {
+            let magic_bytes = hex::decode(hex_magic)?;
+            if magic_bytes.len() != 4 {
+                return Err(Error::UnsupportedChain(&"invalid magic for network length"));
+            }
+
+            let array: [u8; 4] = [
+                magic_bytes[0],
+                magic_bytes[1],
+                magic_bytes[2],
+                magic_bytes[3],
+            ];
+            let magic = Magic::from_bytes(array);
+
+            Network::from_magic(magic)
+                .ok_or_else(|| Error::UnsupportedChain(&"invalid magic for network"))
+        }
+        _ => Ok(DEFAULT_NETWORK),
+    }
 }
 
-fn get_options(options: Option<crate::models::SendOptions>) -> kos_proto::options::BTCOptions {
+fn get_options(options: Option<crate::models::SendOptions>) -> BTCOptions {
     match options.and_then(|opt| opt.data) {
         Some(crate::models::Options::Bitcoin(op)) => op,
-        _ => kos_proto::options::BTCOptions::default(),
+        _ => BTCOptions::default(),
     }
 }
 
@@ -68,13 +91,8 @@ impl BTC {
 
     #[wasm_bindgen(js_name = "getAddressFromKeyPair")]
     pub fn get_address_from_keypair(kp: &KeyPair) -> Result<String, Error> {
-        let pubkey = bitcoin::PublicKey::from_slice(&kp.public_key()).map_err(|e| {
-            Error::InvalidPublicKey(format!("Invalid public key: {}", e.to_string()))
-        })?;
-
-        Address::p2wpkh(&pubkey, get_network())
-            .map(|a| a.to_string())
-            .map_err(|e| Error::InvalidAddress(e.to_string()).into())
+        let address = BTC::get_address(kp, DEFAULT_NETWORK)?;
+        Ok(address.to_string())
     }
 
     #[wasm_bindgen(js_name = "getPath")]
@@ -97,10 +115,24 @@ impl BTC {
 
     #[wasm_bindgen(js_name = "sign")]
     /// Hash and Sign data with the private key.
+    /// P2WPKH address is used as the signature address.
     pub fn sign(tx: Transaction, keypair: &KeyPair) -> Result<Transaction, Error> {
         match tx.data {
+            // get bitcoin transaction from raw
             Some(TransactionRaw::Bitcoin(btc_tx)) => {
-                todo!()
+                let mut btc_tx = btc_tx;
+
+                // sign tx
+                btc_tx.sign(keypair)?;
+
+                // redeem script
+                btc_tx.finalize()?;
+
+                Ok(Transaction {
+                    hash: btc_tx.txid_hash()?,
+                    data: Some(TransactionRaw::Bitcoin(btc_tx)),
+                    ..tx
+                })
             }
             _ => Err(Error::InvalidMessage(
                 "not a bitcoin transaction".to_string(),
@@ -151,11 +183,15 @@ impl BTC {
         requests::balance(&node, address, 0).await
     }
 
-    fn get_receiver(receiver: String, amount: &BigNumber) -> Result<(Address, BigNumber), Error> {
+    fn get_receiver(
+        receiver: String,
+        amount: &BigNumber,
+        network: Network,
+    ) -> Result<(Address, BigNumber), Error> {
         let addr =
             Address::from_str(&receiver).map_err(|e| Error::InvalidAddress(e.to_string()))?;
         Ok((
-            addr.require_network(get_network())
+            addr.require_network(network)
                 .map_err(|e| Error::InvalidAddress(e.to_string()))?,
             amount.clone(),
         ))
@@ -171,25 +207,38 @@ impl BTC {
         let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("BTC"));
         let options = get_options(options);
 
+        let network = get_network(&options)?;
+
         let mut total_amount = amount.clone();
 
         let mut receivers: Vec<(Address, BigNumber)> = Vec::new();
         if !receiver.is_empty() {
-            receivers.push(Self::get_receiver(receiver, &amount)?);
+            receivers.push(Self::get_receiver(receiver, &amount, network)?);
+        } else {
+            // check if amount is provided without receiver
+            if !amount.is_zero() {
+                return Err(Error::InvalidTransaction(format!(
+                    "receiver is required for amount {}",
+                    amount.to_string()
+                )));
+            }
         }
         // add outputs from options
-        for output in options.receivers.unwrap_or(vec![]) {
-            receivers.push(Self::get_receiver(output.0, &output.1)?);
+        for output in options.receivers() {
+            receivers.push(Self::get_receiver(output.0, &output.1, network)?);
             total_amount = total_amount.add(&output.1);
         }
 
-        // todo!() compute fee
-        let sats_per_bytes = options.stats_per_bytes.unwrap_or_default();
-
-        let change_address = Address::from_str(&options.change_address.unwrap_or(sender.clone()))
+        let sender_address = Address::from_str(&sender.clone())
             .map_err(|e| Error::InvalidAddress(e.to_string()))?
-            .require_network(get_network())
+            .require_network(network)
             .map_err(|e| Error::InvalidAddress(e.to_string()))?;
+
+        let change_address =
+            Address::from_str(&options.change_address.clone().unwrap_or(sender.clone()))
+                .map_err(|e| Error::InvalidAddress(e.to_string()))?
+                .require_network(network)
+                .map_err(|e| Error::InvalidAddress(e.to_string()))?;
 
         // get utoxs
         let sender_utxos =
@@ -197,17 +246,17 @@ impl BTC {
 
         // create transaction
         let tx = transaction::create_transaction(
+            sender_address,
             sender_utxos,
             receivers,
-            sats_per_bytes,
             change_address,
-            options.dust_value,
+            &options,
         )?;
 
         Ok(crate::models::Transaction {
             chain: Chain::BTC,
             sender: sender,
-            hash: Hash::new(&tx.ntxid().to_string())?,
+            hash: Hash::new(&tx.txid().to_string())?,
             data: Some(TransactionRaw::Bitcoin(tx)),
         })
     }
@@ -217,7 +266,40 @@ impl BTC {
         tx: crate::models::Transaction,
         node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        todo!()
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("BTC"));
+
+        match &tx.data {
+            Some(TransactionRaw::Bitcoin(btc_tx)) => {
+                let txid = requests::broadcast(&node, &btc_tx.btc_serialize_hex()).await?;
+                // check if tx hash is same as txid
+                if btc_tx.txid().to_string() != txid {
+                    return Err(Error::InvalidTransaction(format!(
+                        "invalid transaction hash: {}/{}",
+                        txid,
+                        btc_tx.txid().to_string()
+                    )));
+                }
+                Ok(BroadcastResult { tx })
+            }
+            _ => Err(Error::InvalidTransaction(
+                "not a bitcoin transaction".to_string(),
+            )),
+        }
+    }
+}
+
+impl BTC {
+    #[inline]
+    pub fn get_address(kp: &KeyPair, network: Network) -> Result<Address, Error> {
+        let pubkey = BTC::get_pubkey(&kp.public_key())?;
+
+        Address::p2wpkh(&pubkey, network).map_err(|e| Error::InvalidAddress(e.to_string()))
+    }
+
+    #[inline]
+    pub fn get_pubkey(data: &[u8]) -> Result<bitcoin::PublicKey, Error> {
+        bitcoin::PublicKey::from_slice(data)
+            .map_err(|e| Error::InvalidPublicKey(format!("Invalid public key: {}", e.to_string())))
     }
 }
 
@@ -278,7 +360,39 @@ mod tests {
     }
 
     #[test]
-    fn test_send_end_sign() {
-        todo!()
+    fn test_send_and_sign() {
+        let btc_address_sender = "tb1q09hyefvam4x5hrnnavx6sphv797f0l5xcqt7cl";
+        let btc_address_receiver = "tb1qgg29y2z8xsvav65j5kx2pztqff4g2ctn6a4x0u";
+        let node = "https://tbtc1.trezor.io";
+
+        let testnet_magic = "0b110907";
+
+        let option = models::SendOptions {
+            data: Some(models::Options::Bitcoin(BTCOptions {
+                sats_per_bytes: Some(1),
+                network: Some(testnet_magic.to_string()),
+                ..Default::default()
+            })),
+        };
+
+        let send_tx = tokio_test::block_on(BTC::send(
+            btc_address_sender.to_string(),
+            btc_address_receiver.to_string(),
+            BigNumber::from(1000),
+            Some(option),
+            Some(node.to_string()),
+        ))
+        .unwrap();
+
+        let sign_tx = BTC::sign(send_tx, &get_default_secret()).unwrap();
+
+        let tx = match sign_tx.data.unwrap() {
+            TransactionRaw::Bitcoin(tx) => tx,
+            _ => panic!("invalid transaction"),
+        };
+
+        assert!(tx.total_send.to_u64() == 1000);
+        assert!(tx.fee.to_u64() == 226);
+        // let _ = tokio_test::block_on(BTC::broadcast(sign_tx, Some(node.to_string()))).unwrap();
     }
 }

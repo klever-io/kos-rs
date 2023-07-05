@@ -21,7 +21,7 @@ hex = { workspace = true }
 sha2 = { workspace = true }
 sha3 = { workspace = true }
 hmac = { workspace = true }
-secp256k1 = { workspace = true, features = ["rand", "serde"] }
+secp256k1 = { workspace = true, features = ["rand", "serde", "bitcoin_hashes"] }
 ed25519-dalek = { workspace = true, features = ["serde"]  }
 aes-gcm = "0.10"
 aes = { version = "0.8" }

@@ -4,7 +4,7 @@ use core::cmp::Ordering;
 use std::{ops::Deref, str::FromStr};
 
 use num_bigint::BigInt;
-use num_traits::ToPrimitive;
+use num_traits::{ToPrimitive, Zero};
 use serde::{Deserialize, Serialize, Serializer};
 
 use wasm_bindgen::prelude::*;
@@ -124,6 +124,10 @@ impl BigNumber {
         let index = len - precision as usize;
         s.insert(index, '.');
         s
+    }
+
+    pub fn is_zero(&self) -> bool {
+        self.v.is_zero()
     }
 
     pub fn self_add(mut self, other: &BigNumber) -> Self {

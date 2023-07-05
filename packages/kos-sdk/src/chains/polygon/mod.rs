@@ -232,7 +232,7 @@ mod tests {
     }
 
     #[test]
-    fn test_send_end_sign() {
+    fn test_send_and_sign() {
         let options = models::SendOptions {
             data: Some(models::Options::Polygon(kos_proto::options::MATICOptions {
                 eth: kos_proto::options::ETHOptions {
