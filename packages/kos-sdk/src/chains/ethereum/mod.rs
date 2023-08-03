@@ -35,16 +35,18 @@ pub fn hash_transaction(eth_tx: &transaction::Transaction) -> Result<Vec<u8>, Er
     Ok(digest)
 }
 
+pub const BASE_CHAIN: BaseChain = BaseChain {
+    name: "Ethereum",
+    symbol: "ETH",
+    precision: 18,
+    chain_code: 3,
+};
+
 #[wasm_bindgen]
 impl ETH {
     #[wasm_bindgen(js_name = "baseChain")]
     pub fn base_chain() -> BaseChain {
-        BaseChain {
-            name: "Ethereum",
-            symbol: "ETH",
-            precision: 18,
-            chain_code: 3,
-        }
+        BASE_CHAIN
     }
 
     #[wasm_bindgen(js_name = "random")]
@@ -422,7 +424,7 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_tron_bip44() {
+    fn test_validate_bip44() {
         let v = vec![
             (0, "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"),
             (1, "0x6Fac4D18c912343BF86fa7049364Dd4E424Ab9C0"),
@@ -441,7 +443,7 @@ mod tests {
     }
 
     #[test]
-    fn test_send_end_sign() {
+    fn test_send_and_sign() {
         let options = models::SendOptions {
             data: Some(models::Options::Ethereum(kos_proto::options::ETHOptions {
                 chain_id: Some(1),

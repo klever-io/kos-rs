@@ -1,9 +1,10 @@
 use crate::error::Error;
 
+use core::cmp::Ordering;
 use std::{ops::Deref, str::FromStr};
 
 use num_bigint::BigInt;
-use num_traits::ToPrimitive;
+use num_traits::{ToPrimitive, Zero};
 use serde::{Deserialize, Serialize, Serializer};
 
 use wasm_bindgen::prelude::*;
@@ -107,6 +108,11 @@ impl BigNumber {
         self.v.to_i64().unwrap_or(0)
     }
 
+    #[wasm_bindgen(js_name = "toU64")]
+    pub fn to_u64(&self) -> u64 {
+        self.v.to_u64().unwrap_or(0)
+    }
+
     #[wasm_bindgen(js_name = "withPrecision")]
     pub fn with_precision(&self, precision: u32) -> String {
         let mut s = self.v.to_string();
@@ -118,6 +124,93 @@ impl BigNumber {
         let index = len - precision as usize;
         s.insert(index, '.');
         s
+    }
+
+    pub fn is_zero(&self) -> bool {
+        self.v.is_zero()
+    }
+
+    pub fn self_add(mut self, other: &BigNumber) -> Self {
+        self.v += &other.v;
+        self
+    }
+
+    pub fn self_sub(mut self, other: &BigNumber) -> Self {
+        self.v -= &other.v;
+        self
+    }
+
+    pub fn self_mul(mut self, other: &BigNumber) -> Self {
+        self.v *= &other.v;
+        self
+    }
+
+    pub fn self_div(mut self, other: &BigNumber) -> Self {
+        self.v /= &other.v;
+        self
+    }
+
+    pub fn add(self, other: &BigNumber) -> Self {
+        BigNumber {
+            v: self.v + &other.v,
+        }
+    }
+
+    pub fn sub(self, other: &BigNumber) -> Self {
+        BigNumber {
+            v: self.v - &other.v,
+        }
+    }
+
+    pub fn mul(self, other: &BigNumber) -> Self {
+        BigNumber {
+            v: self.v * &other.v,
+        }
+    }
+
+    pub fn div(self, other: &BigNumber) -> Self {
+        BigNumber {
+            v: self.v / &other.v,
+        }
+    }
+
+    pub fn gt(&self, other: &BigNumber) -> bool {
+        self.v > other.v
+    }
+
+    pub fn gte(&self, other: &BigNumber) -> bool {
+        self.v >= other.v
+    }
+
+    pub fn lt(&self, other: &BigNumber) -> bool {
+        self.v < other.v
+    }
+
+    pub fn lte(&self, other: &BigNumber) -> bool {
+        self.v <= other.v
+    }
+}
+
+impl PartialEq for BigNumber {
+    #[inline]
+    fn eq(&self, other: &BigNumber) -> bool {
+        self.v.eq(&other.v)
+    }
+}
+
+impl Eq for BigNumber {}
+
+impl PartialOrd for BigNumber {
+    #[inline]
+    fn partial_cmp(&self, other: &BigNumber) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for BigNumber {
+    #[inline]
+    fn cmp(&self, other: &BigNumber) -> Ordering {
+        self.v.cmp(&other.v)
     }
 }
 

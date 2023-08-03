@@ -1,7 +1,7 @@
 use super::ETHTransaction;
 use super::ETH;
 
-use crate::chain::BaseChain;
+use crate::chain::{BaseChain, Chain};
 use crate::models::{self, BroadcastResult, TransactionRaw};
 
 use kos_crypto::keypair::KeyPair;
@@ -15,6 +15,13 @@ use wasm_bindgen::prelude::*;
 pub struct MATIC {}
 
 pub const CHAIN_ID: u64 = 137;
+
+pub const BASE_CHAIN: BaseChain = BaseChain {
+    name: "Polygon",
+    symbol: "MATIC",
+    precision: 18,
+    chain_code: 28,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Transaction {
@@ -41,11 +48,12 @@ fn convert_options(
 fn convert_transaction(tx: models::Transaction) -> Result<models::Transaction, Error> {
     match tx.data.clone() {
         Some(TransactionRaw::Polygon(tx_polygon)) => {
-            Ok(tx.new_data(TransactionRaw::Ethereum(tx_polygon.eth)))
+            Ok(tx.new_data(Chain::MATIC, TransactionRaw::Ethereum(tx_polygon.eth)))
         }
-        Some(TransactionRaw::Ethereum(tx_eth)) => {
-            Ok(tx.new_data(TransactionRaw::Polygon(Transaction { eth: tx_eth })))
-        }
+        Some(TransactionRaw::Ethereum(tx_eth)) => Ok(tx.new_data(
+            Chain::MATIC,
+            TransactionRaw::Polygon(Transaction { eth: tx_eth }),
+        )),
         _ => Err(Error::InvalidTransaction(
             "Invalid Transaction Type".to_string(),
         )),
@@ -56,12 +64,7 @@ fn convert_transaction(tx: models::Transaction) -> Result<models::Transaction, E
 impl MATIC {
     #[wasm_bindgen(js_name = "baseChain")]
     pub fn base_chain() -> BaseChain {
-        BaseChain {
-            name: "Polygon",
-            symbol: "MATIC",
-            precision: 18,
-            chain_code: 28,
-        }
+        BASE_CHAIN
     }
 
     #[wasm_bindgen(js_name = "random")]
@@ -210,7 +213,7 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_tron_bip44() {
+    fn test_validate_bip44() {
         let v = vec![
             (0, "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"),
             (1, "0x6Fac4D18c912343BF86fa7049364Dd4E424Ab9C0"),
@@ -229,7 +232,7 @@ mod tests {
     }
 
     #[test]
-    fn test_send_end_sign() {
+    fn test_send_and_sign() {
         let options = models::SendOptions {
             data: Some(models::Options::Polygon(kos_proto::options::MATICOptions {
                 eth: kos_proto::options::ETHOptions {

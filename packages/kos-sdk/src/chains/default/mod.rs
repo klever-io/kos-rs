@@ -9,17 +9,18 @@ use wasm_bindgen::prelude::*;
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
 pub struct NONE;
+pub const BASE_CHAIN: BaseChain = BaseChain {
+    name: "None",
+    symbol: "NONE",
+    precision: 0,
+    chain_code: 0,
+};
 
 #[wasm_bindgen]
 impl NONE {
     #[wasm_bindgen(js_name = "baseChain")]
     pub fn base_chain() -> BaseChain {
-        BaseChain {
-            name: "None",
-            symbol: "NONE",
-            precision: 0,
-            chain_code: 0,
-        }
+        BASE_CHAIN
     }
 
     #[wasm_bindgen(js_name = "random")]
