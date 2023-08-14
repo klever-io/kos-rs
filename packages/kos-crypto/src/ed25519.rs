@@ -2,7 +2,7 @@ use kos_types::{error::Error, Bytes32};
 
 use coins_bip32::path::DerivationPath;
 use coins_bip39::{English, Mnemonic};
-use ed25519_dalek::{ExpandedSecretKey, PublicKey, SecretKey, Verifier, SECRET_KEY_LENGTH};
+use ed25519_dalek::{Signer, SigningKey, VerifyingKey, PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH};
 use hmac::{Hmac, Mac};
 use sha2::Sha512;
 use std::{fmt, str::FromStr};
@@ -14,15 +14,15 @@ type HmacSha521 = Hmac<Sha512>;
 #[derive(serde::Serialize, serde::Deserialize)]
 #[wasm_bindgen]
 pub struct Ed25519KeyPair {
-    secret_key: SecretKey,
-    public_key: PublicKey,
+    secret_key: SigningKey,
+    public_key: VerifyingKey,
 }
 
 impl Default for Ed25519KeyPair {
     fn default() -> Self {
         Self {
-            secret_key: SecretKey::from_bytes(Bytes32::zeroed().as_ref()).unwrap(),
-            public_key: PublicKey::from_bytes(Bytes32::zeroed().as_ref()).unwrap(),
+            secret_key: SigningKey::from_bytes(&[0u8; SECRET_KEY_LENGTH]),
+            public_key: VerifyingKey::from_bytes(&[0u8; PUBLIC_KEY_LENGTH]).unwrap(),
         }
     }
 }
@@ -30,7 +30,7 @@ impl Default for Ed25519KeyPair {
 impl Clone for Ed25519KeyPair {
     fn clone(&self) -> Ed25519KeyPair {
         Ed25519KeyPair {
-            secret_key: SecretKey::from_bytes(self.secret_key.as_bytes()).unwrap(),
+            secret_key: self.secret_key.clone(),
             public_key: self.public_key.clone(),
         }
     }
@@ -48,8 +48,8 @@ impl Ed25519KeyPair {
     }
 
     pub fn new(secret: [u8; 32]) -> Self {
-        let secret_key: SecretKey = SecretKey::from_bytes(secret.as_ref()).unwrap();
-        let public_key: PublicKey = (&secret_key).into();
+        let secret_key: SigningKey = SigningKey::from_bytes(&secret);
+        let public_key: VerifyingKey = (&secret_key).into();
 
         Self {
             secret_key,
@@ -120,24 +120,37 @@ impl Ed25519KeyPair {
     }
 
     pub fn secret_key(&self) -> Vec<u8> {
-        self.secret_key.as_bytes().to_vec()
+        self.secret_key.to_bytes().to_vec()
     }
 }
 
 impl Ed25519KeyPair {
     pub fn sign_digest(&self, message: &[u8]) -> Vec<u8> {
-        let expanded: ExpandedSecretKey = (&self.secret_key).into();
-        let sig = expanded.sign(message, &self.public_key);
+        let sig = self.secret_key.sign(message);
         sig.to_bytes().to_vec()
     }
 
     pub fn verify_digest(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
-        let sig = ed25519_dalek::Signature::from_bytes(signature).unwrap();
-        if let Ok(public_key) = ed25519_dalek::PublicKey::from_bytes(public_key) {
-            public_key.verify(message, &sig).is_ok()
-        } else {
-            self.public_key.verify(message, &sig).is_ok()
+        if signature.len() != 64 {
+            return false;
         }
+        let mut sig_bytes = [0u8; 64];
+        sig_bytes.copy_from_slice(signature);
+
+        let mut pub_bytes = [0u8; 32];
+        if public_key.len() != 32 {
+            pub_bytes = self.public_key.to_bytes();
+        } else {
+            pub_bytes.copy_from_slice(public_key);
+        }
+
+        VerifyingKey::from_bytes(&pub_bytes)
+            .map(|public_key| {
+                public_key
+                    .verify_strict(message, &ed25519_dalek::Signature::from_bytes(&sig_bytes))
+                    .is_ok()
+            })
+            .is_ok()
     }
 }
 

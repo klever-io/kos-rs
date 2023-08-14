@@ -287,7 +287,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_galance() {
+    fn test_get_balance() {
         let balance = tokio_test::block_on(KLV::get_balance(
             "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
             Some("KLV".to_string()),

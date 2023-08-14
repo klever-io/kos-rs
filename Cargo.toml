@@ -29,7 +29,7 @@ sha2 = { version = "0.10" }
 sha3 = { version = "0.10" }
 hmac = { version = "0.12" }
 secp256k1 = { version = "0.27", features = ["recovery", "rand", "bitcoin_hashes"] }
-ed25519-dalek = { version = "1" }
+ed25519-dalek = { version = "2" }
 coins-bip32 = { version = "0.8", default-features = false }
 coins-bip39 = { version = "0.8", default-features = false, features = ["english"] }
 bytes = { version = "1.4.0", default-features = false }
