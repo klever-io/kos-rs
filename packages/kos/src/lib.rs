@@ -171,8 +171,12 @@ mod test {
             "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d";
         const CLIENT_ID: &str = "web-extension";
 
-        let v = api_signature(DEFAULT_PRIVATE_KEY.to_string(), CLIENT_ID.to_string(), 0).unwrap();
+        let nonce = 1692031458346;
+
+        let v = api_signature(DEFAULT_PRIVATE_KEY.to_string(), CLIENT_ID.to_string(), nonce).unwrap();
 
         println!("{:?}", v);
+
+        assert_eq!(v.signature, "c24b408e710ca3be41fc6814e48857c226f869b13bc269a2a3c84cbd7ad89bc0433674fb816c92b656c1ea3fd18d1895d4fe56ab5427f8a50536060d5c400809")
     }
 }
