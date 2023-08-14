@@ -8,7 +8,7 @@ use crate::{
 use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
 use kos_types::{error::Error, hash::Hash, number::BigNumber};
 
-use std::todo;
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -72,8 +72,15 @@ impl KLV {
 
     #[wasm_bindgen(js_name = "verifyDigest")]
     /// Verify Message signature
-    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<(), Error> {
-        todo!()
+    pub fn verify_digest(digest: &[u8], signature: &[u8], address: &str) -> Result<(), Error> {
+        let addr = address::Address::from_str(address)?;
+        let kp = Ed25519KeyPair::default();
+
+        if kp.verify_digest(digest, signature, &addr.public_key()) {
+            Ok(())
+        } else {
+            Err(Error::InvalidSignature(&"message verification fail"))
+        }
     }
 
     #[wasm_bindgen(js_name = "sign")]
@@ -130,18 +137,20 @@ impl KLV {
 
     #[wasm_bindgen(js_name = "signMessage")]
     /// Sign Message with the private key.
-    pub fn sign_message(_message: &[u8], _keypair: &KeyPair) -> Result<Vec<u8>, Error> {
-        todo!()
+    pub fn sign_message(message: &[u8], keypair: &KeyPair) -> Result<Vec<u8>, Error> {
+        let m = KLV::message_hash(message)?;
+        KLV::sign_digest(&m, keypair)
     }
 
     #[wasm_bindgen(js_name = "verifyMessageSignature")]
     /// Verify Message signature
     pub fn verify_message_signature(
-        _message: &[u8],
-        _signature: &[u8],
-        _address: &str,
+        message: &[u8],
+        signature: &[u8],
+        address: &str,
     ) -> Result<(), Error> {
-        todo!()
+        let m = KLV::message_hash(message)?;
+        KLV::verify_digest(&m, signature, address)
     }
 
     #[wasm_bindgen(js_name = "getBalance")]
@@ -330,5 +339,27 @@ mod tests {
         let address = KLV::get_address_from_keypair(&get_default_secret()).unwrap();
 
         assert_eq!(DEFAULT_ADDRESS, address.to_string());
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let message = "Hello World";
+        let kp = get_default_secret();
+        let signature = KLV::sign_message(message.as_bytes(), &kp).unwrap();
+        assert_eq!(
+            "38b3fd1e4d5a34291dddb2c6ca66e857c1696f3160981ca6abb8a78087f86b6163314cadd16179239d38201ba91c97aa201b7f38ecfff50c7f0448da67bf5a05",
+            hex::encode(signature)
+        );
+    }
+
+    #[test]
+    fn test_verify_message() {
+        let message = "Hello World";
+        let kp = get_default_secret();
+        let signature = hex::decode("38b3fd1e4d5a34291dddb2c6ca66e857c1696f3160981ca6abb8a78087f86b6163314cadd16179239d38201ba91c97aa201b7f38ecfff50c7f0448da67bf5a05").unwrap() ;
+        let address = KLV::get_address_from_keypair(&kp).unwrap();
+        let result = KLV::verify_message_signature(message.as_bytes(), &signature, &address);
+
+        assert!(result.is_ok());
     }
 }

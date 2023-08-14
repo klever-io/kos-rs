@@ -2,7 +2,7 @@ use kos_types::{error::Error, Bytes32};
 
 use coins_bip32::path::DerivationPath;
 use coins_bip39::{English, Mnemonic};
-use ed25519_dalek::{ExpandedSecretKey, PublicKey, SecretKey, SECRET_KEY_LENGTH};
+use ed25519_dalek::{ExpandedSecretKey, PublicKey, SecretKey, Verifier, SECRET_KEY_LENGTH};
 use hmac::{Hmac, Mac};
 use sha2::Sha512;
 use std::{fmt, str::FromStr};
@@ -16,6 +16,15 @@ type HmacSha521 = Hmac<Sha512>;
 pub struct Ed25519KeyPair {
     secret_key: SecretKey,
     public_key: PublicKey,
+}
+
+impl Default for Ed25519KeyPair {
+    fn default() -> Self {
+        Self {
+            secret_key: SecretKey::from_bytes(Bytes32::zeroed().as_ref()).unwrap(),
+            public_key: PublicKey::from_bytes(Bytes32::zeroed().as_ref()).unwrap(),
+        }
+    }
 }
 
 impl Clone for Ed25519KeyPair {
@@ -120,6 +129,15 @@ impl Ed25519KeyPair {
         let expanded: ExpandedSecretKey = (&self.secret_key).into();
         let sig = expanded.sign(message, &self.public_key);
         sig.to_bytes().to_vec()
+    }
+
+    pub fn verify_digest(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
+        let sig = ed25519_dalek::Signature::from_bytes(signature).unwrap();
+        if let Ok(public_key) = ed25519_dalek::PublicKey::from_bytes(public_key) {
+            public_key.verify(message, &sig).is_ok()
+        } else {
+            self.public_key.verify(message, &sig).is_ok()
+        }
     }
 }
 
