@@ -241,6 +241,33 @@ impl KLV {
     }
 }
 
+#[wasm_bindgen]
+impl KLV {
+    /// import raw TX rom JSValue to Transaction model
+    #[wasm_bindgen(js_name = "txFromRaw")]
+    pub fn tx_from_raw(raw: &str) -> Result<crate::models::Transaction, Error> {
+        // convert bytes to serde_json::Value
+        let value = serde_json::from_slice::<serde_json::Value>(raw.as_bytes())?;
+        let tx = models::TransactionResult::try_from(value)?;
+
+        // unwrap raw_data
+        let data = tx
+            .tx
+            .raw_data
+            .clone()
+            .ok_or_else(|| Error::InvalidTransaction("no raw TX found".to_string()))?;
+
+        let sender = address::Address::from_bytes(&data.sender);
+
+        Ok(crate::models::Transaction {
+            chain: crate::chain::Chain::KLV,
+            sender: sender.to_string(),
+            hash: Hash::new(&tx.tx_hash)?,
+            data: Some(TransactionRaw::Klever(tx.tx)),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::assert_eq;
@@ -361,5 +388,36 @@ mod tests {
         let result = KLV::verify_message_signature(message.as_bytes(), &signature, &address);
 
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_tx_from_raw() {
+        let raw = "{\"code\":\"successful\",\"data\":{\"result\":{\"RawData\":{\"BandwidthFee\":1000000,\"ChainID\":\"MTAwNDIw\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Version\":1}},\"txHash\":\"1e61c51f0d230f4855dc9b8935b47b9019887baf02be75d364a4068083833c15\"},\"error\":\"\"}";
+
+        let tx = KLV::tx_from_raw(raw);
+        assert!(tx.is_ok());
+        let tx = tx.unwrap();
+        assert_eq!(tx.chain, crate::chain::Chain::KLV);
+        assert_eq!(
+            tx.sender,
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
+        );
+        assert_eq!(tx.hash.to_string(), "1e61c51f0d230f4855dc9b8935b47b9019887baf02be75d364a4068083833c15");
+        match tx.data.unwrap() {
+            TransactionRaw::Klever(klv_tx) => {
+                let raw = &klv_tx.raw_data.unwrap();
+                assert_eq!(raw.nonce, 39);
+                assert_eq!(raw.contract.len(), 1);
+                assert_eq!(raw.bandwidth_fee, 1000000);
+                assert_eq!(raw.k_app_fee, 500000);
+
+                let c: kos_proto::klever::TransferContract =
+                    kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
+                        .unwrap();
+
+                assert_eq!(c.amount, 10);
+            }
+            _ => assert!(false),
+        }
     }
 }
