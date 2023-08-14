@@ -402,7 +402,10 @@ mod tests {
             tx.sender,
             "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
         );
-        assert_eq!(tx.hash.to_string(), "1e61c51f0d230f4855dc9b8935b47b9019887baf02be75d364a4068083833c15");
+        assert_eq!(
+            tx.hash.to_string(),
+            "1e61c51f0d230f4855dc9b8935b47b9019887baf02be75d364a4068083833c15"
+        );
         match tx.data.unwrap() {
             TransactionRaw::Klever(klv_tx) => {
                 let raw = &klv_tx.raw_data.unwrap();

@@ -173,7 +173,12 @@ mod test {
 
         let nonce = 1692031458346;
 
-        let v = api_signature(DEFAULT_PRIVATE_KEY.to_string(), CLIENT_ID.to_string(), nonce).unwrap();
+        let v = api_signature(
+            DEFAULT_PRIVATE_KEY.to_string(),
+            CLIENT_ID.to_string(),
+            nonce,
+        )
+        .unwrap();
 
         println!("{:?}", v);
 
