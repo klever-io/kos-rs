@@ -73,6 +73,16 @@ impl BTC {
         Ok(KeyPair::new_secp256k1(kp))
     }
 
+    #[wasm_bindgen(js_name = "keypairFromBytes")]
+    pub fn keypair_from_bytes(private_key: &[u8]) -> Result<KeyPair, Error> {
+        // copy to fixed length array
+        let mut pk_slice = [0u8; 32];
+        pk_slice.copy_from_slice(private_key);
+
+        let kp = Secp256k1KeyPair::new(pk_slice);
+        Ok(KeyPair::new_secp256k1(kp))
+    }
+
     #[wasm_bindgen(js_name = "keypairFromMnemonic")]
     pub fn keypair_from_mnemonic(
         mnemonic: &str,
@@ -313,7 +323,7 @@ mod tests {
         "4604b4b710fe91f584fff084e1a9159fe4f8408fff380596a604948474ce4fa3";
     const DEFAULT_ADDRESS: &str = "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu";
     const DEFAULT_MNEMONIC: &str =
-    "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
     fn get_default_secret() -> KeyPair {
         let b = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();

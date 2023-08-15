@@ -31,7 +31,7 @@ pem = "2"
 ciborium = "0.2"
 web3 = { version = "0.18", default-features = false, features = ["http-tls", "wasm"] }
 bitcoin = "0.30"
-secp256k1 = { workspace = true, default-features = false }
+secp256k1 = { workspace = true, features = ["serde", "bitcoin_hashes"] }
 rlp = "0.5"
 
 reqwest = { workspace = true, features = ["blocking", "json"] }

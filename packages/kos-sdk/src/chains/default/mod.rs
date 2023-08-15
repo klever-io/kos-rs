@@ -28,6 +28,11 @@ impl NONE {
         Err(Error::UnsupportedChain("NONE".into()).into())
     }
 
+    #[wasm_bindgen(js_name = "keypairFromBytes")]
+    pub fn keypair_from_bytes(private_key: &[u8]) -> Result<KeyPair, Error> {
+        Err(Error::UnsupportedChain("NONE".into()).into())
+    }
+
     #[wasm_bindgen(js_name = "keypairFromMnemonic")]
     pub fn keypair_from_mnemonic(
         _mnemonic: &str,

@@ -72,6 +72,11 @@ impl MATIC {
         ETH::random()
     }
 
+    #[wasm_bindgen(js_name = "keypairFromBytes")]
+    pub fn keypair_from_bytes(private_key: &[u8]) -> Result<KeyPair, Error> {
+        ETH::keypair_from_bytes(private_key)
+    }
+
     #[wasm_bindgen(js_name = "keypairFromMnemonic")]
     pub fn keypair_from_mnemonic(
         mnemonic: &str,
