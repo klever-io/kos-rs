@@ -317,3 +317,37 @@ mod tests {
         assert!(check_checksum(password, checksum));
     }
 }
+
+/*
+    LEGACY GCM DECRYPT SHA1 KEY no SALT
+*/
+use sha1::Sha1;
+#[wasm_bindgen(js_name = gcmDecryptByKey)]
+pub fn gcm_decrypt_by_key(encrypted: &str, key: &str) -> Result<Vec<u8>, Error> {
+    if encrypted.len() < NONCE_SIZE {
+        return Err(Error::CipherError("invalid data len".to_owned()));
+    }
+
+    // convert hex to bytes
+    let encrypted = hex::decode(encrypted)
+        .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))?;
+    // convert base64 to bytes
+    let key =
+        base64::decode(key).map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))?;
+
+    // compute encrypt key
+    let salt = crate::hash::sha256("".as_bytes());
+    let key_hash = crate::hash::sha256(&key[..]);
+    let mut key = vec![0u8; KEY_SIZE];
+    pbkdf2::<Hmac<Sha1>>(&key_hash, &salt, 4096, &mut key).expect("Error deriving key");
+
+    // retrieve nonce and encrypted data
+    let nonce = &encrypted[..NONCE_SIZE];
+    let encrypted_data = &encrypted[NONCE_SIZE..];
+
+    let key = Key::<Aes256Gcm>::from_slice(&key);
+    let cipher = Aes256Gcm::new(key);
+    cipher
+        .decrypt(&Nonce::from_slice(nonce), encrypted_data)
+        .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))
+}

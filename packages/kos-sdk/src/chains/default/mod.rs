@@ -29,7 +29,7 @@ impl NONE {
     }
 
     #[wasm_bindgen(js_name = "keypairFromBytes")]
-    pub fn keypair_from_bytes(private_key: &[u8]) -> Result<KeyPair, Error> {
+    pub fn keypair_from_bytes(_private_key: &[u8]) -> Result<KeyPair, Error> {
         Err(Error::UnsupportedChain("NONE".into()).into())
     }
 
