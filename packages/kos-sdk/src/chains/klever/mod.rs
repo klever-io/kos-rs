@@ -256,24 +256,23 @@ impl KLV {
     /// import raw TX rom JSValue to Transaction model
     #[wasm_bindgen(js_name = "txFromRaw")]
     pub fn tx_from_raw(raw: &str) -> Result<crate::models::Transaction, Error> {
-        // convert bytes to serde_json::Value
-        let value = serde_json::from_slice::<serde_json::Value>(raw.as_bytes())?;
-        let tx = models::TransactionResult::try_from(value)?;
+        // build expected send result
+        let tx: kos_proto::klever::Transaction = serde_json::from_str(raw)?;
 
         // unwrap raw_data
         let data = tx
-            .tx
             .raw_data
             .clone()
             .ok_or_else(|| Error::InvalidTransaction("no raw TX found".to_string()))?;
 
         let sender = address::Address::from_bytes(&data.sender);
+        let digest = KLV::hash_transaction(&tx)?;
 
         Ok(crate::models::Transaction {
             chain: crate::chain::Chain::KLV,
             sender: sender.to_string(),
-            hash: Hash::new(&tx.tx_hash)?,
-            data: Some(TransactionRaw::Klever(tx.tx)),
+            hash: Hash::from_slice(&digest)?,
+            data: Some(TransactionRaw::Klever(tx)),
         })
     }
 }
@@ -402,7 +401,7 @@ mod tests {
 
     #[test]
     fn test_tx_from_raw() {
-        let raw = "{\"code\":\"successful\",\"data\":{\"result\":{\"RawData\":{\"BandwidthFee\":1000000,\"ChainID\":\"MTAwNDIw\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Version\":1}},\"txHash\":\"1e61c51f0d230f4855dc9b8935b47b9019887baf02be75d364a4068083833c15\"},\"error\":\"\"}";
+        let raw = "{\"RawData\":{\"BandwidthFee\":1000000,\"ChainID\":\"MTAwNDIw\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Version\":1}}";
 
         let tx = KLV::tx_from_raw(raw);
         assert!(tx.is_ok());
