@@ -61,6 +61,27 @@ impl KeyPair {
             KeyType::Secp256k1Compressed => self.secp256k1.as_ref().unwrap().sign_digest(digest),
         }
     }
+
+    pub fn verify_digest(&self, digest: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
+        match self.key_type {
+            KeyType::Default => false,
+            KeyType::Ed25519 => self
+                .ed25519
+                .as_ref()
+                .unwrap()
+                .verify_digest(digest, signature, public_key),
+            KeyType::Secp256k1 => self
+                .secp256k1
+                .as_ref()
+                .unwrap()
+                .verify_digest(digest, signature, public_key),
+            KeyType::Secp256k1Compressed => self
+                .secp256k1
+                .as_ref()
+                .unwrap()
+                .verify_digest(digest, signature, public_key),
+        }
+    }
 }
 
 impl From<ed25519::Ed25519KeyPair> for KeyPair {

@@ -1,3 +1,5 @@
+pub mod api;
+
 pub use kos_crypto::cipher::*;
 use kos_crypto::cipher::{self, CipherAlgo};
 use kos_crypto::mnemonic::generate_mnemonic;

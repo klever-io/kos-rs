@@ -4,15 +4,28 @@ use kos_types::error::Error;
 
 use rlp::RlpStream;
 use secp256k1::ecdsa::RecoverableSignature;
+use serde::Serialize;
 use web3::types::U256;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Serialize, Clone, Debug, PartialEq)]
 pub enum TransactionType {
     Legacy,
     EIP1559,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+fn signature_serialize<S>(x: &Option<RecoverableSignature>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    if let Some(signature) = x {
+        let serialized = format!("{:?}", signature);
+        s.serialize_str(&serialized)
+    } else {
+        s.serialize_none()
+    }
+}
+
+#[derive(Serialize, Clone, Debug, PartialEq)]
 pub struct Transaction {
     pub transaction_type: Option<TransactionType>,
     pub nonce: U256,
@@ -24,6 +37,7 @@ pub struct Transaction {
     pub chain_id: Option<u64>,
     pub max_fee_per_gas: Option<U256>,
     pub max_priority_fee_per_gas: Option<U256>,
+    #[serde(serialize_with = "signature_serialize")]
     pub signature: Option<RecoverableSignature>,
 }
 

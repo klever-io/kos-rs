@@ -56,6 +56,16 @@ impl ETH {
         Ok(KeyPair::new_secp256k1(kp))
     }
 
+    #[wasm_bindgen(js_name = "keypairFromBytes")]
+    pub fn keypair_from_bytes(private_key: &[u8]) -> Result<KeyPair, Error> {
+        // copy to fixed length array
+        let mut pk_slice = [0u8; 32];
+        pk_slice.copy_from_slice(private_key);
+
+        let kp = Secp256k1KeyPair::new(pk_slice);
+        Ok(KeyPair::new_secp256k1(kp))
+    }
+
     #[wasm_bindgen(js_name = "keypairFromMnemonic")]
     pub fn keypair_from_mnemonic(
         mnemonic: &str,

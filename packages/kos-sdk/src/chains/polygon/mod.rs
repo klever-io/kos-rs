@@ -8,6 +8,7 @@ use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
 use kos_types::number::BigNumber;
 
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -23,7 +24,7 @@ pub const BASE_CHAIN: BaseChain = BaseChain {
     chain_code: 28,
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Serialize, Clone, Debug, PartialEq)]
 pub struct Transaction {
     pub eth: ETHTransaction,
 }
@@ -70,6 +71,11 @@ impl MATIC {
     #[wasm_bindgen(js_name = "random")]
     pub fn random() -> Result<KeyPair, Error> {
         ETH::random()
+    }
+
+    #[wasm_bindgen(js_name = "keypairFromBytes")]
+    pub fn keypair_from_bytes(private_key: &[u8]) -> Result<KeyPair, Error> {
+        ETH::keypair_from_bytes(private_key)
     }
 
     #[wasm_bindgen(js_name = "keypairFromMnemonic")]

@@ -27,7 +27,7 @@ pub enum AccountType {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Wallet {
     chain: Chain,
@@ -184,6 +184,40 @@ impl Wallet {
             path: Some(path),
             keypair: Some(kp),
         })
+    }
+
+    #[wasm_bindgen(js_name = "fromPrivateKey")]
+    /// restore wallet from mnemonic
+    pub fn from_private_key(chain: Chain, private_key: String) -> Result<Wallet, Error> {
+        // convert hex to bytes
+        let private_key = hex::decode(private_key)?;
+
+        // check size of private key
+        if private_key.len() != 32 {
+            return Err(Error::WalletManagerError("Invalid private key".to_string()));
+        }
+
+        // crete keypair from private key
+        let kp = chain.keypair_from_bytes(&private_key)?;
+
+        // create wallet from keypair
+        Wallet::from_keypair(chain, kp)
+    }
+
+    #[wasm_bindgen(js_name = "fromKCPem")]
+    /// restore wallet from mnemonic
+    pub fn from_kc_pem(chain: Chain, data: &[u8]) -> Result<Wallet, Error> {
+        // decode pem file
+        let pem = parse_pem(data)
+            .map_err(|_| Error::WalletManagerError("Invalid PEM data".to_string()))?;
+
+        let content = String::from_utf8(pem.contents().to_vec())
+            .map_err(|_| Error::WalletManagerError("Invalid PEM data".to_string()))?;
+
+        let pk_hex = content.chars().take(64).collect::<String>();
+
+        // import from private key
+        Wallet::from_private_key(chain, pk_hex)
     }
 
     #[wasm_bindgen(js_name = "fromMnemonicIndex")]

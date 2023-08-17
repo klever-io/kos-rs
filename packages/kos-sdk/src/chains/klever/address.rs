@@ -23,6 +23,10 @@ impl Address {
         Address(public)
     }
 
+    pub fn public_key(&self) -> [u8; 32] {
+        self.0
+    }
+
     /// Address of a keypair.
     pub fn from_keypair(kp: &KeyPair) -> Address {
         Address::from_public(kp.public_key().try_into().unwrap())

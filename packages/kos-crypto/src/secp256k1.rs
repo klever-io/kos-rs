@@ -112,6 +112,10 @@ impl Secp256k1KeyPair {
         raw
     }
 
+    pub fn verify_digest(&self, digest: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
+        Self::recover(digest, signature).map_or(false, |recovered| recovered == public_key)
+    }
+
     pub fn recover(digest: &[u8], sig: &[u8]) -> Result<Vec<u8>, Error> {
         // check signature length
         if sig.len() != 65 {

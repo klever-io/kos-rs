@@ -30,6 +30,12 @@ macro_rules! createChains {
                 }
             }
 
+            pub fn keypair_from_bytes(&self, private_key: &[u8]) -> Result<KeyPair, Error> {
+                match self {
+                    $(Chain::$name => $name::keypair_from_bytes(private_key),)*
+                }
+            }
+
             pub fn keypair_from_mnemonic(&self, mnemonic: &str, path: &str, password: Option<String>) -> Result<KeyPair, Error> {
                 match self {
                     $(Chain::$name => $name::keypair_from_mnemonic(mnemonic, path, password),)*

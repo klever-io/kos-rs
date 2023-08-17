@@ -8,7 +8,7 @@ use crate::{
 use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
 use kos_types::{error::Error, hash::Hash, number::BigNumber};
 
-use std::todo;
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -35,6 +35,16 @@ impl KLV {
     pub fn random() -> Result<KeyPair, Error> {
         let mut rng = rand::thread_rng();
         let kp = Ed25519KeyPair::random(&mut rng);
+        Ok(KeyPair::new_ed25519(kp))
+    }
+
+    #[wasm_bindgen(js_name = "keypairFromBytes")]
+    pub fn keypair_from_bytes(private_key: &[u8]) -> Result<KeyPair, Error> {
+        // copy to fixed length array
+        let mut pk_slice = [0u8; 32];
+        pk_slice.copy_from_slice(private_key);
+
+        let kp = Ed25519KeyPair::new(pk_slice);
         Ok(KeyPair::new_ed25519(kp))
     }
 
@@ -72,8 +82,15 @@ impl KLV {
 
     #[wasm_bindgen(js_name = "verifyDigest")]
     /// Verify Message signature
-    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<(), Error> {
-        todo!()
+    pub fn verify_digest(digest: &[u8], signature: &[u8], address: &str) -> Result<(), Error> {
+        let addr = address::Address::from_str(address)?;
+        let kp = Ed25519KeyPair::default();
+
+        if kp.verify_digest(digest, signature, &addr.public_key()) {
+            Ok(())
+        } else {
+            Err(Error::InvalidSignature(&"message verification fail"))
+        }
     }
 
     #[wasm_bindgen(js_name = "sign")]
@@ -130,18 +147,20 @@ impl KLV {
 
     #[wasm_bindgen(js_name = "signMessage")]
     /// Sign Message with the private key.
-    pub fn sign_message(_message: &[u8], _keypair: &KeyPair) -> Result<Vec<u8>, Error> {
-        todo!()
+    pub fn sign_message(message: &[u8], keypair: &KeyPair) -> Result<Vec<u8>, Error> {
+        let m = KLV::message_hash(message)?;
+        KLV::sign_digest(&m, keypair)
     }
 
     #[wasm_bindgen(js_name = "verifyMessageSignature")]
     /// Verify Message signature
     pub fn verify_message_signature(
-        _message: &[u8],
-        _signature: &[u8],
-        _address: &str,
+        message: &[u8],
+        signature: &[u8],
+        address: &str,
     ) -> Result<(), Error> {
-        todo!()
+        let m = KLV::message_hash(message)?;
+        KLV::verify_digest(&m, signature, address)
     }
 
     #[wasm_bindgen(js_name = "getBalance")]
@@ -232,6 +251,32 @@ impl KLV {
     }
 }
 
+#[wasm_bindgen]
+impl KLV {
+    /// import raw TX rom JSValue to Transaction model
+    #[wasm_bindgen(js_name = "txFromRaw")]
+    pub fn tx_from_raw(raw: &str) -> Result<crate::models::Transaction, Error> {
+        // build expected send result
+        let tx: kos_proto::klever::Transaction = serde_json::from_str(raw)?;
+
+        // unwrap raw_data
+        let data = tx
+            .raw_data
+            .clone()
+            .ok_or_else(|| Error::InvalidTransaction("no raw TX found".to_string()))?;
+
+        let sender = address::Address::from_bytes(&data.sender);
+        let digest = KLV::hash_transaction(&tx)?;
+
+        Ok(crate::models::Transaction {
+            chain: crate::chain::Chain::KLV,
+            sender: sender.to_string(),
+            hash: Hash::from_slice(&digest)?,
+            data: Some(TransactionRaw::Klever(tx)),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::assert_eq;
@@ -251,7 +296,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_galance() {
+    fn test_get_balance() {
         let balance = tokio_test::block_on(KLV::get_balance(
             "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
             Some("KLV".to_string()),
@@ -330,5 +375,61 @@ mod tests {
         let address = KLV::get_address_from_keypair(&get_default_secret()).unwrap();
 
         assert_eq!(DEFAULT_ADDRESS, address.to_string());
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let message = "Hello World";
+        let kp = get_default_secret();
+        let signature = KLV::sign_message(message.as_bytes(), &kp).unwrap();
+        assert_eq!(
+            "38b3fd1e4d5a34291dddb2c6ca66e857c1696f3160981ca6abb8a78087f86b6163314cadd16179239d38201ba91c97aa201b7f38ecfff50c7f0448da67bf5a05",
+            hex::encode(signature)
+        );
+    }
+
+    #[test]
+    fn test_verify_message() {
+        let message = "Hello World";
+        let kp = get_default_secret();
+        let signature = hex::decode("38b3fd1e4d5a34291dddb2c6ca66e857c1696f3160981ca6abb8a78087f86b6163314cadd16179239d38201ba91c97aa201b7f38ecfff50c7f0448da67bf5a05").unwrap() ;
+        let address = KLV::get_address_from_keypair(&kp).unwrap();
+        let result = KLV::verify_message_signature(message.as_bytes(), &signature, &address);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_tx_from_raw() {
+        let raw = "{\"RawData\":{\"BandwidthFee\":1000000,\"ChainID\":\"MTAwNDIw\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Version\":1}}";
+
+        let tx = KLV::tx_from_raw(raw);
+        assert!(tx.is_ok());
+        let tx = tx.unwrap();
+        assert_eq!(tx.chain, crate::chain::Chain::KLV);
+        assert_eq!(
+            tx.sender,
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
+        );
+        assert_eq!(
+            tx.hash.to_string(),
+            "1e61c51f0d230f4855dc9b8935b47b9019887baf02be75d364a4068083833c15"
+        );
+        match tx.data.unwrap() {
+            TransactionRaw::Klever(klv_tx) => {
+                let raw = &klv_tx.raw_data.unwrap();
+                assert_eq!(raw.nonce, 39);
+                assert_eq!(raw.contract.len(), 1);
+                assert_eq!(raw.bandwidth_fee, 1000000);
+                assert_eq!(raw.k_app_fee, 500000);
+
+                let c: kos_proto::klever::TransferContract =
+                    kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
+                        .unwrap();
+
+                assert_eq!(c.amount, 10);
+            }
+            _ => assert!(false),
+        }
     }
 }
