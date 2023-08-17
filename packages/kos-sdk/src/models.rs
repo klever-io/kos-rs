@@ -92,6 +92,26 @@ impl Transaction {
     pub fn to_string(&self) -> Result<String, Error> {
         serde_json::to_string(&self).map_err(|e| e.into())
     }
+
+    #[wasm_bindgen(js_name = getRaw)]
+    pub fn get_raw(&self) -> Result<String, Error> {
+        match &self.data {
+            Some(data) => match data {
+                TransactionRaw::Klever(data) => serde_json::to_string(&data).map_err(|e| e.into()),
+                TransactionRaw::Tron(data) => serde_json::to_string(&data).map_err(|e| e.into()),
+                TransactionRaw::Ethereum(data) => {
+                    let encoded = data.encode()?;
+                    Ok(hex::encode(encoded))
+                }
+                TransactionRaw::Polygon(data) => {
+                    let encoded = data.eth.encode()?;
+                    Ok(hex::encode(encoded))
+                },
+                TransactionRaw::Bitcoin(data) => serde_json::to_string(&data.tx).map_err(|e| e.into()),
+            },
+            None => Err(Error::InvalidTransaction("no data found".to_string())),
+        }
+    }
 }
 
 impl Transaction {
