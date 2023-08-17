@@ -27,7 +27,7 @@ pub enum AccountType {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Wallet {
     chain: Chain,

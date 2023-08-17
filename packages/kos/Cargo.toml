@@ -30,7 +30,7 @@ hex = { workspace = true }
 
 kos-types = { workspace = true }
 kos-crypto = { workspace = true }
-kos-sdk = { workspace = true }
+kos-sdk = { workspace = true, features = ["serde"] }
 kos-utils = { workspace = true }
 
 

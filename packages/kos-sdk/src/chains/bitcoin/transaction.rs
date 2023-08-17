@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 // Structure to hold Transaction data.
-#[derive(Debug, Clone)]
+#[derive(Serialize, Debug, Clone)]
 pub struct BTCTransaction {
     pub sender_address: Address,
     pub tx: PartiallySignedTransaction,

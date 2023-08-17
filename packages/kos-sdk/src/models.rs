@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::chain::Chain;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 #[wasm_bindgen]
 pub struct BroadcastResult {
     #[wasm_bindgen(skip)]
@@ -67,7 +67,7 @@ impl SendOptions {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 #[wasm_bindgen]
 /// Transaction Handler
 pub struct Transaction {
@@ -78,8 +78,6 @@ pub struct Transaction {
     #[wasm_bindgen(js_name = hash)]
     pub hash: Hash,
     #[wasm_bindgen(skip)]
-    // TODO!()
-    #[serde(skip)]
     pub data: Option<TransactionRaw>,
 }
 
@@ -89,6 +87,7 @@ impl Transaction {
     pub fn chain(&self) -> Chain {
         self.chain
     }
+
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> Result<String, Error> {
         serde_json::to_string(&self).map_err(|e| e.into())

@@ -11,6 +11,10 @@ rust-version = { workspace = true }
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = ["serde"]
+serde = ["bitcoin/serde"]
+
 [dependencies]
 strum = { version = "0.24", features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
@@ -30,7 +34,7 @@ coins-bip39 = { workspace = true }
 pem = "2"
 ciborium = "0.2"
 web3 = { version = "0.18", default-features = false, features = ["http-tls", "wasm"] }
-bitcoin = "0.30"
+bitcoin = { version = "0.30" }
 secp256k1 = { workspace = true, features = ["serde", "bitcoin_hashes"] }
 rlp = "0.5"
 

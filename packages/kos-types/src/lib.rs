@@ -23,7 +23,7 @@ macro_rules! enum_thing {
             $($EnumVariant:ident($EnumType:ty)),* $(,)?
         }
     ) => {
-        #[derive(Clone, Debug)]
+        #[derive(serde::Serialize, Clone, Debug)]
         pub enum $EnumName {
             $($EnumVariant($EnumType),)*
         }
