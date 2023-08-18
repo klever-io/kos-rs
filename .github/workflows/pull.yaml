@@ -1,11 +1,13 @@
 name: Release KOS-RS
 
 on:
+  push:
+    branches:
+      - release-workflow
   pull_request:
     branches:
       - develop
     
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,7 +21,7 @@ jobs:
       - name: Set up Clang
         uses: KyleMayes/install-llvm-action@v1
         with:
-          version: "10.0"
+          version: "16.0"
 
       - name: Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -28,8 +30,27 @@ jobs:
             override: true
             components: rustfmt, clippy
 
+      - name: Setup protobuf
+        run: sudo apt-get update && sudo apt-get -y install protobuf-compiler
+
       - name: Wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: 'Create env file'
+        run: |
+          touch ./packages/kos-sdk/.env.nodes
+          echo NODE.KLV="https://node.mainnet.klever.finance" >> ./packages/kos-sdk/.env.nodes
+          echo NODE.TRX="https://api.trongrid.io" >> ./packages/kos-sdk/.env.nodes          
+          echo NODE.ETH="https://ethereum-mainnet-rpc.allthatnode.com" >> ./packages/kos-sdk/.env.nodes
+          echo NODE.MATIC="https://rpc-mainnet.maticvigil.com" >> ./packages/kos-sdk/.env.nodes
+          echo NODE.BTC="https://bitcoin.blockbook.chains.klever.io" >> ./packages/kos-sdk/.env.nodes
+          echo NODE.MUMBAI="https://polygon-mumbai.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78" >> ./packages/kos-sdk/.env.nodes
+          cat ./packages/kos-sdk/.env.nodes
       
       - name: Build
         run: make webpack-npm
+
+      - name: Publish npm module
+        run: npm publish ./demo/kos --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -17,3 +17,7 @@ package-lock.json
 .env
 .env.*
 dist
+
+.DS_Store
+demo/.DS_Store
+packages/.DS_Store
