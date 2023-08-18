@@ -35,7 +35,7 @@ fn build_pbjson(
     }
 
     prost_build
-        .out_dir(&full_path)
+        .out_dir(fs::canonicalize(&out_dir).unwrap())
         .compile_protos(protos, includes)
         .unwrap();
 
