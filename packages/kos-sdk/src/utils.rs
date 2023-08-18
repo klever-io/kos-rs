@@ -1,6 +1,5 @@
 use kos_types::error::Error;
 
-use reqwest;
 use serde::de::DeserializeOwned;
 
 static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
@@ -9,7 +8,7 @@ static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_P
 #[cfg(not(target_arch = "wasm32"))]
 pub fn http_get_block<T: DeserializeOwned>(url: String) -> Result<T, Error> {
     let body = reqwest::blocking::get(url).unwrap();
-    body.json::<T>().map_err(|e| Error::from(e))
+    body.json::<T>().map_err(Error::from)
 }
 
 pub fn get_client() -> Result<reqwest::Client, Error> {
@@ -32,10 +31,10 @@ pub async fn http_get<T: DeserializeOwned>(url: String) -> Result<T, Error> {
     let client = get_client()?;
 
     let body = client.get(url).send().await?;
-    body.json::<T>().await.map_err(|e| Error::from(e))
+    body.json::<T>().await.map_err(Error::from)
 }
 
-pub async fn http_post<T: DeserializeOwned>(url: String, data: &Vec<u8>) -> Result<T, Error> {
+pub async fn http_post<T: DeserializeOwned>(url: String, data: &[u8]) -> Result<T, Error> {
     let client = get_client()?;
 
     client
@@ -44,12 +43,12 @@ pub async fn http_post<T: DeserializeOwned>(url: String, data: &Vec<u8>) -> Resu
         .body(data.to_vec())
         .send()
         .await
-        .map_err(|e| Error::from(e))?
+        .map_err(Error::from)?
         .json::<T>()
         .await
-        .map_err(|e| Error::from(e))
+        .map_err(Error::from)
 }
 
 pub fn get_node_url(name: &str) -> String {
-    std::env::var(format!("NODE.{}", name)).unwrap_or("".to_string())
+    std::env::var(format!("NODE_{}", name)).unwrap_or("".to_string())
 }

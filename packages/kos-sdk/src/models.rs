@@ -16,14 +16,15 @@ pub struct BroadcastResult {
 impl BroadcastResult {
     #[wasm_bindgen(constructor)]
     pub fn new(tx: Transaction) -> Self {
-        Self { tx: tx }
+        Self { tx }
     }
 
     #[wasm_bindgen(js_name = hash)]
     pub fn hash(&self) -> Hash {
-        self.tx.hash.clone()
+        self.tx.hash
     }
 
+    #[allow(clippy::inherent_to_string)]
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> String {
         serde_json::to_string(&self).unwrap()
@@ -106,8 +107,10 @@ impl Transaction {
                 TransactionRaw::Polygon(data) => {
                     let encoded = data.eth.encode()?;
                     Ok(hex::encode(encoded))
-                },
-                TransactionRaw::Bitcoin(data) => serde_json::to_string(&data.tx).map_err(|e| e.into()),
+                }
+                TransactionRaw::Bitcoin(data) => {
+                    serde_json::to_string(&data.tx).map_err(|e| e.into())
+                }
             },
             None => Err(Error::InvalidTransaction("no data found".to_string())),
         }

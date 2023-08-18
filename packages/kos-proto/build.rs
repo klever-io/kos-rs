@@ -1,5 +1,5 @@
 use glob::glob;
-use heck::CamelCase;
+use heck::ToUpperCamelCase;
 use prost_wkt_build::*;
 use quote::{format_ident, quote};
 use std::fs::{self, File, OpenOptions};
@@ -66,9 +66,8 @@ fn build_pbjson(
 fn get_files(dir: &str) -> Vec<String> {
     let mut list: Vec<String> = vec![];
     for entry in glob(dir).expect("Failed to read glob pattern") {
-        if let Ok(st) = entry {
-            list.push(format!("./{:}", st.display()));
-        }
+        let Ok(st) = entry else { continue; };
+        list.push(format!("./{:}", st.display()));
     }
     list
 }
@@ -158,7 +157,7 @@ fn generate_extras(out_dir: &Path, file_descriptor_set: &FileDescriptorSet) {
             };
 
             let type_url = format!("type.googleapis.com/{}.{}", package, name);
-            let type_name = name.to_camel_case();
+            let type_name = name.to_upper_camel_case();
 
             gen_type_url(&mut gen_file, &type_url, &type_name);
         }

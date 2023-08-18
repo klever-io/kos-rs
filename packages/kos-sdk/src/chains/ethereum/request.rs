@@ -44,7 +44,7 @@ pub async fn get_balance(url: &str, address: Address) -> Result<BigNumber, Error
         .balance(address.into(), None)
         .await
         .map_err(|e| Error::TransportError(e.to_string()))?;
-    Ok(balance.to_string().try_into()?)
+    balance.to_string().try_into()
 }
 
 pub async fn get_nonce(url: &str, address: Address) -> Result<u64, Error> {
@@ -72,29 +72,24 @@ pub async fn estimate_gas(
         gas: None,
         gas_price,
         value,
-        data: match data {
-            Some(data) => Some(data.into()),
-            None => None,
-        },
+        data: data.map(|data| data.into()),
         ..Default::default()
     };
 
     let web3 = get_web3(url)?;
-    Ok(web3
-        .eth()
+    web3.eth()
         .estimate_gas(req, None)
         .await
-        .map_err(|e| Error::TransportError(e.to_string()))?)
+        .map_err(|e| Error::TransportError(e.to_string()))
 }
 
 /// Get current recommended gas price
 pub async fn gas_price(url: &str) -> Result<U256, Error> {
     let web3 = get_web3(url)?;
-    Ok(web3
-        .eth()
+    web3.eth()
         .gas_price()
         .await
-        .map_err(|e| Error::TransportError(e.to_string()))?)
+        .map_err(|e| Error::TransportError(e.to_string()))
 }
 
 pub async fn base_fee(url: &str) -> Result<U256, Error> {

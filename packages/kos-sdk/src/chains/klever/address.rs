@@ -45,7 +45,7 @@ impl Address {
     }
 
     /// To hex address
-    pub fn to_hex_address(&self) -> String {
+    pub fn to_hex_address(self) -> String {
         hex::encode(self.0)
     }
 }

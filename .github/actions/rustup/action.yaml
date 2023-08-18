@@ -1,0 +1,90 @@
+name: WasmPack toolchain
+inputs:
+  with_cache:
+    description: activate cargo cache
+    default: true
+    required: false
+    type: boolean
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup cmake
+      uses: lukka/get-cmake@latest
+      with:
+        useLocalCache: true
+        useCloudCache: true
+
+    ###############################
+    # LLVM Clang CACHE && INSTALL #
+    ###############################
+    - name: Cache LLVM and Clang
+      id: cache-llvm
+      uses: actions/cache@v3
+      with:
+        path: |
+          ./llvm
+        key: llvm-16
+
+    - name: Set up Clang
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: "16.0"
+        cached: ${{ steps.cache-llvm.outputs.cache-hit }}
+
+    ###############################
+    # CARGO CACHE && INSTALL     #
+    ###############################
+    - id: cache-rustup
+      name: Cache Rust toolchain
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.rustup
+          ~/.cargo/bin/
+        key: rust-toolchain-${{ runner.os }}-stable
+
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+        components: clippy, rustfmt
+
+    - if: ${{ steps.cache-rustup.outputs.cache-hit != 'true' }}
+      name: Wasm-pack
+      run: |
+        cargo install --locked wasm-pack || true
+    
+    - if: ${{ steps.cache-rustup.outputs.cache-hit != 'true' }}
+      name: Cargo tools
+      run: |
+        cargo install --locked cargo-deny || true
+        cargo install --locked cargo-outdated || true
+        cargo install --locked cargo-udeps || true
+        cargo install --locked cargo-audit || true
+        cargo install --locked cargo-pants || true 
+
+
+    - name: Cache registry
+      uses: actions/cache@v3
+      id: cache-cargo-registry
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Fetch dependencies
+      if: steps.cache-cargo.outputs.cache-hit != 'true'
+      run: cargo fetch
+
+    ###############################
+    # PROTOBUF CACHE && INSTALL   #
+    ###############################
+    - name: Setup protobuf
+      run: sudo apt-get update && sudo apt-get -y install protobuf-compiler

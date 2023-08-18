@@ -1,0 +1,58 @@
+name: Release KOS-RS
+
+on:
+  pull_request:
+    branches:
+      - develop
+    paths-ignore:
+      - README.md
+      - .gitignore
+      - .github/**
+    
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    env:
+      USER: ${{ secrets.git_user }}
+      TOKEN: ${{ secrets.git_pass }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: RustUp
+        uses: klever-io/kos-rs/.github/actions/rustup@develop
+        with:
+          with_cache: true
+
+      - name: Lint
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy -- -D warnings
+
+      - name: checks
+        run: |
+          cargo deny check
+          cargo outdated --exit-code 1
+          rm -rf ~/.cargo/advisory-db
+          cargo audit
+          cargo pants
+
+  build:
+    needs: [format]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: RustUp
+        uses: klever-io/kos-rs/.github/actions/rustup@develop
+        with:
+          with_cache: true
+
+      - name: Build
+        run: make webpack-npm

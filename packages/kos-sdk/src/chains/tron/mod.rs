@@ -116,7 +116,7 @@ impl TRX {
 
                 Ok(result)
             }
-            _ => return Err(Error::InvalidMessage("not a tron transaction".to_string())),
+            _ => Err(Error::InvalidMessage("not a tron transaction".to_string())),
         }
     }
 
@@ -203,33 +203,34 @@ impl TRX {
 
         let options = TRX::get_options(options);
 
-        let tx: kos_proto::tron::Transaction;
-        match options.token {
+        let tx: kos_proto::tron::Transaction = match options.token {
             Some(token) if token != "TRX" => {
                 // todo!() check if TRC20 transfer
-                let mut contract = kos_proto::tron::TransferAssetContract::default();
-                contract.owner_address = addr_sender.as_bytes().to_vec();
-                contract.to_address = addr_receiver.as_bytes().to_vec();
-                contract.amount = amount.to_i64();
-                contract.asset_name = token.as_bytes().to_vec();
+                let contract = kos_proto::tron::TransferAssetContract {
+                    owner_address: addr_sender.as_bytes().to_vec(),
+                    to_address: addr_receiver.as_bytes().to_vec(),
+                    amount: amount.to_i64(),
+                    asset_name: token.as_bytes().to_vec(),
+                };
 
-                tx = requests::create_asset_transfer(&node, contract).await?;
+                requests::create_asset_transfer(&node, contract).await?
             }
             _ => {
-                let mut contract = kos_proto::tron::TransferContract::default();
-                contract.owner_address = addr_sender.as_bytes().to_vec();
-                contract.to_address = addr_receiver.as_bytes().to_vec();
-                contract.amount = amount.to_i64();
+                let contract = kos_proto::tron::TransferContract {
+                    owner_address: addr_sender.as_bytes().to_vec(),
+                    to_address: addr_receiver.as_bytes().to_vec(),
+                    amount: amount.to_i64(),
+                };
 
-                tx = requests::create_transfer(&node, contract).await?;
+                requests::create_transfer(&node, contract).await?
             }
-        }
+        };
 
         let digest = TRX::hash_transaction(&tx)?;
 
         Ok(crate::models::Transaction {
             chain: chain::Chain::TRX,
-            sender: sender,
+            sender,
             hash: Hash::from_vec(digest)?,
             data: Some(TransactionRaw::Tron(tx)),
         })

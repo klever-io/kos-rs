@@ -63,12 +63,13 @@ impl Blake2b {
 
     pub fn new_with_key(size: usize, key: &[u8]) -> Blake2b {
         assert!(size > 0 && size <= OUT_BYTES);
-        assert!(key.len() > 0 && key.len() <= KEY_BYTES);
+        assert!(!key.is_empty() && key.len() <= KEY_BYTES);
 
         let param = encode_params(size as u8, key.len() as u8);
         let mut state = IV;
 
         for i in 0..state.len() {
+            println!("i2: {} ", i);
             state[i] ^= load64(&param[i * 8..]);
         }
 
@@ -82,9 +83,7 @@ impl Blake2b {
         };
 
         let mut block = [0u8; BLOCK_BYTES];
-        for i in 0..key.len() {
-            block[i] = key[i];
-        }
+        block[..key.len()].copy_from_slice(key);
         b.update(block.as_ref());
         b
     }
@@ -92,14 +91,12 @@ impl Blake2b {
     pub fn update(&mut self, m: &[u8]) {
         let mut m = m;
 
-        while m.len() > 0 {
+        while !m.is_empty() {
             let left = self.buf_len;
             let fill = 2 * BLOCK_BYTES - left;
 
             if m.len() > fill {
-                for i in 0..fill {
-                    self.buf[left + i] = m[i];
-                }
+                self.buf[left..(fill + left)].copy_from_slice(&m[..fill]);
                 self.buf_len += fill;
                 m = &m[fill..];
                 self.increment_counter(BLOCK_BYTES as u64);
@@ -109,9 +106,7 @@ impl Blake2b {
                 }
                 self.buf_len -= BLOCK_BYTES;
             } else {
-                for i in 0..m.len() {
-                    self.buf[left + i] = m[i];
-                }
+                self.buf[left..(m.len() + left)].copy_from_slice(m);
                 self.buf_len += m.len();
                 m = &m[m.len()..];
             }
@@ -158,9 +153,7 @@ impl Blake2b {
             m[i] = load64(&block[i * 8..]);
         }
 
-        for i in 0..8 {
-            v[i] = self.h[i];
-        }
+        v[..8].copy_from_slice(&self.h[..8]);
 
         v[8] = IV[0];
         v[9] = IV[1];
@@ -207,27 +200,19 @@ impl Blake2b {
     }
 }
 
-fn encode_params(size: u8, keylen: u8) -> [u8; 64] {
+fn encode_params(size: u8, key_len: u8) -> [u8; 64] {
     let mut param = [0u8; 64];
-    param[0] = size as u8;
-    param[1] = keylen as u8;
+    param[0] = size;
+    param[1] = key_len;
     param[2] = 1; // fanout
     param[3] = 1; // depth
     param
 }
 
 fn load64(b: &[u8]) -> u64 {
-    let mut v = 0u64;
-    for i in 0..8 {
-        v |= (b[i] as u64) << (8 * i);
-    }
-    v
+    u64::from_le_bytes(b[..8].try_into().expect("slice with incorrect length"))
 }
 
 fn store64(b: &mut [u8], v: u64) {
-    let mut w = v;
-    for i in 0..8 {
-        b[i] = w as u8;
-        w >>= 8;
-    }
+    b[..8].copy_from_slice(&v.to_le_bytes());
 }

@@ -65,7 +65,7 @@ impl KLV {
 
     #[wasm_bindgen(js_name = "getAddressFromKeyPair")]
     pub fn get_address_from_keypair(keypair: &KeyPair) -> Result<String, Error> {
-        Ok(address::Address::from_keypair(&keypair).to_string())
+        Ok(address::Address::from_keypair(keypair).to_string())
     }
 
     #[wasm_bindgen(js_name = "getPath")]
@@ -89,7 +89,7 @@ impl KLV {
         if kp.verify_digest(digest, signature, &addr.public_key()) {
             Ok(())
         } else {
-            Err(Error::InvalidSignature(&"message verification fail"))
+            Err(Error::InvalidSignature("message verification fail"))
         }
     }
 
@@ -112,11 +112,9 @@ impl KLV {
 
                 Ok(result)
             }
-            _ => {
-                return Err(Error::InvalidMessage(
-                    "not a klever transaction".to_string(),
-                ))
-            }
+            _ => Err(Error::InvalidMessage(
+                "not a klever transaction".to_string(),
+            )),
         }
     }
 
@@ -241,7 +239,7 @@ impl KLV {
         let options = KLV::get_options(options);
 
         let contract = models::TransferTXRequest {
-            receiver: receiver,
+            receiver,
             amount: amount.to_i64(),
             kda: options.kda.clone(),
             kda_royalties: options.kda_royalties,

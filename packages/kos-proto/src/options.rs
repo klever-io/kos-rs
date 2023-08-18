@@ -1,21 +1,11 @@
 use kos_types::number::BigNumber;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Default, Deserialize, Serialize, Clone, Debug)]
 pub struct KLVOptions {
     pub nonce: Option<u64>,
     pub kda: Option<String>,
     pub kda_royalties: Option<i64>,
-}
-
-impl Default for KLVOptions {
-    fn default() -> Self {
-        Self {
-            nonce: None,
-            kda: None,
-            kda_royalties: None,
-        }
-    }
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -64,18 +54,16 @@ pub struct BTCOptions {
 
 impl BTCOptions {
     pub fn dust_value(&self) -> BigNumber {
-        self.dust_value
-            .clone()
-            .unwrap_or_else(|| BigNumber::from(546))
+        self.dust_value.clone().unwrap_or(BigNumber::from(546))
     }
     pub fn sats_per_bytes(&self) -> u64 {
-        self.sats_per_bytes.clone().unwrap_or_else(|| 1)
+        self.sats_per_bytes.unwrap_or(1)
     }
     pub fn receivers(&self) -> Vec<(String, BigNumber)> {
-        self.receivers.clone().unwrap_or_else(|| Vec::new())
+        self.receivers.clone().unwrap_or_default()
     }
 
     pub fn rbf(&self) -> bool {
-        self.rbf.clone().unwrap_or_else(|| false)
+        self.rbf.unwrap_or(false)
     }
 }

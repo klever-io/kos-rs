@@ -54,7 +54,7 @@ where
     M: prost::Message + TypeUrl + Default,
 {
     match msg {
-        Some(any) => unpack_from_any(&any),
+        Some(any) => unpack_from_any(any),
         _ => None,
     }
 }

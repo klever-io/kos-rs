@@ -13,7 +13,10 @@ use bitcoin::{
 };
 
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use std::{
+    ops::{Add, Div, Sub},
+    str::FromStr,
+};
 
 // Structure to hold Transaction data.
 #[derive(Serialize, Debug, Clone)]
@@ -105,7 +108,9 @@ pub fn create_transaction(
 ) -> Result<BTCTransaction, Error> {
     let total_send = receivers
         .iter()
-        .fold(BigNumber::from(0), |acc, (_, amount)| acc.add(amount));
+        .fold(BigNumber::from(0), |acc, (_, amount)| {
+            acc.add(amount.clone())
+        });
 
     let mut total_inputs = BigNumber::from(0);
     let mut total_outputs = BigNumber::from(0);
@@ -128,7 +133,7 @@ pub fn create_transaction(
         });
 
         let amount = BigNumber::from_str(&utxo.value)?;
-        total_inputs = total_inputs.add(&amount);
+        total_inputs = total_inputs.add(amount.clone());
 
         // todo!("allow non segwit inputs")
         psbt_input.push(psbt::Input {
@@ -152,7 +157,7 @@ pub fn create_transaction(
             value: amount.to_u64(),
         });
 
-        total_outputs = total_outputs.add(&amount);
+        total_outputs = total_outputs.add(amount);
     }
 
     let change_output = if total_inputs.gt(&total_send) { 1 } else { 0 };
@@ -164,7 +169,7 @@ pub fn create_transaction(
         sats_per_bytes,
     );
 
-    let send_plus_estimated_fee = total_send.clone().add(&fee);
+    let send_plus_estimated_fee = total_send.clone().add(fee.clone());
 
     // error if not enough funds to cover fee and amount send
     if total_inputs.lt(&send_plus_estimated_fee) {
@@ -179,7 +184,7 @@ pub fn create_transaction(
 
     // Output to self (change) if applicable
     // todo add fee calculation
-    let change_amount = total_inputs.clone().sub(&send_plus_estimated_fee);
+    let change_amount = total_inputs.clone().sub(send_plus_estimated_fee);
     // compute dust value if not provided
     let dust_value = options.dust_value();
     if change_amount.gt(&dust_value) {
@@ -188,12 +193,12 @@ pub fn create_transaction(
             value: change_amount.clone().to_u64(),
         });
 
-        total_outputs = total_outputs.add(&change_amount);
+        total_outputs = total_outputs.add(change_amount.clone());
     }
 
-    let fee = total_inputs.clone().sub(&total_outputs);
+    let fee = total_inputs.clone().sub(total_outputs.clone());
     let size = estimate_size(tx_inputs.len() as u64, tx_outputs.len() as u64);
-    let sats_per_bytes = fee.clone().div(&BigNumber::from(size));
+    let sats_per_bytes = fee.clone().div(BigNumber::from(size));
 
     // Build Transaction
     let mut tx = PartiallySignedTransaction::from_unsigned_tx(Transaction {
@@ -202,7 +207,7 @@ pub fn create_transaction(
         input: tx_inputs,
         output: tx_outputs,
     })
-    .map_err(|e| Error::InvalidTransaction(format!("creating psbt: {}", e.to_string())))?;
+    .map_err(|e| Error::InvalidTransaction(format!("creating psbt: {}", e)))?;
 
     // update inputs
     tx.inputs = psbt_input;
@@ -221,6 +226,7 @@ pub fn create_transaction(
 }
 
 // Structure to hold UTXO data.
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UTXO {
     pub txid: String,

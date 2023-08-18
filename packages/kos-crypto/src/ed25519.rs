@@ -31,7 +31,7 @@ impl Clone for Ed25519KeyPair {
     fn clone(&self) -> Ed25519KeyPair {
         Ed25519KeyPair {
             secret_key: self.secret_key.clone(),
-            public_key: self.public_key.clone(),
+            public_key: self.public_key,
         }
     }
 }
@@ -73,18 +73,13 @@ impl Ed25519KeyPair {
         m: Mnemonic<English>,
         password: Option<&str>,
     ) -> Result<Self, Error> {
-        let seed = m.to_seed(password.as_deref())?;
+        let seed = m.to_seed(password)?;
 
         let hardened_child_padding: u8 = 0;
         let mut digest =
             HmacSha521::new_from_slice(b"ed25519 seed").expect("HMAC can take key of any size");
         digest.update(&seed);
-        let intermediary: Vec<u8> = digest
-            .finalize()
-            .into_bytes()
-            .into_iter()
-            .map(|x| x)
-            .collect();
+        let intermediary: Vec<u8> = digest.finalize().into_bytes().into_iter().collect();
         let mut key = intermediary[..SECRET_KEY_LENGTH].to_vec();
         let mut chain_code = intermediary[SECRET_KEY_LENGTH..].to_vec();
 
@@ -98,12 +93,7 @@ impl Ed25519KeyPair {
             digest =
                 HmacSha521::new_from_slice(&chain_code).expect("HMAC can take key of any size");
             digest.update(&buff);
-            let intermediary: Vec<u8> = digest
-                .finalize()
-                .into_bytes()
-                .into_iter()
-                .map(|x| x)
-                .collect();
+            let intermediary: Vec<u8> = digest.finalize().into_bytes().into_iter().collect();
             key = intermediary[..SECRET_KEY_LENGTH].to_vec();
             chain_code = intermediary[SECRET_KEY_LENGTH..].to_vec();
         }

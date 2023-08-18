@@ -1,3 +1,4 @@
+use base64::{engine::general_purpose as b64_engine, Engine};
 use kos_types::error::Error;
 
 use aes::cipher::{
@@ -114,7 +115,7 @@ pub fn encrypt(algo: CipherAlgo, data: &[u8], password: &str) -> Result<Vec<u8>,
 }
 
 pub fn decrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
-    if data.len() < 1 {
+    if data.is_empty() {
         return Err(Error::CipherError("Invalid PEM data".to_owned()));
     }
 
@@ -154,11 +155,11 @@ pub fn gcm_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     let salt = &encrypted[..KEY_SIZE];
     let nonce = &encrypted[KEY_SIZE..KEY_SIZE + NONCE_SIZE];
     let encrypted_data = &encrypted[KEY_SIZE + NONCE_SIZE..];
-    let derived_key = derive_key(&salt, password);
+    let derived_key = derive_key(salt, password);
     let key = Key::<Aes256Gcm>::from_slice(&derived_key);
     let cipher = Aes256Gcm::new(key);
     cipher
-        .decrypt(&Nonce::from_slice(nonce), encrypted_data)
+        .decrypt(Nonce::from_slice(nonce), encrypted_data)
         .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))
 }
 
@@ -172,11 +173,9 @@ pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     let padding_size = BLOCK_SIZE - data.len() % BLOCK_SIZE;
     let buf_len = data.len() + padding_size;
 
-    let mut buf = Vec::with_capacity(buf_len);
-    for _ in 0..buf_len {
-        buf.push(0);
-    }
-    buf[..data.len()].copy_from_slice(&data);
+    let mut buf = vec![0; buf_len];
+
+    buf[..data.len()].copy_from_slice(data);
 
     let ct = Aes256CbcEnc::new(key, &iv.into())
         .encrypt_padded_mut::<Pkcs7>(&mut buf, data.len())
@@ -185,7 +184,7 @@ pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     // Create PEM
     let mut result = CipherAlgo::CBC.to_vec();
     result.extend_from_slice(&iv);
-    result.extend_from_slice(&ct);
+    result.extend_from_slice(ct);
 
     Ok(result)
 }
@@ -197,7 +196,7 @@ pub fn cbc_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
 
     let iv = GenericArray::from_slice(&encrypted[..IV_SIZE]);
     let encrypted_data = &encrypted[IV_SIZE..];
-    let derived_key = derive_key(&iv, password);
+    let derived_key = derive_key(iv, password);
     let key = GenericArray::from_slice(&derived_key);
 
     let mut buf = encrypted_data.to_vec();
@@ -233,7 +232,7 @@ pub fn cfb_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
 
     let iv = GenericArray::from_slice(&encrypted[..IV_SIZE]);
     let encrypted_data = &encrypted[IV_SIZE..];
-    let derived_key = derive_key(&iv, password);
+    let derived_key = derive_key(iv, password);
     let key = GenericArray::from_slice(&derived_key);
 
     let mut buf = encrypted_data.to_vec();
@@ -331,9 +330,12 @@ pub fn gcm_decrypt_by_key(encrypted: &str, key: &str) -> Result<Vec<u8>, Error> 
     // convert hex to bytes
     let encrypted = hex::decode(encrypted)
         .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))?;
+
+    let b64 = b64_engine::STANDARD;
     // convert base64 to bytes
-    let key =
-        base64::decode(key).map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))?;
+    let key = b64
+        .decode(key)
+        .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))?;
 
     // compute encrypt key
     let salt = crate::hash::sha256("".as_bytes());
@@ -348,6 +350,6 @@ pub fn gcm_decrypt_by_key(encrypted: &str, key: &str) -> Result<Vec<u8>, Error> 
     let key = Key::<Aes256Gcm>::from_slice(&key);
     let cipher = Aes256Gcm::new(key);
     cipher
-        .decrypt(&Nonce::from_slice(nonce), encrypted_data)
+        .decrypt(Nonce::from_slice(nonce), encrypted_data)
         .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))
 }
