@@ -54,10 +54,12 @@ runs:
 
     - if: ${{ steps.cache-rustup.outputs.cache-hit != 'true' }}
       name: Wasm-pack
+      shell: bash
       run: |
         cargo install --locked wasm-pack || true
     
     - if: ${{ steps.cache-rustup.outputs.cache-hit != 'true' }}
+      shell: bash
       name: Cargo tools
       run: |
         cargo install --locked cargo-deny || true
@@ -81,10 +83,12 @@ runs:
 
     - name: Fetch dependencies
       if: steps.cache-cargo.outputs.cache-hit != 'true'
+      shell: bash
       run: cargo fetch
 
     ###############################
     # PROTOBUF CACHE && INSTALL   #
     ###############################
     - name: Setup protobuf
+      shell: bash
       run: sudo apt-get update && sudo apt-get -y install protobuf-compiler

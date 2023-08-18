@@ -1,6 +1,7 @@
 name: Release KOS-RS
 
 on:
+  push:
   pull_request:
     branches:
       - develop
