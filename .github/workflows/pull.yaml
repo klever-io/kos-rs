@@ -48,9 +48,9 @@ jobs:
           cat ./packages/kos-sdk/.env.nodes
       
       - name: Build
-        run: make webpack-npm
+        run: wasm-pack build --target bundler --scope klever --release ./packages/kos
 
       - name: Publish npm module
-        run: npm publish ./demo/kos --access public
+        run: npm publish ./packages/kos/pkg --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
