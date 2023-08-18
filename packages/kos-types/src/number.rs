@@ -1,7 +1,11 @@
 use crate::error::Error;
 
 use core::cmp::Ordering;
-use std::{ops::Deref, str::FromStr};
+use std::{
+    fmt::{Display, Formatter},
+    ops::{Add, Deref, Div, Mul, Sub},
+    str::FromStr,
+};
 
 use num_bigint::BigInt;
 use num_traits::{ToPrimitive, Zero};
@@ -9,7 +13,7 @@ use serde::{Deserialize, Serialize, Serializer};
 
 use wasm_bindgen::prelude::*;
 
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 #[wasm_bindgen]
 pub struct BigNumber {
     v: BigInt,
@@ -44,14 +48,6 @@ impl<'de> Deserialize<'de> for BigNumber {
     }
 }
 
-impl Default for BigNumber {
-    fn default() -> Self {
-        Self {
-            v: BigInt::default(),
-        }
-    }
-}
-
 impl FromStr for BigNumber {
     type Err = Error;
 
@@ -80,7 +76,7 @@ impl TryFrom<String> for BigNumber {
 impl BigNumber {
     #[wasm_bindgen(js_name = "fromString")]
     pub fn from_string(value: &str) -> Result<BigNumber, Error> {
-        let value = value.trim().replace("_", "");
+        let value = value.trim().replace('_', "");
 
         Ok(BigNumber {
             v: BigInt::from_str(value.as_str())
@@ -88,6 +84,7 @@ impl BigNumber {
         })
     }
 
+    #[allow(clippy::inherent_to_string_shadow_display)]
     #[wasm_bindgen(js_name = "toString")]
     pub fn to_string(&self) -> String {
         self.v.to_string()
@@ -150,30 +147,6 @@ impl BigNumber {
         self
     }
 
-    pub fn add(self, other: &BigNumber) -> Self {
-        BigNumber {
-            v: self.v + &other.v,
-        }
-    }
-
-    pub fn sub(self, other: &BigNumber) -> Self {
-        BigNumber {
-            v: self.v - &other.v,
-        }
-    }
-
-    pub fn mul(self, other: &BigNumber) -> Self {
-        BigNumber {
-            v: self.v * &other.v,
-        }
-    }
-
-    pub fn div(self, other: &BigNumber) -> Self {
-        BigNumber {
-            v: self.v / &other.v,
-        }
-    }
-
     pub fn gt(&self, other: &BigNumber) -> bool {
         self.v > other.v
     }
@@ -188,6 +161,46 @@ impl BigNumber {
 
     pub fn lte(&self, other: &BigNumber) -> bool {
         self.v <= other.v
+    }
+}
+
+impl Add for BigNumber {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        BigNumber {
+            v: self.v + &other.v,
+        }
+    }
+}
+
+impl Sub for BigNumber {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        BigNumber {
+            v: self.v - &other.v,
+        }
+    }
+}
+
+impl Mul for BigNumber {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self::Output {
+        BigNumber {
+            v: self.v * &other.v,
+        }
+    }
+}
+
+impl Div for BigNumber {
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self::Output {
+        BigNumber {
+            v: self.v / &other.v,
+        }
     }
 }
 
@@ -231,8 +244,8 @@ macro_rules! impl_from {
 impl_from!(u8, u16, u32, u64, u128);
 impl_from!(i8, i16, i32, i64, i128);
 
-impl ToString for BigNumber {
-    fn to_string(&self) -> String {
-        self.v.to_string()
+impl Display for BigNumber {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.v)
     }
 }

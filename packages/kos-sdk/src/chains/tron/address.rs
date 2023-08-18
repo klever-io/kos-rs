@@ -61,14 +61,14 @@ impl Address {
     }
 
     /// To hex address, i.e. 41-address.
-    pub fn to_hex_address(&self) -> String {
+    pub fn to_hex_address(self) -> String {
         hex::encode(self.0)
     }
 }
 
 impl fmt::Display for Address {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        b58encode_check(&self.0).fmt(f)
+        b58encode_check(self.0).fmt(f)
     }
 }
 
@@ -138,7 +138,7 @@ impl FromStr for Address {
             return b58decode_check(s).and_then(Address::try_from);
         }
 
-        if s.len() == 42 && s[..2] == hex::encode(&[ADDRESS_TYPE_PREFIX]) {
+        if s.len() == 42 && s[..2] == hex::encode([ADDRESS_TYPE_PREFIX]) {
             return Vec::from_hex(s)
                 .map_err(|e| Error::InvalidAddress(e.to_string()))
                 .and_then(Address::try_from);
@@ -186,7 +186,7 @@ pub fn b58decode_check(s: &str) -> Result<Vec<u8>, Error> {
     let digest1 = kos_crypto::hash::sha256(&result);
     let digest2 = kos_crypto::hash::sha256(&digest1);
 
-    if check != &digest2[..4] {
+    if check != digest2[..4] {
         Err(Error::InvalidChecksum("base58check"))
     } else {
         Ok(result)

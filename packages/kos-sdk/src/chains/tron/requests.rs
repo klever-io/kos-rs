@@ -45,7 +45,7 @@ pub async fn broadcast(
     // adjust to tron format
     let data = format!("{{\"transaction\": \"{}\"}}", hex::encode(tx_raw),);
 
-    utils::http_post::<serde_json::Value>(url, &data.as_bytes().to_vec()).await
+    utils::http_post::<serde_json::Value>(url, data.as_bytes()).await
 }
 
 pub async fn create_transfer(

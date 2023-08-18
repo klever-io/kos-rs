@@ -42,7 +42,7 @@ impl Address {
     }
 
     /// To hex address
-    pub fn to_hex_address(&self) -> String {
+    pub fn to_hex_address(self) -> String {
         Address::to_hex_checksum(&hex::encode(self.0))
     }
 

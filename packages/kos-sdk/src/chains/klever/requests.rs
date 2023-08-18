@@ -75,7 +75,7 @@ pub async fn make_request(
 
     Ok(crate::models::Transaction {
         chain: chain::Chain::KLV,
-        sender: sender,
+        sender,
         hash: Hash::new(&tx.tx_hash)?,
         data: Some(TransactionRaw::Klever(tx.tx)),
     })

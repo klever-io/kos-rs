@@ -65,7 +65,7 @@ pub fn api_signature(
     // create token nonce
     let token_nonce = format!("{}/{}", nonce, client_id);
     // sha256 token nonce
-    let token_nonce_hash = kos_crypto::hash::sha256(&token_nonce.as_bytes());
+    let token_nonce_hash = kos_crypto::hash::sha256(token_nonce.as_bytes());
     let token_hash_len: [u8; 4] = [0, 0, 0, 32];
     // append prefix. message length and message
     let to_sign = vec![prefix, &token_hash_len, &token_nonce_hash].concat();
@@ -89,7 +89,7 @@ pub fn api_signature(
 
     Ok(APISignature {
         user: addr,
-        nonce: nonce,
+        nonce,
         message_hash: hex::encode(hash),
         signature: hex::encode(signature),
     })

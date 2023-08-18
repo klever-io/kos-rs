@@ -10,5 +10,4 @@ webpack:
 	wasm-pack build --target web --out-dir ../../demo/kos ./packages/kos
 
 webpack-npm:
-	wasm-pack build --target bundler --out-dir ../../demo/kos ./packages/kos
-
+	wasm-pack build --scope klever --target bundler --release --out-dir ../../demo/kos ./packages/kos

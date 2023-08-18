@@ -10,7 +10,7 @@ use kos_types::{error::Error, hash::Hash, number::BigNumber};
 
 use bitcoin::{network::constants::Magic, Address, Network};
 
-use std::str::FromStr;
+use std::{ops::Add, str::FromStr};
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -34,7 +34,7 @@ pub fn get_network(option: &BTCOptions) -> Result<Network, Error> {
         Some(hex_magic) => {
             let magic_bytes = hex::decode(hex_magic)?;
             if magic_bytes.len() != 4 {
-                return Err(Error::UnsupportedChain(&"invalid magic for network length"));
+                return Err(Error::UnsupportedChain("invalid magic for network length"));
             }
 
             let array: [u8; 4] = [
@@ -45,8 +45,7 @@ pub fn get_network(option: &BTCOptions) -> Result<Network, Error> {
             ];
             let magic = Magic::from_bytes(array);
 
-            Network::from_magic(magic)
-                .ok_or_else(|| Error::UnsupportedChain(&"invalid magic for network"))
+            Network::from_magic(magic).ok_or(Error::UnsupportedChain("invalid magic for network"))
         }
         _ => Ok(DEFAULT_NETWORK),
     }
@@ -236,7 +235,7 @@ impl BTC {
         // add outputs from options
         for output in options.receivers() {
             receivers.push(Self::get_receiver(output.0, &output.1, network)?);
-            total_amount = total_amount.add(&output.1);
+            total_amount = total_amount.add(output.1);
         }
 
         let sender_address = Address::from_str(&sender.clone())
@@ -265,7 +264,7 @@ impl BTC {
 
         Ok(crate::models::Transaction {
             chain: Chain::BTC,
-            sender: sender,
+            sender,
             hash: Hash::new(&tx.txid().to_string())?,
             data: Some(TransactionRaw::Bitcoin(tx)),
         })
@@ -282,11 +281,11 @@ impl BTC {
             Some(TransactionRaw::Bitcoin(btc_tx)) => {
                 let txid = requests::broadcast(&node, &btc_tx.btc_serialize_hex()).await?;
                 // check if tx hash is same as txid
-                if btc_tx.txid().to_string() != txid {
+                if btc_tx.txid() != txid {
                     return Err(Error::InvalidTransaction(format!(
                         "invalid transaction hash: {}/{}",
                         txid,
-                        btc_tx.txid().to_string()
+                        btc_tx.txid()
                     )));
                 }
                 Ok(BroadcastResult { tx })
@@ -309,7 +308,7 @@ impl BTC {
     #[inline]
     pub fn get_pubkey(data: &[u8]) -> Result<bitcoin::PublicKey, Error> {
         bitcoin::PublicKey::from_slice(data)
-            .map_err(|e| Error::InvalidPublicKey(format!("Invalid public key: {}", e.to_string())))
+            .map_err(|e| Error::InvalidPublicKey(format!("Invalid public key: {}", e)))
     }
 }
 

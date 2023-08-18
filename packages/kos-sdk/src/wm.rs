@@ -60,7 +60,7 @@ impl WalletManager {
     #[wasm_bindgen(js_name = "fromPem")]
     pub fn from_pem(data: &[u8]) -> Result<WalletManager, Error> {
         // parse pem
-        let pem = parse_pem(&data)
+        let pem = parse_pem(data)
             .map_err(|_| Error::WalletManagerError("Invalid PEM data".to_string()))?;
 
         WalletManager::import(pem)
@@ -113,7 +113,7 @@ impl WalletManager {
         }
 
         // verify password if encrypted data is present
-        if let Some(_) = &self.encrypted_data {
+        if self.encrypted_data.is_some() {
             self.verify_password(password.clone())?;
         }
 
@@ -159,7 +159,7 @@ impl WalletManager {
 
         // Deserialize decrypted bytes to WalletManager
         let wm: WalletManager = ciborium::from_reader(pem.contents())
-            .map_err(|e| Error::CipherError(format!("deserialize wm: {}", e.to_string())))?;
+            .map_err(|e| Error::CipherError(format!("deserialize wm: {}", e)))?;
 
         Ok(wm)
     }
@@ -176,11 +176,17 @@ impl WalletManager {
 
         let mut data = Vec::new();
         ciborium::into_writer(self, &mut data)
-            .map_err(|e| Error::CipherError(format!("serialize wm: {}", e.to_string())))?;
+            .map_err(|e| Error::CipherError(format!("serialize wm: {}", e)))?;
 
         let pem = kos_crypto::cipher::to_pem(KOS_WM_TAG.to_owned(), &data)?;
 
         Ok(pem)
+    }
+}
+
+impl Default for WalletManager {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

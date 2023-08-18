@@ -39,7 +39,7 @@ pub fn to_bytes(data: &str) -> Result<Vec<u8>, Error> {
 #[wasm_bindgen(js_name = "toString")]
 pub fn to_string(data: &[u8]) -> Result<String, Error> {
     String::from_utf8(data.to_vec())
-        .map_err(|e| Error::InvalidString(format!("Invalid UTF-8 string: {}", e.to_string())))
+        .map_err(|e| Error::InvalidString(format!("Invalid UTF-8 string: {}", e)))
 }
 
 /// Encrypts the given data with the given password.
@@ -73,5 +73,5 @@ pub fn from_pem(data: &str, password: &str) -> Result<Vec<u8>, Error> {
 #[wasm_bindgen(js_name = "generateQR")]
 pub fn generate_qr(data: &str) -> Result<Vec<u8>, Error> {
     qrcode_generator::to_png_to_vec(data, QrCodeEcc::Low, 1024)
-        .map_err(|e| Error::InvalidString(format!("Invalid QRCode data: {}", e.to_string())))
+        .map_err(|e| Error::InvalidString(format!("Invalid QRCode data: {}", e)))
 }

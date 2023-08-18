@@ -142,11 +142,9 @@ impl ETH {
 
                 Ok(result)
             }
-            _ => {
-                return Err(Error::InvalidMessage(
-                    "not a ethereum transaction".to_string(),
-                ))
-            }
+            _ => Err(Error::InvalidMessage(
+                "not a ethereum transaction".to_string(),
+            )),
         }
     }
 
@@ -270,7 +268,7 @@ impl ETH {
                 ])
                 .map_err(|e| Error::InvalidTransaction(e.to_string()))?;
 
-            addr_receiver = address::Address::from_str(&token)?;
+            addr_receiver = address::Address::from_str(token)?;
             options.contract_data = Some(encoded);
             amount_eth = 0.into();
         } else if options.gas_limit.is_none() {
@@ -283,7 +281,7 @@ impl ETH {
 
         Ok(crate::models::Transaction {
             chain: chain::Chain::ETH,
-            sender: sender,
+            sender,
             hash: Hash::from_vec(digest)?,
             data: Some(TransactionRaw::Ethereum(tx)),
         })
@@ -297,7 +295,7 @@ impl ETH {
         options: ETHOptions,
     ) -> Result<transaction::Transaction, Error> {
         // update chain id if none
-        let chain_id = options.chain_id.unwrap_or_else(|| CHAIN_ID.into());
+        let chain_id = options.chain_id.unwrap_or(CHAIN_ID);
 
         // compute nonce if none
         let nonce = match options.nonce {
@@ -331,7 +329,7 @@ impl ETH {
                 .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
             None => {
                 request::estimate_gas(
-                    &node,
+                    node,
                     sender,
                     receiver,
                     gas_price,
@@ -378,14 +376,14 @@ impl ETH {
                 transaction::TransactionType::EIP1559
             }),
             chain_id: Some(chain_id),
-            nonce: nonce,
+            nonce,
             to: Some(receiver),
-            value: value,
+            value,
             data: options.contract_data.unwrap_or_default(),
             gas: gas_limit,
-            gas_price: gas_price,
-            max_fee_per_gas: max_fee_per_gas,
-            max_priority_fee_per_gas: max_priority_fee_per_gas,
+            gas_price,
+            max_fee_per_gas,
+            max_priority_fee_per_gas,
             signature: None,
         })
     }

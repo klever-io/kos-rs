@@ -66,7 +66,7 @@ impl Wallet {
             None => {
                 let mut serialized = Vec::new();
                 ciborium::into_writer(&self, &mut serialized)
-                    .map_err(|e| Error::CipherError(format!("deserialize: {}", e.to_string())))?;
+                    .map_err(|e| Error::CipherError(format!("deserialize: {}", e)))?;
 
                 let encrypted_data =
                     kos_crypto::cipher::encrypt(DEFAULT_ALGO, &serialized, &password)?;
@@ -98,7 +98,7 @@ impl Wallet {
         let data = kos_crypto::cipher::decrypt(encrypted_data, &password)?;
         // restore values
         let wallet: Wallet = ciborium::from_reader(&data[..])
-            .map_err(|e| Error::CipherError(format!("deserialize: {}", e.to_string())))?;
+            .map_err(|e| Error::CipherError(format!("deserialize: {}", e)))?;
 
         // restore secrets
         self.keypair = wallet.keypair;
@@ -112,7 +112,7 @@ impl Wallet {
     #[wasm_bindgen(js_name = "isLocked")]
     /// check if wallet is locked
     pub fn is_locked(&self) -> bool {
-        return self.is_locked;
+        self.is_locked
     }
 
     #[wasm_bindgen(js_name = "verifyPassword")]
@@ -125,7 +125,7 @@ impl Wallet {
 
                 Ok(())
             }
-            None => return Err(Error::WalletManagerError("No encrypted data".to_string())),
+            None => Err(Error::WalletManagerError("No encrypted data".to_string())),
         }
     }
 
@@ -143,7 +143,7 @@ impl Wallet {
         let address = chain.get_address_from_keypair(&kp)?;
 
         Ok(Wallet {
-            chain: chain,
+            chain,
             account_type: AccountType::PrivateKey,
             public_address: address,
             is_locked: false,
@@ -172,7 +172,7 @@ impl Wallet {
         let address = chain.get_address_from_keypair(&kp)?;
 
         Ok(Wallet {
-            chain: chain,
+            chain,
             account_type: AccountType::Mnemonic,
             public_address: address,
             is_locked: false,
@@ -238,7 +238,7 @@ impl Wallet {
     #[wasm_bindgen(js_name = "fromPem")]
     pub fn from_pem(data: &[u8]) -> Result<Wallet, Error> {
         // parse pem
-        let pem = parse_pem(&data)
+        let pem = parse_pem(data)
             .map_err(|_| Error::WalletManagerError("Invalid PEM data".to_string()))?;
 
         Wallet::import(pem)
@@ -257,7 +257,7 @@ impl Wallet {
     pub fn import(pem: Pem) -> Result<Wallet, Error> {
         // Deserialize decrypted bytes to WalletManager
         let wallet: Wallet = ciborium::from_reader(pem.contents())
-            .map_err(|e| Error::CipherError(format!("deserialize data: {}", e.to_string())))?;
+            .map_err(|e| Error::CipherError(format!("deserialize data: {}", e)))?;
 
         Ok(wallet)
     }
@@ -275,7 +275,7 @@ impl Wallet {
         // serialize wallet manager
         let mut serialized = Vec::new();
         ciborium::into_writer(self, &mut serialized)
-            .map_err(|e| Error::CipherError(format!("serialize data: {}", e.to_string())))?;
+            .map_err(|e| Error::CipherError(format!("serialize data: {}", e)))?;
 
         let pem = kos_crypto::cipher::to_pem(self.get_key(), &serialized)?;
 

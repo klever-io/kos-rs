@@ -63,24 +63,20 @@ impl TryFrom<serde_json::value::Value> for TransactionResult {
     type Error = kos_types::error::Error;
 
     fn try_from(value: serde_json::value::Value) -> Result<Self, Self::Error> {
-        match value.get("data") {
-            Some(v) => match v.as_object() {
-                Some(obj) => {
-                    let hash = obj.get("txHash").unwrap().as_str().unwrap();
-                    let result = obj.get("result").unwrap().to_string();
-                    let tx: kos_proto::klever::Transaction = serde_json::from_str(&result)?;
-                    return Ok(Self {
-                        tx_hash: hash.to_string(),
-                        tx: tx,
-                    });
-                }
-                None => {}
-            },
-            None => {}
+        if let Some(v) = value.get("data") {
+            if let Some(obj) = v.as_object() {
+                let hash = obj.get("txHash").unwrap().as_str().unwrap();
+                let result = obj.get("result").unwrap().to_string();
+                let tx: kos_proto::klever::Transaction = serde_json::from_str(&result)?;
+                return Ok(Self {
+                    tx_hash: hash.to_string(),
+                    tx,
+                });
+            }
         }
 
         match value.get("error") {
-            Some(err) => return Err(Error::ReqwestError(err.to_string())),
+            Some(err) => Err(Error::ReqwestError(err.to_string())),
             None => Err(Error::ReqwestError("Unknown error".to_string())),
         }
     }
@@ -115,7 +111,7 @@ impl SendTXRequest {
     }
 
     pub fn to_vec(&self) -> Result<Vec<u8>, Error> {
-        let data = serde_json::to_vec(&self).map_err(|e| Error::from(e))?;
+        let data = serde_json::to_vec(&self).map_err(Error::from)?;
         Ok(data)
     }
 }

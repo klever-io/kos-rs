@@ -2,6 +2,7 @@ use super::transaction::{estimate_fee, UTXO};
 use crate::utils;
 
 use kos_types::{error::Error, number::BigNumber};
+use std::ops::Add;
 
 pub async fn fetch_utxos(
     node_url: &str,
@@ -15,7 +16,7 @@ pub async fn fetch_utxos(
         .filter(|utxo| utxo.confirmations >= confirmations)
         .collect();
 
-    list.sort_by(|a, b| a.amount().cmp(&b.amount()));
+    list.sort_by_key(|a| a.amount());
 
     Ok(list)
 }
@@ -30,12 +31,13 @@ pub async fn balance(
         .await?
         .into_iter()
         .map(|utxo| BigNumber::from_string(&utxo.value).unwrap_or_default())
-        .reduce(|a, b| a.add(&b));
+        .reduce(|a, b| a.add(b));
 
     Ok(unspent.unwrap_or_default())
 }
 
 // Fetch UTXOs from Bitcoin node and select UTXOs to cover the desired amount.
+#[allow(clippy::too_many_arguments)]
 pub async fn select_utxos(
     node_url: &str,
     address: &str,
@@ -55,8 +57,8 @@ pub async fn select_utxos(
     // min TX Value defined by dust
     let min_value = BigNumber::from(148 * sats_per_bytes);
 
-    let tx_fee_min = estimate_fee(1, outputs, sats_per_bytes).add(desired_amount);
-    let tx_fee_max = estimate_fee(1, outputs + 1, sats_per_bytes).add(desired_amount);
+    let tx_fee_min = estimate_fee(1, outputs, sats_per_bytes).add(desired_amount.clone());
+    let tx_fee_max = estimate_fee(1, outputs + 1, sats_per_bytes).add(desired_amount.clone());
 
     // check if there is a UTXO that better match the desired amount
     for utxo in &unspent {
@@ -72,7 +74,7 @@ pub async fn select_utxos(
     // accumulate UTXOs until we have enough value
     // reverse order to reduce the number of UTXOs
     if spend_biggest_first {
-        unspent.sort_by(|a, b| b.amount().cmp(&a.amount()));
+        unspent.sort_by_key(|b| std::cmp::Reverse(b.amount()))
     }
 
     // Vector to hold selected UTXOs.
@@ -89,7 +91,7 @@ pub async fn select_utxos(
         }
 
         // Add the value of the UTXO to the total amount.
-        total_amount = total_amount.add(&value);
+        total_amount = total_amount.add(value);
 
         // Add the UTXO to the selected UTXOs.
         selected_utxos.push(utxo);
@@ -126,7 +128,7 @@ pub async fn broadcast(node_url: &str, hex_tx: &str) -> Result<String, Error> {
         }
     }
 
-    return Err(Error::ReqwestError("missing txid".to_string()));
+    Err(Error::ReqwestError("missing txid".to_string()))
 }
 
 #[cfg(test)]
@@ -154,7 +156,7 @@ mod tests {
         let total = list
             .iter()
             .map(|utxo| BigNumber::from_string(&utxo.value).unwrap_or_default())
-            .reduce(|a, b| a.add(&b))
+            .reduce(|a, b| a.add(b))
             .unwrap_or_default();
 
         println!("total: {:?}", total);

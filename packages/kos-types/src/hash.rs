@@ -1,6 +1,7 @@
 use crate::error::Error;
 use crate::Bytes32;
 
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
@@ -22,6 +23,7 @@ impl Hash {
         Ok(Self { data: value })
     }
 
+    #[allow(clippy::inherent_to_string_shadow_display)]
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> String {
         self.data.to_string()
@@ -62,5 +64,11 @@ impl From<Bytes32> for Hash {
 impl From<Hash> for Bytes32 {
     fn from(hash: Hash) -> Self {
         hash.data
+    }
+}
+
+impl Display for Hash {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.data)
     }
 }
