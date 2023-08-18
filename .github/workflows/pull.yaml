@@ -58,6 +58,8 @@ jobs:
           node-version: '18.x'
           registry-url: 'https://registry.npmjs.org/'
           scope: '@klever'
+          always-auth: true
+          token: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish npm module
         run: npm publish ./demo/kos --access public
