@@ -52,13 +52,12 @@ jobs:
       - name: Build
         run: make webpack-npm
 
-      - name: Configure npm
-        run: |
-          echo 'registry=https://registry.npmjs.org/klever' >> .npmrc
-          echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' >> .npmrc
-          cat .npmrc
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}        
+      - name: Setup npm module
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org/'
+          scope: '@klever'
 
       - name: Publish npm module
         run: npm publish ./demo/kos --access public
