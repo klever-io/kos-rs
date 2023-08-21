@@ -13,8 +13,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     env:
-      USER: ${{ secrets.git_user }}
-      TOKEN: ${{ secrets.git_pass }}
+      USER: ${{ secrets.GIT_USER }}
+      TOKEN: ${{ secrets.GIT_PASS }}
     
     steps:
       - name: Checkout repository
@@ -37,6 +37,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org/'
           scope: '@klever'
           always-auth: true
+
+      - name: Tag Release
+        uses: rymndhng/release-on-push-action@master
+        with:
+          bump_version_scheme: minor
 
       - name: Publish npm module
         run: npm publish ./demo/kos --access public

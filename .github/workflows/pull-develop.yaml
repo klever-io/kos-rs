@@ -13,8 +13,8 @@ jobs:
   format:
     runs-on: ubuntu-latest
     env:
-      USER: ${{ secrets.git_user }}
-      TOKEN: ${{ secrets.git_pass }}
+      USER: ${{ secrets.GIT_USER }}
+      TOKEN: ${{ secrets.GIT_PASS }}
     
     steps:
       - name: Checkout repository
