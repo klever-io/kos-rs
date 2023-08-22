@@ -62,7 +62,7 @@ macro_rules! createChains {
             }
 
             /// Verify Message signature
-            pub fn verify_digest(&self, digest: &[u8], signature: &[u8], address: &str) -> Result<(), Error> {
+            pub fn verify_digest(&self, digest: &[u8], signature: &[u8], address: &str) -> Result<bool, Error> {
                 match self {
                     $(Chain::$name => $name::verify_digest(digest, signature, address),)*
                 }
@@ -90,7 +90,7 @@ macro_rules! createChains {
             }
 
             /// Verify Message signature
-            pub fn verify_message_signature(&self, message: &[u8], signature: &[u8], address: &str) -> Result<(), Error> {
+            pub fn verify_message_signature(&self, message: &[u8], signature: &[u8], address: &str) -> Result<bool, Error> {
                 match self {
                     $(Chain::$name => $name::verify_message_signature(message, signature, address),)*
                 }

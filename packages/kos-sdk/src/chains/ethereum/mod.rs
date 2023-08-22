@@ -100,7 +100,7 @@ impl ETH {
 
     #[wasm_bindgen(js_name = "verifyDigest")]
     /// Verify Message signature
-    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<(), Error> {
+    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<bool, Error> {
         // let message = Message::from_slice(message).map_err(|_| RecoveryError::InvalidMessage)?;
         // let recovery_id = RecoveryId::from_i32(recovery_id).map_err(|_| RecoveryError::InvalidSignature)?;
         // let signature =
@@ -176,7 +176,7 @@ impl ETH {
         message: &[u8],
         signature: &[u8],
         address: &str,
-    ) -> Result<(), Error> {
+    ) -> Result<bool, Error> {
         let m = ETH::message_hash(message)?;
         ETH::verify_digest(&m, signature, address)
     }
