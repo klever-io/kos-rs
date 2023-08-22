@@ -1,0 +1,101 @@
+name: Release KOS-RS
+
+on:
+  workflow_dispatch:
+    inputs:
+        versionType:
+          description: 'Version Type'
+          required: true
+          default: 'patch'
+          type: choice
+          options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      USER: ${{ secrets.git_user }}
+      TOKEN: ${{ secrets.git_pass }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Bump version
+        run: |
+          #get highest tag number, and add 0.1.0 if doesn't exist
+          CURRENT_VERSION=`git describe --abbrev=0 --tags 2>/dev/null`
+          if [[ $CURRENT_VERSION == '' ]]
+          then
+            CURRENT_VERSION='v0.1.0'
+          fi
+          echo "Current Version: $CURRENT_VERSION"
+
+          #replace . with space so can split into an array
+          CURRENT_VERSION_PARTS=(${CURRENT_VERSION//./ })
+
+          #get number parts
+          VNUM1=${CURRENT_VERSION_PARTS[0]}
+          VNUM2=${CURRENT_VERSION_PARTS[1]}
+          VNUM3=${CURRENT_VERSION_PARTS[2]}
+
+          VERSION=${{ inputs.logLevel }}
+
+          if [[ $VERSION == 'major' ]]
+          then
+            VNUM1=$((VNUM1+1))
+          elif [[ $VERSION == 'minor' ]]
+          then
+            VNUM2=$((VNUM2+1))
+          elif [[ $VERSION == 'patch' ]]
+          then
+            VNUM3=$((VNUM3+1))
+          else
+            echo "No version type or incorrect type specified"
+            exit 1
+          fi
+
+          #create new tag
+          release_tag="$VNUM1.$VNUM2.$VNUM3"
+          echo "($VERSION) updating $CURRENT_VERSION to $release_tag"
+
+
+          # change version in Cargo.toml
+          sed -i '23s/.*/version = \"${{ release_tag }}\"/' Cargo.toml 
+          # commit changes
+          git add Cargo.toml
+          git commit -m "Bump Version ${{ release_tag }}"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          # push changes
+          git push
+          # create tag
+          git tag -a ${{ release_tag }} -m "Release ${{ release_tag }}"
+          git push origin ${{ release_tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: RustUp
+        uses: klever-io/kos-rs/.github/actions/rustup@develop
+        with:
+          with_cache: true
+
+      - name: Build
+        run: make webpack-npm
+
+      - name: Setup npm module
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org/'
+          scope: '@klever'
+          always-auth: true
+
+      - name: Publish npm module
+        run: npm publish ./demo/kos --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
