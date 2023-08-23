@@ -44,7 +44,7 @@ jobs:
           VNUM2=${CURRENT_VERSION_PARTS[1]}
           VNUM3=${CURRENT_VERSION_PARTS[2]}
 
-          VERSION=${{ inputs.logLevel }}
+          VERSION=${{ inputs.versionType }}
 
           if [[ $VERSION == 'major' ]]
           then
@@ -61,21 +61,23 @@ jobs:
           fi
 
           #create new tag
-          release_tag="$VNUM1.$VNUM2.$VNUM3"
-          echo "($VERSION) updating $CURRENT_VERSION to $release_tag"
-
+          export release_tag="$VNUM1.$VNUM2.$VNUM3"
+          export cargo_release_tag="${release_tag:1}"          
+          echo "($VERSION) updating $CURRENT_VERSION to $release_tag, Cargo.toml to $cargo_release_tag"
 
           # change version in Cargo.toml
-          sed -i '23s/.*/version = \"${{ release_tag }}\"/' Cargo.toml 
+          sed -i '23s/.*/version = \"'"$cargo_release_tag"'\"/' Cargo.toml
           # commit changes
+          git config --global user.email "devsecops@klever.io"
+          git config --global user.name "DevSecOps"         
           git add Cargo.toml
-          git commit -m "Bump Version ${{ release_tag }}"
+          git commit -m "Bump Version $release_tag"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           # push changes
           git push
           # create tag
-          git tag -a ${{ release_tag }} -m "Release ${{ release_tag }}"
-          git push origin ${{ release_tag }}
+          git tag -a $release_tag -m "Release $release_tag"
+          git push origin $release_tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
