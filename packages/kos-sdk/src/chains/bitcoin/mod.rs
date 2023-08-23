@@ -118,7 +118,7 @@ impl BTC {
 
     #[wasm_bindgen(js_name = "verifyDigest")]
     /// Verify Message signature
-    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<(), Error> {
+    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<bool, Error> {
         todo!()
     }
 
@@ -177,7 +177,7 @@ impl BTC {
         message: &[u8],
         signature: &[u8],
         address: &str,
-    ) -> Result<(), Error> {
+    ) -> Result<bool, Error> {
         let m = BTC::message_hash(message)?;
         BTC::verify_digest(&m, signature, address)
     }

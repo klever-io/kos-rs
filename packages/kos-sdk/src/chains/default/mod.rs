@@ -60,7 +60,7 @@ impl NONE {
 
     #[wasm_bindgen(js_name = "verifyDigest")]
     /// Verify Message signature
-    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<(), Error> {
+    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<bool, Error> {
         Err(Error::UnsupportedChain("NONE"))
     }
 
@@ -88,7 +88,7 @@ impl NONE {
         _message: &[u8],
         _signature: &[u8],
         _address: &str,
-    ) -> Result<(), Error> {
+    ) -> Result<bool, Error> {
         Err(Error::UnsupportedChain("NONE"))
     }
 

@@ -82,12 +82,12 @@ impl KLV {
 
     #[wasm_bindgen(js_name = "verifyDigest")]
     /// Verify Message signature
-    pub fn verify_digest(digest: &[u8], signature: &[u8], address: &str) -> Result<(), Error> {
+    pub fn verify_digest(digest: &[u8], signature: &[u8], address: &str) -> Result<bool, Error> {
         let addr = address::Address::from_str(address)?;
         let kp = Ed25519KeyPair::default();
 
         if kp.verify_digest(digest, signature, &addr.public_key()) {
-            Ok(())
+            Ok(true)
         } else {
             Err(Error::InvalidSignature("message verification fail"))
         }
@@ -156,7 +156,7 @@ impl KLV {
         message: &[u8],
         signature: &[u8],
         address: &str,
-    ) -> Result<(), Error> {
+    ) -> Result<bool, Error> {
         let m = KLV::message_hash(message)?;
         KLV::verify_digest(&m, signature, address)
     }
@@ -395,6 +395,7 @@ mod tests {
         let result = KLV::verify_message_signature(message.as_bytes(), &signature, &address);
 
         assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true);
     }
 
     #[test]

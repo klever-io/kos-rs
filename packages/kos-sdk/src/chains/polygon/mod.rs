@@ -105,7 +105,7 @@ impl MATIC {
 
     #[wasm_bindgen(js_name = "verifyDigest")]
     /// Verify Message signature
-    pub fn verify_digest(digest: &[u8], signature: &[u8], address: &str) -> Result<(), Error> {
+    pub fn verify_digest(digest: &[u8], signature: &[u8], address: &str) -> Result<bool, Error> {
         ETH::verify_digest(digest, signature, address)
     }
 
@@ -142,7 +142,7 @@ impl MATIC {
         message: &[u8],
         signature: &[u8],
         address: &str,
-    ) -> Result<(), Error> {
+    ) -> Result<bool, Error> {
         ETH::verify_message_signature(message, signature, address)
     }
 

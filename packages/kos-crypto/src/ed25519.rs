@@ -140,7 +140,7 @@ impl Ed25519KeyPair {
                     .verify_strict(message, &ed25519_dalek::Signature::from_bytes(&sig_bytes))
                     .is_ok()
             })
-            .is_ok()
+            .unwrap_or(false)
     }
 }
 
