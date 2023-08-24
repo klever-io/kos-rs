@@ -1,52 +1,33 @@
 #!/bin/bash
-#get highest tag number, and add 0.1.0 if doesn't exist
-CURRENT_VERSION=$(git describe --abbrev=0 --tags 2>/dev/null || true)
-if [[ $CURRENT_VERSION == '' ]]
-then
-CURRENT_VERSION='v0.1.0'
-fi
-echo "Current Version: $CURRENT_VERSION"
 
-#replace . with space so can split into an array
-CURRENT_VERSION_PARTS=(${CURRENT_VERSION//./ })
+# Get the current version from Cargo.toml
+CURRENT_VERSION=$(grep -E '^version = "[0-9]+\.[0-9]+\.[0-9]+"' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
 
-#get number parts
-VNUM1=${CURRENT_VERSION_PARTS[0]}
-VNUM2=${CURRENT_VERSION_PARTS[1]}
-VNUM3=${CURRENT_VERSION_PARTS[2]}
+# Break the version string into an array.
+IFS='.' read -ra ADDR <<< "$CURRENT_VERSION"
+MAJOR_VERSION=${ADDR[0]}
+MINOR_VERSION=${ADDR[1]}
+PATCH_VERSION=${ADDR[2]}
 
-VERSION=$1
-
-if [[ $VERSION == 'major' ]]
-then
-VNUM1=$((VNUM1+1))
-elif [[ $VERSION == 'minor' ]]
-then
-VNUM2=$((VNUM2+1))
-elif [[ $VERSION == 'patch' ]]
-then
-VNUM3=$((VNUM3+1))
+# Check the PR title to decide how to bump the version.
+if [[ "${PR_TITLE}" == "MAJOR:"* ]]; then
+  MAJOR_VERSION=$((MAJOR_VERSION + 1))
+  MINOR_VERSION=0
+  PATCH_VERSION=0
+elif [[ "${PR_TITLE}" == "MINOR:"* ]]; then
+  MINOR_VERSION=$((MINOR_VERSION + 1))
+  PATCH_VERSION=0
 else
-echo "No version type or incorrect type specified"
-exit 1
+  PATCH_VERSION=$((PATCH_VERSION + 1))
 fi
 
-#create new tag
-release_tag="$VNUM1.$VNUM2.$VNUM3"
-cargo_release_tag="${release_tag:1}"          
-echo "($VERSION) updating $CURRENT_VERSION to $release_tag, Cargo.toml to $cargo_release_tag"
+# Construct the new version string.
+NEW_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
 
-# change version in Cargo.toml
-eval "sed -i '23s/.*/version = \"${cargo_release_tag}\"/' Cargo.toml"
+# Replace the version in Cargo.toml
+sed -i "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/g" Cargo.toml
 
-git config --global user.email "devsecops@klever.io"
-git config --global user.name "DevSecOps"         
-git add Cargo.toml
-git commit -m "Bump Version $release_tag" || exit 0
-
-#git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-# push changes
-git push
-# create tag
-git tag -a $release_tag -m "Release $release_tag"
-git push origin $release_tag
+# Print the new version to a file (or alternatively, set it as an environment variable or output variable).
+echo $NEW_VERSION > VERSION
+   
+echo "($PR_TITLE) updating $CURRENT_VERSION to $NEW_VERSION"
