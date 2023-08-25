@@ -1,0 +1,21 @@
+
+# .github/workflows/labeler.yaml
+name: Issue/PR Labeler
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  triage:
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3 # Uploads repository content to the runner
+        with:
+          repository: "klever-io/kos-rs"
+
+      - uses: actions/labeler@v4
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"

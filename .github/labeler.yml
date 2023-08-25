@@ -1,0 +1,25 @@
+# .github/labeler.yaml
+documentation:
+  - '**/*.md'
+
+rust:
+  - '**/*.rs'
+
+wasm:
+  - '**/*.wasm'
+
+configuration:
+  - '**/*.toml'
+  - '**/*.yaml'
+  - '**/*.yml'
+  - '**/*.json'
+ 
+'@domain/crypto':
+- packages/kos-crypto/**
+'@domain/proto':
+- packages/kos-proto/**
+'@domain/sdk':
+- packages/kos-sdk/**
+'@domain/types':
+- packages/kos-types/**
+- packages/kos-utils/**

@@ -66,7 +66,9 @@ fn build_pbjson(
 fn get_files(dir: &str) -> Vec<String> {
     let mut list: Vec<String> = vec![];
     for entry in glob(dir).expect("Failed to read glob pattern") {
-        let Ok(st) = entry else { continue; };
+        let Ok(st) = entry else {
+            continue;
+        };
         list.push(format!("./{:}", st.display()));
     }
     list
