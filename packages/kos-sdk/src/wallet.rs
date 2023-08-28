@@ -5,6 +5,7 @@ use crate::{
 
 use kos_crypto::keypair::KeyPair;
 use kos_types::{error::Error, number::BigNumber};
+use kos_utils::{pack, unpack};
 
 use pem::{encode as encode_pem, parse as parse_pem, Pem};
 use serde::{Deserialize, Serialize};
@@ -61,12 +62,10 @@ impl Wallet {
         }
 
         // Verify password if encrypted_data is present, else serialize and encrypt wallet
-        match &self.encrypted_data {
+        match self.encrypted_data {
             Some(_) => self.verify_password(password.clone())?,
             None => {
-                let mut serialized = Vec::new();
-                ciborium::into_writer(&self, &mut serialized)
-                    .map_err(|e| Error::CipherError(format!("deserialize: {}", e)))?;
+                let serialized = pack(self)?;
 
                 let encrypted_data =
                     kos_crypto::cipher::encrypt(DEFAULT_ALGO, &serialized, &password)?;
@@ -97,8 +96,8 @@ impl Wallet {
         // decrypt encrypted_data
         let data = kos_crypto::cipher::decrypt(encrypted_data, &password)?;
         // restore values
-        let wallet: Wallet = ciborium::from_reader(&data[..])
-            .map_err(|e| Error::CipherError(format!("deserialize: {}", e)))?;
+        let wallet: Wallet =
+            unpack(&data[..]).map_err(|e| Error::CipherError(format!("deserialize: {}", e)))?;
 
         // restore secrets
         self.keypair = wallet.keypair;
@@ -256,7 +255,7 @@ impl Wallet {
 impl Wallet {
     pub fn import(pem: Pem) -> Result<Wallet, Error> {
         // Deserialize decrypted bytes to WalletManager
-        let wallet: Wallet = ciborium::from_reader(pem.contents())
+        let wallet: Wallet = unpack(pem.contents())
             .map_err(|e| Error::CipherError(format!("deserialize data: {}", e)))?;
 
         Ok(wallet)
@@ -273,9 +272,7 @@ impl Wallet {
         self.verify_password(password)?;
 
         // serialize wallet manager
-        let mut serialized = Vec::new();
-        ciborium::into_writer(self, &mut serialized)
-            .map_err(|e| Error::CipherError(format!("serialize data: {}", e)))?;
+        let serialized = pack(self)?;
 
         let pem = kos_crypto::cipher::to_pem(self.get_key(), &serialized)?;
 
@@ -520,6 +517,7 @@ mod tests {
 
         // unlock wallet
         let result = w1.unlock(default_password.to_string());
+        println!("{:?}", result);
         assert!(result.is_ok());
         assert!(!w1.is_locked());
         // check if secret keys restored

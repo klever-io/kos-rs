@@ -1,5 +1,6 @@
 use crate::wallet::Wallet;
 use kos_types::error::Error;
+use kos_utils::{pack, unpack};
 
 use pem::{
     encode as encode_pem, encode_many as encode_many_pem, parse as parse_pem,
@@ -158,7 +159,7 @@ impl WalletManager {
         }
 
         // Deserialize decrypted bytes to WalletManager
-        let wm: WalletManager = ciborium::from_reader(pem.contents())
+        let wm: WalletManager = unpack(pem.contents())
             .map_err(|e| Error::CipherError(format!("deserialize wm: {}", e)))?;
 
         Ok(wm)
@@ -174,9 +175,7 @@ impl WalletManager {
 
         self.verify_password(password.clone())?;
 
-        let mut data = Vec::new();
-        ciborium::into_writer(self, &mut data)
-            .map_err(|e| Error::CipherError(format!("serialize wm: {}", e)))?;
+        let data = pack(self).map_err(|e| Error::CipherError(format!("serialize wm: {}", e)))?;
 
         let pem = kos_crypto::cipher::to_pem(KOS_WM_TAG.to_owned(), &data)?;
 

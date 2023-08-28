@@ -32,7 +32,6 @@ hex = { workspace = true }
 rand = { workspace = true }
 coins-bip39 = { workspace = true }
 pem = "3"
-ciborium = "0.2"
 web3 = { version = "0.19", default-features = false, features = ["http-tls", "wasm"] }
 bitcoin = { version = "0.30" }
 secp256k1 = { workspace = true, features = ["serde", "bitcoin_hashes"] }
@@ -44,6 +43,7 @@ wasm-bindgen-futures = "0.4"
 kos-types = { workspace = true, features = ["serde"] }
 kos-crypto = { workspace = true }
 kos-proto = { workspace = true }
+kos-utils = { workspace = true }
 pbjson = { workspace = true }
 pbjson-types = { workspace = true }
 prost = { workspace = true }
