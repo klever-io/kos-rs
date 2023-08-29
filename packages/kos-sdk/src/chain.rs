@@ -124,6 +124,13 @@ macro_rules! createChains {
                     $(Chain::$name => $name::broadcast(data, node_url).await,)*
                 }
             }
+
+            /// validate chain address format with options
+            pub fn validate_address(&self, address: &str, option: Option<models::AddressOptions>) -> Result<bool, Error> {
+                match self {
+                    $(Chain::$name => $name::validate_address(address, option),)*
+                }
+            }
         }
     }
 }

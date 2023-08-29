@@ -122,4 +122,12 @@ impl NONE {
     ) -> Result<BroadcastResult, Error> {
         Err(Error::UnsupportedChain("NONE"))
     }
+
+    #[wasm_bindgen(js_name = "validateAddress")]
+    pub fn validate_address(
+        _address: &str,
+        _option: Option<models::AddressOptions>,
+    ) -> Result<bool, Error> {
+        Err(Error::UnsupportedChain("NONE"))
+    }
 }

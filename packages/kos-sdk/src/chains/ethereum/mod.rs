@@ -404,6 +404,29 @@ impl ETH {
 
         Ok(BroadcastResult::new(tx))
     }
+
+    #[wasm_bindgen(js_name = "validateAddress")]
+    pub fn validate_address(
+        address: &str,
+        option: Option<models::AddressOptions>,
+    ) -> Result<bool, Error> {
+        let addr = address::Address::from_str(address);
+        let addr = match addr {
+            Ok(addr) => addr.to_string().trim_start_matches("0x").to_string(),
+            Err(_) => return Ok(false),
+        };
+
+        let option = option.unwrap_or_default();
+
+        // Check if address checksum is required and if the address matches the expected format
+        if option.check_summed.unwrap_or(false)
+            && addr != address.to_string().trim_start_matches("0x")
+        {
+            return Ok(false);
+        }
+
+        Ok(true)
+    }
 }
 
 #[cfg(test)]
@@ -546,5 +569,60 @@ mod tests {
         assert!(balance.is_ok());
 
         assert!(balance.unwrap().to_i64() > 100);
+    }
+
+    #[test]
+    fn test_validate_address_ok() {
+        let list = [
+            "0x9858EfFD232B4033E47d90003D41EC34EcaEda94",
+            "0x6Fac4D18c912343BF86fa7049364Dd4E424Ab9C0",
+            "9858EfFD232B4033E47d90003D41EC34EcaEda94", // no 0x prefix as valid
+        ];
+
+        for addr in list {
+            let valid = ETH::validate_address(addr, None).unwrap();
+            assert!(valid);
+        }
+
+        // check summed
+        for addr in list {
+            let valid = ETH::validate_address(
+                addr,
+                Some(models::AddressOptions::new(None, None, Some(true))),
+            )
+            .unwrap();
+            assert_eq!(valid, true, "address: {}", addr);
+        }
+    }
+
+    #[test]
+    fn test_validate_address_fail() {
+        let list = [
+            "0x9858EfFD232B4033E47d90003D41EC34EcaEda95", // wrong check sum
+            &"0x6Fac4D18c912343BF86fa7049364Dd4E424Ab9C0".to_lowercase(), // all lower case
+        ];
+
+        // check summed
+        for addr in list {
+            let valid = ETH::validate_address(
+                addr,
+                Some(models::AddressOptions::new(None, None, Some(true))),
+            )
+            .unwrap();
+            assert_eq!(valid, false, "address: {}", addr);
+        }
+
+        // wrong size
+        let list = [
+            "0x9858EfFD232B4033E47d90003D41EC34EcaEda9", // hex convert wrong parity
+            "0x9858EfFD232B4033E47d90003D41EC34EcaEda941", // hex convert wrong parity
+            "0x9858EfFD232B4033E47d90003D41EC34EcaEda94Ab", // hex convert ok, wrong length
+        ];
+
+        // check summed
+        for addr in list {
+            let valid = ETH::validate_address(&addr, None).unwrap();
+            assert_eq!(valid, false, "address: {}", addr);
+        }
     }
 }

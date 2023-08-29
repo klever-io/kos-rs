@@ -4,8 +4,7 @@ unmaintained = "deny"
 notice = "deny"
 unsound = "deny"
 ignore = [
-    # reqwest dependency no fixed upgrade is available! 
-    "RUSTSEC-2023-0052"
+    
 ]
 
 [bans]

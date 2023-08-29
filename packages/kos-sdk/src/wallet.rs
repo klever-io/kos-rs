@@ -454,6 +454,15 @@ impl Wallet {
             .broadcast(data, node_url.or(self.node_url.clone()))
             .await
     }
+
+    #[wasm_bindgen(js_name = "validateAddress")]
+    pub fn validate_address(
+        &self,
+        address: &str,
+        option: Option<models::AddressOptions>,
+    ) -> Result<bool, Error> {
+        self.chain.validate_address(address, option)
+    }
 }
 
 #[cfg(test)]
@@ -586,5 +595,80 @@ qeVTAAAA
         let result = w1.get_index();
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 10);
+    }
+
+    #[test]
+    fn test_validate_address_ok() {
+        let list_klv = [
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "klv1x2ejsdqz8uccl7htu4cef63z0cqnydhkd8g36tgk6qdv94hu7syqms3spm",
+        ];
+
+        let list_btc = [
+            "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu",
+            "bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g",
+            "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+            "bc1qgl5vlg0zdl7yvprgxj9fevsc6q6x5dmcyk3cn3",
+        ];
+
+        let w1 = Wallet::new(Chain::KLV).unwrap();
+
+        for address in list_klv.iter() {
+            let result = w1.validate_address(address, None);
+            assert!(result.is_ok());
+            assert!(result.unwrap());
+        }
+
+        let w2 = Wallet::new(Chain::BTC).unwrap();
+        for address in list_btc.iter() {
+            let result = w2.validate_address(address, None);
+            assert!(result.is_ok());
+            assert!(result.unwrap());
+        }
+    }
+
+    #[test]
+    fn test_validate_address_fail() {
+        let list_klv = [
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlaz",
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy1",
+            "klv2usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "klvusdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "bnb1ztx5rf7jx28k3xnemftcq3kfgm3yhfvfmhm456",
+            "0x9858EfFD232B4033E47d90003D41EC34EcaEda94",
+        ];
+
+        let list_btc = [
+            "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu",
+            "bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g",
+            "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+            "bc1qgl5vlg0zdl7yvprgxj9fevsc6q6x5dmcyk3cn3",
+        ];
+
+        let w1 = Wallet::new(Chain::KLV).unwrap();
+
+        for address in list_klv.iter() {
+            let result = w1.validate_address(address, None);
+            assert!(result.is_ok());
+            assert!(!result.unwrap());
+        }
+
+        let w2 = Wallet::new(Chain::BTC).unwrap();
+        for address in list_btc.iter() {
+            let result = w2.validate_address(
+                address,
+                Some(models::AddressOptions::new(
+                    Some("0B110907".to_string()),
+                    None,
+                    None,
+                )),
+            );
+            assert!(result.is_ok());
+            assert!(!result.unwrap());
+        }
     }
 }

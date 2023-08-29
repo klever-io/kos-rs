@@ -8,8 +8,10 @@ use std::{fmt, str::FromStr};
 use wasm_bindgen::prelude::*;
 
 /// The mainnet uses 0x41('A') as address type prefix.
-const ADDRESS_TYPE_PREFIX: u8 = 0x41;
-const ADDRESS_LEN: usize = 21;
+pub const ADDRESS_TYPE_PREFIX: u8 = 0x41;
+pub const ADDRESS_LEN: usize = 21;
+pub const ADDRESS_LEN_STR: usize = 34;
+pub const ADDRESS_TYPE_PREFIX_STR: &str = "T";
 
 /// Address of Tron, saved in 21-byte format.
 #[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
@@ -134,7 +136,7 @@ impl FromStr for Address {
     where
         Self: Sized,
     {
-        if s.len() == 34 {
+        if s.len() == ADDRESS_LEN_STR && s.starts_with(ADDRESS_TYPE_PREFIX_STR) {
             return b58decode_check(s).and_then(Address::try_from);
         }
 

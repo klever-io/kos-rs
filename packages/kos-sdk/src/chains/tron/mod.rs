@@ -268,6 +268,30 @@ impl TRX {
             data: tx.data,
         }))
     }
+
+    #[wasm_bindgen(js_name = "validateAddress")]
+    pub fn validate_address(
+        addr: &str,
+        _option: Option<crate::models::AddressOptions>,
+    ) -> Result<bool, Error> {
+        if addr.len() == address::ADDRESS_LEN_STR
+            && addr.starts_with(address::ADDRESS_TYPE_PREFIX_STR)
+        {
+            let check = address::b58decode_check(addr);
+            if check.is_err() {
+                return Ok(false);
+            }
+
+            let check = check.unwrap();
+
+            // check mainnet prefix
+            if check[0] == address::ADDRESS_TYPE_PREFIX {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -360,6 +384,45 @@ mod tests {
             let addr = TRX::get_address_from_keypair(&kp).unwrap();
 
             assert_eq!(expected_addr, addr);
+        }
+    }
+
+    #[test]
+    fn test_validate_address_ok() {
+        // valid addresses
+        let list = [
+            "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH",
+            "TSeJkUh4Qv67VNFwY8LaAxERygNdy6NQZK",
+            "TYJPRrdB5APNeRs4R7fYZSwW3TcrTKw2gx",
+            "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+        ];
+
+        for addr in list {
+            let result = TRX::validate_address(addr, None);
+            assert!(result.is_ok());
+
+            let result = result.unwrap();
+            assert_eq!(result, true, "address: {}", addr);
+        }
+    }
+
+    #[test]
+    fn test_validate_address_invalid() {
+        // invalid addresses
+        let list = [
+            "TuEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH",
+            "TronEnergyioE1Z3ukeRv38sYkv5Jn55bL",
+            "TronEnergyioNijNo8g3LF2ABKUAae6D2Z",
+            "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH1",
+            "0x9858EfFD232B4033E47d90003D41EC34EcaEda94",
+        ];
+
+        for addr in list {
+            let result = TRX::validate_address(addr, None);
+            assert!(result.is_ok());
+
+            let result = result.unwrap();
+            assert_eq!(result, false, "address: {}", addr);
         }
     }
 }

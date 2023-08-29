@@ -22,6 +22,11 @@ jobs:
         with:
           with_cache: true
 
+      - name: Restore .env file
+        run: echo $NODES_ENV | base64 -d > packages/kos-sdk/.env.nodes
+        env:
+          NODES_ENV: ${{ secrets.NODES_ENV }}
+
       - name: Build
         run: make webpack-npm
 

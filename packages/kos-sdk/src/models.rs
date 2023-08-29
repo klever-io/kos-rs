@@ -125,3 +125,59 @@ impl Transaction {
         tx
     }
 }
+
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+#[wasm_bindgen]
+pub struct AddressOptions {
+    #[wasm_bindgen(skip)]
+    pub network: Option<String>,
+    #[wasm_bindgen(skip)]
+    pub prefix: Option<String>,
+    #[wasm_bindgen(skip)]
+    pub check_summed: Option<bool>,
+}
+
+#[wasm_bindgen]
+impl AddressOptions {
+    pub fn new(
+        network: Option<String>,
+        prefix: Option<String>,
+        check_summed: Option<bool>,
+    ) -> Self {
+        Self {
+            network,
+            prefix,
+            check_summed,
+        }
+    }
+
+    #[wasm_bindgen(js_name = setNetwork)]
+    pub fn set_network(&mut self, network: Option<String>) {
+        self.network = network;
+    }
+
+    #[wasm_bindgen(js_name = setPrefix)]
+    pub fn set_prefix(&mut self, prefix: Option<String>) {
+        self.prefix = prefix;
+    }
+
+    #[wasm_bindgen(js_name = setCheckSummed)]
+    pub fn set_check_summed(&mut self, check_summed: Option<bool>) {
+        self.check_summed = check_summed;
+    }
+
+    #[wasm_bindgen(js_name = getNetwork)]
+    pub fn get_network(&self) -> Option<String> {
+        self.network.clone()
+    }
+
+    #[wasm_bindgen(js_name = getPrefix)]
+    pub fn get_prefix(&self) -> Option<String> {
+        self.prefix.clone()
+    }
+
+    #[wasm_bindgen(js_name = getCheckSummed)]
+    pub fn get_check_summed(&self) -> Option<bool> {
+        self.check_summed
+    }
+}
