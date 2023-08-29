@@ -510,6 +510,8 @@ mod tests {
         // export wallet
         let result = w1.to_pem(default_password.to_string());
         assert!(result.is_ok());
+        let pem = result.unwrap();
+        println!("{}", String::from_utf8(pem.clone()).unwrap());
 
         // export wrong password
         let result = w1.to_pem("wrong password".to_string());
@@ -541,31 +543,15 @@ mod tests {
     fn test_import_pem() {
         let pem_str =
             "-----BEGIN KLV-klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy-----
-qWVjaGFpbmNLTFZsYWNjb3VudF90eXBlaE1uZW1vbmljbnB1YmxpY19hZGRyZXNz
-eD5rbHYxdXNkbnl3amhybHY0dGN5dTZzdHhwbDZ5dmhwbGczNW5lcGxqbHQ0eTVy
-N3lwcGU4ZXI0cXVqbGF6eWlpc19sb2NrZWT1aG5vZGVfdXJseCNodHRwczovL25v
-ZGUubWFpbm5ldC5rbGV2ZXIuZmluYW5jZW5lbmNyeXB0ZWRfZGF0YZkB/wAYlxhH
-GJkDGHcYixjLGMEYfRjfGLoY5xhjGNsYshglGPcYbhgeGEwYaxhTGHMYHhixGDsY
-uQoYXBjbGFQYYRivGGEYeQ8YnRixGDsYRxg2GPwYuBhuGNcY1xjlGIwYkxj6GL4Y
-ShjWGB4Yjhj7Chg6GJsYwRgxGIgY4QQYTRiuGLcYdRiuGGkYVxjVGGwNGFoYIBj0
-GEAYrgYLGD8Y7Bh7GIQY4AUY2AAY+BjcGLMYhxhnGDoYJRjwGNkYfxi4Dxg8GEYY
-KhgnGFQYphgkGP4YqxjiGMQY8xh0GHQRGJgYrRi5GMAYkBgdGKcYyRhWGNwYVRhJ
-GBsYLhgbGEwYcxipGIgCGEsYRxiNGG8Y2Bj8GNYVGGYYfhgsGCIQGHYYKhi2GEoY
-pBjFGF4YmRgeGFYY+xgpGMwYiRixAxizAxiSFRiHGEwYZBhQGCIYdRhyGEwYcRhA
-GOgYzBhyGDYUGOIYrhgrGC8YfRg0GCEYohjcAhhIGCEYjxhrGHcY+hg1GK4Yzhhv
-GKEYPRjoGGUY9BhbGLQYkBgYGGgY6RiEGFIYHxhAGM8Y2RhkGGgY0hhkGHcYzAoY
-/BjaGPIYhxipGN0FGGwYiRhqGPEYfxhCGNwYaRQYeQYYshjdGKEYzxi6GKsY2RjW
-GF8YzxitGFoYXBjWAhi8CBiPGGEYshjEGFgYoRizGFIYNBjLGDkY2Bh+GKwY3Bg1
-GEoY/BjEGPoYdBjfGO0Y9hhSGJUYeRi2GJwRGFYYbRhuGHgYjRjKGDsYtxj+GPcY
-IBh4GHEYgxi6GDMYVRibGKgY4hh5GJ0YfBjJGIkYaBiQGHIYPhgzGKgY1BheGG8Y
-GhjsGK4YdxiGGJoYiRhJGLIXGDoY6hiLGFYYjRhXGCMYOBhNGGEYORhQERg3GKMY
-KBhAGNgY1hilGDEYJhgbGLcY8RisGCUY/Bg6GKEYjRjZGF4YWhjyGCMYiBiiDRhc
-GFAYjhgZGP4YhBjrFhi5GDkYuhiNGGwYYAoYhgQY9hioGLcYqxhTGGkY+hjyGLwK
-ERhTGMoY8RghGGoYVhhPGO4Y9BiKAxhBGNcYYRhCGJQYVwoMGGQYIBiWGPsYUxg9
-GOEYKBiaGJ8Y8RhaGCoY/hivGKAY9BixGMIYUxgxGCQY4xhEGOIY3hg7GGYYhBiv
-GFYYXBhXGO0YsRhKGIQYvRh/GMgY2Rj8GJIYXhhsGOwYGRiDGBoYcxiWGH0Y3Bh8
-DxjeGMoYbRhWGCQYZhjGGHgYtxhpGHIYgxiqGLQYRxUHGOYYIRiNGNIY8xhxCBj9
-GFcYRRj0GIIYkhiQGJNobW5lbW9uaWP2ZHBhdGj2Z2tleXBhaXL2
+AQA+a2x2MXVzZG55d2pocmx2NHRjeXU2c3R4cGw2eXZocGxnMzVuZXBsamx0NHk1
+cjd5cHBlOGVyNHF1amxhenkBAAABvAIAOJCsBrwdU4FmaoxoUm790L+QMK4zTixR
+pX8Nich/FhH53iI1cgoAyySPnzUVpvdSrsYZgpALJHO1Iv5FYBMYOqIIOJfLgMYp
+N4C8Qw2LCgx4L/VIFoU+nbxJhvnx8Xd9mmkyWhbcoBSAHxzQ/teEfTRAMu9l8H33
+tN5xf3N7KRFsjZ3vDSW9w/xoiOCsi1QbTpE7SHB0KGLPaW1kgJ57J0gPC1QHI8Nk
+csPM/08jVmOb1OIIs51qmo/FOsewPwb5aPEji6panHN3aJiYYv5XZCAxbWQqu2oY
+Q4mznxvSHZLyGLsTGDmrticCzCL2i+3nXh7a07PsTMguY8IqUNRZpF68TqcYw/Bf
+56tx4+0OgQ2ujSMWWeR3uN95K6o7rzIMpRbLxrcGfTkfozbGMe/H0Ur+5YI0hVY/
+qeVTAAAA
 -----END KLV-klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy-----";
 
         let wallet = Wallet::from_pem(pem_str.as_bytes()).unwrap();
