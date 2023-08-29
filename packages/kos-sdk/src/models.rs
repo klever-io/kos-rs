@@ -126,7 +126,7 @@ impl Transaction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct AddressOptions {
     #[wasm_bindgen(skip)]
@@ -179,15 +179,5 @@ impl AddressOptions {
     #[wasm_bindgen(js_name = getCheckSummed)]
     pub fn get_check_summed(&self) -> Option<bool> {
         self.check_summed
-    }
-}
-
-impl Default for AddressOptions {
-    fn default() -> Self {
-        Self {
-            network: None,
-            prefix: None,
-            check_summed: None,
-        }
     }
 }

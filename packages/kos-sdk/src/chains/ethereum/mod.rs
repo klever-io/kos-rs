@@ -418,10 +418,11 @@ impl ETH {
 
         let option = option.unwrap_or_default();
 
-        if option.check_summed.unwrap_or(false) {
-            if addr != address.to_string().trim_start_matches("0x") {
-                return Ok(false);
-            }
+        // Check if address checksum is required and if the address matches the expected format
+        if option.check_summed.unwrap_or(false)
+            && addr != address.to_string().trim_start_matches("0x")
+        {
+            return Ok(false);
         }
 
         Ok(true)

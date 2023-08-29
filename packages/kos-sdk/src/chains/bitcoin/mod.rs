@@ -296,6 +296,26 @@ impl BTC {
         }
     }
 
+    fn decode_magic(hex_magic: String) -> Result<Network, Error> {
+        let magic_bytes = hex::decode(hex_magic)?;
+        if magic_bytes.len() != 4 {
+            return Err(Error::UnsupportedChain("invalid magic for network length"));
+        }
+
+        let array: [u8; 4] = [
+            magic_bytes[0],
+            magic_bytes[1],
+            magic_bytes[2],
+            magic_bytes[3],
+        ];
+        let magic = Magic::from_bytes(array);
+
+        let network = Network::from_magic(magic)
+            .ok_or(Error::UnsupportedChain("invalid magic for network"))?;
+
+        Ok(network)
+    }
+
     #[wasm_bindgen(js_name = "validateAddress")]
     pub fn validate_address(
         address: &str,
@@ -303,7 +323,7 @@ impl BTC {
     ) -> Result<bool, Error> {
         let addr = Address::from_str(address);
         if addr.is_err() {
-            return Ok(false)
+            return Ok(false);
         }
 
         let addr = addr.unwrap();
@@ -311,23 +331,7 @@ impl BTC {
         // get network from options
         let network = match options {
             Some(opt) => match opt.network {
-                Some(hex_magic) => {
-                    let magic_bytes = hex::decode(hex_magic)?;
-                    if magic_bytes.len() != 4 {
-                        return Err(Error::UnsupportedChain("invalid magic for network length"));
-                    }
-
-                    let array: [u8; 4] = [
-                        magic_bytes[0],
-                        magic_bytes[1],
-                        magic_bytes[2],
-                        magic_bytes[3],
-                    ];
-                    let magic = Magic::from_bytes(array);
-
-                    Network::from_magic(magic)
-                        .ok_or(Error::UnsupportedChain("invalid magic for network"))?
-                }
+                Some(hex_magic) => BTC::decode_magic(hex_magic)?,
                 _ => DEFAULT_NETWORK,
             },
             _ => DEFAULT_NETWORK,
@@ -500,7 +504,7 @@ mod tests {
         }
 
         let list = [
-            "qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu", // no prefix
+            "qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu",     // no prefix
             "ltc1qz9vvmr3q2s6m4drd9y9plzs0l38u9z4p96wwxz", // wrong prefix
             "BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
             "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN",
