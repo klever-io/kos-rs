@@ -190,6 +190,14 @@ impl MATIC {
         let result = ETH::broadcast(tx, Some(node)).await?;
         Ok(BroadcastResult::new(convert_transaction(result.tx)?))
     }
+
+    #[wasm_bindgen(js_name = "validateAddress")]
+    pub fn validate_address(
+        address: &str,
+        option: Option<models::AddressOptions>,
+    ) -> Result<bool, Error> {
+        ETH::validate_address(address, option)
+    }
 }
 
 #[cfg(test)]
