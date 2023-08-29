@@ -1,7 +1,7 @@
 pub mod api;
 
+use kos_crypto::cipher;
 pub use kos_crypto::cipher::*;
-use kos_crypto::cipher::{self, CipherAlgo};
 use kos_crypto::mnemonic::generate_mnemonic;
 pub use kos_sdk::*;
 use kos_types::error::Error;

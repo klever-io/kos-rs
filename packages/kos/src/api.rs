@@ -68,7 +68,7 @@ pub fn api_signature(
     let token_nonce_hash = kos_crypto::hash::sha256(token_nonce.as_bytes());
     let token_hash_len: [u8; 4] = [0, 0, 0, 32];
     // append prefix. message length and message
-    let to_sign = vec![prefix, &token_hash_len, &token_nonce_hash].concat();
+    let to_sign = [prefix, &token_hash_len, &token_nonce_hash].concat();
     // keccak256 hash
     let hash = kos_crypto::hash::keccak256(&to_sign);
 

@@ -1,0 +1,99 @@
+name: KOS-RS Bump version && Release 
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    env:
+      USER: ${{ secrets.GIT_USER }}
+      TOKEN: ${{ secrets.GIT_PASS }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+        
+      - name: RustUp
+        uses: klever-io/kos-rs/.github/actions/rustup@develop
+        with:
+          with_cache: true
+
+      # todo: fix grcov 
+      # - name: Run Tests with coverage
+      #   run: |
+      #     cargo install grcov
+      #     export CARGO_INCREMENTAL=0
+      #     export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
+      #     export RUSTDOCFLAGS="-Cpanic=abort"
+      #     cargo build
+      #     cargo test
+      #     grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing --ignore "/*" -o lcov.info
+      
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v2
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     files: ./lcov.info
+      #     flags: unittests
+      #     name: codecov-umbrella
+      #     fail_ci_if_error: true
+
+      - name: Setup GitHub CLI
+        run: |
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
+          sudo apt update
+          sudo apt install gh
+
+      - name: Get PR title
+        id: pr_data
+        run: |
+          PR_TITLE=$(gh pr view https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }} --json title -q ".title")
+          echo "::set-output name=title::$PR_TITLE"
+
+      - name: Bump Version in Cargo.toml
+        env:
+          PR_TITLE: ${{ steps.pr_data.outputs.title }}
+        run: .github/actions/bump-version.sh
+
+      - name: Build
+        run: make webpack-npm
+
+      - name: Capture Release Notes
+        id: release_notes
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          RELEASE_NOTES=$(git log --oneline $LATEST_TAG..HEAD)
+          echo "::set-output name=notes::$RELEASE_NOTES"
+
+      - name: Create GitHub Release
+        run: |
+          VERSION=$(cat VERSION)
+          gh release create "v$VERSION" ./demo/kos --title "Release v$VERSION" --notes "${{ steps.release_notes.outputs.notes }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup npm module
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org/'
+          scope: '@klever'
+          always-auth: true
+
+      - name: Publish npm module
+        run: npm publish ./demo/kos --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -7,7 +7,7 @@ function debugWallet(tag, w) {
 }
 
 // import kos to window on load
-import("../kos/kos.js").then((kos) => {
+import("../kos/index.js").then((kos) => {
   window.kos = kos;
 });
 
