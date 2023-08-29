@@ -295,6 +295,46 @@ impl BTC {
             )),
         }
     }
+
+    #[wasm_bindgen(js_name = "validateAddress")]
+    pub fn validate_address(
+        address: &str,
+        options: Option<models::AddressOptions>,
+    ) -> Result<bool, Error> {
+        let addr = Address::from_str(address);
+        if addr.is_err() {
+            return Ok(false)
+        }
+
+        let addr = addr.unwrap();
+
+        // get network from options
+        let network = match options {
+            Some(opt) => match opt.network {
+                Some(hex_magic) => {
+                    let magic_bytes = hex::decode(hex_magic)?;
+                    if magic_bytes.len() != 4 {
+                        return Err(Error::UnsupportedChain("invalid magic for network length"));
+                    }
+
+                    let array: [u8; 4] = [
+                        magic_bytes[0],
+                        magic_bytes[1],
+                        magic_bytes[2],
+                        magic_bytes[3],
+                    ];
+                    let magic = Magic::from_bytes(array);
+
+                    Network::from_magic(magic)
+                        .ok_or(Error::UnsupportedChain("invalid magic for network"))?
+                }
+                _ => DEFAULT_NETWORK,
+            },
+            _ => DEFAULT_NETWORK,
+        };
+
+        Ok(addr.is_valid_for_network(network))
+    }
 }
 
 impl BTC {
@@ -315,7 +355,7 @@ impl BTC {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hex::FromHex;
+    use hex::{FromHex, ToHex};
     use kos_types::Bytes32;
 
     const DEFAULT_PRIVATE_KEY: &str =
@@ -403,5 +443,72 @@ mod tests {
         assert!(tx.total_send.to_u64() == 1000);
         assert!(tx.fee.to_u64() == 226);
         // let _ = tokio_test::block_on(BTC::broadcast(sign_tx, Some(node.to_string()))).unwrap();
+    }
+
+    #[test]
+    fn test_validate_address_ok() {
+        let list = [
+            "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu",
+            "bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g",
+            "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+            "bc1qgl5vlg0zdl7yvprgxj9fevsc6q6x5dmcyk3cn3",
+        ];
+
+        for addr in list.iter() {
+            let valid = BTC::validate_address(addr, None).unwrap();
+            assert_eq!(valid, true, "address {} should be valid", addr);
+        }
+
+        // network mainnet
+        for addr in list.iter() {
+            let valid = BTC::validate_address(
+                addr,
+                Some(models::AddressOptions::new(
+                    Some(Network::Bitcoin.magic().encode_hex()),
+                    None,
+                    None,
+                )),
+            )
+            .unwrap();
+            assert_eq!(valid, true, "address {} should be valid", addr);
+        }
+    }
+
+    #[test]
+    fn test_validate_address_fail() {
+        let list = [
+            "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu",
+            "bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g",
+            "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+            "bc1qgl5vlg0zdl7yvprgxj9fevsc6q6x5dmcyk3cn3",
+        ];
+
+        // wrong network
+        for addr in list.iter() {
+            let valid = BTC::validate_address(
+                addr,
+                Some(models::AddressOptions::new(
+                    Some(Network::Testnet.magic().encode_hex()),
+                    None,
+                    None,
+                )),
+            )
+            .unwrap();
+            assert_eq!(valid, false, "address {} should be invalid", addr);
+        }
+
+        let list = [
+            "qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu", // no prefix
+            "ltc1qz9vvmr3q2s6m4drd9y9plzs0l38u9z4p96wwxz", // wrong prefix
+            "BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+            "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN",
+        ];
+
+        for addr in list.iter() {
+            let valid = BTC::validate_address(addr, None).unwrap();
+            assert_eq!(valid, false, "address {} should be invalid", addr);
+        }
     }
 }
