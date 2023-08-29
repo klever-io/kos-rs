@@ -30,6 +30,9 @@ jobs:
         with:
           with_cache: true
 
+      - name: Run Tests
+        run: cargo test
+
       # todo: fix grcov 
       # - name: Run Tests with coverage
       #   run: |

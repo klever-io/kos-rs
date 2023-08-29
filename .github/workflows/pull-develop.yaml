@@ -2,13 +2,21 @@ name: KOS-RS Checks
 
 on:
   push:
+    branches:
+      - develop
+      - master
+    paths-ignore:
+      - '**/*.md'
+      - '.gitignore'
+      - '.github/**'
   pull_request:
     branches:
       - develop
+      - master
     paths-ignore:
-      - README.md
-      - .gitignore
-      - .github/**
+      - '**/*.md'
+      - '.gitignore'
+      - '.github/**'
     
 jobs:
   format:
@@ -38,6 +46,9 @@ jobs:
           cargo deny check
           cargo outdated --exit-code 1
           cargo pants
+
+      - name: Run Tests
+        run: cargo test
 
   build:
     needs: [format]

@@ -1,4 +1,4 @@
-.PHONY: all fmt webpack webpack-npm grcov
+.PHONY: all fmt clippy check webpack webpack-npm grcov
 
 all: fmt
 	cargo build
@@ -8,6 +8,11 @@ fmt:
 
 clippy:
 	cargo clippy --all -- -D warnings
+
+check: fmt clippy
+	cargo deny check
+	cargo outdated --exit-code 1
+	cargo pants
 
 grcov:
 	cargo build
