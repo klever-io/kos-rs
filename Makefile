@@ -1,5 +1,7 @@
 .PHONY: all fmt clippy check webpack webpack-npm grcov
 
+UNAME := $(shell uname)
+
 all: fmt
 	cargo build
 
@@ -8,6 +10,14 @@ fmt:
 
 clippy:
 	cargo clippy --all -- -D warnings
+
+encode-env:
+ifeq ($(UNAME), Linux)
+	cat packages/kos-sdk/.env.nodes | base64 -w 0 > .env.nodes.base64
+endif
+ifeq ($(UNAME), Darwin)
+	cat packages/kos-sdk/.env.nodes | base64 > .env.nodes.base64
+endif
 
 check: fmt clippy
 	cargo deny check
