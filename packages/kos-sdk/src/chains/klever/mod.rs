@@ -3,7 +3,7 @@ pub mod models;
 pub mod requests;
 use crate::{
     chain::BaseChain,
-    models::{BroadcastResult, Transaction, TransactionRaw},
+    models::{AddressOptions, BroadcastResult, Transaction, TransactionRaw},
 };
 use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
 use kos_types::{error::Error, hash::Hash, number::BigNumber};
@@ -247,6 +247,23 @@ impl KLV {
 
         requests::make_request(sender, contract, &options, node.as_str()).await
     }
+
+    #[wasm_bindgen(js_name = "validateAddress")]
+    pub fn validate_address(
+        address: &str,
+        _options: Option<AddressOptions>,
+    ) -> Result<bool, Error> {
+        let addr = address::Address::from_str(address);
+        if addr.is_err() {
+            return Ok(false);
+        }
+
+        if addr.unwrap().to_string() == address {
+            return Ok(true);
+        }
+
+        return Ok(false);
+    }
 }
 
 #[wasm_bindgen]
@@ -429,6 +446,40 @@ mod tests {
                 assert_eq!(c.amount, 10);
             }
             _ => assert!(false),
+        }
+    }
+
+    #[test]
+    fn test_validate_address_ok() {
+        let list = [
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "klv1x2ejsdqz8uccl7htu4cef63z0cqnydhkd8g36tgk6qdv94hu7syqms3spm",
+        ];
+
+        for addr in list.iter() {
+            let result = KLV::validate_address(addr, None);
+            assert!(result.is_ok());
+            assert_eq!(result.unwrap(), true, "address: {}", addr);
+        }
+    }
+
+    #[test]
+    fn test_validate_address_fail() {
+        let list = [
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlaz",
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy1",
+            "klv2usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "klvusdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "bnb1ztx5rf7jx28k3xnemftcq3kfgm3yhfvfmhm456",
+            "0x9858EfFD232B4033E47d90003D41EC34EcaEda94",
+        ];
+
+        for addr in list.iter() {
+            let result = KLV::validate_address(addr, None);
+            assert!(result.is_ok());
+            assert_eq!(result.unwrap(), false, "address: {}", addr);
         }
     }
 }

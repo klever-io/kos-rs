@@ -415,7 +415,7 @@ impl ETH {
             Ok(addr) => addr.to_string().trim_start_matches("0x").to_string(),
             Err(_) => return Ok(false),
         };
-        
+
         let option = option.unwrap_or_default();
 
         if option.check_summed.unwrap_or(false) {
@@ -616,7 +616,6 @@ mod tests {
             "0x9858EfFD232B4033E47d90003D41EC34EcaEda9", // hex convert wrong parity
             "0x9858EfFD232B4033E47d90003D41EC34EcaEda941", // hex convert wrong parity
             "0x9858EfFD232B4033E47d90003D41EC34EcaEda94Ab", // hex convert ok, wrong length
-
         ];
 
         // check summed
