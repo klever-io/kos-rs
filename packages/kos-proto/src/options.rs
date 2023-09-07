@@ -6,12 +6,14 @@ pub struct KLVOptions {
     pub nonce: Option<u64>,
     pub kda: Option<String>,
     pub kda_royalties: Option<i64>,
+    pub memo: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct TRXOptions {
     pub token: Option<String>,
     pub fee_limit: Option<i64>,
+    pub memo: Option<String>,
 }
 
 impl Default for TRXOptions {
@@ -19,6 +21,7 @@ impl Default for TRXOptions {
         Self {
             token: None,
             fee_limit: Some(10_000_000),
+            memo: None,
         }
     }
 }
@@ -40,6 +43,7 @@ pub struct ETHOptions {
 pub struct MATICOptions {
     pub eth: ETHOptions,
 }
+
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 pub struct BTCOptions {
     /// hex magic from network (default is bitcoin mainnet)
