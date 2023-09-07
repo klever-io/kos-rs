@@ -225,7 +225,7 @@ impl TRX {
                 requests::create_transfer(&node, contract).await?
             }
         };
-        
+
         // update memo field
         let tx = match options.memo {
             Some(memo) => {

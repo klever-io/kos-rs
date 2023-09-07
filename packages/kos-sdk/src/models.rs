@@ -75,6 +75,7 @@ impl SendOptions {
         nonce: Option<u64>,
         kda: Option<String>,
         kda_royalties: Option<i64>,
+        kda_fee: Option<String>,
         memo: Option<String>,
     ) -> Self {
         let memo = match memo {
@@ -87,6 +88,7 @@ impl SendOptions {
                 nonce,
                 kda,
                 kda_royalties,
+                kda_fee,
                 memo,
             })),
         }

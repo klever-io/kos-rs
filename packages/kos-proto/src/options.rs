@@ -6,6 +6,7 @@ pub struct KLVOptions {
     pub nonce: Option<u64>,
     pub kda: Option<String>,
     pub kda_royalties: Option<i64>,
+    pub kda_fee: Option<String>,
     pub memo: Option<Vec<String>>,
 }
 
