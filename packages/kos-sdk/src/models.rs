@@ -1,5 +1,5 @@
 // use crate::klever;
-use kos_types::{error::Error, hash::Hash};
+use kos_types::{error::Error, hash::Hash, number::BigNumber};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
@@ -65,6 +65,124 @@ pub struct SendOptions {
 impl SendOptions {
     pub fn new(data: Options) -> Self {
         Self { data: Some(data) }
+    }
+}
+
+#[wasm_bindgen]
+impl SendOptions {
+    #[wasm_bindgen(js_name = newKleverSendOptions)]
+    pub fn new_klever_send_options(
+        nonce: Option<u64>,
+        kda: Option<String>,
+        kda_royalties: Option<i64>,
+        memo: Option<String>,
+    ) -> Self {
+        let memo = match memo {
+            Some(memo) => Some(vec![memo]),
+            None => None,
+        };
+
+        Self {
+            data: Some(Options::Klever(kos_proto::options::KLVOptions {
+                nonce,
+                kda,
+                kda_royalties,
+                memo,
+            })),
+        }
+    }
+
+    #[wasm_bindgen(js_name = newTronSendOptions)]
+    pub fn new_tron_send_options(
+        token: Option<String>,
+        fee_limit: Option<i64>,
+        memo: Option<String>,
+    ) -> Self {
+        Self {
+            data: Some(Options::Tron(kos_proto::options::TRXOptions {
+                token,
+                fee_limit,
+                memo,
+            })),
+        }
+    }
+
+    #[wasm_bindgen(js_name = newEthereumSendOptions)]
+    pub fn new_ethereum_send_options(
+        legacy_type: Option<bool>,
+        nonce: Option<u64>,
+        chain_id: Option<u64>,
+        token: Option<String>,
+        gas_limit: Option<BigNumber>,
+        gas_price: Option<BigNumber>,
+        contract_data: Option<Vec<u8>>,
+        max_fee_per_gas: Option<BigNumber>,
+        max_priority_fee_per_gas: Option<BigNumber>,
+    ) -> Self {
+        Self {
+            data: Some(Options::Ethereum(kos_proto::options::ETHOptions {
+                legacy_type,
+                nonce,
+                chain_id,
+                token,
+                gas_limit,
+                gas_price,
+                contract_data,
+                max_fee_per_gas,
+                max_priority_fee_per_gas,
+            })),
+        }
+    }
+
+    #[wasm_bindgen(js_name = newPolygonSendOptions)]
+    pub fn new_polygon_send_options(
+        legacy_type: Option<bool>,
+        nonce: Option<u64>,
+        chain_id: Option<u64>,
+        token: Option<String>,
+        gas_limit: Option<BigNumber>,
+        gas_price: Option<BigNumber>,
+        contract_data: Option<Vec<u8>>,
+        max_fee_per_gas: Option<BigNumber>,
+        max_priority_fee_per_gas: Option<BigNumber>,
+    ) -> Self {
+        Self {
+            data: Some(Options::Polygon(kos_proto::options::MATICOptions {
+                eth: kos_proto::options::ETHOptions {
+                    legacy_type,
+                    nonce,
+                    chain_id,
+                    token,
+                    gas_limit,
+                    gas_price,
+                    contract_data,
+                    max_fee_per_gas,
+                    max_priority_fee_per_gas,
+                },
+            })),
+        }
+    }
+
+    #[wasm_bindgen(js_name = newBitcoinSendOptions)]
+    pub fn new_bitcoin_send_options(
+        network: Option<String>,
+        sats_per_bytes: Option<u64>,
+        dust_value: Option<BigNumber>,
+        send_all: Option<bool>,
+        change_address: Option<String>,
+        rbf: Option<bool>,
+    ) -> Self {
+        Self {
+            data: Some(Options::Bitcoin(kos_proto::options::BTCOptions {
+                network,
+                sats_per_bytes,
+                dust_value,
+                send_all,
+                change_address,
+                receivers: None,
+                rbf,
+            })),
+        }
     }
 }
 
