@@ -23,6 +23,7 @@ pbjson-types = { workspace = true }
 
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+wasm-bindgen = { workspace = true }
 
 [lib]
 test = false

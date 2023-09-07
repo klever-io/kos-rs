@@ -1502,6 +1502,7 @@ dependencies = [
  "quote",
  "serde",
  "serde_json",
+ "wasm-bindgen",
 ]
 
 [[package]]
