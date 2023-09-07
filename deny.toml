@@ -15,16 +15,12 @@ deny = [
 skip = [
     { name = "bitflags", version = "=1.3.2" }, # openssl
     { name = "base64", version = "=0.13.1" }, # openssl
-    { name = "bech32", version = "=0.7.3" }, # coins-bip32
-    { name = "block-buffer", version = "=0.9.0" }, # coin-bip39
-    { name = "block-buffer", version = "=0.9.0" }, # coin-bip39
-    { name = "digest", version = "=0.9.0" }, # coin-bip39
-    { name = "sha2", version = "=0.9.9" }, # coin-bip39
     { name = "socket2", version = "=0.4.9" }, # reqwest
     { name = "spin", version = "=0.5.2" }, # reqwest rustls
-    { name = "syn", version = "=2.0.29" }, # web3
 ]
 skip-tree = [
+    { name = "prost-wkt-types", version = "=0.4.2", depth = 20 }, # prost-wkt-build
+    { name = "prost-wkt-build", version = "=0.4.2", depth = 20 }, # prost-wkt-build
 ]
 
 [sources]
