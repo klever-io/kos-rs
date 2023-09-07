@@ -225,6 +225,16 @@ impl TRX {
                 requests::create_transfer(&node, contract).await?
             }
         };
+        
+        // update memo field
+        let tx = match options.memo {
+            Some(memo) => {
+                let mut tx = tx.clone();
+                tx.raw_data.as_mut().unwrap().data = memo.as_bytes().to_vec();
+                tx
+            }
+            None => tx,
+        };
 
         let digest = TRX::hash_transaction(&tx)?;
 
