@@ -58,15 +58,27 @@ pub async fn make_request(
     options: &kos_proto::options::KLVOptions,
     node: &str,
 ) -> Result<crate::models::Transaction, Error> {
+    let data = match options.memo.clone() {
+        Some(memo) => {
+            // convert memo Vec<String> to Vec<Vec<u8>>
+            Some(
+                memo.into_iter()
+                    .map(|m| m.into_bytes())
+                    .collect::<Vec<Vec<u8>>>(),
+            )
+        }
+        None => None,
+    };
+
     let mut tx_request = models::SendTXRequest {
         tx_type: 0,
         sender: sender.to_owned(),
         nonce: options.nonce,
         perm_id: None,
-        data: None,
+        data,
         contract: None,
         contracts: None,
-        kda_fee: None,
+        kda_fee: options.kda_fee.clone(),
     };
 
     tx_request.set_contract(contract)?;
