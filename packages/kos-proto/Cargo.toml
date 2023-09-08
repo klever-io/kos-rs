@@ -23,6 +23,7 @@ pbjson-types = { workspace = true }
 
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+wasm-bindgen = { workspace = true }
 
 [lib]
 test = false
@@ -30,7 +31,7 @@ doctest = false
 
 [build-dependencies]
 glob = "0.3"
-prost-build = "0.11"
+prost-build = "0.12"
 prost-wkt-build = "0.4"
 quote = "1.0"
 heck = " 0.4"

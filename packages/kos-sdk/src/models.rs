@@ -68,6 +68,44 @@ impl SendOptions {
     }
 }
 
+#[wasm_bindgen]
+impl SendOptions {
+    #[wasm_bindgen(js_name = newKleverSendOptions)]
+    pub fn new_klever_send_options(option: kos_proto::options::KLVOptions) -> Self {
+        Self {
+            data: Some(Options::Klever(option)),
+        }
+    }
+
+    #[wasm_bindgen(js_name = newTronSendOptions)]
+    pub fn new_tron_send_options(option: kos_proto::options::TRXOptions) -> Self {
+        Self {
+            data: Some(Options::Tron(option)),
+        }
+    }
+
+    #[wasm_bindgen(js_name = newEthereumSendOptions)]
+    pub fn new_ethereum_send_options(option: &kos_proto::options::ETHOptions) -> Self {
+        Self {
+            data: Some(Options::Ethereum(option.clone())),
+        }
+    }
+
+    #[wasm_bindgen(js_name = newPolygonSendOptions)]
+    pub fn new_polygon_send_options(option: &kos_proto::options::MATICOptions) -> Self {
+        Self {
+            data: Some(Options::Polygon(option.clone())),
+        }
+    }
+
+    #[wasm_bindgen(js_name = newBitcoinSendOptions)]
+    pub fn new_bitcoin_send_options(option: &kos_proto::options::BTCOptions) -> Self {
+        Self {
+            data: Some(Options::Bitcoin(option.clone())),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[wasm_bindgen]
 /// Transaction Handler
