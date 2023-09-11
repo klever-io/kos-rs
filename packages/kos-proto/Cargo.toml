@@ -11,7 +11,7 @@ rust-version = { workspace = true }
 [features]
 
 [dependencies]
-kos-types = { workspace = true }
+kos-types = { workspace = true, features = ["serde"]}
 
 bytes = { workspace = true }
 prost = { workspace = true }
