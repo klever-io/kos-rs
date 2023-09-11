@@ -24,7 +24,7 @@ impl KLVOptions {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     #[wasm_bindgen(js_name = setNonce)]
     pub fn set_nonce(&mut self, nonce: i64) {
         self.nonce = Some(nonce as u64);
@@ -32,7 +32,7 @@ impl KLVOptions {
 
     #[wasm_bindgen(js_name = getNonce)]
     pub fn get_nonce(&self) -> u64 {
-        self.nonce.clone().unwrap_or_default()
+        self.nonce.unwrap_or_default()
     }
 
     #[wasm_bindgen(js_name = addMemo)]
@@ -70,7 +70,7 @@ impl KLVOptions {
 
     #[wasm_bindgen(js_name = getKDARoyalties)]
     pub fn get_kda_royalties(&self) -> i64 {
-        self.kda_royalties.clone().unwrap_or_default()
+        self.kda_royalties.unwrap_or_default()
     }
 
     #[wasm_bindgen(js_name = setKDAFee)]
@@ -82,7 +82,6 @@ impl KLVOptions {
     pub fn get_kda_fee(&self) -> String {
         self.kda_fee.clone().unwrap_or_default()
     }
-
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -120,7 +119,7 @@ impl TRXOptions {
 
     #[wasm_bindgen(js_name = getFeeLimit)]
     pub fn get_fee_limit(&self) -> u64 {
-        self.fee_limit.clone().unwrap_or_default() as u64
+        self.fee_limit.unwrap_or_default() as u64
     }
 
     #[wasm_bindgen(js_name = setMemo)]
@@ -181,7 +180,7 @@ impl ETHOptions {
 
     #[wasm_bindgen(js_name = getLegacyType)]
     pub fn get_legacy_type(&self) -> bool {
-        self.legacy_type.clone().unwrap_or_default()
+        self.legacy_type.unwrap_or_default()
     }
 
     #[wasm_bindgen(js_name = setNonce)]
@@ -191,7 +190,7 @@ impl ETHOptions {
 
     #[wasm_bindgen(js_name = getNonce)]
     pub fn get_nonce(&self) -> u64 {
-        self.nonce.clone().unwrap_or_default()
+        self.nonce.unwrap_or_default()
     }
 
     #[wasm_bindgen(js_name = setChainId)]
@@ -201,14 +200,14 @@ impl ETHOptions {
 
     #[wasm_bindgen(js_name = getChainId)]
     pub fn get_chain_id(&self) -> u64 {
-        self.chain_id.clone().unwrap_or_default()
+        self.chain_id.unwrap_or_default()
     }
-    
+
     #[wasm_bindgen(js_name = setToken)]
     pub fn set_token(&mut self, token: &str) {
         self.token = Some(token.to_owned());
     }
-    
+
     #[wasm_bindgen(js_name = getToken)]
     pub fn get_token(&self) -> String {
         self.token.clone().unwrap_or_default()
@@ -268,7 +267,10 @@ impl ETHOptions {
 
     #[wasm_bindgen(js_name = getMaxPriorityFeePerGas)]
     pub fn get_max_priority_fee_per_gas(&self) -> String {
-        self.max_priority_fee_per_gas.clone().unwrap_or_default().to_string()
+        self.max_priority_fee_per_gas
+            .clone()
+            .unwrap_or_default()
+            .to_string()
     }
 }
 
@@ -341,7 +343,7 @@ impl BTCOptions {
 
     #[wasm_bindgen(js_name = getSatsPerBytes)]
     pub fn get_sats_per_bytes(&self) -> u64 {
-        self.sats_per_bytes.clone().unwrap_or_default()
+        self.sats_per_bytes.unwrap_or_default()
     }
 
     #[wasm_bindgen(js_name = setDustValue)]
@@ -362,7 +364,7 @@ impl BTCOptions {
 
     #[wasm_bindgen(js_name = getSendAll)]
     pub fn get_send_all(&self) -> bool {
-        self.send_all.clone().unwrap_or_default()
+        self.send_all.unwrap_or_default()
     }
 
     #[wasm_bindgen(js_name = setChangeAddress)]
@@ -374,7 +376,7 @@ impl BTCOptions {
     pub fn get_change_address(&self) -> String {
         self.change_address.clone().unwrap_or_default()
     }
-    
+
     #[wasm_bindgen(js_name = addReceiver)]
     pub fn addr_receiver(&mut self, addr: &str, amount: &str) -> Result<(), Error> {
         let amount = BigNumber::from_string(amount)?;
@@ -411,7 +413,7 @@ impl BTCOptions {
 
     #[wasm_bindgen(js_name = getRBF)]
     pub fn get_rbf(&self) -> bool {
-        self.rbf.clone().unwrap_or_default()
+        self.rbf.unwrap_or_default()
     }
 }
 
@@ -427,7 +429,7 @@ impl BTCOptions {
     pub fn receivers(&self) -> Vec<(String, BigNumber)> {
         self.receivers.clone().unwrap_or_default()
     }
-    
+
     pub fn rbf(&self) -> bool {
         self.rbf.unwrap_or(false)
     }
