@@ -74,8 +74,8 @@ impl KLVOptions {
     }
 
     #[wasm_bindgen(js_name = setKDAFee)]
-    pub fn set_kda_fee(&mut self, fee: &str) {
-        self.kda_fee = Some(fee.to_owned());
+    pub fn set_kda_fee(&mut self, kda: &str) {
+        self.kda_fee = Some(kda.to_owned());
     }
 
     #[wasm_bindgen(js_name = getKDAFee)]
