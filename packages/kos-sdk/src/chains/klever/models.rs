@@ -129,7 +129,7 @@ pub struct TransferTXRequest {
     pub receiver: String,
     #[serde(rename = "amount")]
     pub amount: i64,
-    #[serde(rename = "kdaFee")]
+    #[serde(rename = "kda")]
     pub kda: Option<String>,
     #[serde(rename = "kdaRoyalties")]
     pub kda_royalties: Option<i64>,
