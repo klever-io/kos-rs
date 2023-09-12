@@ -73,12 +73,17 @@ mod tests {
             Some(TransactionRaw::Klever(tx)) => {
                 let raw = &tx.raw_data.unwrap();
                 assert!(raw.nonce > 0);
+                assert_eq!(raw.k_app_fee, 500000);
+                assert_eq!(raw.bandwidth_fee, 1000000);
+                assert!(raw.kda_fee.is_none());
+
                 assert_eq!(raw.contract.len(), 1);
                 let c: kos_proto::klever::TransferContract =
                     kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
                         .unwrap();
 
                 assert_eq!(c.amount, 10);
+                assert_eq!(c.asset_id.len(), 0);
             }
             _ => assert!(false),
         }
@@ -108,17 +113,16 @@ mod tests {
             Some(TransactionRaw::Klever(tx)) => {
                 let raw = &tx.raw_data.unwrap();
                 assert!(raw.nonce > 0);
-
                 assert_eq!(raw.k_app_fee, 500000);
                 assert_eq!(raw.bandwidth_fee, 1000000);
                 assert!(raw.kda_fee.is_none());
+
                 assert_eq!(raw.contract.len(), 1);
                 let c: kos_proto::klever::TransferContract =
                     kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
                         .unwrap();
 
                 assert_eq!(c.amount, 10);
-
                 assert_eq!(str::from_utf8(&c.asset_id).unwrap(), kda);
             }
             _ => assert!(false),
