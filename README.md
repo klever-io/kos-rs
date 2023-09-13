@@ -1,4 +1,30 @@
-# kos-rs
+# Klever Wallet Ops Security Library for Rust (kos-rs)
+
+kos-rs is an open-source, cross-platform library designed to provide essential low-level functionality for blockchain wallet operations and transactions. Developed in Rust, it offers robust security and platform flexibility, making it an excellent choice for building secure and efficient blockchain applications.
+
+## Features
+
+- Cross-platform compatibility.
+- Low-level blockchain wallet features.
+- Transaction handling.
+- Robust security measures.
+- Open-source and community-driven.
+
+## Getting Started
+
+Follow these instructions to get started with kos-rs in your Rust project.
+
+### Prerequisites
+
+- [Rust](https://www.rust-lang.org/tools/install)
+
+### Installation
+
+To add kos-rs to your Rust project, simply include it as a dependency in your `Cargo.toml`:
+
+```toml
+[dependencies]
+kos-rs = "0.1"
 
 ## Project Directory Structure
 
