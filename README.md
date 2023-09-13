@@ -12,13 +12,13 @@ kos-rs is an open-source, cross-platform library designed to provide essential l
 - Robust security measures.
 - Open-source and community-driven.
 
-#### Initially, Klever OS offers support for the following blockchain networks:
+#### Initially, kos-rs offers support for the following blockchain networks:
 
-- Bitcoin (BTC)
-- Ethereum (ETH)
-- Tron (TRX)
-- Klever (KLV)
-- Polygon (Matic)
+[x] Bitcoin (BTC)
+[x] Ethereum (ETH)
+[x] Tron (TRX)
+[x] Klever (KLV)
+[x] Polygon (Matic)
 
 ## Getting Started with Javascript and Node.js
 
