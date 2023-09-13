@@ -25,6 +25,8 @@ To add kos-rs to your Rust project, simply include it as a dependency in your `C
 ```toml
 [dependencies]
 kos-rs = "0.1"
+```
+
 
 ## Project Directory Structure
 
