@@ -12,7 +12,7 @@ kos-rs is an open-source, cross-platform library designed to provide essential l
 - Robust security measures.
 - Open-source and community-driven.
 
-## Getting Started with Javascript
+## Getting Started with Javascript and Node.js
 
 ```sh
 npm i @klever/kos
