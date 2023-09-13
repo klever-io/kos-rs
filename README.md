@@ -12,7 +12,7 @@ kos-rs is an open-source, cross-platform library designed to provide essential l
 - Robust security measures.
 - Open-source and community-driven.
 
-#### Initially, kos-rs offers support for the following blockchain networks:
+#### Initially, kos-rs offers support for the following blockchain networks and its sub tokens:
 
 - [x] Bitcoin (BTC)
 - [x] Ethereum (ETH)
