@@ -14,11 +14,11 @@ kos-rs is an open-source, cross-platform library designed to provide essential l
 
 #### Initially, kos-rs offers support for the following blockchain networks:
 
-[x] Bitcoin (BTC)
-[x] Ethereum (ETH)
-[x] Tron (TRX)
-[x] Klever (KLV)
-[x] Polygon (Matic)
+- [x] Bitcoin (BTC)
+- [x] Ethereum (ETH)
+- [x] Tron (TRX)
+- [x] Klever (KLV)
+- [x] Polygon (Matic)
 
 ## Getting Started with Javascript and Node.js
 
