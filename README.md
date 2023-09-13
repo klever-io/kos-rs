@@ -12,7 +12,13 @@ kos-rs is an open-source, cross-platform library designed to provide essential l
 - Robust security measures.
 - Open-source and community-driven.
 
-## Getting Started
+## Getting Started with Javascript
+
+```sh
+npm i @klever/kos
+```
+
+## Getting Started with Rust
 
 Follow these instructions to get started with kos-rs in your Rust project.
 
