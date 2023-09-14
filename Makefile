@@ -35,3 +35,48 @@ webpack:
 
 webpack-npm:
 	wasm-pack build --scope klever --target bundler --release --out-name index --out-dir ../../demo/kos ./packages/kos
+
+ios: header
+	@cargo build --release --lib --target=aarch64-apple-ios
+	@cargo build --release --lib --target=aarch64-apple-ios-sim
+	@cargo build --release --lib --target=x86_64-apple-ios
+
+	@$(RM) -rf libs
+	@mkdir -p libs
+	
+	@cp target/aarch64-apple-ios/release/libkos.a libs/libkos-ios.a
+	
+	@lipo -create \
+		target/aarch64-apple-ios-sim/release/libkos.a \
+		target/x86_64-apple-ios/release/libkos.a \
+		-output libs/libkos-ios-sim.a
+
+macos:
+	@cargo build --release --lib --target aarch64-apple-darwin
+	@cargo build --release --lib --target x86_64-apple-darwin
+	@cargo +nightly build -Z build-std --release --lib --target aarch64-apple-ios-macabi
+	@cargo +nightly build -Z build-std --release --lib --target x86_64-apple-ios-macabi
+	
+	@$(RM) -rf libs/libkos-macos.a
+	@$(RM) -rf libs/libkos-maccatalyst.a
+	
+	@lipo -create -output libs/libkos-macos.a \
+					target/aarch64-apple-darwin/release/libkos.a \
+					target/x86_64-apple-darwin/release/libkos.a
+	
+	@lipo -create -output libs/libkos-maccatalyst.a \
+					target/aarch64-apple-ios-macabi/release/libkos.a \
+					target/x86_64-apple-ios-macabi/release/libkos.a
+		
+xc:
+	@xcodebuild -create-xcframework \
+	-library libs/libkos-ios-sim.a \
+	-headers ./include/ \
+	-library libs/libkos-ios.a \
+	-headers ./include/ \
+	-output Kos.xcframework
+
+
+header:
+	@mkdir -p include
+	@cbindgen $(shell pwd)/packages/kos-ios/src/lib.rs -l c > include/kos.h

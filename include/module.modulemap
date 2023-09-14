@@ -1,0 +1,4 @@
+module kos {
+  header "kos.h"
+  export *
+}

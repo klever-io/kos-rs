@@ -10,7 +10,7 @@ repository = { workspace = true }
 rust-version = { workspace = true }
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib", "rlib", "staticlib"]
 
 [features]
 # If you uncomment this line, it will enable `wee_alloc`:
@@ -44,4 +44,3 @@ features = ["console"]
 wasm-bindgen-test = "0.3"
 futures = "0.3"
 js-sys = "0.3.22"
-

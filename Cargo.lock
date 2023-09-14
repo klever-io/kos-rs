@@ -1438,6 +1438,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "kos-ios"
+version = "0.1.0"
+
+[[package]]
 name = "kos-proto"
 version = "0.1.0"
 dependencies = [
