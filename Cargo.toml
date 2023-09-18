@@ -7,6 +7,7 @@ members = [
     "packages/kos-crypto",
     "packages/kos-sdk",
     "packages/kos-ios",
+    "packages/kos-android",
 ]
 
 [profile.release]
@@ -69,3 +70,4 @@ kos-sdk = { version = "0.1.0", path = "./packages/kos-sdk", default-features = f
 kos-utils = { version = "0.1.0", path = "./packages/kos-utils", default-features = false }
 kos-proto = { version = "0.1.0", path = "./packages/kos-proto", default-features = false }
 kos-ios = { version = "0.1.0", path = "./packages/kos-ios", default-features = false }
+kos-android = { version = "0.1.0", path = "./packages/kos-android", default-features = false }

@@ -36,6 +36,12 @@ webpack:
 webpack-npm:
 	wasm-pack build --scope klever --target bundler --release --out-name index --out-dir ../../demo/kos ./packages/kos
 
+android:
+	cargo build --manifest-path packages/kos-android/Cargo.toml --target aarch64-linux-android --release
+	cargo build --manifest-path packages/kos-android/Cargo.toml --target i686-linux-android --release
+	cargo build --manifest-path packages/kos-android/Cargo.toml --target armv7-linux-androideabi --release
+	cargo build --manifest-path packages/kos-android/Cargo.toml --target x86_64-linux-android --release
+
 ios: header
 # rustup target add aarch64-apple-ios aarch64-apple-darwin x86_64-apple-ios x86_64-apple-darwin
 	@cargo build --manifest-path packages/kos-ios/Cargo.toml --release --lib --target aarch64-apple-ios

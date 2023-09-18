@@ -1,0 +1,35 @@
+[package]
+name = "kos-android"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = { workspace = true }
+wasm-bindgen = { workspace = true }
+console_error_panic_hook = "0.1"
+qrcode-generator = "4.1"
+hex = { workspace = true }
+
+# `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
+# compared to the default allocator's ~10K. However, it is slower than the default
+# allocator, so it's not enabled by default.
+
+kos-types = { workspace = true }
+kos-crypto = { workspace = true }
+kos-sdk = { workspace = true, features = ["serde"] }
+kos-utils = { workspace = true }
+jni = { version = "0.21.1", default-features = false }
+openssl-sys = "0.9.93"
+ring = "0.16.20"
+
+[lib]
+name = "kosandroid"
+crate-type = ["cdylib"]
+
