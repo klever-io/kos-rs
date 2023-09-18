@@ -6,6 +6,7 @@ members = [
     "packages/kos",
     "packages/kos-crypto",
     "packages/kos-sdk",
+    "packages/kos-ios",
 ]
 
 [profile.release]
@@ -28,10 +29,16 @@ base58 = "0.2.0"
 sha2 = { version = "0.10" }
 sha3 = { version = "0.10" }
 hmac = { version = "0.12" }
-secp256k1 = { version = "0.27", features = ["recovery", "rand", "bitcoin_hashes"] }
+secp256k1 = { version = "0.27", features = [
+    "recovery",
+    "rand",
+    "bitcoin_hashes",
+] }
 ed25519-dalek = { version = "2" }
 coins-bip32 = { version = "0.8", default-features = false }
-coins-bip39 = { version = "0.8", default-features = false, features = ["english"] }
+coins-bip39 = { version = "0.8", default-features = false, features = [
+    "english",
+] }
 bytes = { version = "1.4.0", default-features = false }
 elliptic-curve = { version = "0.13.4", default-features = false }
 hex = { version = "0.4.3", default-features = false }
@@ -44,7 +51,11 @@ pbjson = { version = "0.5", git = "https://github.com/klever-io/pbjson" }
 pbjson-types = { version = "0.5", git = "https://github.com/klever-io/pbjson" }
 pbjson-build = { version = "0.5", git = "https://github.com/klever-io/pbjson" }
 
-reqwest = { version = "0.11", default-features = false, feature = ["rustls-tls", "blocking", "json"] }
+reqwest = { version = "0.11", default-features = false, feature = [
+    "rustls-tls",
+    "blocking",
+    "json",
+] }
 wasm-bindgen = "0.2"
 enum_delegate = "0.2"
 serde = { version = "1.0", default-features = false }
@@ -57,3 +68,4 @@ kos-crypto = { version = "0.1.0", path = "./packages/kos-crypto", default-featur
 kos-sdk = { version = "0.1.0", path = "./packages/kos-sdk", default-features = false }
 kos-utils = { version = "0.1.0", path = "./packages/kos-utils", default-features = false }
 kos-proto = { version = "0.1.0", path = "./packages/kos-proto", default-features = false }
+kos-ios = { version = "0.1.0", path = "./packages/kos-ios", default-features = false }
