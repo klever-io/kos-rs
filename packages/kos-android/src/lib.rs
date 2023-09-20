@@ -1,18 +1,16 @@
-use kos_crypto::mnemonic::{generate_mnemonic as gm, validate_mnemonic as vm};
+use kos_crypto::mnemonic::generate_mnemonic as gm;
 use jni::objects::{JClass, JString};
-// use jni::sys::jstring;
+use jni::sys::jint;
 use jni::JNIEnv;
 
 use std::convert::TryFrom;
-use std::ffi::{CStr, CString};
-use std::os::raw::{c_char, c_uint};
 
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_example_kosrsintegration_NativeLibrary_generate_mnemonic<'local>(
+pub unsafe extern "C" fn Java_com_example_kosrsintegration_NativeLibrary_generateMnemonic<'local>(
     env: JNIEnv<'local>,
     _: JClass<'local>,
-    count: jni::sys::jint<'local>,
+    count: jint,
 ) -> JString<'local> {
     let u_count = usize::try_from(count).unwrap();
     let mnemonic = gm(u_count).unwrap().to_phrase();
