@@ -37,9 +37,20 @@ webpack-npm:
 	wasm-pack build --scope klever --target bundler --release --out-name index --out-dir ../../demo/kos ./packages/kos
 
 android:
-	cargo build --manifest-path packages/kos-android/Cargo.toml --target aarch64-linux-android --release
-	cargo build --manifest-path packages/kos-android/Cargo.toml --target i686-linux-android --release
-	cargo build --manifest-path packages/kos-android/Cargo.toml --target armv7-linux-androideabi --release
+	@set RUST_BACKTRACE=1
+
+# we need to setup:
+# android ndk path
+# ANDROID_NDK_HOME
+# export CC=""
+# export AR=""
+# install openssl and add headers to include folder LDFLAGS and CPPFLAGS
+# setup OPENSSL_DIR
+
+# cargo build --manifest-path packages/kos-android/Cargo.toml --target aarch64-linux-android --release
+	
+# cargo build --manifest-path packages/kos-android/Cargo.toml --target i686-linux-android --release
+# cargo build --manifest-path packages/kos-android/Cargo.toml --target armv7-linux-androideabi --release
 	cargo build --manifest-path packages/kos-android/Cargo.toml --target x86_64-linux-android --release
 
 ios: header
@@ -73,6 +84,7 @@ macos:
 					target/x86_64-apple-ios-macabi/release/libkos.a
 		
 xc:
+	@$(RM) -rf build/Kos.xcframework
 	@xcodebuild -create-xcframework \
 	-library build/libkos-ios-sim.a \
 	-headers ./build/include/ \

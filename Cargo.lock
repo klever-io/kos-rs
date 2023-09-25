@@ -1556,11 +1556,8 @@ dependencies = [
  "kos-crypto",
  "kos-sdk",
  "kos-types",
- "kos-utils",
  "log",
- "openssl-sys",
  "qrcode-generator",
- "ring",
  "wasm-bindgen",
 ]
 
@@ -1694,8 +1691,6 @@ dependencies = [
  "log",
  "postcard",
  "serde",
- "wasm-bindgen",
- "web-sys",
 ]
 
 [[package]]
