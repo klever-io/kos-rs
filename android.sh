@@ -39,6 +39,24 @@ check_file_exists()
   fi
 }
 
+check_openssl_exists()
+{
+  if command -v openssl >/dev/null; then
+    echo "openssl is installed"
+
+    if [ ! -d "$OPENSSL_DIR" ]; then
+      echo "OPENSSL_DIR env is not set. Please set OPENSSL_DIR to the correct path."
+      exit 1
+    fi
+
+    echo "OPENSSL_DIR env is set"
+
+  else
+    echo "openssl is not installed or is not in the PATH env"
+    exit 1
+  fi
+}
+
 build()
 {
   arch=$1
@@ -59,9 +77,10 @@ echo "Init android build"
 echo "Checking NDK_HOME"
 check_env $NDK_HOME
 check_file_exists $AR
+check_openssl_exists
 
 echo "Clean cargo"
-# cargo clean
+cargo clean
 rm -rf buid/android
 
 build aarch64-linux-android $1
