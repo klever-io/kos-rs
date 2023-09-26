@@ -15,7 +15,7 @@ crate-type = ["cdylib", "rlib"]
 kos-types = { workspace = true }
 
 log = { workspace = true, features = ["std"] }
-# wasm-bindgen = { workspace = true }
-# web-sys = { version="0.3", features=["console"] }
+wasm-bindgen = { workspace = true }
+web-sys = { version = "0.3", features = ["console"] }
 postcard = { version = "1.0.6", features = ["use-std"] }
 serde = { version = "1.0", features = ["derive"] }
