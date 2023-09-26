@@ -1691,6 +1691,8 @@ dependencies = [
  "log",
  "postcard",
  "serde",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

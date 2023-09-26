@@ -14,7 +14,7 @@ else
   exit 1
 fi
 
-export AR=$NDK_HOME/toolchains/llvm/prebuilt/$OS_NAME/bin/aarch64-linux-android-ar
+export AR=$NDK_HOME/toolchains/llvm/prebuilt/$OS_NAME/bin/llvm-ar
 
 check_env() 
 {
