@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-set -eux -o pipefail
+set -o pipefail
+set -e
 
 #  get os name with arch
 OS_NAME=$(uname -s);
@@ -41,6 +42,7 @@ check_file_exists()
 build()
 {
   arch=$1
+  flags=$2
   # if arch is eq armv7a-linux-androideabi
   # then set CC to armv7a-linux-androideabi30-clang
   if [ $arch = "armv7-linux-androideabi" ]; then
@@ -50,7 +52,7 @@ build()
   fi
 
   check_file_exists $CC
-  cargo build --manifest-path packages/kos-android/Cargo.toml --target $arch --release --verbose
+  cargo build --manifest-path packages/kos-android/Cargo.toml --target $arch --release $flags
 }
 
 echo "Init android build"
@@ -62,10 +64,10 @@ echo "Clean cargo"
 # cargo clean
 rm -rf buid/android
 
-# build aarch64-linux-android
-# build i686-linux-android
-# build armv7-linux-androideabi
-# build x86_64-linux-android
+build aarch64-linux-android $1
+build i686-linux-android $1
+build armv7-linux-androideabi $1
+build x86_64-linux-android $1
 
 mkdir -p build/android/aarch64-linux-android \
    build/android/i686-linux-android \
