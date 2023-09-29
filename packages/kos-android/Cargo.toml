@@ -26,7 +26,6 @@ kos-crypto = { workspace = true }
 kos-sdk = { workspace = true, features = ["serde"] }
 # kos-utils = { workspace = true }
 
-[target.'cfg(target_os="android")'.dependencies]
 jni = { version = "0.21.1", default-features = false }
 
 [lib]
