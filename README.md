@@ -68,10 +68,10 @@ Klever is on a quest for adept Rust developers to revamp its Rust-powered crypto
 
 Bounty winners will be compensated with $KFI tokens. Here's the reward distribution:
 
-- [x] Web (Rust SDK binding): 10,000 KFI
-- [x] React Native (Rust SDK binding): 10,000 KFI
-- [ ] Kotlin (Rust SDK binding): 10,000 KFI
-- [ ] Swift (Rust SDK binding): 10,000 KFI
+- [x] Web Wasm: 10,000 KFI 
+- [x] React Native Wasm): 10,000 KFI
+- [ ] Kotlin Rust SDK binding: 10,000 KFI (First PR Approved only)
+- [ ] Swift Rust SDK binding: 10,000 KFI (First PR Approved only)
 - [ ] Code Review PR Approval: 100 KFI
 
 ## Key Milestones
