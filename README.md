@@ -1,6 +1,6 @@
-# KleverOS Library for Rust (kos-rs)
+# Klever OS Library for Rust (kos-rs)
 
-kos-rs is an open-source, cross-platform library designed to provide essential low-level functionality for blockchain wallet operations and transactions. Developed in Rust, it offers robust security and platform flexibility, making it an excellent choice for building secure and efficient blockchain applications.
+Klever kos-rs is an open-source library crafted to deliver fundamental low-level crypto-wallet capabilities for blockchain actions and transactions. Built with Rust, it ensures top-tier security and versatile platform adaptability, positioning it as a premier choice for constructing secure and high-performing blockchain solutions.
 
 #### KleverOS, which stands for Klever Wallet Ops Security, is a robust library meticulously crafted in Rust to guarantee the utmost security in private key generation while ensuring unparalleled auditability.
 
