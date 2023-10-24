@@ -14,11 +14,11 @@ kos-rs is an open-source, cross-platform library designed to provide essential l
 
 #### Initially, kos-rs offers support for the following blockchain networks and its sub tokens:
 
-[x] Bitcoin (BTC)
-[x] Ethereum (ETH)
-[x] Tron (TRX)
-[x] Klever (KLV)
-[x] Polygon (Matic)
+- [x] Bitcoin (BTC)
+- [x] Ethereum (ETH)
+- [x] Tron (TRX)
+- [x] Klever (KLV)
+- [x] Polygon (Matic)
 
 ## Getting Started with Javascript and Node.js
 
@@ -68,11 +68,11 @@ Klever is on a quest for adept Rust developers to revamp its Rust-powered crypto
 
 Bounty winners will be compensated with $KFI tokens. Here's the reward distribution:
 
-[x] Web (Rust SDK binding): 10,000 KFI
-[x] React Native (Rust SDK binding): 10,000 KFI
-[ ] Kotlin (Rust SDK binding): 10,000 KFI
-[ ] Swift (Rust SDK binding): 10,000 KFI
-[ ] Code Review PR Approval: 100 KFI
+- [x] Web (Rust SDK binding): 10,000 KFI
+- [x] React Native (Rust SDK binding): 10,000 KFI
+- [ ] Kotlin (Rust SDK binding): 10,000 KFI
+- [ ] Swift (Rust SDK binding): 10,000 KFI
+- [ ] Code Review PR Approval: 100 KFI
 
 ## Key Milestones
 
