@@ -58,13 +58,13 @@ kos-rs = "0.1"
 - `packages/kos-types/`: Package containing complex data types and helpful utilities.
 - `packages/kos-utils/`: Package with utility libraries for various purposes.
 
-# Klever Bounty Program (kos-rs)
+---
 
-## Overview
+# Klever Bounty Program (kos-rs)
 
 Klever is on a quest for adept Rust developers to revamp its Rust-powered crypto wallet SDK, initially designed for WebAssembly (Wasm). The aim is to expand its compatibility for Kotlin (Android) and Swift (iOS) platforms. The ultimate objective is to streamline this transition, minimizing the manual coding interventions.
 
-## Reward Distribution
+## Rewards Distribution
 
 Bounty winners will be compensated with $KFI tokens. Here's the reward distribution:
 
@@ -121,5 +121,3 @@ Bounty winners will be compensated with $KFI tokens. Here's the reward distribut
 ### Final Words
 
 We're eager to witness the pioneering solutions our community will present. Accomplishing this bounty's objectives will immensely boost our SDK's adaptability and appeal, enriching both developers and end-users.
-
-
