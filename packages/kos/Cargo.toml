@@ -37,11 +37,11 @@ kos-utils = { workspace = true }
 # The `web-sys` crate allows you to interact with the various browser APIs,
 # like the DOM.
 [dependencies.web-sys]
-version = "0.3.22"
+version = "0.3.66"
 features = ["console"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
 futures = "0.3"
-js-sys = "0.3.22"
+js-sys = "0.3.66"
 
