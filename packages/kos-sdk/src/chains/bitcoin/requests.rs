@@ -142,7 +142,7 @@ mod tests {
         let amount = BigNumber::from_string("20000000").unwrap();
         let list = tokio_test::block_on(select_utxos(
             node,
-            "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo",
+            "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S",
             &amount,
             0,
             0,
@@ -182,7 +182,7 @@ mod tests {
 
         // get all utxos
         let list = tokio_test::block_on(fetch_utxos(
-            "https://bitcoin.blockbook.chains.klever.io",
+            "https://btc1.trezor.io",
             "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo",
             0,
         ))

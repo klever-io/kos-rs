@@ -413,7 +413,7 @@ mod tests {
     #[test]
     fn test_get_balance() {
         let balance = tokio_test::block_on(BTC::get_balance(
-            "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo",
+            "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S",
             None,
             None,
         ))
