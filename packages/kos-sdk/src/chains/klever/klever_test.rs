@@ -8,6 +8,9 @@ mod tests {
     use hex::FromHex;
     use kos_types::Bytes32;
 
+    const DEFAULT_KAPP_FEE: i64 = 1000000;
+    const DEFAULT_BANDWIDTH_FEE: i64 = 2000000;
+
     const DEFAULT_PRIVATE_KEY: &str =
         "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d";
     const DEFAULT_ADDRESS: &str = "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy";
@@ -55,7 +58,7 @@ mod tests {
         assert!(result
             .unwrap_err()
             .to_string()
-            .contains("lowerNonceInTx: true"))
+            .contains("invalid transaction fees"))
     }
 
     #[test]
@@ -73,8 +76,8 @@ mod tests {
             Some(TransactionRaw::Klever(tx)) => {
                 let raw = &tx.raw_data.unwrap();
                 assert!(raw.nonce > 0);
-                assert_eq!(raw.k_app_fee, 500000);
-                assert_eq!(raw.bandwidth_fee, 1000000);
+                assert_eq!(raw.k_app_fee, DEFAULT_KAPP_FEE);
+                assert_eq!(raw.bandwidth_fee, DEFAULT_BANDWIDTH_FEE);
                 assert!(raw.kda_fee.is_none());
 
                 assert_eq!(raw.contract.len(), 1);
@@ -113,8 +116,8 @@ mod tests {
             Some(TransactionRaw::Klever(tx)) => {
                 let raw = &tx.raw_data.unwrap();
                 assert!(raw.nonce > 0);
-                assert_eq!(raw.k_app_fee, 500000);
-                assert_eq!(raw.bandwidth_fee, 1000000);
+                assert_eq!(raw.k_app_fee, DEFAULT_KAPP_FEE);
+                assert_eq!(raw.bandwidth_fee, DEFAULT_BANDWIDTH_FEE);
                 assert!(raw.kda_fee.is_none());
 
                 assert_eq!(raw.contract.len(), 1);
@@ -189,8 +192,8 @@ mod tests {
                 let raw = &klv_tx.raw_data.unwrap();
                 assert_eq!(raw.nonce, 39);
                 assert_eq!(raw.contract.len(), 1);
-                assert_eq!(raw.bandwidth_fee, 1000000);
                 assert_eq!(raw.k_app_fee, 500000);
+                assert_eq!(raw.bandwidth_fee, 1000000);
 
                 let c: kos_proto::klever::TransferContract =
                     kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)

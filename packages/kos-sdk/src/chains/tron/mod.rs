@@ -341,7 +341,7 @@ mod tests {
     #[test]
     fn test_get_balance() {
         let balance = tokio_test::block_on(TRX::get_balance(
-            "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH",
+            "TWd4WrZ9wn84f5x1hZhL4DHvk738ns5jwb",
             Some("TRX".to_string()),
             None,
         ))
