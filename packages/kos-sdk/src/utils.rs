@@ -84,5 +84,5 @@ pub fn basic_auth(client: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
         return client.basic_auth(user, pass);
     }
 
-    return client;
+    client
 }

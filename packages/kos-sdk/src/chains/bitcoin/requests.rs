@@ -10,7 +10,7 @@ pub async fn fetch_utxos(
     confirmations: u64,
 ) -> Result<Vec<UTXO>, Error> {
     let url = format!("{}/api/v2/utxo/{}", node_url, address);
-    let mut list: Vec<UTXO> = utils::http_get::<Vec<UTXO>>(url)
+    let mut list: Vec<UTXO> = utils::http_get_auth::<Vec<UTXO>>(url)
         .await?
         .into_iter()
         .filter(|utxo| utxo.confirmations >= confirmations)
@@ -110,7 +110,7 @@ pub async fn broadcast(node_url: &str, hex_tx: &str) -> Result<String, Error> {
     let url = format!("{}/api/v2/sendtx/", node_url);
     let data = hex_tx.as_bytes().to_vec();
 
-    let result = utils::http_post::<serde_json::Value>(url, &data).await;
+    let result = utils::http_post_auth::<serde_json::Value>(url, &data).await;
 
     let result = result?;
 
@@ -170,7 +170,7 @@ mod tests {
 
         let selected = tokio_test::block_on(select_utxos(
             node,
-            "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo",
+            "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S",
             &BigNumber::from(0),
             0,
             0,
@@ -182,8 +182,8 @@ mod tests {
 
         // get all utxos
         let list = tokio_test::block_on(fetch_utxos(
-            "https://btc1.trezor.io",
-            "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo",
+            "https://bitcoin.explorer.klever.io",
+            "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S",
             0,
         ))
         .unwrap();
