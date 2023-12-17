@@ -27,6 +27,7 @@ pub fn get_client() -> Result<reqwest::Client, Error> {
         .map_err(|e| Error::ReqwestError(e.to_string()))
 }
 
+/// HTTP GET request
 pub async fn http_get<T: DeserializeOwned>(url: String) -> Result<T, Error> {
     let client = get_client()?;
 
@@ -34,6 +35,15 @@ pub async fn http_get<T: DeserializeOwned>(url: String) -> Result<T, Error> {
     body.json::<T>().await.map_err(Error::from)
 }
 
+/// HTTP GET request with basic auth
+pub async fn http_get_auth<T: DeserializeOwned>(url: String) -> Result<T, Error> {
+    let client = get_client()?;
+
+    let body = basic_auth(client.get(url)).send().await?;
+    body.json::<T>().await.map_err(Error::from)
+}
+
+/// HTTP POST request
 pub async fn http_post<T: DeserializeOwned>(url: String, data: &[u8]) -> Result<T, Error> {
     let client = get_client()?;
 
@@ -49,6 +59,30 @@ pub async fn http_post<T: DeserializeOwned>(url: String, data: &[u8]) -> Result<
         .map_err(Error::from)
 }
 
+/// HTTP POST request with basic auth
+pub async fn http_post_auth<T: DeserializeOwned>(url: String, data: &[u8]) -> Result<T, Error> {
+    let client = get_client()?;
+
+    basic_auth(client.post(url))
+        .header("Content-Type", "application/json")
+        .body(data.to_vec())
+        .send()
+        .await
+        .map_err(Error::from)?
+        .json::<T>()
+        .await
+        .map_err(Error::from)
+}
+
 pub fn get_node_url(name: &str) -> String {
     std::env::var(format!("NODE_{}", name)).unwrap_or("".to_string())
+}
+
+pub fn basic_auth(client: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+    if let Ok(user) = std::env::var("KOS_API_USER") {
+        let pass: Option<String> = std::env::var("KOS_API_PASS").ok();
+        return client.basic_auth(user, pass);
+    }
+
+    return client;
 }
