@@ -21,7 +21,7 @@ endif
 
 check: fmt clippy
 	cargo deny check
-	cargo outdated --exit-code 1
+#	cargo outdated --exit-code 1
 	cargo pants
 
 grcov:

@@ -232,6 +232,7 @@ pub struct UTXO {
     pub txid: String,
     pub vout: u32,
     pub value: String,
+    #[serde(default)]
     pub height: u64,
     pub confirmations: u64,
 }

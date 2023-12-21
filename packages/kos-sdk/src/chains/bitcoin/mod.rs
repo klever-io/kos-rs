@@ -78,7 +78,7 @@ impl BTC {
         let mut pk_slice = [0u8; 32];
         pk_slice.copy_from_slice(private_key);
 
-        let kp = Secp256k1KeyPair::new(pk_slice);
+        let kp = Secp256k1KeyPair::new(pk_slice).set_compressed(true);
         Ok(KeyPair::new_secp256k1(kp))
     }
 
@@ -382,6 +382,16 @@ mod tests {
     }
 
     #[test]
+    fn test_address_from_private_key_bytes() {
+        // convert hex to [u8]
+        let pk_bytes = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
+        let kp = BTC::keypair_from_bytes(pk_bytes.as_ref()).unwrap();
+        let address = BTC::get_address_from_keypair(&kp).unwrap();
+
+        assert_eq!(DEFAULT_ADDRESS, address);
+    }
+
+    #[test]
     fn test_validate_bip44() {
         let v = vec![
             (0, "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"),
@@ -403,7 +413,7 @@ mod tests {
     #[test]
     fn test_get_balance() {
         let balance = tokio_test::block_on(BTC::get_balance(
-            "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo",
+            "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S",
             None,
             None,
         ))
