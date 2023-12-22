@@ -79,9 +79,13 @@ impl TRX {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(index: u32) -> Result<String, Error> {
-        // use account 0 index X
-        Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index))
+    pub fn get_path(index: u32, is_legacy: Option<bool>) -> Result<String, Error> {
+        if let Some(legacy) = is_legacy {
+            Ok(format!("m/44'/{}'/{}'", BIP44_PATH, index))
+        } else {
+            // use account 0 index X
+            Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index))
+        }
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
@@ -324,7 +328,7 @@ mod tests {
 
     #[test]
     fn test_address_from_mnemonic() {
-        let path = TRX::get_path(0).unwrap();
+        let path = TRX::get_path(0, None).unwrap();
         let kp = TRX::keypair_from_mnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", &path, None).unwrap();
         let address = TRX::get_address_from_keypair(&kp).unwrap();
 
@@ -389,7 +393,7 @@ mod tests {
         ];
 
         for (index, expected_addr) in v {
-            let path = TRX::get_path(index).unwrap();
+            let path = TRX::get_path(index, None).unwrap();
             let kp = TRX::keypair_from_mnemonic(default_mnemonic, &path, None).unwrap();
             let addr = TRX::get_address_from_keypair(&kp).unwrap();
 

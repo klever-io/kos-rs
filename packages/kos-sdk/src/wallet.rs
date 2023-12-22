@@ -227,7 +227,7 @@ impl Wallet {
         index: u32,
         password: Option<String>,
     ) -> Result<Wallet, Error> {
-        let path = chain.get_path(index)?;
+        let path = chain.get_path(index, None)?;
         let mut wallet = Wallet::from_mnemonic(chain, mnemonic, path, password)?;
         wallet.index = Some(index);
 
@@ -474,7 +474,7 @@ mod tests {
         let mut w1 = Wallet::from_mnemonic(
             Chain::KLV,
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-        Chain::KLV.get_path(0).unwrap(),
+        Chain::KLV.get_path(0, None).unwrap(),
             None,
         ).unwrap();
 
@@ -501,7 +501,7 @@ mod tests {
         let mut w1 = Wallet::from_mnemonic(
             Chain::KLV,
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-        Chain::KLV.get_path(0).unwrap(),
+        Chain::KLV.get_path(0, None).unwrap(),
             None,
         ).unwrap();
 
@@ -576,7 +576,7 @@ qeVTAAAA
         let w1 = Wallet::from_mnemonic(
             Chain::KLV,
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-        Chain::KLV.get_path(0).unwrap(),
+        Chain::KLV.get_path(0, None).unwrap(),
             None,
         ).unwrap();
 

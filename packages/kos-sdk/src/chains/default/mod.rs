@@ -48,7 +48,7 @@ impl NONE {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(_index: u32) -> Result<String, Error> {
+    pub fn get_path(_index: u32, _is_legacy: Option<bool> ) -> Result<String, Error> {
         Err(Error::UnsupportedChain("NONE"))
     }
 

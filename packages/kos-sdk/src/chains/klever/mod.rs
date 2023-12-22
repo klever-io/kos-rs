@@ -69,7 +69,7 @@ impl KLV {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(index: u32) -> Result<String, Error> {
+    pub fn get_path(index: u32, is_legacy: Option<bool>) -> Result<String, Error> {
         Ok(format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, index))
     }
 

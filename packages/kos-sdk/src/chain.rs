@@ -48,9 +48,9 @@ macro_rules! createChains {
                 }
             }
 
-            pub fn get_path(&self, index: u32) -> Result<String, Error> {
+            pub fn get_path(&self, index: u32, is_legacy: Option<bool>) -> Result<String, Error> {
                 match self {
-                    $(Chain::$name => $name::get_path(index),)*
+                    $(Chain::$name => $name::get_path(index, is_legacy),)*
                 }
             }
 
