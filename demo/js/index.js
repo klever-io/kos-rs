@@ -32,11 +32,14 @@ async function deriveAccounts(){
       {chain: kos.Chain.TRX, model: kos.TRX},
       {chain: kos.Chain.KLV, model: kos.KLV},
     ].forEach((d) => {
+      // get path options
+      const pathOptions = kos.PathOptions.new(0);
+
       // create new wallet from mnemonic
       let w1 = kos.Wallet.fromMnemonic(
         d.chain,
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
-        d.model.getPath(0),
+        d.model.getPath(pathOptions),
       );
       debugWallet("mnemonic", w1);
 
@@ -78,10 +81,12 @@ window.onload = function(){
 
 async function sendKLV(address, to, amount, token = "KLV") {
     const kos = window.kos;
+    const pathOptions = kos.PathOptions.new(0);
+
     let klvWallet = kos.Wallet.fromMnemonic(
       kos.Chain.KLV,
       "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
-      kos.KLV.getPath(0),
+      kos.KLV.getPath(pathOptions),
     );
 
     klvWallet.setNodeUrl(NODE);
