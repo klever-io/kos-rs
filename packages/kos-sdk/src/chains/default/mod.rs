@@ -1,5 +1,5 @@
 use crate::chain::BaseChain;
-use crate::models::{self, BroadcastResult, Transaction};
+use crate::models::{self, BroadcastResult, Transaction, PathOptions};
 use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
 use kos_types::number::BigNumber;
@@ -48,7 +48,7 @@ impl NONE {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(_index: u32, _is_legacy: Option<bool> ) -> Result<String, Error> {
+    pub fn get_path(_options: &PathOptions) -> Result<String, Error> {
         Err(Error::UnsupportedChain("NONE"))
     }
 

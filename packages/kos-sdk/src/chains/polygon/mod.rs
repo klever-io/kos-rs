@@ -2,6 +2,7 @@ use super::ETHTransaction;
 use super::ETH;
 
 use crate::chain::{BaseChain, Chain};
+use crate::models::PathOptions;
 use crate::models::{self, BroadcastResult, TransactionRaw};
 
 use kos_crypto::keypair::KeyPair;
@@ -93,8 +94,8 @@ impl MATIC {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(index: u32, is_legacy: Option<bool>) -> Result<String, Error> {
-        ETH::get_path(index, is_legacy)
+    pub fn get_path(options: &PathOptions) -> Result<String, Error> {
+        ETH::get_path(options)
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
@@ -237,7 +238,7 @@ mod tests {
         ];
 
         for (index, expected_addr) in v {
-            let path = MATIC::get_path(index, None).unwrap();
+            let path = MATIC::get_path(&PathOptions::new(index)).unwrap();
             let kp = MATIC::keypair_from_mnemonic(DEFAULT_MNEMONIC, &path, None).unwrap();
             let addr = MATIC::get_address_from_keypair(&kp).unwrap();
 

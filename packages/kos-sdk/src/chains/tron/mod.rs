@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use crate::{
     chain::{self, BaseChain},
-    models::{BroadcastResult, Transaction, TransactionRaw},
+    models::{BroadcastResult, Transaction, TransactionRaw, PathOptions},
 };
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
 use kos_types::error::Error;
@@ -79,8 +79,12 @@ impl TRX {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(index: u32, is_legacy: Option<bool>) -> Result<String, Error> {
-        if let Some(legacy) = is_legacy {
+    pub fn get_path(options: &PathOptions) -> Result<String, Error> {
+        let index = options.index;
+
+        let is_legacy = options.is_legacy.unwrap_or(false);
+
+        if is_legacy {
             Ok(format!("m/44'/{}'/{}'", BIP44_PATH, index))
         } else {
             // use account 0 index X
@@ -328,7 +332,7 @@ mod tests {
 
     #[test]
     fn test_address_from_mnemonic() {
-        let path = TRX::get_path(0, None).unwrap();
+        let path = TRX::get_path(&PathOptions::new(0)).unwrap();
         let kp = TRX::keypair_from_mnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", &path, None).unwrap();
         let address = TRX::get_address_from_keypair(&kp).unwrap();
 
@@ -393,7 +397,7 @@ mod tests {
         ];
 
         for (index, expected_addr) in v {
-            let path = TRX::get_path(index, None).unwrap();
+            let path = TRX::get_path(&PathOptions::new(index)).unwrap();
             let kp = TRX::keypair_from_mnemonic(default_mnemonic, &path, None).unwrap();
             let addr = TRX::get_address_from_keypair(&kp).unwrap();
 

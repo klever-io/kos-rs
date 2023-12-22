@@ -69,8 +69,8 @@ impl KLV {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(index: u32, is_legacy: Option<bool>) -> Result<String, Error> {
-        Ok(format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, index))
+    pub fn get_path(options: &crate::models::PathOptions) -> Result<String, Error> {
+        Ok(format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, options.index))
     }
 
     #[wasm_bindgen(js_name = "signDigest")]

@@ -2,7 +2,7 @@ mod requests;
 pub mod transaction;
 
 use crate::chain::{BaseChain, Chain};
-use crate::models::{self, BroadcastResult, Transaction, TransactionRaw};
+use crate::models::{self, BroadcastResult, Transaction, TransactionRaw, PathOptions};
 
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
 use kos_proto::options::BTCOptions;
@@ -105,8 +105,8 @@ impl BTC {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(index: u32, is_legacy: Option<bool>) -> Result<String, Error> {
-        Ok(format!("m/84'/{}'/0'/0/{}", BIP44_PATH, index))
+    pub fn get_path(options: &PathOptions) -> Result<String, Error> {
+        Ok(format!("m/84'/{}'/0'/0/{}", BIP44_PATH, options.index))
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
@@ -402,7 +402,7 @@ mod tests {
         ];
 
         for (index, expected_addr) in v {
-            let path = BTC::get_path(index, None).unwrap();
+            let path = BTC::get_path(&PathOptions::new(index)).unwrap();
             let kp = BTC::keypair_from_mnemonic(DEFAULT_MNEMONIC, &path, None).unwrap();
             let addr = BTC::get_address_from_keypair(&kp).unwrap();
 
