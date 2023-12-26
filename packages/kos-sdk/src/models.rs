@@ -56,13 +56,11 @@ impl PathOptions {
     pub fn set_index(&mut self, index: u32) {
         self.index = index;
     }
-    
     #[wasm_bindgen(js_name = setLegacy)]
     pub fn set_legacy(&mut self, is_legacy: bool) {
         self.is_legacy = Some(is_legacy);
     }
 }
-
 
 // create enum variant list of transaction types supported
 kos_types::enum_thing! {

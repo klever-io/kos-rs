@@ -4,7 +4,7 @@ pub mod request;
 pub mod transaction;
 
 use crate::chain::{self, BaseChain};
-use crate::models::{self, BroadcastResult, Transaction, TransactionRaw, PathOptions};
+use crate::models::{self, BroadcastResult, PathOptions, Transaction, TransactionRaw};
 
 use kos_crypto::keypair::KeyPair;
 use kos_crypto::secp256k1::Secp256k1KeyPair;

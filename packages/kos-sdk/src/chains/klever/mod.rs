@@ -3,7 +3,7 @@ pub mod models;
 pub mod requests;
 use crate::{
     chain::BaseChain,
-    models::{AddressOptions, BroadcastResult, Transaction, TransactionRaw},
+    models::{AddressOptions, BroadcastResult, PathOptions, Transaction, TransactionRaw},
 };
 use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
 use kos_types::{error::Error, hash::Hash, number::BigNumber};
@@ -69,7 +69,7 @@ impl KLV {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(options: &crate::models::PathOptions) -> Result<String, Error> {
+    pub fn get_path(options: &PathOptions) -> Result<String, Error> {
         Ok(format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, options.index))
     }
 

@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use crate::{
     chain::{self, BaseChain},
-    models::{BroadcastResult, Transaction, TransactionRaw, PathOptions},
+    models::{BroadcastResult, PathOptions, Transaction, TransactionRaw},
 };
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
 use kos_types::error::Error;

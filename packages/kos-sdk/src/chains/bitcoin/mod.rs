@@ -2,7 +2,7 @@ mod requests;
 pub mod transaction;
 
 use crate::chain::{BaseChain, Chain};
-use crate::models::{self, BroadcastResult, Transaction, TransactionRaw, PathOptions};
+use crate::models::{self, BroadcastResult, PathOptions, Transaction, TransactionRaw};
 
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
 use kos_proto::options::BTCOptions;

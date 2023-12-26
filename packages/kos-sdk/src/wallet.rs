@@ -1,6 +1,6 @@
 use crate::{
     chain::{BaseChain, Chain},
-    models::{self, BroadcastResult, Transaction, PathOptions},
+    models::{self, BroadcastResult, PathOptions, Transaction},
 };
 
 use kos_crypto::keypair::KeyPair;

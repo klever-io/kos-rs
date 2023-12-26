@@ -1,4 +1,4 @@
-use crate::{wallet::Wallet, models::PathOptions};
+use crate::{models::PathOptions, wallet::Wallet};
 use kos_types::error::Error;
 use kos_utils::{pack, unpack};
 
