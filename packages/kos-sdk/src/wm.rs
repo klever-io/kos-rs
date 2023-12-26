@@ -1,4 +1,4 @@
-use crate::wallet::Wallet;
+use crate::{models::PathOptions, wallet::Wallet};
 use kos_types::error::Error;
 use kos_utils::{pack, unpack};
 
@@ -249,7 +249,7 @@ impl WalletManager {
         let mut wallet = Wallet::from_mnemonic_index(
             chain,
             self.get_mnemonic(password.to_owned())?,
-            index,
+            &PathOptions::new(index),
             None,
         )?;
 

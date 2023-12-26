@@ -4,6 +4,7 @@ mod tests {
     use std::str;
 
     use crate::chains::klever::*;
+    use crate::models::PathOptions;
     use crate::models::SendOptions;
     use hex::FromHex;
     use kos_types::Bytes32;
@@ -134,7 +135,7 @@ mod tests {
 
     #[test]
     fn test_address_from_mnemonic() {
-        let path = KLV::get_path(0).unwrap();
+        let path = KLV::get_path(&PathOptions::new(0)).unwrap();
         let kp = KLV::keypair_from_mnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", &path, None).unwrap();
         let address = KLV::get_address_from_keypair(&kp).unwrap();
 

@@ -4,7 +4,7 @@ pub mod request;
 pub mod transaction;
 
 use crate::chain::{self, BaseChain};
-use crate::models::{self, BroadcastResult, Transaction, TransactionRaw};
+use crate::models::{self, BroadcastResult, PathOptions, Transaction, TransactionRaw};
 
 use kos_crypto::keypair::KeyPair;
 use kos_crypto::secp256k1::Secp256k1KeyPair;
@@ -87,8 +87,8 @@ impl ETH {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(index: u32) -> Result<String, Error> {
-        Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index))
+    pub fn get_path(options: &PathOptions) -> Result<String, Error> {
+        Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, options.index))
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
@@ -465,7 +465,7 @@ mod tests {
         ];
 
         for (index, expected_addr) in v {
-            let path = ETH::get_path(index).unwrap();
+            let path = ETH::get_path(&PathOptions::new(index)).unwrap();
             let kp = ETH::keypair_from_mnemonic(DEFAULT_MNEMONIC, &path, None).unwrap();
             let addr = ETH::get_address_from_keypair(&kp).unwrap();
 

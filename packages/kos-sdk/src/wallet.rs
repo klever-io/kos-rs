@@ -1,6 +1,6 @@
 use crate::{
     chain::{BaseChain, Chain},
-    models::{self, BroadcastResult, Transaction},
+    models::{self, BroadcastResult, PathOptions, Transaction},
 };
 
 use kos_crypto::keypair::KeyPair;
@@ -224,12 +224,12 @@ impl Wallet {
     pub fn from_mnemonic_index(
         chain: Chain,
         mnemonic: String,
-        index: u32,
+        path_options: &PathOptions,
         password: Option<String>,
     ) -> Result<Wallet, Error> {
-        let path = chain.get_path(index)?;
+        let path = chain.get_path(path_options)?;
         let mut wallet = Wallet::from_mnemonic(chain, mnemonic, path, password)?;
-        wallet.index = Some(index);
+        wallet.index = Some(path_options.index);
 
         Ok(wallet)
     }
@@ -474,7 +474,7 @@ mod tests {
         let mut w1 = Wallet::from_mnemonic(
             Chain::KLV,
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-        Chain::KLV.get_path(0).unwrap(),
+        Chain::KLV.get_path(&PathOptions::new(0)).unwrap(),
             None,
         ).unwrap();
 
@@ -501,7 +501,7 @@ mod tests {
         let mut w1 = Wallet::from_mnemonic(
             Chain::KLV,
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-        Chain::KLV.get_path(0).unwrap(),
+        Chain::KLV.get_path(&PathOptions::new(0)).unwrap(),
             None,
         ).unwrap();
 
@@ -576,7 +576,7 @@ qeVTAAAA
         let w1 = Wallet::from_mnemonic(
             Chain::KLV,
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-        Chain::KLV.get_path(0).unwrap(),
+        Chain::KLV.get_path(&PathOptions::new(0)).unwrap(),
             None,
         ).unwrap();
 
@@ -589,7 +589,7 @@ qeVTAAAA
         let w1 = Wallet::from_mnemonic_index(
             Chain::KLV,
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-        10,
+        &PathOptions::new(10),
             None,
         ).unwrap();
         let result = w1.get_index();
