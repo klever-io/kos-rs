@@ -66,6 +66,15 @@ pub async fn create_asset_transfer(
     create_transaction(url, contract).await
 }
 
+pub async fn create_trigger_contract(
+    node_url: &str,
+    contract: kos_proto::tron::TriggerSmartContract,
+) -> Result<kos_proto::tron::Transaction, Error> {
+    let url = format!("{}/wallet/triggersmartcontract", node_url);
+
+    create_transaction(url, contract).await
+}
+
 async fn create_transaction(
     url: String,
     contract: impl serde::Serialize,
