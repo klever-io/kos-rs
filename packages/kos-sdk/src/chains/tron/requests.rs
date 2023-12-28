@@ -104,6 +104,12 @@ fn unpack_result(value: serde_json::Value) -> Result<String, Error> {
         return Ok(v.to_string());
     }
 
+    if let Some(transaction) = value.get("transaction") {
+        if let Some(v) = transaction.get("raw_data_hex").and_then(|v| v.as_str()) {
+            return Ok(v.to_string());
+        }
+    }
+
     match value.get("Error") {
         Some(err) => Err(Error::ReqwestError(err.to_string())),
         None => Err(Error::ReqwestError("Unknown error".to_string())),

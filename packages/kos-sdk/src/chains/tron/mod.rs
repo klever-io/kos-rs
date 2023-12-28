@@ -224,29 +224,30 @@ impl TRX {
                     })?;
 
                     let to_address = *ETHAddress::from_bytes(addr_receiver.as_tvm_bytes());
-
+                    
                     let encoded = func
-                        .encode_input(&[
-                            ethabi::Token::Address(to_address.into()),    
-                            ethabi::Token::Uint(
-                                U256::from_dec_str(&amount.to_string())
-                                    .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
-                            ),
+                    .encode_input(&[
+                        ethabi::Token::Address(to_address.into()),    
+                        ethabi::Token::Uint(
+                            U256::from_dec_str(&amount.to_string())
+                            .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+                        ),
                         ])
                         .map_err(|e| Error::InvalidTransaction(e.to_string()))?;
+                    
+                    let contract_address = address::Address::from_str(&token)?;
 
 
                     let contract = kos_proto::tron::TriggerSmartContract {
                         owner_address: addr_sender.as_bytes().to_vec(),
-                        contract_address: token.as_bytes().to_vec(),
+                        contract_address: contract_address.as_bytes().to_vec(),
                         data: encoded,
                         call_token_value: 0,
                         call_value: 0,
-                        token_id: 0,
-
+                        token_id: 0,    
                     };
     
-                    requests::create_trigger_contract(&node, contract).await?
+                    requests::create_trigger_contract(&node, contract).await.unwrap()
                 } else {
 
                     let contract = kos_proto::tron::TransferAssetContract {
@@ -354,6 +355,8 @@ impl TRX {
 mod tests {
     use std::assert_eq;
 
+    use crate::models::SendOptions;
+
     use super::*;
     use hex::FromHex;
     use kos_types::Bytes32;
@@ -421,6 +424,27 @@ mod tests {
             }
             _ => assert!(false),
         }
+    }
+
+    #[test]
+    fn test_send_trc20() {
+        // create TRX send options
+        let trx_options = kos_proto::options::TRXOptions {
+            token: Some("TKk6DLX1xWRKHjDhHfdyQKefnP1WUppEXB".to_string()),
+            ..Default::default()
+        };
+
+        let options = SendOptions::new_tron_send_options(trx_options);
+
+        let result = tokio_test::block_on(TRX::send(
+            "TCwwZeH6so1X4R5kcdbKqa4GWuzF53xPqG".to_string(),
+            DEFAULT_ADDRESS.to_string(),
+            BigNumber::from(1000000),
+            Some(options),
+            Some("https://api.trongrid.io".to_string()),
+        ));
+
+        assert!(result.is_ok());
     }
 
     #[test]
