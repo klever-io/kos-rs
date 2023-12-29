@@ -224,19 +224,16 @@ impl TRX {
                     })?;
 
                     let to_address = *ETHAddress::from_bytes(addr_receiver.as_tvm_bytes());
-                    
                     let encoded = func
-                    .encode_input(&[
-                        ethabi::Token::Address(to_address.into()),    
-                        ethabi::Token::Uint(
-                            U256::from_dec_str(&amount.to_string())
-                            .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
-                        ),
+                        .encode_input(&[
+                            ethabi::Token::Address(to_address.into()),
+                            ethabi::Token::Uint(
+                                U256::from_dec_str(&amount.to_string())
+                                    .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+                            ),
                         ])
                         .map_err(|e| Error::InvalidTransaction(e.to_string()))?;
-                    
                     let contract_address = address::Address::from_str(&token)?;
-
 
                     let contract = kos_proto::tron::TriggerSmartContract {
                         owner_address: addr_sender.as_bytes().to_vec(),
@@ -244,23 +241,26 @@ impl TRX {
                         data: encoded,
                         call_token_value: 0,
                         call_value: 0,
-                        token_id: 0,    
+                        token_id: 0,
                     };
-    
-                    requests::create_trigger_contract(&node, contract).await.unwrap()
-                } else {
 
+                    let extended = requests::CreateTRC20TransferOptions {
+                        contract,
+                        // TODO: estimate fee limit, for now use 100 TRX
+                        fee_limit: 100000000,
+                    };
+                    requests::create_trc20_tranfer(&node, extended)
+                        .await
+                        .unwrap()
+                } else {
                     let contract = kos_proto::tron::TransferAssetContract {
                         owner_address: addr_sender.as_bytes().to_vec(),
                         to_address: addr_receiver.as_bytes().to_vec(),
                         amount: amount.to_i64(),
                         asset_name: token.as_bytes().to_vec(),
                     };
-    
                     requests::create_asset_transfer(&node, contract).await?
                 }
-                
-
             }
             _ => {
                 let contract = kos_proto::tron::TransferContract {

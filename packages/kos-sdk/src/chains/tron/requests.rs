@@ -2,6 +2,15 @@ use crate::utils;
 use kos_types::error::Error;
 use serde_json::json;
 
+use serde::Serialize;
+
+#[derive(Serialize)]
+pub struct CreateTRC20TransferOptions {
+    #[serde(flatten)]
+    pub contract: kos_proto::tron::TriggerSmartContract,
+    pub fee_limit: u32,
+}
+
 pub async fn get_account(node_url: &str, address: &str) -> Result<kos_proto::tron::Account, Error> {
     let url = format!("{}/wallet/getaccount", node_url);
 
@@ -66,9 +75,9 @@ pub async fn create_asset_transfer(
     create_transaction(url, contract).await
 }
 
-pub async fn create_trigger_contract(
+pub async fn create_trc20_tranfer(
     node_url: &str,
-    contract: kos_proto::tron::TriggerSmartContract,
+    contract: CreateTRC20TransferOptions,
 ) -> Result<kos_proto::tron::Transaction, Error> {
     let url = format!("{}/wallet/triggersmartcontract", node_url);
 
@@ -81,7 +90,6 @@ async fn create_transaction(
 ) -> Result<kos_proto::tron::Transaction, Error> {
     let data = serde_json::to_string(&contract)?.as_bytes().to_vec();
     let result = utils::http_post::<serde_json::Value>(url, &data).await?;
-
     let raw_hex = unpack_result(result)?;
     pack_tx(&raw_hex)
 }
