@@ -441,10 +441,33 @@ mod tests {
             DEFAULT_ADDRESS.to_string(),
             BigNumber::from(1000000),
             Some(options),
-            Some("https://api.trongrid.io".to_string()),
+            None,
         ));
 
         assert!(result.is_ok());
+        let t = result.unwrap().clone();
+        match t.clone().data {
+            Some(TransactionRaw::Tron(tx)) => {
+                let raw = &tx.raw_data.unwrap();
+                assert_eq!(raw.contract.len(), 1);
+                let c: kos_proto::tron::TriggerSmartContract =
+                    kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
+                        .unwrap();
+                let data: String = c.data.iter().map(|b| format!("{:02X}", b)).collect();
+                let owner_address = address::Address::from_bytes(&c.owner_address);
+                let contract_address = address::Address::from_bytes(&c.contract_address);
+                assert!(data.starts_with("A9059CBB"));
+                assert_eq!(
+                    owner_address.to_string(),
+                    "TCwwZeH6so1X4R5kcdbKqa4GWuzF53xPqG".to_string()
+                );
+                assert_eq!(
+                    contract_address.to_string(),
+                    "TKk6DLX1xWRKHjDhHfdyQKefnP1WUppEXB".to_string()
+                );
+            }
+            _ => assert!(false),
+        }
     }
 
     #[test]
