@@ -1,5 +1,5 @@
 use crate::chains::*;
-use crate::models::{self, BroadcastResult, Transaction};
+use crate::models::{self, BroadcastResult, PathOptions, Transaction};
 use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
 use kos_types::number::BigNumber;
@@ -48,9 +48,9 @@ macro_rules! createChains {
                 }
             }
 
-            pub fn get_path(&self, index: u32) -> Result<String, Error> {
+            pub fn get_path(&self, options: &PathOptions) -> Result<String, Error> {
                 match self {
-                    $(Chain::$name => $name::get_path(index),)*
+                    $(Chain::$name => $name::get_path(options),)*
                 }
             }
 

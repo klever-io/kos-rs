@@ -2,6 +2,7 @@
   "ignore": [
     { "id": "CVE-2023-1255", "reason": "openssl-sys@0.9.91 from reqwest" },
     { "id": "CVE-2023-2975", "reason": "openssl-sys@0.9.91 from reqwest" },
-    { "id": "CVE-2023-3446", "reason": "openssl-sys@0.9.91 from reqwest" }
+    { "id": "CVE-2023-3446", "reason": "openssl-sys@0.9.91 from reqwest" },
+    { "id": "CVE-2023-5363", "reason": "openssl-sys@0.9.97 from reqwest" }
 ]
 }

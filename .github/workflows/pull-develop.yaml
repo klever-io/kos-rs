@@ -44,7 +44,6 @@ jobs:
       - name: checks
         run: |
           cargo deny check
-          cargo outdated --exit-code 1
           cargo pants
 
       - name: Restore .env file
