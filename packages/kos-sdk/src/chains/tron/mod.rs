@@ -215,7 +215,7 @@ impl TRX {
                 amount: amount.to_i64(),
                 asset_name: token.as_bytes().to_vec(),
             };
-            let transaction = requests::create_asset_transfer(&node, contract).await?;
+            let transaction = requests::create_asset_transfer(node, contract).await?;
             return Ok(transaction);
         }
         use ethabi;
@@ -236,7 +236,7 @@ impl TRX {
                 ),
             ])
             .map_err(|e| Error::InvalidTransaction(e.to_string()))?;
-        let contract_address = address::Address::from_str(&token)?;
+        let contract_address = address::Address::from_str(token)?;
 
         let contract = kos_proto::tron::TriggerSmartContract {
             owner_address: addr_sender.as_bytes().to_vec(),
@@ -252,8 +252,8 @@ impl TRX {
             // TODO: estimate fee limit, for now use 100 TRX
             fee_limit: 100000000,
         };
-        let transaction = requests::create_trc20_transfer(&node, extended).await?;
-        return Ok(transaction);
+        let transaction = requests::create_trc20_transfer(node, extended).await?;
+        Ok(transaction)
     }
 
     /// create a send transaction network
