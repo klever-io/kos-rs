@@ -169,11 +169,11 @@ impl AsRef<[u8]> for Address {
 impl rlp::Decodable for Address {
     fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
         let mut data: Vec<u8> = rlp.as_val()?;
-        let mut bytes: [u8; 20] = [0; 20];
-        while data.len() < 20 {
+        let mut bytes: [u8; ADDRESS_LEN] = [0; ADDRESS_LEN];
+        while data.len() < ADDRESS_LEN {
             data.push(0);
         }
-        bytes.copy_from_slice(&data[..].to_vec());
+        bytes.copy_from_slice(&data[..]);
         Ok(Address(bytes))
     }
 }

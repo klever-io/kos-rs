@@ -457,7 +457,6 @@ impl ETH {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chains::ETH;
     use hex::FromHex;
     use kos_types::Bytes32;
 
