@@ -75,7 +75,7 @@ pub async fn create_asset_transfer(
     create_transaction(url, contract).await
 }
 
-pub async fn create_trc20_tranfer(
+pub async fn create_trc20_transfer(
     node_url: &str,
     contract: CreateTRC20TransferOptions,
 ) -> Result<kos_proto::tron::Transaction, Error> {

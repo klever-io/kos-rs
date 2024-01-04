@@ -1,14 +1,15 @@
 pub mod address;
 pub mod requests;
-mod trc20;
 
 use std::str::FromStr;
 
 use crate::{
     chain::{self, BaseChain},
     chains::ethereum::address::Address as ETHAddress,
+    chains::evm20,
     models::{BroadcastResult, PathOptions, Transaction, TransactionRaw},
 };
+use bitcoin::transaction;
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
 use kos_types::error::Error;
 use kos_types::hash::Hash;
@@ -199,6 +200,62 @@ impl TRX {
         })
     }
 
+    async fn check_valid_address(
+        valid_address: &bool,
+        addr_sender: &address::Address,
+        addr_receiver: &address::Address,
+        amount: &BigNumber,
+        token: &str,
+        node: &str,
+    ) -> Result<kos_proto::tron::Transaction, Error> {
+        if !valid_address {
+            let contract = kos_proto::tron::TransferAssetContract {
+                owner_address: addr_sender.as_bytes().to_vec(),
+                to_address: addr_receiver.as_bytes().to_vec(),
+                amount: amount.to_i64(),
+                asset_name: token.as_bytes().to_vec(),
+            };
+            let transaction = requests::create_asset_transfer(&node, contract).await?;
+            return Ok(transaction);
+        }
+        use ethabi;
+        use requests;
+
+        let contract = evm20::get_contract_evm20();
+        let func = contract.function("transfer").map_err(|e| {
+            Error::InvalidMessage(format!("failed to get transferFrom function: {}", e))
+        })?;
+
+        let to_address = *ETHAddress::from_bytes(addr_receiver.as_tvm_bytes());
+        let encoded = func
+            .encode_input(&[
+                ethabi::Token::Address(to_address.into()),
+                ethabi::Token::Uint(
+                    U256::from_dec_str(&amount.to_string())
+                        .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+                ),
+            ])
+            .map_err(|e| Error::InvalidTransaction(e.to_string()))?;
+        let contract_address = address::Address::from_str(&token)?;
+
+        let contract = kos_proto::tron::TriggerSmartContract {
+            owner_address: addr_sender.as_bytes().to_vec(),
+            contract_address: contract_address.as_bytes().to_vec(),
+            data: encoded,
+            call_token_value: 0,
+            call_value: 0,
+            token_id: 0,
+        };
+
+        let extended = requests::CreateTRC20TransferOptions {
+            contract,
+            // TODO: estimate fee limit, for now use 100 TRX
+            fee_limit: 100000000,
+        };
+        let transaction = requests::create_trc20_transfer(&node, extended).await?;
+        return Ok(transaction);
+    }
+
     /// create a send transaction network
     #[wasm_bindgen(js_name = "send")]
     pub async fn send(
@@ -217,50 +274,16 @@ impl TRX {
         let tx: kos_proto::tron::Transaction = match options.token {
             Some(token) if token != "TRX" => {
                 // Check if TRC20 transfer
-                if TRX::validate_address(&token, None)? {
-                    let contract = trc20::get_contract_trc20();
-                    let func = contract.function("transfer").map_err(|e| {
-                        Error::InvalidMessage(format!("failed to get transferFrom function: {}", e))
-                    })?;
-
-                    let to_address = *ETHAddress::from_bytes(addr_receiver.as_tvm_bytes());
-                    let encoded = func
-                        .encode_input(&[
-                            ethabi::Token::Address(to_address.into()),
-                            ethabi::Token::Uint(
-                                U256::from_dec_str(&amount.to_string())
-                                    .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
-                            ),
-                        ])
-                        .map_err(|e| Error::InvalidTransaction(e.to_string()))?;
-                    let contract_address = address::Address::from_str(&token)?;
-
-                    let contract = kos_proto::tron::TriggerSmartContract {
-                        owner_address: addr_sender.as_bytes().to_vec(),
-                        contract_address: contract_address.as_bytes().to_vec(),
-                        data: encoded,
-                        call_token_value: 0,
-                        call_value: 0,
-                        token_id: 0,
-                    };
-
-                    let extended = requests::CreateTRC20TransferOptions {
-                        contract,
-                        // TODO: estimate fee limit, for now use 100 TRX
-                        fee_limit: 100000000,
-                    };
-                    requests::create_trc20_tranfer(&node, extended)
-                        .await
-                        .unwrap()
-                } else {
-                    let contract = kos_proto::tron::TransferAssetContract {
-                        owner_address: addr_sender.as_bytes().to_vec(),
-                        to_address: addr_receiver.as_bytes().to_vec(),
-                        amount: amount.to_i64(),
-                        asset_name: token.as_bytes().to_vec(),
-                    };
-                    requests::create_asset_transfer(&node, contract).await?
-                }
+                let valid_address = TRX::validate_address(&token, None)?;
+                Self::check_valid_address(
+                    &valid_address,
+                    &addr_sender,
+                    &addr_receiver,
+                    &amount,
+                    &token,
+                    &node,
+                )
+                .await?
             }
             _ => {
                 let contract = kos_proto::tron::TransferContract {
