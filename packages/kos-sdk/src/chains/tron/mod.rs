@@ -9,7 +9,7 @@ use crate::{
     chains::evm20,
     models::{BroadcastResult, PathOptions, Transaction, TransactionRaw},
 };
-use bitcoin::transaction;
+
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
 use kos_types::error::Error;
 use kos_types::hash::Hash;
