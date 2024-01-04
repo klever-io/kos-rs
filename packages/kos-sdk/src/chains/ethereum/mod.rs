@@ -13,6 +13,7 @@ use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
+use rlp::Rlp;
 use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 use std::{ops::Div, str::FromStr};
 use wasm_bindgen::prelude::*;
@@ -426,6 +427,30 @@ impl ETH {
         }
 
         Ok(true)
+    }
+
+    #[wasm_bindgen(js_name = "txFromRaw")]
+    pub fn tx_from_raw(raw: &str) -> Result<crate::models::Transaction, Error> {
+        let hex_tx = hex::decode(raw)?;
+        let rlp = Rlp::new(&hex_tx);
+
+        let tx = match transaction::Transaction::decode_legacy(&rlp) {
+            Ok(tx) => tx,
+            Err(_) => {
+                let rlp = Rlp::new(&hex_tx[2..]);
+                self::transaction::Transaction::decode_eip155(rlp).map_err(|e| {
+                    Error::InvalidTransaction(format!("failed to decode transaction: {}", e))
+                })?
+            }
+        };
+
+        let digest = hash_transaction(&tx)?;
+        Ok(crate::models::Transaction {
+            chain: chain::Chain::ETH,
+            sender: "".to_string(), //TODO: implement sender on eth decode
+            hash: Hash::from_vec(digest)?,
+            data: Some(TransactionRaw::Ethereum(tx)),
+        })
     }
 }
 

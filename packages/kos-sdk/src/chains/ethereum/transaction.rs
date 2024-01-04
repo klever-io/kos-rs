@@ -2,7 +2,7 @@ use super::address::Address;
 
 use kos_types::error::Error;
 
-use rlp::RlpStream;
+use rlp::{DecoderError, Rlp, RlpStream};
 use secp256k1::ecdsa::RecoverableSignature;
 use serde::Serialize;
 use web3::types::U256;
@@ -143,6 +143,38 @@ impl Transaction {
                 Ok([&[2], stream.as_raw()].concat())
             }
         }
+    }
+
+    pub fn decode_legacy(rlp: &Rlp) -> Result<Self, DecoderError> {
+        Ok(Transaction {
+            transaction_type: Some(TransactionType::Legacy),
+            nonce: rlp.val_at(0)?,
+            gas_price: Some(rlp.val_at(1)?),
+            gas: rlp.val_at(2)?,
+            to: Some(rlp.val_at(3)?),
+            value: rlp.val_at(4)?,
+            data: rlp.val_at(5)?,
+            chain_id: None,
+            max_fee_per_gas: None,
+            max_priority_fee_per_gas: None,
+            signature: None,
+        })
+    }
+
+    pub fn decode_eip155(rlp: Rlp) -> Result<Self, DecoderError> {
+        Ok(Transaction {
+            transaction_type: Some(TransactionType::EIP1559),
+            chain_id: Some(rlp.val_at(0)?),
+            nonce: rlp.val_at(1)?,
+            max_priority_fee_per_gas: Some(rlp.val_at(2)?),
+            max_fee_per_gas: Some(rlp.val_at(3)?),
+            gas: rlp.val_at(4)?,
+            to: Some(rlp.val_at(5)?), // Convert to Option
+            value: rlp.val_at(6)?,
+            data: rlp.val_at(7)?,
+            signature: None,
+            gas_price: None,
+        })
     }
 }
 
