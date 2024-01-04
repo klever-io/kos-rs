@@ -722,7 +722,7 @@ mod tests {
         );
         assert_eq!(
             eth_tx.to.unwrap().to_string(),
-            "0x4cBeee256240c92A9ad920ea6f4d7Df6466D2Cdc"
+            "0xdAC17F958D2ee523a2206206994597C13D831ec7"
         );
         assert_eq!(eth_tx.gas, U256::from(0));
         assert_eq!(eth_tx.value, U256::from(0));
