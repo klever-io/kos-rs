@@ -459,6 +459,7 @@ mod tests {
     use super::*;
     use hex::FromHex;
     use kos_types::Bytes32;
+    use crate::chains::ETH;
 
     const DEFAULT_PRIVATE_KEY: &str =
         "1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727";
@@ -649,5 +650,28 @@ mod tests {
             let valid = ETH::validate_address(&addr, None).unwrap();
             assert_eq!(valid, false, "address: {}", addr);
         }
+    }
+
+    #[test]
+    fn test_decode_rlp_tx() {
+        let raw_tx = "af02ed0182012884019716f7850e60f86055827530944cbeee256240c92a9ad920ea6f4d7df6466d2cdc0180c0808080";
+        let tx = ETH::tx_from_raw(raw_tx).unwrap();
+
+        assert_eq!(tx.chain, chain::Chain::ETH);
+
+        let eth_tx = match tx.data {
+            Some(TransactionRaw::Ethereum(tx)) => tx,
+            _ => panic!("invalid tx"),
+        };
+
+        assert_eq!(eth_tx.chain_id, Some(1));
+        assert_eq!(eth_tx.nonce, U256::from_dec_str("296").unwrap());
+        assert_eq!(
+            eth_tx.to.unwrap().to_string(),
+            "0x4cBeee256240c92A9ad920ea6f4d7Df6466D2Cdc"
+        );
+        assert_eq!(eth_tx.gas, U256::from(30000));
+        assert_eq!(eth_tx.value, U256::from_dec_str("1").unwrap());
+        assert_eq!(eth_tx.signature, None);
     }
 }
