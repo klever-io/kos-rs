@@ -378,6 +378,7 @@ impl ETH {
             }),
             chain_id: Some(chain_id),
             nonce,
+            from: Some(sender),
             to: Some(receiver),
             value,
             data: options.contract_data.unwrap_or_default(),
@@ -448,6 +449,26 @@ impl ETH {
         Ok(crate::models::Transaction {
             chain: chain::Chain::ETH,
             sender: "".to_string(), //TODO: implement sender on eth decode
+            hash: Hash::from_vec(digest)?,
+            data: Some(TransactionRaw::Ethereum(tx)),
+        })
+    }
+
+    #[wasm_bindgen(js_name = "txFromJson")]
+    pub fn tx_from_json(raw: &str) -> Result<crate::models::Transaction, Error> {
+        // build expected send result
+        let tx: transaction::Transaction = serde_json::from_str(raw)?;
+
+        let digest = hash_transaction(&tx)?;
+
+        let sender = match tx.from {
+            Some(addr) => addr.to_string(),
+            None => "".to_string(),
+        };
+
+        Ok(crate::models::Transaction {
+            chain: chain::Chain::ETH,
+            sender,
             hash: Hash::from_vec(digest)?,
             data: Some(TransactionRaw::Ethereum(tx)),
         })
@@ -671,6 +692,40 @@ mod tests {
         );
         assert_eq!(eth_tx.gas, U256::from(30000));
         assert_eq!(eth_tx.value, U256::from_dec_str("1").unwrap());
+        assert_eq!(eth_tx.signature, None);
+    }
+
+    #[test]
+    fn test_decode_json() {
+        let json = r#"{
+        "from":"0x4cbeee256240c92a9ad920ea6f4d7df6466d2cdc",
+        "maxPriorityFeePerGas":null,"maxFeePerGas":null,
+         "gas": "0x00",
+         "value": "0x00",
+         "data":"0xa9059cbb000000000000000000000000ac4145fef6c828e8ae017207ad944c988ccb2cf700000000000000000000000000000000000000000000000000000000000f4240",
+         "to":"0xdac17f958d2ee523a2206206994597c13d831ec7",
+         "nonce":"0x00"}"#;
+        let tx = ETH::tx_from_json(json).unwrap();
+
+        assert_eq!(tx.chain, chain::Chain::ETH);
+
+        let eth_tx = match tx.data {
+            Some(TransactionRaw::Ethereum(tx)) => tx,
+            _ => panic!("invalid tx"),
+        };
+
+        assert_eq!(eth_tx.chain_id, None);
+        assert_eq!(eth_tx.nonce, U256::from_dec_str("0").unwrap());
+        assert_eq!(
+            eth_tx.from.unwrap().to_string(),
+            "0x4cBeee256240c92A9ad920ea6f4d7Df6466D2Cdc"
+        );
+        assert_eq!(
+            eth_tx.to.unwrap().to_string(),
+            "0x4cBeee256240c92A9ad920ea6f4d7Df6466D2Cdc"
+        );
+        assert_eq!(eth_tx.gas, U256::from(0));
+        assert_eq!(eth_tx.value, U256::from(0));
         assert_eq!(eth_tx.signature, None);
     }
 }

@@ -1,13 +1,14 @@
 use super::address::Address;
+use std::str::FromStr;
 
 use kos_types::error::Error;
 
 use rlp::{DecoderError, Rlp, RlpStream};
 use secp256k1::ecdsa::RecoverableSignature;
-use serde::Serialize;
+use serde::{Deserialize, Deserializer, Serialize};
 use web3::types::U256;
 
-#[derive(Serialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum TransactionType {
     Legacy,
     EIP1559,
@@ -25,19 +26,55 @@ where
     }
 }
 
-#[derive(Serialize, Clone, Debug, PartialEq)]
+pub fn deserialize_addr<'de, D>(deserializer: D) -> Result<Option<Address>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    if s.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(
+            Address::from_str(&s).map_err(serde::de::Error::custom)?,
+        ))
+    }
+}
+
+pub fn deserialize_data<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    if s.is_empty() {
+        Ok(Vec::new())
+    } else {
+        let s = if s.len() > 2 && (s.starts_with("0x") || s.starts_with("0X")) {
+            &s[2..]
+        } else {
+            &s
+        };
+
+        Ok(hex::decode(s).map_err(serde::de::Error::custom)?)
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Transaction {
     pub transaction_type: Option<TransactionType>,
     pub nonce: U256,
+    #[serde(deserialize_with = "deserialize_addr")]
+    pub from: Option<Address>,
+    #[serde(deserialize_with = "deserialize_addr")]
     pub to: Option<Address>,
     pub gas: U256,
     pub gas_price: Option<U256>,
     pub value: U256,
+    #[serde(deserialize_with = "deserialize_data")]
     pub data: Vec<u8>,
     pub chain_id: Option<u64>,
     pub max_fee_per_gas: Option<U256>,
     pub max_priority_fee_per_gas: Option<U256>,
-    #[serde(serialize_with = "signature_serialize")]
+    #[serde(serialize_with = "signature_serialize", skip_deserializing)]
     pub signature: Option<RecoverableSignature>,
 }
 
@@ -151,6 +188,7 @@ impl Transaction {
             nonce: rlp.val_at(0)?,
             gas_price: Some(rlp.val_at(1)?),
             gas: rlp.val_at(2)?,
+            from: None,
             to: Some(rlp.val_at(3)?),
             value: rlp.val_at(4)?,
             data: rlp.val_at(5)?,
@@ -169,6 +207,7 @@ impl Transaction {
             max_priority_fee_per_gas: Some(rlp.val_at(2)?),
             max_fee_per_gas: Some(rlp.val_at(3)?),
             gas: rlp.val_at(4)?,
+            from: None,
             to: Some(rlp.val_at(5)?), // Convert to Option
             value: rlp.val_at(6)?,
             data: rlp.val_at(7)?,
@@ -189,6 +228,7 @@ mod tests {
         let tx = Transaction {
             transaction_type: Some(TransactionType::Legacy),
             nonce: U256::from_dec_str("691").unwrap(),
+            from: None,
             to: Some(Address::try_from("0x4592D8f8D7B001e72Cb26A73e4Fa1806a51aC79d").unwrap()),
             gas: U256::from(21000),
             gas_price: Some(U256::from_dec_str("2000000000").unwrap()),
@@ -216,6 +256,7 @@ mod tests {
         let tx = Transaction {
             transaction_type: Some(TransactionType::EIP1559),
             nonce: U256::from_dec_str("241").unwrap(),
+            from: None,
             to: Some(Address::try_from("0xe0e5d2B4EDcC473b988b44b4d13c3972cb6694cb").unwrap()),
             gas: U256::from(21000),
             gas_price: None,
