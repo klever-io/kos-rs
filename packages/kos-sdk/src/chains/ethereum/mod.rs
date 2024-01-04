@@ -457,9 +457,9 @@ impl ETH {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::chains::ETH;
     use hex::FromHex;
     use kos_types::Bytes32;
-    use crate::chains::ETH;
 
     const DEFAULT_PRIVATE_KEY: &str =
         "1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727";
