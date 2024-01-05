@@ -1,10 +1,10 @@
 mod bitcoin;
 mod default;
 mod ethereum;
+mod evm20;
 mod klever;
 mod polygon;
 mod tron;
-mod evm20;
 
 pub use self::bitcoin::BTC;
 pub use default::NONE;

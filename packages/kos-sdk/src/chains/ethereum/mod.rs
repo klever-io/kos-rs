@@ -2,8 +2,8 @@ pub mod address;
 pub mod request;
 pub mod transaction;
 
-use crate::chains::evm20;
 use crate::chain::{self, BaseChain};
+use crate::chains::evm20;
 use crate::models::{self, BroadcastResult, PathOptions, Transaction, TransactionRaw};
 
 use kos_crypto::keypair::KeyPair;
