@@ -200,24 +200,30 @@ impl TRX {
         })
     }
 
-    async fn check_valid_address(
-        valid_address: &bool,
+    async fn trigger_asset_transfer(
         addr_sender: &address::Address,
         addr_receiver: &address::Address,
         amount: &BigNumber,
         token: &str,
         node: &str,
     ) -> Result<kos_proto::tron::Transaction, Error> {
-        if !valid_address {
-            let contract = kos_proto::tron::TransferAssetContract {
-                owner_address: addr_sender.as_bytes().to_vec(),
-                to_address: addr_receiver.as_bytes().to_vec(),
-                amount: amount.to_i64(),
-                asset_name: token.as_bytes().to_vec(),
-            };
-            let transaction = requests::create_asset_transfer(node, contract).await?;
-            return Ok(transaction);
-        }
+        let contract = kos_proto::tron::TransferAssetContract {
+            owner_address: addr_sender.as_bytes().to_vec(),
+            to_address: addr_receiver.as_bytes().to_vec(),
+            amount: amount.to_i64(),
+            asset_name: token.as_bytes().to_vec(),
+        };
+        let transaction = requests::create_asset_transfer(node, contract).await?;
+        return Ok(transaction);
+    }
+
+    async fn trigger_trc20_transfer(
+        addr_sender: &address::Address,
+        addr_receiver: &address::Address,
+        amount: &BigNumber,
+        token: &str,
+        node: &str,
+    ) -> Result<kos_proto::tron::Transaction, Error> {
         use ethabi;
         use requests;
 
@@ -247,7 +253,7 @@ impl TRX {
             token_id: 0,
         };
 
-        let extended = requests::CreateTRC20TransferOptions {
+        let extended = requests::TransferOptions {
             contract,
             // TODO: estimate fee limit, for now use 100 TRX
             fee_limit: 100000000,
@@ -275,15 +281,25 @@ impl TRX {
             Some(token) if token != "TRX" => {
                 // Check if TRC20 transfer
                 let valid_address = TRX::validate_address(&token, None)?;
-                Self::check_valid_address(
-                    &valid_address,
-                    &addr_sender,
-                    &addr_receiver,
-                    &amount,
-                    &token,
-                    &node,
-                )
-                .await?
+                if valid_address {
+                    TRX::trigger_trc20_transfer(
+                        &addr_sender,
+                        &addr_receiver,
+                        &amount,
+                        &token,
+                        &node,
+                    )
+                    .await?
+                } else {
+                    TRX::trigger_asset_transfer(
+                        &addr_sender,
+                        &addr_receiver,
+                        &amount,
+                        &token,
+                        &node,
+                    )
+                    .await?
+                }
             }
             _ => {
                 let contract = kos_proto::tron::TransferContract {
@@ -295,7 +311,6 @@ impl TRX {
                 requests::create_transfer(&node, contract).await?
             }
         };
-
         // update memo field
         let tx = match options.memo {
             Some(memo) => {
