@@ -11,6 +11,7 @@ use crate::{
 };
 
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
+use kos_proto::options::TRXOptions;
 use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
@@ -223,6 +224,7 @@ impl TRX {
         amount: &BigNumber,
         token: &str,
         node: &str,
+        fee_limit: &i64,
     ) -> Result<kos_proto::tron::Transaction, Error> {
         use ethabi;
         use requests;
@@ -256,7 +258,7 @@ impl TRX {
         let extended = requests::TransferOptions {
             contract,
             // TODO: estimate fee limit, for now use 100 TRX
-            fee_limit: 100000000,
+            fee_limit: fee_limit | 100000000,
         };
         let transaction = requests::create_trc20_transfer(node, extended).await?;
         Ok(transaction)
@@ -277,6 +279,8 @@ impl TRX {
 
         let options = TRX::get_options(options);
 
+        let fee_limit = options.fee_limit.unwrap_or(0);
+
         let tx: kos_proto::tron::Transaction = match options.token {
             Some(token) if token != "TRX" => {
                 // Check if TRC20 transfer
@@ -288,6 +292,7 @@ impl TRX {
                         &amount,
                         &token,
                         &node,
+                        &fee_limit,
                     )
                     .await?
                 } else {

@@ -1,14 +1,13 @@
 use crate::utils;
 use kos_types::error::Error;
-use serde_json::json;
-
 use serde::Serialize;
+use serde_json::json;
 
 #[derive(Serialize)]
 pub struct TransferOptions {
     #[serde(flatten)]
     pub contract: kos_proto::tron::TriggerSmartContract,
-    pub fee_limit: u32,
+    pub fee_limit: i64,
 }
 
 pub async fn get_account(node_url: &str, address: &str) -> Result<kos_proto::tron::Account, Error> {
