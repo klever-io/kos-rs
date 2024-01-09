@@ -11,7 +11,6 @@ use crate::{
 };
 
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
-use kos_proto::options::TRXOptions;
 use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
@@ -215,7 +214,7 @@ impl TRX {
             asset_name: token.as_bytes().to_vec(),
         };
         let transaction = requests::create_asset_transfer(node, contract).await?;
-        return Ok(transaction);
+        Ok(transaction)
     }
 
     async fn trigger_trc20_transfer(
