@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::json;
 
 #[derive(Serialize)]
-pub struct TransferOptions {
+pub struct ContractOptions {
     #[serde(flatten)]
     pub contract: kos_proto::tron::TriggerSmartContract,
     pub fee_limit: i64,
@@ -74,9 +74,9 @@ pub async fn create_asset_transfer(
     create_transaction(url, contract).await
 }
 
-pub async fn create_trc20_transfer(
+pub async fn trigger_smartcontract(
     node_url: &str,
-    contract: TransferOptions,
+    contract: ContractOptions,
 ) -> Result<kos_proto::tron::Transaction, Error> {
     let url = format!("{}/wallet/triggersmartcontract", node_url);
 

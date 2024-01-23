@@ -1,7 +1,12 @@
-pub mod address;
-pub mod requests;
-
 use std::str::FromStr;
+
+use wasm_bindgen::prelude::*;
+use web3::{ethabi, types::U256};
+
+use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
+use kos_types::error::Error;
+use kos_types::hash::Hash;
+use kos_types::number::BigNumber;
 
 use crate::{
     chain::{self, BaseChain},
@@ -10,13 +15,8 @@ use crate::{
     models::{BroadcastResult, PathOptions, Transaction, TransactionRaw},
 };
 
-use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
-use kos_types::error::Error;
-use kos_types::hash::Hash;
-use kos_types::number::BigNumber;
-
-use wasm_bindgen::prelude::*;
-use web3::{ethabi, types::U256};
+pub mod address;
+pub mod requests;
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
@@ -225,12 +225,9 @@ impl TRX {
         node: &str,
         fee_limit: &i64,
     ) -> Result<kos_proto::tron::Transaction, Error> {
-        use ethabi;
-        use requests;
-
         let contract = evm20::get_contract_evm20();
         let func = contract.function("transfer").map_err(|e| {
-            Error::InvalidMessage(format!("failed to get transferFrom function: {}", e))
+            Error::InvalidMessage(format!("failed to get transfer function: {}", e))
         })?;
 
         let to_address = *ETHAddress::from_bytes(addr_receiver.as_tvm_bytes());
@@ -254,12 +251,12 @@ impl TRX {
             token_id: 0,
         };
 
-        let extended = requests::TransferOptions {
+        let extended = requests::ContractOptions {
             contract,
             // TODO: estimate fee limit, for now use 100 TRX
             fee_limit: fee_limit | 100000000,
         };
-        let transaction = requests::create_trc20_transfer(node, extended).await?;
+        let transaction = requests::trigger_smartcontract(node, extended).await?;
         Ok(transaction)
     }
 
@@ -397,11 +394,13 @@ impl TRX {
 mod tests {
     use std::assert_eq;
 
+    use hex::FromHex;
+
+    use kos_types::Bytes32;
+
     use crate::models::SendOptions;
 
     use super::*;
-    use hex::FromHex;
-    use kos_types::Bytes32;
 
     const DEFAULT_PRIVATE_KEY: &str =
         "b5a4cea271ff424d7c31dc12a3e43e401df7a40d7412a15750f3f0b6b5449a28";
