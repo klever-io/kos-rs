@@ -2,6 +2,7 @@ use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
 
 use hex::FromHex;
+use rlp::{DecoderError, Rlp};
 use std::{fmt, str::FromStr};
 use web3::types::Address as Web3Address;
 
@@ -162,6 +163,18 @@ impl FromStr for Address {
 impl AsRef<[u8]> for Address {
     fn as_ref(&self) -> &[u8] {
         &self.0
+    }
+}
+
+impl rlp::Decodable for Address {
+    fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
+        let mut data: Vec<u8> = rlp.as_val()?;
+        let mut bytes: [u8; ADDRESS_LEN] = [0; ADDRESS_LEN];
+        while data.len() < ADDRESS_LEN {
+            data.push(0);
+        }
+        bytes.copy_from_slice(&data[..]);
+        Ok(Address(bytes))
     }
 }
 
