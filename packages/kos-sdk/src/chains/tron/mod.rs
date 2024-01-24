@@ -1,12 +1,7 @@
+pub mod address;
+pub mod requests;
+
 use std::str::FromStr;
-
-use wasm_bindgen::prelude::*;
-use web3::{ethabi, types::U256};
-
-use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
-use kos_types::error::Error;
-use kos_types::hash::Hash;
-use kos_types::number::BigNumber;
 
 use crate::{
     chain::{self, BaseChain},
@@ -14,9 +9,13 @@ use crate::{
     chains::evm20,
     models::{BroadcastResult, PathOptions, Transaction, TransactionRaw},
 };
+use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
+use kos_types::error::Error;
+use kos_types::hash::Hash;
+use kos_types::number::BigNumber;
 
-pub mod address;
-pub mod requests;
+use wasm_bindgen::prelude::*;
+use web3::{ethabi, types::U256};
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
