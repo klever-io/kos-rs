@@ -1,9 +1,9 @@
 pub mod address;
-mod erc20;
 pub mod request;
 pub mod transaction;
 
 use crate::chain::{self, BaseChain};
+use crate::chains::evm20;
 use crate::models::{self, BroadcastResult, PathOptions, Transaction, TransactionRaw};
 
 use kos_crypto::keypair::KeyPair;
@@ -195,7 +195,7 @@ impl ETH {
         match token {
             Some(key) if key != "ETH" => {
                 let contract_address: address::Address = key.as_str().try_into()?;
-                let contract = erc20::get_contract_erc20();
+                let contract = evm20::get_contract_evm20();
                 let func = contract.function("balanceOf").map_err(|e| {
                     Error::InvalidMessage(format!("failed to get balanceOf function: {}", e))
                 })?;
@@ -253,7 +253,7 @@ impl ETH {
         // Update addr_receiver for non-ETH token.
         if !is_eth_token {
             // update contract data for token transfer
-            let contract = erc20::get_contract_erc20();
+            let contract = evm20::get_contract_evm20();
             let func = contract.function("transferFrom").map_err(|e| {
                 Error::InvalidMessage(format!("failed to get transferFrom function: {}", e))
             })?;

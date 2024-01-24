@@ -1,7 +1,7 @@
 use web3::ethabi::Contract;
 
 // ERC20 contract ABI. This is a simplified ABI with only the `balanceOf` function.
-const ERC20_CONTRACT_ABI: &str = r#"
+const EVM20_CONTRACT_ABI: &str = r#"
 [
   {
     "constant": true,
@@ -49,11 +49,34 @@ const ERC20_CONTRACT_ABI: &str = r#"
     "payable": false,
         "stateMutability": "nonpayable",
     "type": "function"
-  }
+  },
+  {
+    "constant":false,
+    "inputs":[
+       {
+          "name":"_to",
+          "type":"address"
+       },
+       {
+          "name":"_value",
+          "type":"uint256"
+       }
+    ],
+    "name":"transfer",
+    "outputs":[
+       {
+          "name":"",
+          "type":"bool"
+       }
+    ],
+    "payable":false,
+    "stateMutability":"nonpayable",
+    "type":"function"
+ }
 ]
 "#;
 
-pub fn get_contract_erc20() -> Contract {
+pub fn get_contract_evm20() -> Contract {
     // Parse the ABI.
-    Contract::load(ERC20_CONTRACT_ABI.as_bytes()).unwrap()
+    Contract::load(EVM20_CONTRACT_ABI.as_bytes()).unwrap()
 }
