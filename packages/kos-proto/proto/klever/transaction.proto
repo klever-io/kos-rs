@@ -34,6 +34,7 @@ message TXContract {
 		UpdateAccountPermissionContractType   = 22;
 		DepositContractType                   = 23;
 		ITOTriggerContractType                = 24;
+		SmartContractType                     = 99;
 	}
 	ContractType Type 				= 1 [json_name = "Type"];
 	google.protobuf.Any Parameter 	= 2 [json_name = "Parameter"];
@@ -101,8 +102,29 @@ message Transaction {
         ITOWhiteListError        = 51;
         NFTMetadataChangeStopped = 52;
         AlreadyExists            = 53;
-
-        Fail                     = 99;
+        IteratorLimitReached	 = 54;
+		// FunctionNotFound is returned when the input specifies a function name that does not exist or is not public.
+		VMFunctionNotFound		 = 55;
+		// FunctionWrongSignature is returned when the wrong number of arguments is provided.
+		VMFunctionWrongSignature = 56;
+		// UserError is returned for various execution errors.
+		VMUserError				 = 57;
+		// OutOfGas is returned when VM execution runs out of gas.
+		VMOutOfGas				 = 58;
+		// AccountCollision is returned when created account already exists.
+		VMAccountCollision		 = 59;
+		// CallStackOverFlow is returned when stack overflow occurs.
+		VMCallStackOverFlow		 = 60;
+		// Execution Panicked
+		VMExecutionPanicked		 = 61;
+		// ExecutionFailed is returned when the execution of the specified function has failed.
+		VMExecutionFailed		 = 62;
+		// UpgradeFailed is returned when the upgrade of the contract has failed
+		VMUpgradeFailed          = 63;
+		// SimulateFailed is returned when tx simulation fails execution
+		VMSimulateFailed		 = 64;
+		
+		Fail					 = 99;
 	}
 
     message KDAFee {
@@ -134,4 +156,6 @@ message Transaction {
 	TXResultCode     ResultCode        = 4 [json_name = "ResultCode"];
 	repeated Receipt Receipts          = 5 [json_name = "Receipts"];
 	uint64           Block             = 6 [json_name = "Block"];
+    uint64		   GasLimit		       = 7 [json_name = "GasLimit"];
+	uint64		   GasMultiplier	   = 8 [json_name = "GasMultiplier"];
 }
