@@ -25,6 +25,10 @@ const EVM20_CONTRACT_ABI: &str = r#"
   {
     "constant": false,
     "inputs": [
+      {	
+        "name": "_from",	
+        "type": "address"	
+      },
       {
         "name": "_to",
         "type": "address"
@@ -35,7 +39,7 @@ const EVM20_CONTRACT_ABI: &str = r#"
       }
 
     ],
-    "name": "transfer",
+    "name": "transferFrom",
     "outputs": [
         {
             "name": "",
