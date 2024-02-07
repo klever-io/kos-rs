@@ -25,9 +25,9 @@ const EVM20_CONTRACT_ABI: &str = r#"
   {
     "constant": false,
     "inputs": [
-      {	
-        "name": "_from",	
-        "type": "address"	
+      {
+        "name": "_from",
+        "type": "address"
       },
       {
         "name": "_to",
