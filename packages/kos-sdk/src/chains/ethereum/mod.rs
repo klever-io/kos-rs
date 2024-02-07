@@ -253,13 +253,12 @@ impl ETH {
         if !is_eth_token {
             // update contract data for token transfer
             let contract = erc20::get_contract_erc20();
-            let func = contract.function("transferFrom").map_err(|e| {
-                Error::InvalidMessage(format!("failed to get transferFrom function: {}", e))
+            let func = contract.function("transfer").map_err(|e| {
+                Error::InvalidMessage(format!("failed to get transfer function: {}", e))
             })?;
 
             let encoded = func
                 .encode_input(&[
-                    ethabi::Token::Address(addr_sender.into()),
                     ethabi::Token::Address(addr_receiver.into()),
                     ethabi::Token::Uint(
                         U256::from_dec_str(&amount.to_string())

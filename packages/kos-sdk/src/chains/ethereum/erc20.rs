@@ -26,10 +26,6 @@ const ERC20_CONTRACT_ABI: &str = r#"
     "constant": false,
     "inputs": [
       {
-        "name": "_from",
-        "type": "address"
-      },
-      {
         "name": "_to",
         "type": "address"
       },
@@ -39,7 +35,7 @@ const ERC20_CONTRACT_ABI: &str = r#"
       }
 
     ],
-    "name": "transferFrom",
+    "name": "transfer",
     "outputs": [
         {
             "name": "",
@@ -47,7 +43,7 @@ const ERC20_CONTRACT_ABI: &str = r#"
         }
     ],
     "payable": false,
-        "stateMutability": "nonpayable",
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]
