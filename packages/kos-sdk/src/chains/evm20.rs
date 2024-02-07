@@ -47,7 +47,7 @@ const EVM20_CONTRACT_ABI: &str = r#"
         }
     ],
     "payable": false,
-    "stateMutability": "nonpayable",
+        "stateMutability": "nonpayable",
     "type": "function"
   },
   {
