@@ -84,6 +84,21 @@ impl BigNumber {
         })
     }
 
+    #[wasm_bindgen(js_name = "fromHex")]
+    pub fn from_hex(hex: &str) -> Result<BigNumber, Error> {
+        let hex = hex.trim().replace("_", "");
+        let hex = if hex.starts_with("0x") {
+            hex[2..].to_string()
+        } else {
+            hex
+        };
+
+        Ok(BigNumber {
+            v: BigInt::parse_bytes(hex.as_bytes(), 16)
+                .ok_or_else(|| Error::InvalidNumberParse(hex.clone()))?,
+        })
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     #[wasm_bindgen(js_name = "toString")]
     pub fn to_string(&self) -> String {
