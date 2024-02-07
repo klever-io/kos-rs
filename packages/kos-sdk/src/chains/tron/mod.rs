@@ -5,6 +5,8 @@ use std::str::FromStr;
 
 use crate::{
     chain::{self, BaseChain},
+    chains::ethereum::address::Address as ETHAddress,
+    chains::evm20,
     models::{BroadcastResult, PathOptions, Transaction, TransactionRaw},
 };
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
@@ -13,6 +15,7 @@ use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
 use wasm_bindgen::prelude::*;
+use web3::{ethabi, types::U256};
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
@@ -196,6 +199,66 @@ impl TRX {
         })
     }
 
+    async fn trigger_asset_transfer(
+        addr_sender: &address::Address,
+        addr_receiver: &address::Address,
+        amount: &BigNumber,
+        token: &str,
+        node: &str,
+    ) -> Result<kos_proto::tron::Transaction, Error> {
+        let contract = kos_proto::tron::TransferAssetContract {
+            owner_address: addr_sender.as_bytes().to_vec(),
+            to_address: addr_receiver.as_bytes().to_vec(),
+            amount: amount.to_i64(),
+            asset_name: token.as_bytes().to_vec(),
+        };
+        let transaction = requests::create_asset_transfer(node, contract).await?;
+        Ok(transaction)
+    }
+
+    async fn trigger_trc20_transfer(
+        addr_sender: &address::Address,
+        addr_receiver: &address::Address,
+        amount: &BigNumber,
+        token: &str,
+        node: &str,
+        fee_limit: &i64,
+    ) -> Result<kos_proto::tron::Transaction, Error> {
+        let contract = evm20::get_contract_evm20();
+        let func = contract.function("transfer").map_err(|e| {
+            Error::InvalidMessage(format!("failed to get transfer function: {}", e))
+        })?;
+
+        let to_address = *ETHAddress::from_bytes(addr_receiver.as_tvm_bytes());
+        let encoded = func
+            .encode_input(&[
+                ethabi::Token::Address(to_address.into()),
+                ethabi::Token::Uint(
+                    U256::from_dec_str(&amount.to_string())
+                        .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+                ),
+            ])
+            .map_err(|e| Error::InvalidTransaction(e.to_string()))?;
+        let contract_address = address::Address::from_str(token)?;
+
+        let contract = kos_proto::tron::TriggerSmartContract {
+            owner_address: addr_sender.as_bytes().to_vec(),
+            contract_address: contract_address.as_bytes().to_vec(),
+            data: encoded,
+            call_token_value: 0,
+            call_value: 0,
+            token_id: 0,
+        };
+
+        let extended = requests::ContractOptions {
+            contract,
+            // TODO: estimate fee limit, for now use 100 TRX
+            fee_limit: fee_limit | 100000000,
+        };
+        let transaction = requests::trigger_smartcontract(node, extended).await?;
+        Ok(transaction)
+    }
+
     /// create a send transaction network
     #[wasm_bindgen(js_name = "send")]
     pub async fn send(
@@ -211,17 +274,32 @@ impl TRX {
 
         let options = TRX::get_options(options);
 
+        let fee_limit = options.fee_limit.unwrap_or(0);
+
         let tx: kos_proto::tron::Transaction = match options.token {
             Some(token) if token != "TRX" => {
-                // todo!() check if TRC20 transfer
-                let contract = kos_proto::tron::TransferAssetContract {
-                    owner_address: addr_sender.as_bytes().to_vec(),
-                    to_address: addr_receiver.as_bytes().to_vec(),
-                    amount: amount.to_i64(),
-                    asset_name: token.as_bytes().to_vec(),
-                };
-
-                requests::create_asset_transfer(&node, contract).await?
+                // Check if TRC20 transfer
+                let valid_address = TRX::validate_address(&token, None)?;
+                if valid_address {
+                    TRX::trigger_trc20_transfer(
+                        &addr_sender,
+                        &addr_receiver,
+                        &amount,
+                        &token,
+                        &node,
+                        &fee_limit,
+                    )
+                    .await?
+                } else {
+                    TRX::trigger_asset_transfer(
+                        &addr_sender,
+                        &addr_receiver,
+                        &amount,
+                        &token,
+                        &node,
+                    )
+                    .await?
+                }
             }
             _ => {
                 let contract = kos_proto::tron::TransferContract {
@@ -233,7 +311,6 @@ impl TRX {
                 requests::create_transfer(&node, contract).await?
             }
         };
-
         // update memo field
         let tx = match options.memo {
             Some(memo) => {
@@ -316,9 +393,13 @@ impl TRX {
 mod tests {
     use std::assert_eq;
 
-    use super::*;
     use hex::FromHex;
+
     use kos_types::Bytes32;
+
+    use crate::models::SendOptions;
+
+    use super::*;
 
     const DEFAULT_PRIVATE_KEY: &str =
         "b5a4cea271ff424d7c31dc12a3e43e401df7a40d7412a15750f3f0b6b5449a28";
@@ -380,6 +461,50 @@ mod tests {
                         .unwrap();
 
                 assert_eq!(c.amount, 10);
+            }
+            _ => assert!(false),
+        }
+    }
+
+    #[test]
+    fn test_send_trc20() {
+        // create TRX send options
+        let trx_options = kos_proto::options::TRXOptions {
+            token: Some("TKk6DLX1xWRKHjDhHfdyQKefnP1WUppEXB".to_string()),
+            ..Default::default()
+        };
+
+        let options = SendOptions::new_tron_send_options(trx_options);
+
+        let result = tokio_test::block_on(TRX::send(
+            "TCwwZeH6so1X4R5kcdbKqa4GWuzF53xPqG".to_string(),
+            DEFAULT_ADDRESS.to_string(),
+            BigNumber::from(1000000),
+            Some(options),
+            None,
+        ));
+
+        assert!(result.is_ok());
+        let t = result.unwrap().clone();
+        match t.clone().data {
+            Some(TransactionRaw::Tron(tx)) => {
+                let raw = &tx.raw_data.unwrap();
+                assert_eq!(raw.contract.len(), 1);
+                let c: kos_proto::tron::TriggerSmartContract =
+                    kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
+                        .unwrap();
+                let data: String = c.data.iter().map(|b| format!("{:02X}", b)).collect();
+                let owner_address = address::Address::from_bytes(&c.owner_address);
+                let contract_address = address::Address::from_bytes(&c.contract_address);
+                assert!(data.starts_with("A9059CBB"));
+                assert_eq!(
+                    owner_address.to_string(),
+                    "TCwwZeH6so1X4R5kcdbKqa4GWuzF53xPqG".to_string()
+                );
+                assert_eq!(
+                    contract_address.to_string(),
+                    "TKk6DLX1xWRKHjDhHfdyQKefnP1WUppEXB".to_string()
+                );
             }
             _ => assert!(false),
         }

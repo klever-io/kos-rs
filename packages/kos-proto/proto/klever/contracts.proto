@@ -397,3 +397,15 @@ message DepositContract {
     bytes           CurrencyID   = 3 [json_name = "CurrencyID"];
     int64           Amount       = 4 [json_name = "Amount"];
 }
+
+message SmartContract {
+    enum SCType {
+        SCInvoke  = 0;
+        SCDeploy  = 1;
+    }
+    SCType  Type       = 1 [json_name = "Type"];
+    bytes   Address    = 2 [json_name = "Address"];
+    // SmartContract CallValue is represented by a map of currencyID and amount
+    //  should be limited to 50 currencies
+    map<string, int64> CallValue = 3 [json_name = "CallValue"];
+}
