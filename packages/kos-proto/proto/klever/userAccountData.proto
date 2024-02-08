@@ -31,4 +31,13 @@ message UserAccountData {
     uint64  Nonce          = 7;
 
     repeated Permission Permissions = 8;
+
+    bytes OwnerAddress   = 9;
+    bytes CodeHash       = 10;
+    bytes CodeMetadata   = 11;
+}
+
+message CodeEntry {
+    bytes   Code             = 1;
+    uint32  NumReferences    = 2;
 }

@@ -1,6 +1,14 @@
 use crate::utils;
 use kos_types::error::Error;
+use serde::Serialize;
 use serde_json::json;
+
+#[derive(Serialize)]
+pub struct ContractOptions {
+    #[serde(flatten)]
+    pub contract: kos_proto::tron::TriggerSmartContract,
+    pub fee_limit: i64,
+}
 
 pub async fn get_account(node_url: &str, address: &str) -> Result<kos_proto::tron::Account, Error> {
     let url = format!("{}/wallet/getaccount", node_url);
@@ -66,13 +74,21 @@ pub async fn create_asset_transfer(
     create_transaction(url, contract).await
 }
 
+pub async fn trigger_smartcontract(
+    node_url: &str,
+    contract: ContractOptions,
+) -> Result<kos_proto::tron::Transaction, Error> {
+    let url = format!("{}/wallet/triggersmartcontract", node_url);
+
+    create_transaction(url, contract).await
+}
+
 async fn create_transaction(
     url: String,
     contract: impl serde::Serialize,
 ) -> Result<kos_proto::tron::Transaction, Error> {
     let data = serde_json::to_string(&contract)?.as_bytes().to_vec();
     let result = utils::http_post::<serde_json::Value>(url, &data).await?;
-
     let raw_hex = unpack_result(result)?;
     pack_tx(&raw_hex)
 }
@@ -93,6 +109,12 @@ fn pack_tx(raw_hex: &str) -> Result<kos_proto::tron::Transaction, Error> {
 fn unpack_result(value: serde_json::Value) -> Result<String, Error> {
     if let Some(v) = value.get("raw_data_hex").and_then(|v| v.as_str()) {
         return Ok(v.to_string());
+    }
+
+    if let Some(transaction) = value.get("transaction") {
+        if let Some(v) = transaction.get("raw_data_hex").and_then(|v| v.as_str()) {
+            return Ok(v.to_string());
+        }
     }
 
     match value.get("Error") {
