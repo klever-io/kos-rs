@@ -2,6 +2,7 @@ use crate::utils;
 use kos_types::error::Error;
 use serde::Serialize;
 use serde_json::json;
+use crate::chains::TRXTransaction;
 
 #[derive(Serialize)]
 pub struct ContractOptions {
@@ -59,7 +60,7 @@ pub async fn broadcast(
 pub async fn create_transfer(
     node_url: &str,
     contract: kos_proto::tron::TransferContract,
-) -> Result<kos_proto::tron::Transaction, Error> {
+) -> Result<TRXTransaction, Error> {
     let url = format!("{}/wallet/createtransaction", node_url);
 
     create_transaction(url, contract).await
@@ -68,7 +69,7 @@ pub async fn create_transfer(
 pub async fn create_asset_transfer(
     node_url: &str,
     contract: kos_proto::tron::TransferAssetContract,
-) -> Result<kos_proto::tron::Transaction, Error> {
+) -> Result<TRXTransaction, Error> {
     let url = format!("{}/wallet/transferasset", node_url);
 
     create_transaction(url, contract).await
@@ -77,7 +78,7 @@ pub async fn create_asset_transfer(
 pub async fn trigger_smartcontract(
     node_url: &str,
     contract: ContractOptions,
-) -> Result<kos_proto::tron::Transaction, Error> {
+) -> Result<TRXTransaction, Error> {
     let url = format!("{}/wallet/triggersmartcontract", node_url);
 
     create_transaction(url, contract).await
@@ -86,23 +87,30 @@ pub async fn trigger_smartcontract(
 async fn create_transaction(
     url: String,
     contract: impl serde::Serialize,
-) -> Result<kos_proto::tron::Transaction, Error> {
+) -> Result<TRXTransaction, Error> {
     let data = serde_json::to_string(&contract)?.as_bytes().to_vec();
     let result = utils::http_post::<serde_json::Value>(url, &data).await?;
     let raw_hex = unpack_result(result)?;
     pack_tx(&raw_hex)
 }
 
-fn pack_tx(raw_hex: &str) -> Result<kos_proto::tron::Transaction, Error> {
+
+
+fn pack_tx(raw_hex: &str) -> Result<TRXTransaction, Error> {
     // encode raw data
     let raw_data_bytes = hex::decode(raw_hex)?;
     let raw_data: kos_proto::tron::transaction::Raw = kos_proto::from_bytes(raw_data_bytes)
         .map_err(|e| Error::InvalidTransaction(e.to_string()))?;
-
-    Ok(kos_proto::tron::Transaction {
+    
+    let transaction = kos_proto::tron::Transaction {
         raw_data: Some(raw_data),
         signature: Vec::new(),
         ret: Vec::new(),
+    };
+
+    Ok(TRXTransaction {
+        transaction,
+        raw_data_hex: raw_hex.parse()?,
     })
 }
 

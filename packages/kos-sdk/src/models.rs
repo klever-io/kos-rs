@@ -66,7 +66,7 @@ impl PathOptions {
 kos_types::enum_thing! {
     enum TransactionRaw {
         Klever(kos_proto::klever::Transaction),
-        Tron(kos_proto::tron::Transaction),
+        Tron(super::chains::TRXTransaction),
         Ethereum(super::chains::ETHTransaction),
         Polygon(super::chains::MATICTransaction),
         Bitcoin(super::chains::BTCTransaction),

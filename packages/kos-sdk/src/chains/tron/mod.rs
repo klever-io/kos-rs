@@ -1,5 +1,6 @@
 pub mod address;
 pub mod requests;
+pub mod transaction;
 
 use std::str::FromStr;
 
@@ -14,10 +15,13 @@ use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use web3::{ethabi, types::U256};
 
-#[derive(Debug, Copy, Clone)]
+use super::TRXTransaction;
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 #[wasm_bindgen]
 pub struct TRX {}
 
@@ -114,10 +118,10 @@ impl TRX {
         match tx.data {
             Some(TransactionRaw::Tron(trx_tx)) => {
                 let mut new_tx = trx_tx.clone();
-                let digest = TRX::hash_transaction(&trx_tx)?;
+                let digest = TRX::hash_transaction(&trx_tx.transaction)?;
                 let sig = TRX::sign_digest(digest.as_slice(), keypair)?;
 
-                new_tx.signature.push(sig);
+                new_tx.transaction.signature.push(sig);
                 let result = Transaction {
                     chain: tx.chain,
                     sender: tx.sender,
@@ -138,6 +142,13 @@ impl TRX {
         } else {
             Err(Error::InvalidTransaction("trx raw_data".to_string()))
         }
+    }
+
+    #[wasm_bindgen(js_name = "txFromJson")]
+    pub fn tx_from_json(raw: &str) -> Result<Vec<u8>, Error>  {
+        let tx: kos_proto::tron::Transaction = serde_json::from_str(raw)?;
+
+        Ok(TRX::hash_transaction(&tx)?)
     }
 
     #[wasm_bindgen(js_name = "hash")]
@@ -205,7 +216,7 @@ impl TRX {
         amount: &BigNumber,
         token: &str,
         node: &str,
-    ) -> Result<kos_proto::tron::Transaction, Error> {
+    ) -> Result<TRXTransaction, Error> {
         let contract = kos_proto::tron::TransferAssetContract {
             owner_address: addr_sender.as_bytes().to_vec(),
             to_address: addr_receiver.as_bytes().to_vec(),
@@ -223,7 +234,7 @@ impl TRX {
         token: &str,
         node: &str,
         fee_limit: &i64,
-    ) -> Result<kos_proto::tron::Transaction, Error> {
+    ) -> Result<TRXTransaction, Error> {
         let contract = evm20::get_contract_evm20();
         let func = contract.function("transfer").map_err(|e| {
             Error::InvalidMessage(format!("failed to get transfer function: {}", e))
@@ -276,7 +287,7 @@ impl TRX {
 
         let fee_limit = options.fee_limit.unwrap_or(0);
 
-        let tx: kos_proto::tron::Transaction = match options.token {
+        let tx: TRXTransaction = match options.token {
             Some(token) if token != "TRX" => {
                 // Check if TRC20 transfer
                 let valid_address = TRX::validate_address(&token, None)?;
@@ -315,13 +326,13 @@ impl TRX {
         let tx = match options.memo {
             Some(memo) => {
                 let mut tx = tx.clone();
-                tx.raw_data.as_mut().unwrap().data = memo.as_bytes().to_vec();
+                tx.transaction.raw_data.as_mut().unwrap().data = memo.as_bytes().to_vec();
                 tx
             }
             None => tx,
         };
 
-        let digest = TRX::hash_transaction(&tx)?;
+        let digest = TRX::hash_transaction(&tx.transaction)?;
 
         Ok(crate::models::Transaction {
             chain: chain::Chain::TRX,
@@ -338,12 +349,12 @@ impl TRX {
     ) -> Result<BroadcastResult, Error> {
         let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("TRX"));
 
-        let raw = tx
-            .data
-            .clone()
-            .ok_or_else(|| Error::ReqwestError("Missing transaction data".into()))?;
+        let raw = match tx.data.to_owned() {
+                Some(TransactionRaw::Tron(tx)) => tx,
+                _ => return Err(Error::InvalidTransaction("Invalid transaction type".into())),
+            };
 
-        let result = requests::broadcast(node.as_str(), raw.try_into()?).await?;
+        let result = requests::broadcast(node.as_str(), raw.transaction.try_into()?).await?;
 
         if let Some(false) = result.get("result").and_then(|v| v.as_bool()) {
             let error_message = result
@@ -454,7 +465,7 @@ mod tests {
         let t = result.unwrap().clone();
         match t.clone().data {
             Some(TransactionRaw::Tron(tx)) => {
-                let raw = &tx.raw_data.unwrap();
+                let raw = &tx.transaction.raw_data.unwrap();
                 assert_eq!(raw.contract.len(), 1);
                 let c: kos_proto::tron::TransferContract =
                     kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
@@ -488,7 +499,7 @@ mod tests {
         let t = result.unwrap().clone();
         match t.clone().data {
             Some(TransactionRaw::Tron(tx)) => {
-                let raw = &tx.raw_data.unwrap();
+                let raw = &tx.transaction.raw_data.unwrap();
                 assert_eq!(raw.contract.len(), 1);
                 let c: kos_proto::tron::TriggerSmartContract =
                     kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
