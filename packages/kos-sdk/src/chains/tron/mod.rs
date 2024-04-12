@@ -387,6 +387,14 @@ impl TRX {
 
         Ok(false)
     }
+
+    #[wasm_bindgen(js_name = "serializeTxIntoRawHex")]
+    pub fn serialize_tx_into_raw_hex(raw: &str) -> Result<String, Error> {
+        let raw: kos_proto::tron::Transaction = serde_json::from_str(raw)?;
+
+        let bytes = kos_proto::write_message(&raw);
+        Ok(hex::encode(bytes))
+    }
 }
 
 #[cfg(test)]
