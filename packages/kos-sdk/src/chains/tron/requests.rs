@@ -1,8 +1,8 @@
+use crate::chains::TRXTransaction;
 use crate::utils;
 use kos_types::error::Error;
 use serde::Serialize;
 use serde_json::json;
-use crate::chains::TRXTransaction;
 
 #[derive(Serialize)]
 pub struct ContractOptions {
@@ -94,14 +94,11 @@ async fn create_transaction(
     pack_tx(&raw_hex)
 }
 
-
-
 fn pack_tx(raw_hex: &str) -> Result<TRXTransaction, Error> {
     // encode raw data
     let raw_data_bytes = hex::decode(raw_hex)?;
     let raw_data: kos_proto::tron::transaction::Raw = kos_proto::from_bytes(raw_data_bytes)
         .map_err(|e| Error::InvalidTransaction(e.to_string()))?;
-    
     let transaction = kos_proto::tron::Transaction {
         raw_data: Some(raw_data),
         signature: Vec::new(),

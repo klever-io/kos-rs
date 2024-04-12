@@ -6,4 +6,3 @@ pub struct TRXTransaction {
     pub transaction: kos_proto::tron::Transaction,
     pub raw_data_hex: String,
 }
-

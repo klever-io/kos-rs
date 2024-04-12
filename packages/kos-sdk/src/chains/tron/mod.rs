@@ -145,10 +145,10 @@ impl TRX {
     }
 
     #[wasm_bindgen(js_name = "txFromJson")]
-    pub fn tx_from_json(raw: &str) -> Result<Vec<u8>, Error>  {
+    pub fn tx_from_json(raw: &str) -> Result<Vec<u8>, Error> {
         let tx: kos_proto::tron::Transaction = serde_json::from_str(raw)?;
 
-        Ok(TRX::hash_transaction(&tx)?)
+        TRX::hash_transaction(&tx)
     }
 
     #[wasm_bindgen(js_name = "hash")]
@@ -350,11 +350,11 @@ impl TRX {
         let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("TRX"));
 
         let raw = match tx.data.to_owned() {
-                Some(TransactionRaw::Tron(tx)) => tx,
-                _ => return Err(Error::InvalidTransaction("Invalid transaction type".into())),
-            };
+            Some(TransactionRaw::Tron(tx)) => tx,
+            _ => return Err(Error::InvalidTransaction("Invalid transaction type".into())),
+        };
 
-        let result = requests::broadcast(node.as_str(), raw.transaction.try_into()?).await?;
+        let result = requests::broadcast(node.as_str(), raw.transaction).await?;
 
         if let Some(false) = result.get("result").and_then(|v| v.as_bool()) {
             let error_message = result
