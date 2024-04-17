@@ -296,6 +296,16 @@ impl BTC {
         }
     }
 
+    #[wasm_bindgen(js_name = "serializeTx")]
+    pub fn serialize_tx(tx: Transaction) -> Result<String, Error> {
+        match tx.data {
+            Some(TransactionRaw::Bitcoin(btc_tx)) => Ok(btc_tx.btc_serialize_hex()),
+            _ => Err(Error::InvalidTransaction(
+                "not a bitcoin transaction".to_string(),
+            )),
+        }
+    }
+
     fn decode_magic(hex_magic: String) -> Result<Network, Error> {
         let magic_bytes = hex::decode(hex_magic)?;
         if magic_bytes.len() != 4 {
