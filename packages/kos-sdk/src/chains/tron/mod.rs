@@ -400,6 +400,7 @@ impl TRX {
 #[cfg(test)]
 mod tests {
     use std::assert_eq;
+    use std::str;
 
     use hex::FromHex;
 
@@ -455,7 +456,7 @@ mod tests {
             DEFAULT_ADDRESS.to_string(),
             BigNumber::from(10),
             None,
-            None,
+            Some("https://tron.node.klever.io".to_string()),
         ));
 
         assert!(result.is_ok());
