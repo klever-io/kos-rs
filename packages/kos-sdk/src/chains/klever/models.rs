@@ -20,7 +20,10 @@ pub struct DataAccount {
 
 impl std::fmt::Display for ResultAccount {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({})", serde_json::to_string(&self).unwrap())
+        match serde_json::to_string(&self) {
+            Ok(json_str) => write!(f, "({})", json_str),
+            Err(e) => write!(f, "{}", e),
+        }
     }
 }
 
@@ -137,6 +140,9 @@ pub struct TransferTXRequest {
 
 impl std::fmt::Display for TransferTXRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({})", serde_json::to_string(&self).unwrap())
+        match serde_json::to_string(&self) {
+            Ok(json_str) => write!(f, "({})", json_str),
+            Err(e) => write!(f, "{}", e),
+        }
     }
 }
