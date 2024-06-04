@@ -14,9 +14,14 @@ deny = [
 ]
 skip = [
     { name = "bitflags", version = "=1.3.2" }, # openssl
-    { name = "base64", version = "=0.13.1" }, # openssl
-    { name = "socket2", version = "=0.4.10" }, #
-    { name = "idna", version = "=0.4.0" }, # 
+    { name = "base64", version = "<=0.22" }, # openssl
+    { name = "idna", version = "=0.4.0" }, #
+    { name = "winreg", version = "<=0.52" },
+    { name = "http", version = "<=1.1" },
+    { name = "http-body", version = "<=1.0.0" },
+    { name = "hyper", version = "<=1.3.1" },
+    { name = "reqwest", version = "<=0.12.4" },
+    { name = "rustls-pemfile", version = "1.0.4" }
 ]
 skip-tree = [
     { name = "prost-wkt-types", version = "=0.4.2", depth = 20 }, # prost-wkt-build

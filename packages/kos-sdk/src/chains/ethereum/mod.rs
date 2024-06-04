@@ -578,7 +578,7 @@ mod tests {
 
         assert_eq!(
             tx.hash.to_string(),
-            "8fa67a23aa532d7a844abe36f028a87b897cb3a3e53c66c7402ad4c766cd49d8"
+            "fa2b84b45d28888c43c0bda80000e4a4d2040017f3b6e4a31e7d8a4ace27db29"
         );
 
         let eth_tx = match tx.data.clone() {
@@ -587,13 +587,13 @@ mod tests {
         };
 
         assert_eq!(eth_tx.value.to_string(), "0");
-        assert_eq!(hex::encode(eth_tx.data), "23b872dd0000000000000000000000009858effd232b4033e47d90003d41ec34ecaeda940000000000000000000000006fac4d18c912343bf86fa7049364dd4e424ab9c000000000000000000000000000000000000000000000000000000000000003e8");
+        assert_eq!(hex::encode(eth_tx.data), "a9059cbb0000000000000000000000006fac4d18c912343bf86fa7049364dd4e424ab9c000000000000000000000000000000000000000000000000000000000000003e8");
 
         let signed = ETH::sign(tx, &get_default_secret());
         assert!(signed.is_ok());
         assert_eq!(
             signed.unwrap().hash.to_string(),
-            "df35692c5d74f0d0cdc29f6c0067e32294902f414b7b8a08992557f05794470c"
+            "f4c27caf4a9e3718d217f315e8fed3f9b739fa61c78e5ab43a7ca7d4fd1c010f"
         );
     }
 

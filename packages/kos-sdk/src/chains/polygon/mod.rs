@@ -214,6 +214,10 @@ mod tests {
     const DEFAULT_MNEMONIC: &str =
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
+    fn init() {
+        std::env::set_var("NODE_MATIC", "https://matic.node.klever.io");
+    }
+
     fn get_default_secret() -> KeyPair {
         let b = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
         let kp = Secp256k1KeyPair::new(b.into());
@@ -284,6 +288,7 @@ mod tests {
 
     #[test]
     fn test_send_erc20() {
+        std::env::set_var("NODE_MATIC", "https://matic.node.klever.io");
         let options = models::SendOptions {
             data: Some(models::Options::Polygon(kos_proto::options::MATICOptions {
                 eth: kos_proto::options::ETHOptions {
@@ -307,10 +312,9 @@ mod tests {
             None,
         ))
         .unwrap();
-
         assert_eq!(
             tx.hash.to_string(),
-            "99851c74c0bd74345c5361b46ac128a3d37c3af1998af53f8c91740f3b90d6e8"
+            "531d345f8aa0a5ff3625d758e53ff601fa8e2a060bc7a3a1b83e50e927fbb5f5"
         );
 
         let polygon_tx = match tx.data.clone() {
@@ -319,18 +323,19 @@ mod tests {
         };
 
         assert_eq!(polygon_tx.eth.value.to_string(), "0");
-        assert_eq!(hex::encode(polygon_tx.eth.data), "23b872dd0000000000000000000000009858effd232b4033e47d90003d41ec34ecaeda940000000000000000000000006fac4d18c912343bf86fa7049364dd4e424ab9c000000000000000000000000000000000000000000000000000000000000003e8");
+        assert_eq!(hex::encode(polygon_tx.eth.data), "a9059cbb0000000000000000000000006fac4d18c912343bf86fa7049364dd4e424ab9c000000000000000000000000000000000000000000000000000000000000003e8");
 
         let signed = MATIC::sign(tx, &get_default_secret());
         assert!(signed.is_ok());
         assert_eq!(
             signed.unwrap().hash.to_string(),
-            "af025f06a080ce062313f662a67adb34ccf700777ef1120f9f8d44ed269e83e0"
+            "1b570ed15ef11db9860618fce69ac0a6b50cef5403cefa94c86483103ae2bde3"
         );
     }
 
     #[test]
     fn test_get_balance() {
+        init();
         let balance =
             tokio_test::block_on(MATIC::get_balance(DEFAULT_ADDRESS, None, None)).unwrap();
 
@@ -339,6 +344,7 @@ mod tests {
 
     #[test]
     fn test_get_balance_erc20() {
+        init();
         let balance = tokio_test::block_on(MATIC::get_balance(
             DEFAULT_ADDRESS,
             Some("0x19a935cbaaa4099072479d521962588d7857d717".to_string()),

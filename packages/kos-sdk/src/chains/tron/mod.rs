@@ -387,11 +387,20 @@ impl TRX {
 
         Ok(false)
     }
+
+    #[wasm_bindgen(js_name = "serializeTxIntoRawHex")]
+    pub fn serialize_tx_into_raw_hex(raw: &str) -> Result<String, Error> {
+        let raw: kos_proto::tron::Transaction = serde_json::from_str(raw)?;
+
+        let bytes = kos_proto::write_message(&raw);
+        Ok(hex::encode(bytes))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::assert_eq;
+    use std::str;
 
     use hex::FromHex;
 
@@ -447,7 +456,7 @@ mod tests {
             DEFAULT_ADDRESS.to_string(),
             BigNumber::from(10),
             None,
-            None,
+            Some("https://tron.node.klever.io".to_string()),
         ));
 
         assert!(result.is_ok());

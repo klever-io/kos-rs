@@ -18,9 +18,12 @@ pub struct DataAccount {
     pub account: Account,
 }
 
-impl ToString for ResultAccount {
-    fn to_string(&self) -> String {
-        serde_json::to_string(&self).unwrap()
+impl std::fmt::Display for ResultAccount {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match serde_json::to_string(&self) {
+            Ok(json_str) => write!(f, "({})", json_str),
+            Err(e) => write!(f, "{}", e),
+        }
     }
 }
 
@@ -135,8 +138,11 @@ pub struct TransferTXRequest {
     pub kda_royalties: Option<i64>,
 }
 
-impl ToString for TransferTXRequest {
-    fn to_string(&self) -> String {
-        serde_json::to_string(&self).unwrap()
+impl std::fmt::Display for TransferTXRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match serde_json::to_string(&self) {
+            Ok(json_str) => write!(f, "({})", json_str),
+            Err(e) => write!(f, "{}", e),
+        }
     }
 }
