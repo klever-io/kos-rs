@@ -214,6 +214,10 @@ mod tests {
     const DEFAULT_MNEMONIC: &str =
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
+    fn init() {
+        std::env::set_var("NODE_MATIC", "https://matic.node.klever.io");
+    }
+
     fn get_default_secret() -> KeyPair {
         let b = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
         let kp = Secp256k1KeyPair::new(b.into());
@@ -284,6 +288,7 @@ mod tests {
 
     #[test]
     fn test_send_erc20() {
+        std::env::set_var("NODE_MATIC", "https://matic.node.klever.io");
         let options = models::SendOptions {
             data: Some(models::Options::Polygon(kos_proto::options::MATICOptions {
                 eth: kos_proto::options::ETHOptions {
@@ -330,6 +335,7 @@ mod tests {
 
     #[test]
     fn test_get_balance() {
+        init();
         let balance =
             tokio_test::block_on(MATIC::get_balance(DEFAULT_ADDRESS, None, None)).unwrap();
 
@@ -338,6 +344,7 @@ mod tests {
 
     #[test]
     fn test_get_balance_erc20() {
+        init();
         let balance = tokio_test::block_on(MATIC::get_balance(
             DEFAULT_ADDRESS,
             Some("0x19a935cbaaa4099072479d521962588d7857d717".to_string()),
