@@ -45,6 +45,7 @@ runs:
         key: rust-toolchain-${{ runner.os }}-stable
 
     - name: Install Rust toolchain
+      shell: bash
       run: |
         set -e
         rustup update --no-self-update stable
