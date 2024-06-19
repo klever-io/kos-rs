@@ -46,6 +46,7 @@ runs:
 
     - name: Install Rust toolchain
       run: |
+        set -e
         rustup update --no-self-update stable
         rustup component add --toolchain stable rustfmt clippy
         rustup default stable
