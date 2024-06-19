@@ -615,4 +615,17 @@ mod tests {
             _ => assert!(false),
         }
     }
+
+    #[test]
+    fn test_serialize_raw_data_empty_input() {
+        let result = TRX::serialize_raw_data_into_hex_string("");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_serialize_raw_data_invalid_format() {
+        let invalid_tx = "invalid_json_format";
+        let result = TRX::serialize_raw_data_into_hex_string(invalid_tx);
+        assert!(result.is_err());
+    }
 }
