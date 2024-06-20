@@ -369,7 +369,7 @@ impl BTC {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dotenv;
+    use dotenvy;
     use hex::{FromHex, ToHex};
     use kos_types::Bytes32;
     use std::sync::Once;
@@ -384,7 +384,7 @@ mod tests {
 
     fn _init() {
         _INIT.call_once(|| {
-            dotenv::from_filename(".env.nodes").ok();
+            dotenvy::from_filename(".env.nodes").ok();
         });
     }
 

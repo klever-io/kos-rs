@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod klever_test {
-    use dotenv;
+    use dotenvy;
     use std::assert_eq;
     use std::str;
 
@@ -22,7 +22,7 @@ mod klever_test {
 
     fn _init() {
         _INIT.call_once(|| {
-            dotenv::from_filename(".env.nodes").ok();
+            dotenvy::from_filename(".env.nodes").ok();
         });
     }
 
