@@ -7,8 +7,6 @@ members = [
     "packages/kos-crypto",
     "packages/kos-sdk",
 ]
-
-[profile.release]
 # This makes the compiled code faster and smaller, but it makes compiling slower,
 # so it's only enabled in release mode.
 # lto = true
@@ -33,7 +31,6 @@ ed25519-dalek = { version = "2" }
 coins-bip32 = { version = "0.8", default-features = false }
 coins-bip39 = { version = "0.8", default-features = false, features = ["english"] }
 bytes = { version = "1.4.0", default-features = false }
-elliptic-curve = { version = "0.13.4", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 rand = "0.8"
 zeroize = { version = "1.5", features = ["derive"] }

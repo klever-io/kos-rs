@@ -477,14 +477,24 @@ impl ETH {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use dotenv;
     use hex::FromHex;
     use kos_types::Bytes32;
+    use std::sync::Once;
 
     const DEFAULT_PRIVATE_KEY: &str =
         "1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727";
     const DEFAULT_ADDRESS: &str = "0x9858EfFD232B4033E47d90003D41EC34EcaEda94";
     const DEFAULT_MNEMONIC: &str =
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+
+    static _INIT: Once = Once::new();
+
+    fn _init() {
+        _INIT.call_once(|| {
+            dotenv::from_filename(".env.nodes").ok();
+        });
+    }
 
     fn get_default_secret() -> KeyPair {
         let b = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
@@ -608,7 +618,7 @@ mod tests {
     fn test_get_balance_erc20() {
         let balance = tokio_test::block_on(ETH::get_balance(
             DEFAULT_ADDRESS,
-            Some("0xc12d1c73ee7dc3615ba4e37e4abfdbddfa38907e".to_string()),
+            Some("0xC12D1c73eE7DC3615BA4e37E4ABFdbDDFA38907E".to_string()),
             None,
         ));
         assert!(balance.is_ok());

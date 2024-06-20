@@ -137,7 +137,7 @@ mod tests {
 
     #[test]
     fn test_select_utxos() {
-        let node = &crate::utils::get_node_url("BTC");
+        let node = "https://bitcoin.explorer.klever.io";
 
         let amount = BigNumber::from_string("20000000").unwrap();
         let list = tokio_test::block_on(select_utxos(
@@ -166,7 +166,7 @@ mod tests {
 
     #[test]
     fn test_spend_all() {
-        let node = &crate::utils::get_node_url("BTC");
+        let node = "https://bitcoin.explorer.klever.io";
 
         let selected = tokio_test::block_on(select_utxos(
             node,
