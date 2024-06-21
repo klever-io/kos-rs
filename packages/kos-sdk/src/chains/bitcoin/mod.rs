@@ -369,14 +369,24 @@ impl BTC {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use dotenvy;
     use hex::{FromHex, ToHex};
     use kos_types::Bytes32;
+    use std::sync::Once;
 
     const DEFAULT_PRIVATE_KEY: &str =
         "4604b4b710fe91f584fff084e1a9159fe4f8408fff380596a604948474ce4fa3";
     const DEFAULT_ADDRESS: &str = "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu";
     const DEFAULT_MNEMONIC: &str =
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+
+    static _INIT: Once = Once::new();
+
+    fn _init() {
+        _INIT.call_once(|| {
+            dotenvy::from_filename(".env.nodes").ok();
+        });
+    }
 
     fn get_default_secret() -> KeyPair {
         let b = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
@@ -436,7 +446,6 @@ mod tests {
     fn test_send_and_sign() {
         let btc_address_sender = "tb1q09hyefvam4x5hrnnavx6sphv797f0l5xcqt7cl";
         let btc_address_receiver = "tb1qgg29y2z8xsvav65j5kx2pztqff4g2ctn6a4x0u";
-        let node = "https://tbtc1.trezor.io";
 
         let testnet_magic = "0b110907";
 
@@ -453,7 +462,7 @@ mod tests {
             btc_address_receiver.to_string(),
             BigNumber::from(1000),
             Some(option),
-            Some(node.to_string()),
+            None,
         ))
         .unwrap();
 

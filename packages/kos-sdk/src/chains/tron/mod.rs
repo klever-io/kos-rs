@@ -395,6 +395,16 @@ impl TRX {
         let bytes = kos_proto::write_message(&raw);
         Ok(hex::encode(bytes))
     }
+
+    #[wasm_bindgen(js_name = "serializeRawDataIntoHexString")]
+    pub fn serialize_raw_data_into_hex_string(tx: &str) -> Result<String, Error> {
+        let t: kos_proto::tron::Transaction = serde_json::from_str(tx)?;
+        let raw_data = t.raw_data.ok_or(Error::InvalidTransaction(
+            "Transaction raw data is missing.".to_string(),
+        ))?;
+        let bytes = kos_proto::write_message(&raw_data);
+        Ok(hex::encode(bytes))
+    }
 }
 
 #[cfg(test)]
@@ -576,5 +586,48 @@ mod tests {
             let result = result.unwrap();
             assert_eq!(result, false, "address: {}", addr);
         }
+    }
+
+    #[test]
+    fn test_serialize_raw_data_into_hex_string() {
+        let result = tokio_test::block_on(TRX::send(
+            "TAUN6FwrnwwmaEqYcckffC7wYmbaS6cBiX".to_string(),
+            DEFAULT_ADDRESS.to_string(),
+            BigNumber::from(10),
+            None,
+            Some("https://tron.node.klever.io".to_string()),
+        ));
+
+        let t = result.unwrap().clone();
+        match t.clone().data {
+            Some(TransactionRaw::Tron(tx)) => {
+                let raw = tx.clone().raw_data.unwrap();
+                assert_eq!(raw.contract.len(), 1);
+                let c: kos_proto::tron::TransferContract =
+                    kos_proto::unpack_from_option_any(&raw.contract.get(0).unwrap().parameter)
+                        .unwrap();
+
+                assert_eq!(c.amount, 10);
+                let raw_data_string = t.get_raw().unwrap();
+                let hex_string_tx =
+                    TRX::serialize_raw_data_into_hex_string(&raw_data_string).unwrap();
+                println!("tx: {:?}", hex_string_tx);
+                assert!(hex_string_tx.len() > 0);
+            }
+            _ => assert!(false),
+        }
+    }
+
+    #[test]
+    fn test_serialize_raw_data_empty_input() {
+        let result = TRX::serialize_raw_data_into_hex_string("");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_serialize_raw_data_invalid_format() {
+        let invalid_tx = "invalid_json_format";
+        let result = TRX::serialize_raw_data_into_hex_string(invalid_tx);
+        assert!(result.is_err());
     }
 }

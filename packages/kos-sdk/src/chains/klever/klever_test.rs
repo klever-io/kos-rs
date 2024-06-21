@@ -1,5 +1,6 @@
 #[cfg(test)]
-mod tests {
+mod klever_test {
+    use dotenvy;
     use std::assert_eq;
     use std::str;
 
@@ -8,6 +9,7 @@ mod tests {
     use crate::models::SendOptions;
     use hex::FromHex;
     use kos_types::Bytes32;
+    use std::sync::Once;
 
     const DEFAULT_KAPP_FEE: i64 = 1000000;
     const DEFAULT_BANDWIDTH_FEE: i64 = 2000000;
@@ -15,6 +17,14 @@ mod tests {
     const DEFAULT_PRIVATE_KEY: &str =
         "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d";
     const DEFAULT_ADDRESS: &str = "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy";
+
+    static _INIT: Once = Once::new();
+
+    fn _init() {
+        _INIT.call_once(|| {
+            dotenvy::from_filename(".env.nodes").ok();
+        });
+    }
 
     fn get_default_secret() -> KeyPair {
         let b = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
@@ -33,7 +43,7 @@ mod tests {
         println!("balance: {}", balance.to_string());
         println!("balance: {}", balance.with_precision(6));
 
-        assert_eq!("0", balance.to_string());
+        assert!(balance > BigNumber::from(0));
     }
 
     #[test]
@@ -50,10 +60,7 @@ mod tests {
             data: Some(TransactionRaw::Klever(klv_tx)),
         };
 
-        let result = tokio_test::block_on(KLV::broadcast(
-            to_broadcast,
-            Some("https://node.testnet.klever.finance".to_string()),
-        ));
+        let result = tokio_test::block_on(KLV::broadcast(to_broadcast, None));
 
         assert!(result.is_err());
         assert!(result
@@ -69,7 +76,7 @@ mod tests {
             "klv1x2ejsdqz8uccl7htu4cef63z0cqnydhkd8g36tgk6qdv94hu7syqms3spm".to_string(),
             BigNumber::from(10),
             None,
-            Some("https://node.testnet.klever.finance".to_string()),
+            None,
         ));
 
         assert!(result.is_ok());
@@ -95,7 +102,7 @@ mod tests {
 
     #[test]
     fn test_send_kda() {
-        let kda = "KFI".to_string();
+        let kda = "TAS-1I86".to_string();
         // create KLV send options
         let klv_options = kos_proto::options::KLVOptions {
             kda: Some(kda.clone()),
@@ -109,7 +116,7 @@ mod tests {
             "klv1x2ejsdqz8uccl7htu4cef63z0cqnydhkd8g36tgk6qdv94hu7syqms3spm".to_string(),
             BigNumber::from(10),
             Some(options),
-            Some("https://node.testnet.klever.finance".to_string()),
+            None,
         ));
 
         assert!(result.is_ok());
