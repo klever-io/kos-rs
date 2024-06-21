@@ -48,7 +48,7 @@ jobs:
 
       - name: Restore .env file
         run: |
-          echo ${{ vars.NODES_ENV }} > packages/kos-sdk/.env.nodes
+          echo "${{ vars.NODES_ENV }}" > packages/kos-sdk/.env.nodes
 
       - name: Run Tests
         run: cargo test
