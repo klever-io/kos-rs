@@ -4,6 +4,7 @@ mod ethereum;
 mod evm20;
 mod klever;
 mod polygon;
+mod substrate;
 mod tron;
 
 pub use self::bitcoin::BTC;

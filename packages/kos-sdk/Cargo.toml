@@ -32,12 +32,19 @@ hex = { workspace = true }
 rand = { workspace = true }
 coins-bip39 = { workspace = true }
 pem = "3"
-web3 = { version = "0.19", default-features = false, features = ["http-tls", "wasm"] }
+web3 = { version = "0.19", default-features = false, features = [
+    "http-tls",
+    "wasm",
+] }
 bitcoin = { version = "0.30" }
 secp256k1 = { workspace = true, features = ["serde", "bitcoin_hashes"] }
 rlp = "0.5"
 
-reqwest = { workspace = true, default-features = false, features = ["rustls-tls", "blocking", "json"] }
+reqwest = { workspace = true, default-features = false, features = [
+    "rustls-tls",
+    "blocking",
+    "json",
+] }
 wasm-bindgen-futures = "0.4"
 
 kos-types = { workspace = true, features = ["serde"] }
@@ -47,8 +54,13 @@ kos-utils = { workspace = true }
 pbjson = { workspace = true }
 pbjson-types = { workspace = true }
 prost = { workspace = true }
+subxt = "0.37.0"
+subxt-signer = "0.37.0"
 
 [dev-dependencies]
+sp-core = "34.0.0"
+sp-runtime = "38.0.0"
+tokio = { version = "1", features = ["full"] }
 tokio-test = "*"
 dotenvy = "0.15.7"
 
