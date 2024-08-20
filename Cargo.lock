@@ -1052,6 +1052,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "curve25519-dalek-ng"
+version = "4.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c359b7249347e46fb28804470d071c921156ad62b3eef5d34e2ba867533dec8"
+dependencies = [
+ "byteorder",
+ "digest 0.9.0",
+ "rand_core",
+ "subtle-ng",
+ "zeroize",
+]
+
+[[package]]
 name = "darling"
 version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2696,6 +2709,7 @@ dependencies = [
  "sha1",
  "sha2 0.10.8",
  "sha3",
+ "subxt-signer 0.30.1",
  "wasm-bindgen",
  "zeroize",
 ]
@@ -2728,6 +2742,7 @@ name = "kos-sdk"
 version = "0.1.0"
 dependencies = [
  "base58",
+ "base64 0.22.1",
  "bech32",
  "bitcoin",
  "coins-bip39",
@@ -2757,7 +2772,8 @@ dependencies = [
  "sp-runtime",
  "strum",
  "subxt",
- "subxt-signer",
+ "subxt-core 0.0.1",
+ "subxt-signer 0.37.0",
  "tokio",
  "tokio-test",
  "wasm-bindgen",
@@ -4353,6 +4369,23 @@ dependencies = [
 
 [[package]]
 name = "schnorrkel"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "844b7645371e6ecdf61ff246ba1958c29e802881a749ae3fb1993675d210d28d"
+dependencies = [
+ "arrayref",
+ "arrayvec 0.7.4",
+ "curve25519-dalek-ng",
+ "merlin",
+ "rand_core",
+ "serde_bytes",
+ "sha2 0.9.9",
+ "subtle-ng",
+ "zeroize",
+]
+
+[[package]]
+name = "schnorrkel"
 version = "0.11.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8de18f6d8ba0aad7045f5feae07ec29899c1112584a38509a84ad7b04451eaa0"
@@ -4749,7 +4782,7 @@ dependencies = [
  "rand",
  "rand_chacha",
  "ruzstd",
- "schnorrkel",
+ "schnorrkel 0.11.4",
  "serde",
  "serde_json",
  "sha2 0.10.8",
@@ -4851,7 +4884,7 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-io",
- "sp-std",
+ "sp-std 14.0.0",
 ]
 
 [[package]]
@@ -4866,7 +4899,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-std",
+ "sp-std 14.0.0",
  "static_assertions",
 ]
 
@@ -4899,7 +4932,7 @@ dependencies = [
  "primitive-types",
  "rand",
  "scale-info",
- "schnorrkel",
+ "schnorrkel 0.11.4",
  "secp256k1 0.28.2",
  "secrecy",
  "serde",
@@ -4907,7 +4940,7 @@ dependencies = [
  "sp-debug-derive",
  "sp-externalities",
  "sp-runtime-interface",
- "sp-std",
+ "sp-std 14.0.0",
  "sp-storage",
  "ss58-registry",
  "substrate-bip39",
@@ -4915,6 +4948,21 @@ dependencies = [
  "tracing",
  "w3f-bls",
  "zeroize",
+]
+
+[[package]]
+name = "sp-core-hashing"
+version = "9.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ee599a8399448e65197f9a6cee338ad192e9023e35e31f22382964c3c174c68"
+dependencies = [
+ "blake2b_simd",
+ "byteorder",
+ "digest 0.10.7",
+ "sha2 0.10.8",
+ "sha3",
+ "sp-std 8.0.0",
+ "twox-hash",
 ]
 
 [[package]]
@@ -4973,7 +5021,7 @@ dependencies = [
  "sp-keystore",
  "sp-runtime-interface",
  "sp-state-machine",
- "sp-std",
+ "sp-std 14.0.0",
  "sp-tracing",
  "sp-trie",
  "tracing",
@@ -5025,7 +5073,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-io",
- "sp-std",
+ "sp-std 14.0.0",
  "sp-weights",
 ]
 
@@ -5042,7 +5090,7 @@ dependencies = [
  "primitive-types",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
- "sp-std",
+ "sp-std 14.0.0",
  "sp-storage",
  "sp-tracing",
  "sp-wasm-interface",
@@ -5083,6 +5131,12 @@ dependencies = [
  "tracing",
  "trie-db",
 ]
+
+[[package]]
+name = "sp-std"
+version = "8.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53458e3c57df53698b3401ec0934bea8e8cfce034816873c0b0abbd83d7bac0d"
 
 [[package]]
 name = "sp-std"
@@ -5253,7 +5307,7 @@ checksum = "ca58ffd742f693dc13d69bdbb2e642ae239e0053f6aab3b104252892f856700a"
 dependencies = [
  "hmac 0.12.1",
  "pbkdf2",
- "schnorrkel",
+ "schnorrkel 0.11.4",
  "sha2 0.10.8",
  "zeroize",
 ]
@@ -5263,6 +5317,12 @@ name = "subtle"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
+
+[[package]]
+name = "subtle-ng"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 
 [[package]]
 name = "subxt"
@@ -5290,7 +5350,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-crypto-hashing",
- "subxt-core",
+ "subxt-core 0.37.0",
  "subxt-lightclient",
  "subxt-macro",
  "subxt-metadata",
@@ -5320,6 +5380,12 @@ dependencies = [
  "thiserror",
  "tokio",
 ]
+
+[[package]]
+name = "subxt-core"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19edd7c615b78a93cc306ae223afa62547fc40074ca06382328cf62fb8fc7276"
 
 [[package]]
 name = "subxt-core"
@@ -5395,6 +5461,27 @@ dependencies = [
 
 [[package]]
 name = "subxt-signer"
+version = "0.30.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8829de70ce3df90bfeccee1d80a29d554bc0219d7031ed67c11679e3ddc95b7d"
+dependencies = [
+ "bip39",
+ "hex",
+ "hmac 0.12.1",
+ "parity-scale-codec",
+ "pbkdf2",
+ "regex",
+ "schnorrkel 0.10.2",
+ "secp256k1 0.27.0",
+ "secrecy",
+ "sha2 0.10.8",
+ "sp-core-hashing",
+ "thiserror",
+ "zeroize",
+]
+
+[[package]]
+name = "subxt-signer"
 version = "0.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f49888ae6ae90fe01b471193528eea5bd4ed52d8eecd2d13f4a2333b87388850"
@@ -5406,12 +5493,12 @@ dependencies = [
  "parity-scale-codec",
  "pbkdf2",
  "regex",
- "schnorrkel",
+ "schnorrkel 0.11.4",
  "secp256k1 0.28.2",
  "secrecy",
  "sha2 0.10.8",
  "sp-crypto-hashing",
- "subxt-core",
+ "subxt-core 0.37.0",
  "zeroize",
 ]
 

@@ -6,6 +6,7 @@ mod klever;
 mod polygon;
 mod substrate;
 mod tron;
+mod polkadot;
 
 pub use self::bitcoin::BTC;
 pub use default::NONE;

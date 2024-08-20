@@ -1,8 +1,9 @@
 use crate::ed25519;
 use crate::secp256k1;
+use subxt_signer::{sr25519, sr25519::verify, sr25519::Keypair};
 
 use std::fmt;
-
+use std::fmt::Pointer;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -11,6 +12,7 @@ enum KeyType {
     Ed25519,
     Secp256k1,
     Secp256k1Compressed,
+    Sr25519,
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
@@ -19,6 +21,7 @@ pub struct KeyPair {
     key_type: KeyType,
     ed25519: Option<ed25519::Ed25519KeyPair>,
     secp256k1: Option<secp256k1::Secp256k1KeyPair>,
+    sr25519: Option<Keypair>
 }
 
 #[wasm_bindgen]
@@ -28,6 +31,7 @@ impl KeyPair {
             key_type: KeyType::Default,
             ed25519: None,
             secp256k1: None,
+            sr25519: None,
         }
     }
 
@@ -36,6 +40,7 @@ impl KeyPair {
             key_type: KeyType::Ed25519,
             ed25519: Some(kp),
             secp256k1: None,
+            sr25519: None,
         }
     }
 
@@ -48,9 +53,21 @@ impl KeyPair {
             },
             ed25519: None,
             secp256k1: Some(kp),
+            sr25519: None,
+        }
+    }
+
+    pub fn new_sr25519(kp: sr25519::Keypair) -> Self {
+        Self {
+            key_type: KeyType::Sr25519,
+            ed25519: None,
+            secp256k1: None,
+            sr25519: Some(kp),
         }
     }
 }
+
+
 
 impl KeyPair {
     pub fn sign_digest(&self, digest: &[u8]) -> Vec<u8> {
@@ -59,6 +76,7 @@ impl KeyPair {
             KeyType::Ed25519 => self.ed25519.as_ref().unwrap().sign_digest(digest),
             KeyType::Secp256k1 => self.secp256k1.as_ref().unwrap().sign_digest(digest),
             KeyType::Secp256k1Compressed => self.secp256k1.as_ref().unwrap().sign_digest(digest),
+            KeyType::Sr25519 => self.sr25519.as_ref().unwrap().sign(digest).0.to_vec(),
         }
     }
 
@@ -80,6 +98,12 @@ impl KeyPair {
                 .as_ref()
                 .unwrap()
                 .verify_digest(digest, signature, public_key),
+            KeyType::Sr25519 => {
+                let pub_key = sr25519::PublicKey::try_from(public_key).unwrap();
+
+                verify(digest.as_ref(), signature, &pub_key)
+            }
+
         }
     }
 }
@@ -104,6 +128,7 @@ impl KeyPair {
             KeyType::Secp256k1 | KeyType::Secp256k1Compressed => {
                 self.secp256k1.as_ref().unwrap().public_key()
             }
+            KeyType::Sr25519 => self.sr25519.as_ref().unwrap().public_key().0.to_vec()
         }
     }
 
@@ -119,6 +144,7 @@ impl KeyPair {
             KeyType::Secp256k1 | KeyType::Secp256k1Compressed => {
                 self.secp256k1.as_ref().unwrap().secret_key()
             }
+            KeyType::Sr25519 => Vec::new() // Find a way to get secret key
         }
     }
 

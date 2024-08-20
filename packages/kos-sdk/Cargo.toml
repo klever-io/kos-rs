@@ -56,6 +56,8 @@ pbjson-types = { workspace = true }
 prost = { workspace = true }
 subxt = "0.37.0"
 subxt-signer = "0.37.0"
+base64 = "0.22.1"
+subxt-core = "0.0.1"
 
 [dev-dependencies]
 sp-core = "34.0.0"

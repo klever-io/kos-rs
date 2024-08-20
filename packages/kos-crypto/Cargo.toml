@@ -31,3 +31,4 @@ cbc = { version = "0.1", features = ["block-padding", "std"] }
 pem = "3"
 pbkdf2 = { version = "0.12", features = ["simple"] }
 base64 = "0.21"
+subxt-signer = "0.30.1"
