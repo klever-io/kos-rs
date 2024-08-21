@@ -32,3 +32,4 @@ pem = "3"
 pbkdf2 = { version = "0.12", features = ["simple"] }
 base64 = "0.21"
 subxt-signer = "0.30.1"
+sp-core = "34.0.0"

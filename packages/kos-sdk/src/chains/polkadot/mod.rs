@@ -16,6 +16,7 @@ use kos_types::number::BigNumber;
 
 use wasm_bindgen::prelude::*;
 use web3::{ethabi, types::U256};
+use kos_crypto::sr25519::Sr25519KeyPair;
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
@@ -43,8 +44,8 @@ impl DOT {
         let mut pk_slice = [0u8; 32];
         pk_slice.copy_from_slice(private_key);
 
-        let kp = Secp256k1KeyPair::new(pk_slice);
-        Ok(KeyPair::new_secp256k1(kp))
+        let kp = Sr25519KeyPair::new(pk_slice);
+        Ok(KeyPair::new_sr25519(kp))
     }
 
     #[wasm_bindgen(js_name = "keypairFromMnemonic")]
@@ -53,13 +54,13 @@ impl DOT {
         path: &str,
         password: Option<String>,
     ) -> Result<KeyPair, Error> {
-        let kp = Secp256k1KeyPair::new_from_mnemonic_phrase_with_path(
+        let kp = Sr25519KeyPair::new_from_mnemonic_phrase_with_path(
             mnemonic,
             path,
             password.as_deref(),
         )?;
 
-        Ok(KeyPair::new_secp256k1(kp))
+        Ok(KeyPair::new_sr25519(kp))
     }
 
     #[wasm_bindgen(js_name = "getAddressFromKeyPair")]
@@ -71,14 +72,7 @@ impl DOT {
     pub fn get_path(options: &PathOptions) -> Result<String, Error> {
         let index = options.index;
 
-        let is_legacy = options.is_legacy.unwrap_or(false);
-
-        if is_legacy {
-            Ok(format!("m/44'/{}'/{}'", BIP44_PATH, index))
-        } else {
-            // use account 0 index X
-            Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index))
-        }
+        Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index))
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
