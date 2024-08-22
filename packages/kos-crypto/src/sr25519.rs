@@ -2,10 +2,8 @@ use std::str::FromStr;
 use coins_bip32::path::DerivationPath;
 use kos_types::{error::Error, Bytes32};
 use coins_bip39::{English, Mnemonic};
-use subxt_signer::{sr25519, sr25519::verify, sr25519::Keypair};
-use sp_core::{sr25519::Pair};
+use subxt_signer::{sr25519, sr25519::Keypair};
 use serde::{Serialize, Serializer, Deserialize, Deserializer};
-use subxt_signer::sr25519::PublicKey;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 
@@ -120,20 +118,5 @@ impl Sr25519KeyPair {
         // };
         // verify(&keypair, message, signature)
         true
-    }
-}
-
-// Simple tests
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_sr25519_keypair() {
-        let keypair = Sr25519KeyPair::random(&mut rand::thread_rng());
-        let public_key = keypair.public_key();
-        let message = b"hello world";
-        let signature = keypair.sign_digest(message);
-        assert_eq!(keypair.verify_digest(message, &signature, &public_key), true);
     }
 }

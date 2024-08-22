@@ -1,21 +1,17 @@
-// pub mod address;
-// pub mod requests;
+mod address;
 
 use std::str::FromStr;
 
 use crate::{
     chain::{self, BaseChain},
-    chains::ethereum::address::Address as ETHAddress,
-    chains::evm20,
-    models::{BroadcastResult, PathOptions, Transaction, TransactionRaw},
+    models::{PathOptions, Transaction, TransactionRaw},
 };
-use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair, };
+use kos_crypto::{keypair::KeyPair};
 use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
 use wasm_bindgen::prelude::*;
-use web3::{ethabi, types::U256};
 use kos_crypto::sr25519::Sr25519KeyPair;
 
 #[derive(Debug, Copy, Clone)]
@@ -65,7 +61,7 @@ impl DOT {
 
     #[wasm_bindgen(js_name = "getAddressFromKeyPair")]
     pub fn get_address_from_keypair(kp: &KeyPair) -> Result<String, Error> {
-        Ok(String::from(""))
+        Ok(address::Address::from_keypair(kp).to_string())
     }
 
     #[wasm_bindgen(js_name = "getPath")]
@@ -157,3 +153,19 @@ impl DOT {
         Ok(true)
     }
 }
+
+// Test keypair from mnemonic
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_keypair_from_mnemonic() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+        let path = "m/44'/195'/0'/0/0";
+        let kp = super::DOT::keypair_from_mnemonic(mnemonic, path, None).unwrap();
+        let address = super::DOT::get_address_from_keypair(&kp).unwrap();
+        assert_eq!(address, "");
+    }
+
+}
+
