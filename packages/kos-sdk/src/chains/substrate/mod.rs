@@ -40,7 +40,7 @@ mod tests {
             .build();
 
         // initialing account
-        let phrase = "permit best kiwi blast purchase cook grab present have hurdle quarter steak";
+        let phrase = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
         let mnemonic = Mnemonic::parse(phrase).unwrap();
         let from = Keypair::from_phrase(&mnemonic, None).unwrap();
 
