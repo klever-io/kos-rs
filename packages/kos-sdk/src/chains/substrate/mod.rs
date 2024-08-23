@@ -102,7 +102,7 @@ mod tests {
     // #[tokio::test]
     // async fn test_sign_2() {
     //     // Step 1: Generate a keypair from a mnemonic phrase
-    //     let phrase = "permit best kiwi blast purchase cook grab present have hurdle quarter steak";
+    //     let phrase = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
     //     let mnemonic = Mnemonic::parse(phrase).unwrap();
     //     let from = Keypair::from_phrase(&mnemonic, None).unwrap();
     //
