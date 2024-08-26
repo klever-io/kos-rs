@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 use kos_crypto::keypair::KeyPair;
-use sp_core::crypto::Ss58Codec;
+use sp_core::crypto::{Ss58AddressFormat, Ss58Codec};
 
 const ADDRESS_LEN: usize = 32;
 #[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
@@ -45,7 +45,8 @@ impl Address {
 
 impl ::std::fmt::Display for Address {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-        let st = <dyn Ss58Codec>::from_slice(&self.0).to_string();
+        let st = sp_core::sr25519::Public::from_raw(self.0).to_ss58check_with_version(Ss58AddressFormat::custom(0));
+
         st.fmt(f)
     }
 }

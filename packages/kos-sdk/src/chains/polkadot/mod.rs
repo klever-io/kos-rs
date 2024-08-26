@@ -68,7 +68,13 @@ impl DOT {
     pub fn get_path(options: &PathOptions) -> Result<String, Error> {
         let index = options.index;
 
-        Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index))
+        if (index == 0) {
+            return Ok(String::new());
+        }
+
+        let index = index - 1;
+
+        Ok(format!("//{}", index))
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
@@ -161,10 +167,17 @@ mod tests {
     #[test]
     fn test_keypair_from_mnemonic() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
-        let path = "m/44'/195'/0'/0/0";
-        let kp = super::DOT::keypair_from_mnemonic(mnemonic, path, None).unwrap();
+        let path = super::DOT::get_path(&super::PathOptions { index: 0, is_legacy: None }).unwrap();
+        let kp = super::DOT::keypair_from_mnemonic(mnemonic, &path, None).unwrap();
         let address = super::DOT::get_address_from_keypair(&kp).unwrap();
-        assert_eq!(address, "");
+        assert_eq!(address, "13KVd4f2a4S5pLp4gTTFezyXdPWx27vQ9vS6xBXJ9yWVd7xo");
+    }
+
+    #[test]
+    fn test_get_path() {
+        let path = super::DOT::get_path(&super::PathOptions { index: 1, is_legacy: None }).unwrap();
+
+        assert_eq!(path, "//0");
     }
 
 }

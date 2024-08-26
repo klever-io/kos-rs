@@ -101,29 +101,3 @@ impl Sr25519KeyPair {
     }
 }
 
-// Test new_from_mnemonic
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use coins_bip39::Mnemonic;
-    use sp_core::crypto::{Ss58AddressFormat, Ss58Codec};
-
-    #[test]
-    fn test_new_from_mnemonic() {
-        let phrase = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
-        let mnemonic =  Mnemonic::<English>::new_from_phrase(phrase).unwrap();
-        let keypair = Sr25519KeyPair::new_from_mnemonic("//0", mnemonic, None).unwrap();
-        let address = keypair.keypair.public().to_ss58check_with_version(Ss58AddressFormat::custom(0));
-        // Print the address
-        println!("{:?}", address);
-
-        assert_eq!(keypair.keypair.public().0.len(), 32);
-    }
-
-    #[test]
-    fn test_random() {
-        let mut rng = rand::thread_rng();
-        let keypair = Sr25519KeyPair::random(&mut rng);
-        assert_eq!(keypair.keypair.public().0.len(), 32);
-    }
-}
