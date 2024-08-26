@@ -59,3 +59,4 @@ kos-rs = "0.1"
 - `packages/kos-utils/`: Package with utility libraries for various purposes.
 
 ---
+[Download Klever Wallet - The best multi-chain crypto wallet](https://onelink.to/455hxv)
