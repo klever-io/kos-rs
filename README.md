@@ -69,4 +69,4 @@ The kos-rs library powers several key applications within the Klever ecosystem:
 
 #### Open a pull request to include your app here.
 ---
-[Download Klever Wallet - The best multi-chain crypto wallet](https://onelink.to/455hxv)
+[Download Klever Wallet - The best multi-chain crypto wallet](https://klever.io)
