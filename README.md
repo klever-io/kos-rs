@@ -62,10 +62,10 @@ kos-rs = "0.1"
 ### Apps powered by kos-rs
 The kos-rs library powers several key applications within the Klever ecosystem:
 
-[Klever Wallet for iOS](https://apps.apple.com/uy/app/klever-wallet-bitcoin-crypto/id1615064243)
-[Klever Wallet for Android](https://play.google.com/store/apps/details?id=finance.klever.bitcoin.wallet&hl=en)
-[Klever Wallet for Browser (Extension)](https://chromewebstore.google.com/detail/klever-wallet/ifclboecfhkjbpmhgehodcjpciihhmif)
+- [Klever Wallet for iOS](https://apps.apple.com/uy/app/klever-wallet-bitcoin-crypto/id1615064243)
+- [Klever Wallet for Android](https://play.google.com/store/apps/details?id=finance.klever.bitcoin.wallet&hl=en)
+- [Klever Wallet for Browser (Extension)](https://chromewebstore.google.com/detail/klever-wallet/ifclboecfhkjbpmhgehodcjpciihhmif)
 
 Open a pull request to include your app here.
 ---
-[Download Klever Wallet - The best multi-chain crypto wallet](https://onelink.to/455hxv)
+- [Download Klever Wallet - The best multi-chain crypto wallet](https://onelink.to/455hxv)
