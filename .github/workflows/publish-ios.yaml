@@ -3,7 +3,7 @@ on:
   release:
     types: [ created ]
 jobs:
-  upload-assets:
+  upload-xcframework:
     runs-on: [ "macos-14" ]
     env:
       TERM: xterm

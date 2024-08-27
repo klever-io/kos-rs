@@ -8,7 +8,7 @@ set -e
 configure_cargo() {
   cd "$BUILD_HOME"
   for i in $(seq 0 $((${#IOS_ARCHS[@]} - 1))); do
-    rustup target add "${IOS_ARCHS[i]}" >/dev/null 2>&1
+    rustup target add "${IOS_ARCHS[i]}"
   done
 }
 
@@ -16,7 +16,7 @@ assemble_ios_lib() {
   arch=$1
   cd "$BUILD_HOME"
   log_status "assembling iOS lib to $arch..."
-  cargo build --target "$arch" --release -q >/dev/null 2>&1
+  cargo build --target "$arch" --release -q
   cd ../../target/"$arch"/release
   mv lib"$PACKAGE_NAME".a "$arch"-lib"$PACKAGE_NAME".a
 }
@@ -25,7 +25,7 @@ generate_binds() {
   cd "$BUILD_HOME/../.."
   log_status "generating iOS binds..."
   rm -rf ios/binds
-  cargo run -q --bin uniffi-bindgen generate --library target/"${IOS_ARCHS[0]}"/release/lib"$PACKAGE_NAME".dylib --language swift --out-dir packages/kos-mobile/ios/binds >/dev/null 2>&1
+  cargo run -q --bin uniffi-bindgen generate --library target/"${IOS_ARCHS[0]}"/release/lib"$PACKAGE_NAME".dylib --language swift --out-dir packages/kos-mobile/ios/binds
 }
 
 generate_xcframework() {
@@ -42,7 +42,7 @@ generate_xcframework() {
         -arch arm64 \
         BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
         SKIP_INSTALL=NO \
-        clean build >/dev/null 2>&1
+        clean build
       BUILT_PRODUCTS_DIR=$(xcodebuild -project KOSMobile.xcodeproj \
         -scheme KOSMobile \
         -configuration Release \
@@ -60,7 +60,7 @@ generate_xcframework() {
         -arch arm64 \
         BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
         SKIP_INSTALL=NO \
-        clean build >/dev/null 2>&1
+        clean build
       BUILT_PRODUCTS_DIR=$(xcodebuild -project KOSMobile.xcodeproj \
         -scheme KOSMobile \
         -configuration Release \
@@ -77,7 +77,7 @@ generate_xcframework() {
   xcodebuild -create-xcframework \
     -framework "${IOS_ARCHS[0]}"/KOSMobile.framework \
     -framework "${IOS_ARCHS[1]}"/KOSMobile.framework \
-    -output ../../XCFrameworks/KOSMobile.xcframework >/dev/null 2>&1
+    -output ../../XCFrameworks/KOSMobile.xcframework
   cd ../../XCFrameworks
   zip -r -y KOSMobile.xcframework.zip KOSMobile.xcframework
 }
