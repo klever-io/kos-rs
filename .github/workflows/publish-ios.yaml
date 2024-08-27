@@ -18,12 +18,10 @@ jobs:
           cargo clean
           make clean-mobile-build
           make test-ios
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GIT_PASS }}
+          GITHUB_TOKEN: ${{ secrets.git_pass }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./packages/kos-mobile/ios/XCFrameworks/KOSMobile.xcframework.zip
-          asset_name: KOSMobile.xcframework.zip
-          asset_content_type: application/zip
+          name: ${{ github.event.release.name }}
+          files: ./packages/kos-mobile/ios/XCFrameworks/KOSMobile.xcframework.zip
