@@ -76,7 +76,7 @@ jobs:
           RELEASE_BODY="${{ github.event.release.body }}"
           PRERELEASE=${{ github.event.release.prerelease }} 
           ESCAPED_BODY=$(echo "${RELEASE_BODY}" | jq -Rsa .)
-          curl -X POST \
+          curl -f -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/json" \
             -d '{
