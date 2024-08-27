@@ -14,6 +14,7 @@ jobs:
           fetch-depth: 0
       - name: Build and Test Framework
         run: |
+          brew install protobuf
           cargo clean
           make clean-mobile-build
           make test-ios
