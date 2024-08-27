@@ -45,7 +45,7 @@ publishing {
             url = URI.create("https://maven.pkg.github.com/daniellfalcao/kos-rs-fork")
             credentials {
                 username = ""
-                password = (System.getenv("KLEVER_GIT_TOKEN")
+                password = (System.getenv("GITHUB_TOKEN")
                     ?: (getLocalProperties()["git.token"] as? String?)
                     ?: "")
             }
