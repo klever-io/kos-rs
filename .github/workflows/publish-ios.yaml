@@ -71,6 +71,7 @@ jobs:
           git push origin main
       - name: Create Release
         run: |
+          brew install jq
           TAG_NAME=${GITHUB_REF#refs/tags/}
           RELEASE_NAME="${{ github.event.release.name }}"
           RELEASE_BODY="${{ github.event.release.body }}"
