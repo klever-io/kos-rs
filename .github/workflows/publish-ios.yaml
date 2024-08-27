@@ -22,6 +22,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./packages/kos-mobile/ios/XCFrameworks/
+          asset_path: ./packages/kos-mobile/ios/XCFrameworks/KOSMobile.xcframework.zip
           asset_name: KOSMobile.xcframework.zip
           asset_content_type: application/zip
