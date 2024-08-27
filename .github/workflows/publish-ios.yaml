@@ -18,6 +18,14 @@ jobs:
           cargo clean
           make clean-mobile-build
           make test-ios
+      - name: Generate checksum
+        run: |
+          swift package compute-checksum packages/kos-mobile/ios/XCFrameworks/KOSMobile.xcframework.zip > checksum.txt
+      - name: Upload checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksum
+          path: checksum.txt
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         env:
@@ -25,3 +33,53 @@ jobs:
         with:
           name: ${{ github.event.release.name }}
           files: ./packages/kos-mobile/ios/XCFrameworks/KOSMobile.xcframework.zip
+
+  create-ios-release:
+    runs-on: ubuntu-latest
+    env:
+      TERM: xterm
+    steps:
+      - name: Checkout kos-rs-xcframework
+        uses: actions/checkout@v4
+        with:
+          repository: klever-io/kos-rs-xcframework
+          token: ${{ secrets.git_pass }}
+      - name: Download checksum
+        uses: actions/download-artifact@v4
+        with:
+          name: checksum
+          path: .
+      - name: Update Swift Package Url and Checksum
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          export NEW_URL="https://github.com/daniellfalcao/kos-rs-fork/releases/download/$TAG_NAME/KOSMobile.xcframework.zip"
+          export NEW_CHECKSUM=$(cat checksum.txt)
+          echo "URL: $NEW_URL"
+          echo "Checksum: $NEW_CHECKSUM"
+          ./update_package.sh
+      - name: Commit Changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git commit -m "Update package.swift"
+          git push origin main
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.git_pass }}
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          RELEASE_NAME="${{ github.event.release.name }}"
+          RELEASE_BODY="${{ github.event.release.body }}"
+          PRERELEASE=${{ github.event.release.prerelease }}
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "tag_name": "'"${TAG_NAME}"'",
+              "target_commitish": "main",
+              "name": "'"${RELEASE_NAME}"'",
+              "body": "'"${RELEASE_BODY}"'",
+              "draft": false,
+              "prerelease": '${PRERELEASE}'
+            }' \
+            https://api.github.com/repos/klever-io/kos-rs-xcframework/releases
