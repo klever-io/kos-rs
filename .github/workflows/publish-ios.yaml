@@ -2,6 +2,8 @@ name: Publish iOS
 on:
   release:
     types: [ created ]
+permissions:
+  contents: write
 jobs:
   upload-xcframework:
     runs-on: [ "macos-14" ]
@@ -39,6 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TERM: xterm
+      GITHUB_TOKEN: ${{ secrets.git_pass }}
     steps:
       - name: Checkout kos-rs-xcframework
         uses: actions/checkout@v4
@@ -57,6 +60,7 @@ jobs:
           export NEW_CHECKSUM=$(cat checksum.txt)
           echo "URL: $NEW_URL"
           echo "Checksum: $NEW_CHECKSUM"
+          chmod +x ./update_package.sh
           ./update_package.sh
       - name: Commit Changes
         run: |
@@ -65,8 +69,6 @@ jobs:
           git commit -m "Update package.swift"
           git push origin main
       - name: Create Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.git_pass }}
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           RELEASE_NAME="${{ github.event.release.name }}"
