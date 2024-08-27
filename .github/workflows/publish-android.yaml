@@ -19,7 +19,7 @@ jobs:
           make clean-mobile-build
           make test-android
       - name: Publish Package
-        env:
-          LIB_VERSION: ${GITHUB_REF#refs/tags/}
         run: |
+          export LIB_VERSION=${GITHUB_REF#refs/tags/}
+          echo "Publishing version $LIB_VERSION"
           make publish-android
