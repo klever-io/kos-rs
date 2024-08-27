@@ -5,6 +5,8 @@ on:
 jobs:
   upload-assets:
     runs-on: [ "macos-14" ]
+    env:
+      TERM: xterm
     steps:
       - uses: actions/checkout@v4
       - name: Build and Test Framework
