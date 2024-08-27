@@ -20,6 +20,8 @@ jobs:
           make test-ios
       - name: Upload Release Assets
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_PASS }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./packages/kos-mobile/ios/XCFrameworks/KOSMobile.xcframework.zip
