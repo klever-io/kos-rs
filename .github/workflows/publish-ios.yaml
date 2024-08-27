@@ -9,6 +9,8 @@ jobs:
       TERM: xterm
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Build and Test Framework
         run: |
           cargo clean
