@@ -35,6 +35,7 @@ jobs:
           files: ./packages/kos-mobile/ios/XCFrameworks/KOSMobile.xcframework.zip
 
   create-ios-release:
+    needs: upload-xcframework
     runs-on: ubuntu-latest
     env:
       TERM: xterm
