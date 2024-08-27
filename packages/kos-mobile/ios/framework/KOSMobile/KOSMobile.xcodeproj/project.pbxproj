@@ -1,0 +1,512 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6561E0B92C76772200907790 /* KOSMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6561E0B02C76772200907790 /* KOSMobile.framework */; };
+		6561E0BE2C76772200907790 /* KOSMobileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6561E0BD2C76772200907790 /* KOSMobileTests.swift */; };
+		6561E0BF2C76772200907790 /* KOSMobile.h in Headers */ = {isa = PBXBuildFile; fileRef = 6561E0B32C76772200907790 /* KOSMobile.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		6561E0CB2C76782000907790 /* kos_mobile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6561E0C82C76782000907790 /* kos_mobile.swift */; };
+		6561E0CC2C76782000907790 /* kos_mobileFFI.h in Headers */ = {isa = PBXBuildFile; fileRef = 6561E0CA2C76782000907790 /* kos_mobileFFI.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		6561E0CF2C76784A00907790 /* aarch64-apple-ios-sim-libkos_mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6561E0CE2C76784A00907790 /* aarch64-apple-ios-sim-libkos_mobile.a */; };
+		6561E0D12C76785700907790 /* aarch64-apple-ios-libkos_mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6561E0D02C76785700907790 /* aarch64-apple-ios-libkos_mobile.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6561E0BA2C76772200907790 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6561E0A72C76772200907790 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6561E0AF2C76772200907790;
+			remoteInfo = KOSMobile;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		6561E0B02C76772200907790 /* KOSMobile.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = KOSMobile.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		6561E0B32C76772200907790 /* KOSMobile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KOSMobile.h; sourceTree = "<group>"; };
+		6561E0B82C76772200907790 /* KOSMobileTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KOSMobileTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6561E0BD2C76772200907790 /* KOSMobileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KOSMobileTests.swift; sourceTree = "<group>"; };
+		6561E0C82C76782000907790 /* kos_mobile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = kos_mobile.swift; path = ../../../binds/kos_mobile.swift; sourceTree = "<group>"; };
+		6561E0C92C76782000907790 /* kos_mobileFFI.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; name = kos_mobileFFI.modulemap; path = ../../../binds/kos_mobileFFI.modulemap; sourceTree = "<group>"; };
+		6561E0CA2C76782000907790 /* kos_mobileFFI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kos_mobileFFI.h; path = ../../../binds/kos_mobileFFI.h; sourceTree = "<group>"; };
+		6561E0CE2C76784A00907790 /* aarch64-apple-ios-sim-libkos_mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "aarch64-apple-ios-sim-libkos_mobile.a"; path = "../../../../../target/aarch64-apple-ios-sim/release/aarch64-apple-ios-sim-libkos_mobile.a"; sourceTree = "<group>"; };
+		6561E0D02C76785700907790 /* aarch64-apple-ios-libkos_mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "aarch64-apple-ios-libkos_mobile.a"; path = "../../../../../target/aarch64-apple-ios/release/aarch64-apple-ios-libkos_mobile.a"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6561E0AD2C76772200907790 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6561E0D12C76785700907790 /* aarch64-apple-ios-libkos_mobile.a in Frameworks */,
+				6561E0CF2C76784A00907790 /* aarch64-apple-ios-sim-libkos_mobile.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6561E0B52C76772200907790 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6561E0B92C76772200907790 /* KOSMobile.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		6561E0A62C76772200907790 = {
+			isa = PBXGroup;
+			children = (
+				6561E0B22C76772200907790 /* KOSMobile */,
+				6561E0BC2C76772200907790 /* KOSMobileTests */,
+				6561E0B12C76772200907790 /* Products */,
+				6561E0CD2C76784A00907790 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		6561E0B12C76772200907790 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6561E0B02C76772200907790 /* KOSMobile.framework */,
+				6561E0B82C76772200907790 /* KOSMobileTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6561E0B22C76772200907790 /* KOSMobile */ = {
+			isa = PBXGroup;
+			children = (
+				6561E0C82C76782000907790 /* kos_mobile.swift */,
+				6561E0CA2C76782000907790 /* kos_mobileFFI.h */,
+				6561E0C92C76782000907790 /* kos_mobileFFI.modulemap */,
+				6561E0B32C76772200907790 /* KOSMobile.h */,
+			);
+			path = KOSMobile;
+			sourceTree = "<group>";
+		};
+		6561E0BC2C76772200907790 /* KOSMobileTests */ = {
+			isa = PBXGroup;
+			children = (
+				6561E0BD2C76772200907790 /* KOSMobileTests.swift */,
+			);
+			path = KOSMobileTests;
+			sourceTree = "<group>";
+		};
+		6561E0CD2C76784A00907790 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				6561E0D02C76785700907790 /* aarch64-apple-ios-libkos_mobile.a */,
+				6561E0CE2C76784A00907790 /* aarch64-apple-ios-sim-libkos_mobile.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		6561E0AB2C76772200907790 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6561E0CC2C76782000907790 /* kos_mobileFFI.h in Headers */,
+				6561E0BF2C76772200907790 /* KOSMobile.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		6561E0AF2C76772200907790 /* KOSMobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6561E0C22C76772200907790 /* Build configuration list for PBXNativeTarget "KOSMobile" */;
+			buildPhases = (
+				6561E0AB2C76772200907790 /* Headers */,
+				6561E0AC2C76772200907790 /* Sources */,
+				6561E0AD2C76772200907790 /* Frameworks */,
+				6561E0AE2C76772200907790 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = KOSMobile;
+			productName = KOSMobile;
+			productReference = 6561E0B02C76772200907790 /* KOSMobile.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		6561E0B72C76772200907790 /* KOSMobileTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6561E0C52C76772200907790 /* Build configuration list for PBXNativeTarget "KOSMobileTests" */;
+			buildPhases = (
+				6561E0B52C76772200907790 /* Frameworks */,
+				6561E0B42C76772200907790 /* Sources */,
+				6561E0B62C76772200907790 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6561E0BB2C76772200907790 /* PBXTargetDependency */,
+			);
+			name = KOSMobileTests;
+			productName = KOSMobileTests;
+			productReference = 6561E0B82C76772200907790 /* KOSMobileTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6561E0A72C76772200907790 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1520;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					6561E0AF2C76772200907790 = {
+						CreatedOnToolsVersion = 15.2;
+						LastSwiftMigration = 1520;
+					};
+					6561E0B72C76772200907790 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+				};
+			};
+			buildConfigurationList = 6561E0AA2C76772200907790 /* Build configuration list for PBXProject "KOSMobile" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 6561E0A62C76772200907790;
+			productRefGroup = 6561E0B12C76772200907790 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6561E0AF2C76772200907790 /* KOSMobile */,
+				6561E0B72C76772200907790 /* KOSMobileTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6561E0AE2C76772200907790 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6561E0B62C76772200907790 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6561E0AC2C76772200907790 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6561E0CB2C76782000907790 /* kos_mobile.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6561E0B42C76772200907790 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6561E0BE2C76772200907790 /* KOSMobileTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6561E0BB2C76772200907790 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6561E0AF2C76772200907790 /* KOSMobile */;
+			targetProxy = 6561E0BA2C76772200907790 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		6561E0C02C76772200907790 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		6561E0C12C76772200907790 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		6561E0C32C76772200907790 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = "\"$(SRCROOT)/../../../../../target/aarch64-apple-ios/release/aarch64-apple-ios-libkos_mobile.a\"";
+				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = "\"$(SRCROOT)/../../../../../target/aarch64-apple-ios-sim/release/aarch64-apple-ios-sim-libkos_mobile.a\"";
+				PRODUCT_BUNDLE_IDENTIFIER = io.klever.KOSMobile;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		6561E0C42C76772200907790 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = "\"$(SRCROOT)/../../../../../target/aarch64-apple-ios/release/aarch64-apple-ios-libkos_mobile.a\"";
+				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = "\"$(SRCROOT)/../../../../../target/aarch64-apple-ios-sim/release/aarch64-apple-ios-sim-libkos_mobile.a\"";
+				PRODUCT_BUNDLE_IDENTIFIER = io.klever.KOSMobile;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		6561E0C62C76772200907790 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.klever.KOSMobileTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		6561E0C72C76772200907790 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.klever.KOSMobileTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		6561E0AA2C76772200907790 /* Build configuration list for PBXProject "KOSMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6561E0C02C76772200907790 /* Debug */,
+				6561E0C12C76772200907790 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6561E0C22C76772200907790 /* Build configuration list for PBXNativeTarget "KOSMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6561E0C32C76772200907790 /* Debug */,
+				6561E0C42C76772200907790 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6561E0C52C76772200907790 /* Build configuration list for PBXNativeTarget "KOSMobileTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6561E0C62C76772200907790 /* Debug */,
+				6561E0C72C76772200907790 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 6561E0A72C76772200907790 /* Project object */;
+}
