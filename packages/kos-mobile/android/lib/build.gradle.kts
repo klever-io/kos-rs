@@ -42,7 +42,7 @@ publishing {
     repositories {
         maven {
             name = "GithubPackages"
-            url = URI.create("https://maven.pkg.github.com/klever-io/kos-mobile")
+            url = URI.create("https://maven.pkg.github.com/daniellfalcao/kos-rs-fork")
             credentials {
                 username = ""
                 password = (System.getenv("KLEVER_GIT_TOKEN")

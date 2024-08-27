@@ -42,6 +42,9 @@ clean-mobile-build:
 build-android:
 	cd packages/kos-mobile && ./build_android.sh
 
+publish-android:
+	cd packages/kos-mobile/android && ./gradlew lib:publishKOSPublicationToGithubPackagesRepository
+
 build-ios:
 	cd packages/kos-mobile && ./build_ios.sh
 
