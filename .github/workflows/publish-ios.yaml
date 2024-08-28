@@ -56,7 +56,7 @@ jobs:
       - name: Update Swift Package Url and Checksum
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          export NEW_URL="https://github.com/daniellfalcao/kos-rs-fork/releases/download/$TAG_NAME/KOSMobile.xcframework.zip"
+          export NEW_URL="https://github.com/klever-io/kos-rs/releases/download/$TAG_NAME/KOSMobile.xcframework.zip"
           export NEW_CHECKSUM=$(cat checksum.txt)
           echo "URL: $NEW_URL"
           echo "Checksum: $NEW_CHECKSUM"
