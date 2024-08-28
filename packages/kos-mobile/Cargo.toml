@@ -30,9 +30,3 @@ uniffi = { workspace = true, features = ["cli"] }
 
 [build-dependencies]
 uniffi = { workspace = true, features = ["build"] }
-
-
-
-#cargo run --bin uniffi-bindgen generate --library target/debug/libkos_mobile.dylib --language swift --out-dir ios/binds
-
-#cargo run --bin uniffi-bindgen generate packages/kos-mobile/src/math.udl --language kotlin
