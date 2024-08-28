@@ -40,6 +40,8 @@ rlp = "0.5"
 reqwest = { workspace = true, default-features = false, features = ["rustls-tls", "blocking", "json"] }
 wasm-bindgen-futures = "0.4"
 
+lazy_static = { workspace = true }
+
 kos-types = { workspace = true, features = ["serde"] }
 kos-crypto = { workspace = true }
 kos-proto = { workspace = true }
