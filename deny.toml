@@ -1,12 +1,3 @@
-[advisories]
-vulnerability = "deny"
-unmaintained = "deny"
-notice = "deny"
-unsound = "deny"
-ignore = [
-    
-]
-
 [bans]
 multiple-versions = "deny"
 deny = [
@@ -36,9 +27,6 @@ unknown-git = "deny"
 github = ["klever-io"]
 
 [licenses]
-unlicensed = "deny"
-allow-osi-fsf-free = "neither"
-copyleft = "deny"
 confidence-threshold = 0.8
 allow = [
     "Apache-2.0",
