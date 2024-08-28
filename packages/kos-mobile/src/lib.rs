@@ -55,7 +55,10 @@ fn validate_mnemonic(mnemonic: String) -> bool {
 
 #[uniffi::export]
 fn generate_wallet_from_mnemonic(
-    mnemonic: String, chain_id: i32, index: i32, use_legacy_path: bool,
+    mnemonic: String,
+    chain_id: i32,
+    index: i32,
+    use_legacy_path: bool,
 ) -> Result<KOSAccount, KOSError> {
     let chain = get_chain_by(chain_id)?;
     let mut path_options = PathOptions::new(index as u32);
@@ -73,7 +76,8 @@ fn generate_wallet_from_mnemonic(
 
 #[uniffi::export]
 fn generate_wallet_from_private_key(
-    chain_id: i32, private_key: String,
+    chain_id: i32,
+    private_key: String,
 ) -> Result<KOSAccount, KOSError> {
     let chain = get_chain_by(chain_id)?;
     let wallet = Wallet::from_private_key(chain, private_key)?;
@@ -112,7 +116,8 @@ fn decrypt(data: String, password: String) -> Result<String, KOSError> {
 }
 
 fn get_chain_by(id: i32) -> Result<Chain, KOSError> {
-    let id_u8 = u8::try_from(id).map_err(|_| KOSError::UnsupportedChainError { id: id.to_string() })?;
+    let id_u8 =
+        u8::try_from(id).map_err(|_| KOSError::UnsupportedChainError { id: id.to_string() })?;
     let chain = Chain::get_by_code(id_u8)
         .ok_or_else(|| KOSError::UnsupportedChainError { id: id.to_string() })?;
     Ok(chain)
@@ -127,7 +132,7 @@ mod tests {
         let size = 12;
         match generate_mnemonic(size) {
             Ok(mnemonic) => assert!(!mnemonic.is_empty(), "The mnemonic should not be empty"),
-            Err(_) => panic!("unexpected error!")
+            Err(_) => panic!("unexpected error!"),
         }
     }
 
@@ -136,7 +141,10 @@ mod tests {
         let size = -1;
         match generate_mnemonic(size) {
             Ok(_) => panic!("A error was expected but found a mnemonic"),
-            Err(e) => assert!(matches!(e, KOSError::KOSDelegateError(..)), " Invalid error")
+            Err(e) => assert!(
+                matches!(e, KOSError::KOSDelegateError(..)),
+                " Invalid error"
+            ),
         }
     }
 
@@ -178,11 +186,19 @@ mod tests {
         let chain_id = 38;
         match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
             Ok(account) => {
-                assert_eq!(account.address, "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy".to_string(), "The address doesn't match");
-                assert_eq!(account.private_key, "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d".to_string(), "The private_key doesn't match");
+                assert_eq!(
+                    account.address,
+                    "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy".to_string(),
+                    "The address doesn't match"
+                );
+                assert_eq!(
+                    account.private_key,
+                    "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d".to_string(),
+                    "The private_key doesn't match"
+                );
                 assert_eq!(account.chain_id, chain_id, "The chain_id doesn't match");
             }
-            Err(_) => panic!("unexpected error!")
+            Err(_) => panic!("unexpected error!"),
         }
     }
 
@@ -194,28 +210,54 @@ mod tests {
             println!("code = {}", chain_code)
         }
         for (&chain_code, _) in Chain::get_chains().iter() {
-            match generate_wallet_from_mnemonic(mnemonic.clone(), i32::from(chain_code), index, false) {
+            match generate_wallet_from_mnemonic(
+                mnemonic.clone(),
+                i32::from(chain_code),
+                index,
+                false,
+            ) {
                 Ok(account) => {
-                    assert!(!account.address.is_empty(), "The address for chain {} is empty", chain_code);
-                    assert!(!account.private_key.is_empty(), "The private_key for chain {} is empty", chain_code);
-                    assert_eq!(account.chain_id, i32::from(chain_code), "The chain_id doesn't match");
+                    assert!(
+                        !account.address.is_empty(),
+                        "The address for chain {} is empty",
+                        chain_code
+                    );
+                    assert!(
+                        !account.private_key.is_empty(),
+                        "The private_key for chain {} is empty",
+                        chain_code
+                    );
+                    assert_eq!(
+                        account.chain_id,
+                        i32::from(chain_code),
+                        "The chain_id doesn't match"
+                    );
                 }
-                Err(e) => panic!("unexpected error! {}", e.to_string())
+                Err(e) => panic!("unexpected error! {}", e.to_string()),
             }
         }
     }
 
     #[test]
     fn should_get_account_from_private_key() {
-        let private_key = "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d".to_string();
+        let private_key =
+            "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d".to_string();
         let chain_id = 38;
         match generate_wallet_from_private_key(chain_id, private_key) {
             Ok(account) => {
-                assert_eq!(account.address, "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy".to_string(), "The address doesn't match");
-                assert_eq!(account.private_key, "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d".to_string(), "The private_key doesn't match");
+                assert_eq!(
+                    account.address,
+                    "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy".to_string(),
+                    "The address doesn't match"
+                );
+                assert_eq!(
+                    account.private_key,
+                    "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d".to_string(),
+                    "The private_key doesn't match"
+                );
                 assert_eq!(account.chain_id, chain_id, "The chain_id doesn't match");
             }
-            Err(_) => panic!("unexpected error!")
+            Err(_) => panic!("unexpected error!"),
         }
     }
 
@@ -224,8 +266,14 @@ mod tests {
         let private_key = "".to_string();
         let chain_id = 38;
         match generate_wallet_from_private_key(chain_id, private_key) {
-            Ok(account) => panic!("A error was expected but found a pk {}.", account.private_key),
-            Err(e) => assert!(matches!(e, KOSError::KOSDelegateError(..)), " Invalid error")
+            Ok(account) => panic!(
+                "A error was expected but found a pk {}.",
+                account.private_key
+            ),
+            Err(e) => assert!(
+                matches!(e, KOSError::KOSDelegateError(..)),
+                " Invalid error"
+            ),
         }
     }
 
@@ -263,7 +311,10 @@ mod tests {
         let encrypted_data = encrypt_with_gmc(original_data.clone(), password.clone()).unwrap();
         match decrypt(encrypted_data, "wrong".to_string()) {
             Ok(_) => panic!("A error was expected but found a decrypted data"),
-            Err(e) => assert!(matches!(e, KOSError::KOSDelegateError(..)), " Invalid error")
+            Err(e) => assert!(
+                matches!(e, KOSError::KOSDelegateError(..)),
+                " Invalid error"
+            ),
         }
     }
 }
