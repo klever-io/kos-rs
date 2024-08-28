@@ -1,10 +1,12 @@
 use crate::chains::*;
-use crate::models::{self, BroadcastResult, Transaction};
+use crate::models::{self, BroadcastResult, PathOptions, Transaction};
 use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
 use kos_types::number::BigNumber;
 
+use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use strum::{EnumCount, IntoStaticStr};
 
 use wasm_bindgen::prelude::*;
@@ -15,6 +17,16 @@ macro_rules! createChains {
         #[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone, EnumCount, IntoStaticStr)]
         pub enum Chain {
             $($name,)*
+        }
+
+        lazy_static! {
+            static ref CHAIN_MAP: HashMap<u8, Chain> = {
+                let mut map = HashMap::new();
+                $(map.insert($name::base_chain().chain_code, Chain::$name);)*
+                // remove the NONE chain
+                map.remove(&0);
+                map
+            };
         }
 
         impl Chain {
@@ -48,10 +60,18 @@ macro_rules! createChains {
                 }
             }
 
-            pub fn get_path(&self, index: u32) -> Result<String, Error> {
+            pub fn get_path(&self, options: &PathOptions) -> Result<String, Error> {
                 match self {
-                    $(Chain::$name => $name::get_path(index),)*
+                    $(Chain::$name => $name::get_path(options),)*
                 }
+            }
+
+            pub fn get_by_code(code: u8) -> Option<Self> {
+                CHAIN_MAP.get(&code).cloned()
+            }
+
+            pub fn get_chains() -> HashMap<u8, Chain> {
+                CHAIN_MAP.clone()
             }
 
             /// Sign digest data with the private key.

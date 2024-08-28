@@ -2,7 +2,7 @@ mod requests;
 pub mod transaction;
 
 use crate::chain::{BaseChain, Chain};
-use crate::models::{self, BroadcastResult, Transaction, TransactionRaw};
+use crate::models::{self, BroadcastResult, PathOptions, Transaction, TransactionRaw};
 
 use kos_crypto::{keypair::KeyPair, secp256k1::Secp256k1KeyPair};
 use kos_proto::options::BTCOptions;
@@ -78,7 +78,7 @@ impl BTC {
         let mut pk_slice = [0u8; 32];
         pk_slice.copy_from_slice(private_key);
 
-        let kp = Secp256k1KeyPair::new(pk_slice);
+        let kp = Secp256k1KeyPair::new(pk_slice).set_compressed(true);
         Ok(KeyPair::new_secp256k1(kp))
     }
 
@@ -105,8 +105,8 @@ impl BTC {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(index: u32) -> Result<String, Error> {
-        Ok(format!("m/84'/{}'/0'/0/{}", BIP44_PATH, index))
+    pub fn get_path(options: &PathOptions) -> Result<String, Error> {
+        Ok(format!("m/84'/{}'/0'/0/{}", BIP44_PATH, options.index))
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
@@ -296,6 +296,16 @@ impl BTC {
         }
     }
 
+    #[wasm_bindgen(js_name = "serializeTx")]
+    pub fn serialize_tx(tx: Transaction) -> Result<String, Error> {
+        match tx.data {
+            Some(TransactionRaw::Bitcoin(btc_tx)) => Ok(btc_tx.btc_serialize_hex()),
+            _ => Err(Error::InvalidTransaction(
+                "not a bitcoin transaction".to_string(),
+            )),
+        }
+    }
+
     fn decode_magic(hex_magic: String) -> Result<Network, Error> {
         let magic_bytes = hex::decode(hex_magic)?;
         if magic_bytes.len() != 4 {
@@ -359,14 +369,24 @@ impl BTC {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use dotenvy;
     use hex::{FromHex, ToHex};
     use kos_types::Bytes32;
+    use std::sync::Once;
 
     const DEFAULT_PRIVATE_KEY: &str =
         "4604b4b710fe91f584fff084e1a9159fe4f8408fff380596a604948474ce4fa3";
     const DEFAULT_ADDRESS: &str = "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu";
     const DEFAULT_MNEMONIC: &str =
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+
+    static _INIT: Once = Once::new();
+
+    fn _init() {
+        _INIT.call_once(|| {
+            dotenvy::from_filename(".env.nodes").ok();
+        });
+    }
 
     fn get_default_secret() -> KeyPair {
         let b = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
@@ -382,6 +402,16 @@ mod tests {
     }
 
     #[test]
+    fn test_address_from_private_key_bytes() {
+        // convert hex to [u8]
+        let pk_bytes = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
+        let kp = BTC::keypair_from_bytes(pk_bytes.as_ref()).unwrap();
+        let address = BTC::get_address_from_keypair(&kp).unwrap();
+
+        assert_eq!(DEFAULT_ADDRESS, address);
+    }
+
+    #[test]
     fn test_validate_bip44() {
         let v = vec![
             (0, "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"),
@@ -392,7 +422,7 @@ mod tests {
         ];
 
         for (index, expected_addr) in v {
-            let path = BTC::get_path(index).unwrap();
+            let path = BTC::get_path(&PathOptions::new(index)).unwrap();
             let kp = BTC::keypair_from_mnemonic(DEFAULT_MNEMONIC, &path, None).unwrap();
             let addr = BTC::get_address_from_keypair(&kp).unwrap();
 
@@ -403,7 +433,7 @@ mod tests {
     #[test]
     fn test_get_balance() {
         let balance = tokio_test::block_on(BTC::get_balance(
-            "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo",
+            "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S",
             None,
             None,
         ))
@@ -416,7 +446,6 @@ mod tests {
     fn test_send_and_sign() {
         let btc_address_sender = "tb1q09hyefvam4x5hrnnavx6sphv797f0l5xcqt7cl";
         let btc_address_receiver = "tb1qgg29y2z8xsvav65j5kx2pztqff4g2ctn6a4x0u";
-        let node = "https://tbtc1.trezor.io";
 
         let testnet_magic = "0b110907";
 
@@ -433,7 +462,7 @@ mod tests {
             btc_address_receiver.to_string(),
             BigNumber::from(1000),
             Some(option),
-            Some(node.to_string()),
+            None,
         ))
         .unwrap();
 

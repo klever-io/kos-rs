@@ -1,0 +1,58 @@
+# Build and compilation directories
+build/
+.build
+out/
+.gradle/
+.idea/
+.kotlin
+docs
+
+# Local IntelliJ IDEA configuration files
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Kotlin Native user-specific local file
+.konan/
+
+# Gradle cache folder
+.gradle/
+!gradle-wrapper.jar
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.tmp.*
+
+# Operating system specific files
+.DS_Store
+Thumbs.db
+
+# JAR output folder
+libs/
+
+# Android-specific ignores
+*.apk
+*.ap_
+*.aab
+bin/
+gen/
+local.properties
+
+# Keystore files for Android signing
+*.jks
+*.keystore
+
+# Google Services (exclude your google-services.json)
+/google-services.json
+
+# specific
+
+ndk
+openssl
+openssl-libs
+lib/src/main/kotlin/uniffi
+lib/src/main/jniLibs

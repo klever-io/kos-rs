@@ -53,8 +53,8 @@ impl BTCTransaction {
                 match self.tx.inputs[inp_idx].partial_sigs.first_key_value() {
                     Some((pubkey, sig)) => {
                         let mut script_witness = bitcoin::Witness::new();
-                        script_witness.push(&sig.to_vec());
-                        script_witness.push(&pubkey.to_bytes());
+                        script_witness.push(sig.to_vec());
+                        script_witness.push(pubkey.to_bytes());
                         script_witness
                     }
                     _ => return Err(Error::TransportError("No signature found".to_string())),
@@ -232,6 +232,7 @@ pub struct UTXO {
     pub txid: String,
     pub vout: u32,
     pub value: String,
+    #[serde(default)]
     pub height: u64,
     pub confirmations: u64,
 }

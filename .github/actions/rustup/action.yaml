@@ -45,12 +45,11 @@ runs:
         key: rust-toolchain-${{ runner.os }}-stable
 
     - name: Install Rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-        override: true
-        components: clippy, rustfmt
+      shell: bash
+      run: |
+        set -e
+        rustup component add --toolchain stable rustfmt clippy
+        rustup default stable
 
     - if: ${{ steps.cache-rustup.outputs.cache-hit != 'true' }}
       name: Wasm-pack

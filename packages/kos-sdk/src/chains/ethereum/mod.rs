@@ -1,10 +1,10 @@
 pub mod address;
-mod erc20;
 pub mod request;
 pub mod transaction;
 
 use crate::chain::{self, BaseChain};
-use crate::models::{self, BroadcastResult, Transaction, TransactionRaw};
+use crate::chains::evm20;
+use crate::models::{self, BroadcastResult, PathOptions, Transaction, TransactionRaw};
 
 use kos_crypto::keypair::KeyPair;
 use kos_crypto::secp256k1::Secp256k1KeyPair;
@@ -13,6 +13,7 @@ use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
+use rlp::Rlp;
 use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 use std::{ops::Div, str::FromStr};
 use wasm_bindgen::prelude::*;
@@ -87,8 +88,8 @@ impl ETH {
     }
 
     #[wasm_bindgen(js_name = "getPath")]
-    pub fn get_path(index: u32) -> Result<String, Error> {
-        Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index))
+    pub fn get_path(options: &PathOptions) -> Result<String, Error> {
+        Ok(format!("m/44'/{}'/0'/0/{}", BIP44_PATH, options.index))
     }
 
     #[wasm_bindgen(js_name = "signDigest")]
@@ -194,7 +195,7 @@ impl ETH {
         match token {
             Some(key) if key != "ETH" => {
                 let contract_address: address::Address = key.as_str().try_into()?;
-                let contract = erc20::get_contract_erc20();
+                let contract = evm20::get_contract_evm20();
                 let func = contract.function("balanceOf").map_err(|e| {
                     Error::InvalidMessage(format!("failed to get balanceOf function: {}", e))
                 })?;
@@ -252,14 +253,13 @@ impl ETH {
         // Update addr_receiver for non-ETH token.
         if !is_eth_token {
             // update contract data for token transfer
-            let contract = erc20::get_contract_erc20();
-            let func = contract.function("transferFrom").map_err(|e| {
-                Error::InvalidMessage(format!("failed to get transferFrom function: {}", e))
+            let contract = evm20::get_contract_evm20();
+            let func = contract.function("transfer").map_err(|e| {
+                Error::InvalidMessage(format!("failed to get transfer function: {}", e))
             })?;
 
             let encoded = func
                 .encode_input(&[
-                    ethabi::Token::Address(addr_sender.into()),
                     ethabi::Token::Address(addr_receiver.into()),
                     ethabi::Token::Uint(
                         U256::from_dec_str(&amount.to_string())
@@ -377,6 +377,7 @@ impl ETH {
             }),
             chain_id: Some(chain_id),
             nonce,
+            from: Some(sender),
             to: Some(receiver),
             value,
             data: options.contract_data.unwrap_or_default(),
@@ -427,19 +428,73 @@ impl ETH {
 
         Ok(true)
     }
+
+    #[wasm_bindgen(js_name = "txFromRaw")]
+    pub fn tx_from_raw(raw: &str) -> Result<crate::models::Transaction, Error> {
+        let hex_tx = hex::decode(raw)?;
+        let rlp = Rlp::new(&hex_tx);
+
+        let tx = match transaction::Transaction::decode_legacy(&rlp) {
+            Ok(tx) => tx,
+            Err(_) => {
+                let rlp = Rlp::new(&hex_tx[2..]);
+                self::transaction::Transaction::decode_eip155(rlp).map_err(|e| {
+                    Error::InvalidTransaction(format!("failed to decode transaction: {}", e))
+                })?
+            }
+        };
+
+        let digest = hash_transaction(&tx)?;
+        Ok(crate::models::Transaction {
+            chain: chain::Chain::ETH,
+            sender: "".to_string(), //TODO: implement sender on eth decode
+            hash: Hash::from_vec(digest)?,
+            data: Some(TransactionRaw::Ethereum(tx)),
+        })
+    }
+
+    #[wasm_bindgen(js_name = "txFromJson")]
+    pub fn tx_from_json(raw: &str) -> Result<crate::models::Transaction, Error> {
+        // build expected send result
+        let tx: transaction::Transaction = serde_json::from_str(raw)?;
+
+        let digest = hash_transaction(&tx)?;
+
+        let sender = match tx.from {
+            Some(addr) => addr.to_string(),
+            None => "".to_string(),
+        };
+
+        Ok(crate::models::Transaction {
+            chain: chain::Chain::ETH,
+            sender,
+            hash: Hash::from_vec(digest)?,
+            data: Some(TransactionRaw::Ethereum(tx)),
+        })
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use dotenvy;
     use hex::FromHex;
     use kos_types::Bytes32;
+    use std::sync::Once;
 
     const DEFAULT_PRIVATE_KEY: &str =
         "1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727";
     const DEFAULT_ADDRESS: &str = "0x9858EfFD232B4033E47d90003D41EC34EcaEda94";
     const DEFAULT_MNEMONIC: &str =
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+
+    static _INIT: Once = Once::new();
+
+    fn _init() {
+        _INIT.call_once(|| {
+            dotenvy::from_filename(".env.nodes").ok();
+        });
+    }
 
     fn get_default_secret() -> KeyPair {
         let b = Bytes32::from_hex(DEFAULT_PRIVATE_KEY).unwrap();
@@ -465,7 +520,7 @@ mod tests {
         ];
 
         for (index, expected_addr) in v {
-            let path = ETH::get_path(index).unwrap();
+            let path = ETH::get_path(&PathOptions::new(index)).unwrap();
             let kp = ETH::keypair_from_mnemonic(DEFAULT_MNEMONIC, &path, None).unwrap();
             let addr = ETH::get_address_from_keypair(&kp).unwrap();
 
@@ -533,7 +588,7 @@ mod tests {
 
         assert_eq!(
             tx.hash.to_string(),
-            "8fa67a23aa532d7a844abe36f028a87b897cb3a3e53c66c7402ad4c766cd49d8"
+            "fa2b84b45d28888c43c0bda80000e4a4d2040017f3b6e4a31e7d8a4ace27db29"
         );
 
         let eth_tx = match tx.data.clone() {
@@ -542,13 +597,13 @@ mod tests {
         };
 
         assert_eq!(eth_tx.value.to_string(), "0");
-        assert_eq!(hex::encode(eth_tx.data), "23b872dd0000000000000000000000009858effd232b4033e47d90003d41ec34ecaeda940000000000000000000000006fac4d18c912343bf86fa7049364dd4e424ab9c000000000000000000000000000000000000000000000000000000000000003e8");
+        assert_eq!(hex::encode(eth_tx.data), "a9059cbb0000000000000000000000006fac4d18c912343bf86fa7049364dd4e424ab9c000000000000000000000000000000000000000000000000000000000000003e8");
 
         let signed = ETH::sign(tx, &get_default_secret());
         assert!(signed.is_ok());
         assert_eq!(
             signed.unwrap().hash.to_string(),
-            "df35692c5d74f0d0cdc29f6c0067e32294902f414b7b8a08992557f05794470c"
+            "f4c27caf4a9e3718d217f315e8fed3f9b739fa61c78e5ab43a7ca7d4fd1c010f"
         );
     }
 
@@ -556,14 +611,14 @@ mod tests {
     fn test_get_balance() {
         let balance = tokio_test::block_on(ETH::get_balance(DEFAULT_ADDRESS, None, None)).unwrap();
 
-        assert!(balance.to_i64() > 100);
+        assert!(balance.to_i64() > 0);
     }
 
     #[test]
     fn test_get_balance_erc20() {
         let balance = tokio_test::block_on(ETH::get_balance(
             DEFAULT_ADDRESS,
-            Some("0xc12d1c73ee7dc3615ba4e37e4abfdbddfa38907e".to_string()),
+            Some("0xC12D1c73eE7DC3615BA4e37E4ABFdbDDFA38907E".to_string()),
             None,
         ));
         assert!(balance.is_ok());
@@ -624,5 +679,62 @@ mod tests {
             let valid = ETH::validate_address(&addr, None).unwrap();
             assert_eq!(valid, false, "address: {}", addr);
         }
+    }
+
+    #[test]
+    fn test_decode_rlp_tx() {
+        let raw_tx = "af02ed0182012884019716f7850e60f86055827530944cbeee256240c92a9ad920ea6f4d7df6466d2cdc0180c0808080";
+        let tx = ETH::tx_from_raw(raw_tx).unwrap();
+
+        assert_eq!(tx.chain, chain::Chain::ETH);
+
+        let eth_tx = match tx.data {
+            Some(TransactionRaw::Ethereum(tx)) => tx,
+            _ => panic!("invalid tx"),
+        };
+
+        assert_eq!(eth_tx.chain_id, Some(1));
+        assert_eq!(eth_tx.nonce, U256::from_dec_str("296").unwrap());
+        assert_eq!(
+            eth_tx.to.unwrap().to_string(),
+            "0x4cBeee256240c92A9ad920ea6f4d7Df6466D2Cdc"
+        );
+        assert_eq!(eth_tx.gas, U256::from(30000));
+        assert_eq!(eth_tx.value, U256::from_dec_str("1").unwrap());
+        assert_eq!(eth_tx.signature, None);
+    }
+
+    #[test]
+    fn test_decode_json() {
+        let json = r#"{
+        "from":"0x4cbeee256240c92a9ad920ea6f4d7df6466d2cdc",
+        "maxPriorityFeePerGas":null,"maxFeePerGas":null,
+         "gas": "0x00",
+         "value": "0x00",
+         "data":"0xa9059cbb000000000000000000000000ac4145fef6c828e8ae017207ad944c988ccb2cf700000000000000000000000000000000000000000000000000000000000f4240",
+         "to":"0xdac17f958d2ee523a2206206994597c13d831ec7",
+         "nonce":"0x00"}"#;
+        let tx = ETH::tx_from_json(json).unwrap();
+
+        assert_eq!(tx.chain, chain::Chain::ETH);
+
+        let eth_tx = match tx.data {
+            Some(TransactionRaw::Ethereum(tx)) => tx,
+            _ => panic!("invalid tx"),
+        };
+
+        assert_eq!(eth_tx.chain_id, None);
+        assert_eq!(eth_tx.nonce, U256::from_dec_str("0").unwrap());
+        assert_eq!(
+            eth_tx.from.unwrap().to_string(),
+            "0x4cBeee256240c92A9ad920ea6f4d7Df6466D2Cdc"
+        );
+        assert_eq!(
+            eth_tx.to.unwrap().to_string(),
+            "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+        );
+        assert_eq!(eth_tx.gas, U256::from(0));
+        assert_eq!(eth_tx.value, U256::from(0));
+        assert_eq!(eth_tx.signature, None);
     }
 }

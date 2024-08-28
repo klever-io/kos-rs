@@ -1,6 +1,7 @@
 mod bitcoin;
 mod default;
 mod ethereum;
+mod evm20;
 mod klever;
 mod polygon;
 mod tron;

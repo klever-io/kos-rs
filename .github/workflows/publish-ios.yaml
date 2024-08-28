@@ -1,0 +1,91 @@
+name: Publish iOS
+on:
+  release:
+    types: [ created ]
+permissions:
+  contents: write
+jobs:
+  upload-xcframework:
+    runs-on: [ "macos-14" ]
+    env:
+      TERM: xterm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Build and Test Framework
+        run: |
+          brew install protobuf
+          cargo clean
+          make clean-mobile-build
+          make test-ios
+      - name: Generate checksum
+        run: |
+          swift package compute-checksum packages/kos-mobile/ios/XCFrameworks/KOSMobile.xcframework.zip > checksum.txt
+      - name: Upload checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksum
+          path: checksum.txt
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.git_pass }}
+        with:
+          name: ${{ github.event.release.name }}
+          files: ./packages/kos-mobile/ios/XCFrameworks/KOSMobile.xcframework.zip
+
+  create-ios-release:
+    needs: upload-xcframework
+    runs-on: [ "macos-14" ]
+    env:
+      TERM: xterm
+      GITHUB_TOKEN: ${{ secrets.git_pass }}
+    steps:
+      - name: Checkout kos-rs-xcframework
+        uses: actions/checkout@v4
+        with:
+          repository: klever-io/kos-rs-xcframework
+          token: ${{ secrets.git_pass }}
+      - name: Download checksum
+        uses: actions/download-artifact@v4
+        with:
+          name: checksum
+          path: .
+      - name: Update Swift Package Url and Checksum
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          export NEW_URL="https://github.com/klever-io/kos-rs/releases/download/$TAG_NAME/KOSMobile.xcframework.zip"
+          export NEW_CHECKSUM=$(cat checksum.txt)
+          echo "URL: $NEW_URL"
+          echo "Checksum: $NEW_CHECKSUM"
+          chmod +x ./update_package.sh
+          ./update_package.sh
+      - name: Commit Changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add -f Package.swift
+          git commit -m "Update package.swift"
+          git push origin main
+      - name: Create Release
+        run: |
+          brew install jq
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          RELEASE_NAME="${{ github.event.release.name }}"
+          RELEASE_BODY="${{ github.event.release.body }}"
+          PRERELEASE=${{ github.event.release.prerelease }} 
+          ESCAPED_BODY=$(echo "${RELEASE_BODY}" | jq -Rsa .)
+          curl -f -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+            "tag_name": "'"${TAG_NAME}"'",
+            "target_commitish": "main",
+            "name": "'"${RELEASE_NAME}"'",
+            "body": '"${ESCAPED_BODY}"',
+            "draft": false,
+            "prerelease": '"${PRERELEASE}"'
+          }' \
+          https://api.github.com/repos/klever-io/kos-rs-xcframework/releases

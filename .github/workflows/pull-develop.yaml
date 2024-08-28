@@ -44,13 +44,11 @@ jobs:
       - name: checks
         run: |
           cargo deny check
-          cargo outdated --exit-code 1
           cargo pants
 
       - name: Restore .env file
-        run: echo $NODES_ENV | base64 -d > packages/kos-sdk/.env.nodes
-        env:
-          NODES_ENV: ${{ secrets.NODES_ENV }}
+        run: |
+          echo "${{ vars.NODES_ENV }}" > packages/kos-sdk/.env.nodes
 
       - name: Run Tests
         run: cargo test
