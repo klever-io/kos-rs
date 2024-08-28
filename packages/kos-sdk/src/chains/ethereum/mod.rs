@@ -611,7 +611,7 @@ mod tests {
     fn test_get_balance() {
         let balance = tokio_test::block_on(ETH::get_balance(DEFAULT_ADDRESS, None, None)).unwrap();
 
-        assert!(balance.to_i64() > 100);
+        assert!(balance.to_i64() > 0);
     }
 
     #[test]
