@@ -3,34 +3,32 @@ use hex::ToHex;
 
 use kos_crypto::cipher;
 use kos_crypto::cipher::CipherAlgo;
-use kos_sdk;
+use kos_sdk::chain::Chain;
 use kos_sdk::models::PathOptions;
 use kos_sdk::wallet::Wallet;
 use kos_types::error::Error as KosError;
-
-use crate::kos_sdk::chain::Chain;
 
 uniffi::setup_scaffolding!();
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 enum KOSError {
     #[error("UnsupportedChainError: Unsupported chain {id}")]
-    UnsupportedChainError { id: String },
+    UnsupportedChain { id: String },
     #[error("KOSDelegateError: {0}")]
-    KOSDelegateError(String),
+    KOSDelegate(String),
     #[error("HexDecodeError: {0}")]
-    HexDecodeError(String),
+    HexDecode(String),
 }
 
 impl From<KosError> for KOSError {
     fn from(err: KosError) -> Self {
-        KOSError::KOSDelegateError(err.to_string())
+        KOSError::KOSDelegate(err.to_string())
     }
 }
 
 impl From<FromHexError> for KOSError {
     fn from(err: FromHexError) -> Self {
-        KOSError::HexDecodeError(err.to_string())
+        KOSError::HexDecode(err.to_string())
     }
 }
 
@@ -111,15 +109,14 @@ fn encrypt_with_cfb(data: String, password: String) -> Result<String, KOSError> 
 #[uniffi::export]
 fn decrypt(data: String, password: String) -> Result<String, KOSError> {
     let data_in_byte = hex::decode(data)?;
-    let decrypted_data = cipher::decrypt(&*data_in_byte, password.as_str())?;
+    let decrypted_data = cipher::decrypt(&data_in_byte, password.as_str())?;
     Ok(String::from_utf8_lossy(&decrypted_data).to_string())
 }
 
 fn get_chain_by(id: i32) -> Result<Chain, KOSError> {
-    let id_u8 =
-        u8::try_from(id).map_err(|_| KOSError::UnsupportedChainError { id: id.to_string() })?;
+    let id_u8 = u8::try_from(id).map_err(|_| KOSError::UnsupportedChain { id: id.to_string() })?;
     let chain = Chain::get_by_code(id_u8)
-        .ok_or_else(|| KOSError::UnsupportedChainError { id: id.to_string() })?;
+        .ok_or_else(|| KOSError::UnsupportedChain { id: id.to_string() })?;
     Ok(chain)
 }
 
@@ -141,10 +138,7 @@ mod tests {
         let size = -1;
         match generate_mnemonic(size) {
             Ok(_) => panic!("A error was expected but found a mnemonic"),
-            Err(e) => assert!(
-                matches!(e, KOSError::KOSDelegateError(..)),
-                " Invalid error"
-            ),
+            Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), "Invalid error"),
         }
     }
 
@@ -170,7 +164,7 @@ mod tests {
         match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
             Ok(_) => panic!("A error was expected but found a mnemonic"),
             Err(e) => {
-                if let KOSError::UnsupportedChainError { id } = e {
+                if let KOSError::UnsupportedChain { id } = e {
                     assert_eq!(id, chain_id.to_string(), "Invalid error");
                 } else {
                     panic!("Expected UnsupportedChainError but found different error");
@@ -270,10 +264,7 @@ mod tests {
                 "A error was expected but found a pk {}.",
                 account.private_key
             ),
-            Err(e) => assert!(
-                matches!(e, KOSError::KOSDelegateError(..)),
-                " Invalid error"
-            ),
+            Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), " Invalid error"),
         }
     }
 
@@ -311,10 +302,7 @@ mod tests {
         let encrypted_data = encrypt_with_gmc(original_data.clone(), password.clone()).unwrap();
         match decrypt(encrypted_data, "wrong".to_string()) {
             Ok(_) => panic!("A error was expected but found a decrypted data"),
-            Err(e) => assert!(
-                matches!(e, KOSError::KOSDelegateError(..)),
-                " Invalid error"
-            ),
+            Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), " Invalid error"),
         }
     }
 }
