@@ -58,6 +58,9 @@ fn generate_wallet_from_mnemonic(
     index: i32,
     use_legacy_path: bool,
 ) -> Result<KOSAccount, KOSError> {
+    if !validate_mnemonic(mnemonic.clone()) {
+        return Err(KOSError::KOSDelegate("Invalid mnemonic".to_string()));
+    }
     let chain = get_chain_by(chain_id)?;
     let mut path_options = PathOptions::new(index as u32);
     path_options.set_legacy(use_legacy_path);
@@ -197,6 +200,17 @@ mod tests {
     }
 
     #[test]
+    fn should_fail_to_get_account_from_mnemonic_with_invalid_mnemonic() {
+        let mnemonic = "abandon abandon abandon abandon abandon klv abandon abandon abandon abandon abandon about".to_string();
+        let index = 0;
+        let chain_id = 38;
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
+            Ok(_) => panic!("A error was expected but found a account"),
+            Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), " Invalid error"),
+        }
+    }
+
+    #[test]
     fn should_get_all_supported_chains_account_from_mnemonic() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
@@ -302,7 +316,7 @@ mod tests {
         let encrypted_data = encrypt_with_gmc(original_data.clone(), password.clone()).unwrap();
         match decrypt(encrypted_data, "wrong".to_string()) {
             Ok(_) => panic!("A error was expected but found a decrypted data"),
-            Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), " Invalid error"),
+            Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), "Invalid error"),
         }
     }
 }
