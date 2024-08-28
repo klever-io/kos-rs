@@ -1,0 +1,26 @@
+name: Publish Android
+on:
+  release:
+    types: [ created ]
+jobs:
+  publish-package:
+    runs-on: [ "macos-14" ]
+    env:
+      TERM: xterm
+      GITHUB_TOKEN: ${{ secrets.git_pass }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Build and Test Android
+        run: |
+          brew install protobuf
+          cargo clean
+          make clean-mobile-build
+          make test-android
+      - name: Publish Package
+        run: |
+          export LIB_VERSION=${GITHUB_REF#refs/tags/}
+          echo "Publishing version $LIB_VERSION"
+          make publish-android
