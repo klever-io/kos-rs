@@ -12,6 +12,7 @@ rust-version = { workspace = true }
 alloc = ["hex/alloc"]
 serde = ["dep:serde", "alloc"]
 std = ["alloc", "serde?/std"]
+random = []
 
 [dependencies]
 rand = { workspace = true }

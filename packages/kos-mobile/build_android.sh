@@ -12,7 +12,7 @@ configure_cargo() {
     if [ "$toolchain" = "armv7a-linux-androideabi" ]; then
       toolchain="armv7-linux-androideabi"
     fi
-    rustup target add $toolchain >/dev/null 2>&1
+    rustup target add $toolchain
   done
   export AR="$ANDROID_NDK_PATH/toolchains/llvm/prebuilt/$OS/bin/llvm-ar"
   export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$ANDROID_NDK_PATH/toolchains/llvm/prebuilt/$OS/bin/aarch64-linux-android$ANDROID_MIN_API-clang"
