@@ -80,7 +80,7 @@ jobs:
           VERSION=$(cat VERSION)
           gh release create "v$VERSION" ./demo/kos-js.zip --title "Release v$VERSION" --generate-notes --target master || { echo 'Release creation failed'; exit 1; }
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GIT_PASS }}
 
       - name: Setup npm module
         uses: actions/setup-node@v3
