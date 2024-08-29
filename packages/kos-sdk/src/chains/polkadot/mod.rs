@@ -156,7 +156,8 @@ impl DOT {
         addr: &str,
         _option: Option<crate::models::AddressOptions>,
     ) -> Result<bool, Error> {
-        Ok(true)
+        let address = address::Address::from_str(addr);
+        Ok(address.is_ok())
     }
 }
 
@@ -178,6 +179,13 @@ mod tests {
         let path = super::DOT::get_path(&super::PathOptions { index: 1, is_legacy: None }).unwrap();
 
         assert_eq!(path, "//0");
+    }
+
+    #[test]
+    fn test_validate_address() {
+        let address = "13KVd4f2a4S5pLp4gTTFezyXdPWx27vQ9vS6xBXJ9yWVd7xo";
+        let valid = super::DOT::validate_address(address, None).unwrap();
+        assert_eq!(valid, true);
     }
 
 }
