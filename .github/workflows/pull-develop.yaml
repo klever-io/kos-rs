@@ -47,8 +47,9 @@ jobs:
           cargo pants
 
       - name: Restore .env file
-        run: |
-          echo "${{ vars.NODES_ENV }}" > packages/kos-sdk/.env.nodes
+        run: echo $NODES_ENV | base64 -d > packages/kos-sdk/.env.nodes
+        env:
+          NODES_ENV: ${{ secrets.NODES_ENV }}
 
       - name: Run Tests
         run: cargo test
