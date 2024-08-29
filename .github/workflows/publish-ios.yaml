@@ -73,6 +73,7 @@ jobs:
         run: |
           brew install jq
           TAG_NAME=${GITHUB_REF#refs/tags/}
+          TAG_NAME=${TAG_NAME#v}
           RELEASE_NAME="${{ github.event.release.name }}"
           RELEASE_BODY="${{ github.event.release.body }}"
           PRERELEASE=${{ github.event.release.prerelease }} 
