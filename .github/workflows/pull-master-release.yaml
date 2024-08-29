@@ -72,6 +72,9 @@ jobs:
       - name: Build
         run: make webpack-npm
 
+      - name: Package kos-js
+        run: zip -r ./demo/kos-js.zip ./demo/kos
+
       - name: Capture Release Notes
         id: release_notes
         run: |
@@ -82,7 +85,7 @@ jobs:
       - name: Create GitHub Release
         run: |
           VERSION=$(cat VERSION)
-          gh release create "v$VERSION" ./demo/kos --title "Release v$VERSION" --notes "${{ steps.release_notes.outputs.notes }}"
+          gh release create "v$VERSION" ./demo/kos-js.zip --title "Release v$VERSION" --notes "${{ steps.release_notes.outputs.notes }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
