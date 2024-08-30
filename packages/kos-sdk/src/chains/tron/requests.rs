@@ -2,6 +2,7 @@ use crate::utils;
 use kos_types::error::Error;
 use serde::Serialize;
 use serde_json::json;
+use kos_proto::tron::TransferContract;
 
 #[derive(Serialize)]
 pub struct ContractOptions {

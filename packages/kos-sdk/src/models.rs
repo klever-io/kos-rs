@@ -1,9 +1,11 @@
+use pbjson::private::base64;
 // use crate::klever;
 use kos_types::{error::Error, hash::Hash};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 use crate::chain::Chain;
+use crate::chain::Chain::KLV;
 
 #[derive(Debug, Clone, Serialize)]
 #[wasm_bindgen]
@@ -185,13 +187,72 @@ impl Transaction {
         }
     }
 }
-
 impl Transaction {
     pub fn new_data(&self, chain: Chain, data: TransactionRaw) -> Transaction {
         let mut tx = self.clone();
         tx.chain = chain;
         tx.data = Some(data);
         tx
+    }
+}
+
+#[wasm_bindgen]
+impl Transaction {
+    #[wasm_bindgen(js_name = fromRaw)]
+    pub fn from_raw(chain: Chain, data: &str) -> Self {
+        let mut sender = String::default();
+
+        let data = match chain {
+            Chain::KLV => {
+                let tx: kos_proto::klever::Transaction =
+                    serde_json::from_str(data).expect("failed to parse klever transaction");
+
+                // unwrap raw_data
+                let raw_data = tx
+                    .raw_data
+                    .clone()
+                    .ok_or_else(|| Error::InvalidTransaction("no raw TX found".to_string())).unwrap();
+
+                sender = String::default();
+                TransactionRaw::Klever(tx)
+            }
+            Chain::TRX => {
+                let tx: kos_proto::tron::Transaction =
+                    serde_json::from_str(data).unwrap();
+
+                let raw_data = &tx.clone().raw_data.unwrap().contract[0];
+
+                let value = &raw_data.parameter.clone().unwrap().value;
+
+
+                sender = String::default();
+                TransactionRaw::Tron(tx)
+            }
+
+            Chain::ETH => {
+                let data: super::chains::ETHTransaction =
+                    serde_json::from_str(data).expect("failed to parse ethereum transaction");
+                TransactionRaw::Ethereum(data)
+            }
+            Chain::MATIC => {
+                todo!("decode polygon transaction")
+            }
+            Chain::BTC => {
+               todo!("decode bitcoin transaction")
+            }
+            Chain::NONE => {
+                panic!("invalid chain")
+            }
+        };
+
+        let hash = Hash::default();
+
+        Self {
+            chain,
+            sender,
+            hash,
+            data: Some(data),
+        }
     }
 }
 
@@ -248,5 +309,29 @@ impl AddressOptions {
     #[wasm_bindgen(js_name = getCheckSummed)]
     pub fn get_check_summed(&self) -> Option<bool> {
         self.check_summed
+    }
+}
+
+// Test Transaction from raw
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::chains::ETHTransaction;
+    use kos_proto::klever::Transaction as KleverTransaction;
+    use kos_proto::tron::Transaction as TronTransaction;
+    use serde_json::json;
+    use web3::ethabi::ParamType::String;
+
+    #[test]
+    fn test_transaction_from_raw() {
+
+
+        let tron_tx_str = r#"{"raw_data":{"ref_block_bytes":"ceda","ref_block_hash":"55821ec130fa833c","expiration":1725055080000,"contract":[{"type":"TransferContract","parameter":{"typeUrl":"type.googleapis.com/protocol.TransferContract","value":"ChVBBYOmijvNhsJasb7kgrrASiFrAmESFUHIWZER8pweHgYSZbSvk+ofJ0rXihgK"}}],"timestamp":1725055023434}}"#;
+        let klv_tx_str = r#"{"RawData":{"Nonce":312,"Sender":"nxNUcG11rraE8m196h+9oX4mTHWVzB7d7AuJaMG+hSQ=","Contract":[{"Parameter":{"type_url":"type.googleapis.com/proto.TransferContract","value":"CiCthZSJePbX7pPJ64gh6PZ+HBo1YPZddPMYyYs/+aLSMxIDS0xWGMCEPQ=="}}],"Data":[""],"KAppFee":1000000,"BandwidthFee":2000000,"Version":1,"ChainID":"MTA4"}}"#;
+
+        let tx = Transaction::from_raw(Chain::TRX, tron_tx_str);
+
+        assert_eq!(tx.chain, Chain::TRX);
+
     }
 }
