@@ -3,9 +3,9 @@ use pbjson::private::base64;
 use kos_types::{error::Error, hash::Hash};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
-
+use kos_proto::tron;
 use crate::chain::Chain;
-use crate::chain::Chain::KLV;
+use crate::chains::{KLV, TRX};
 
 #[derive(Debug, Clone, Serialize)]
 #[wasm_bindgen]
@@ -213,19 +213,22 @@ impl Transaction {
                     .clone()
                     .ok_or_else(|| Error::InvalidTransaction("no raw TX found".to_string())).unwrap();
 
-                sender = String::default();
+                sender = KLV::address_from_bytes(&raw_data.sender).unwrap();
                 TransactionRaw::Klever(tx)
             }
             Chain::TRX => {
-                let tx: kos_proto::tron::Transaction =
-                    serde_json::from_str(data).unwrap();
+                let raw_data_bytes = hex::decode(data).unwrap().clone();
+                let raw_data: kos_proto::tron::transaction::Raw = kos_proto::from_bytes(raw_data_bytes).unwrap();
 
-                let raw_data = &tx.clone().raw_data.unwrap().contract[0];
+                let parameter: kos_proto::tron::TransferContract = kos_proto::unpack_from_option_any(&raw_data.contract[0].parameter).unwrap();
 
-                let value = &raw_data.parameter.clone().unwrap().value;
+                let tx = kos_proto::tron::Transaction {
+                    raw_data: Some(raw_data),
+                    signature: Vec::new(),
+                    ret: Vec::new(),
+                };
 
-
-                sender = String::default();
+                sender = TRX::address_from_bytes(parameter.owner_address.as_slice()).unwrap();
                 TransactionRaw::Tron(tx)
             }
 
@@ -325,13 +328,16 @@ mod tests {
     #[test]
     fn test_transaction_from_raw() {
 
-
-        let tron_tx_str = r#"{"raw_data":{"ref_block_bytes":"ceda","ref_block_hash":"55821ec130fa833c","expiration":1725055080000,"contract":[{"type":"TransferContract","parameter":{"typeUrl":"type.googleapis.com/protocol.TransferContract","value":"ChVBBYOmijvNhsJasb7kgrrASiFrAmESFUHIWZER8pweHgYSZbSvk+ofJ0rXihgK"}}],"timestamp":1725055023434}}"#;
         let klv_tx_str = r#"{"RawData":{"Nonce":312,"Sender":"nxNUcG11rraE8m196h+9oX4mTHWVzB7d7AuJaMG+hSQ=","Contract":[{"Parameter":{"type_url":"type.googleapis.com/proto.TransferContract","value":"CiCthZSJePbX7pPJ64gh6PZ+HBo1YPZddPMYyYs/+aLSMxIDS0xWGMCEPQ=="}}],"Data":[""],"KAppFee":1000000,"BandwidthFee":2000000,"Version":1,"ChainID":"MTA4"}}"#;
+        let klv_tx = Transaction::from_raw(Chain::KLV, klv_tx_str);
 
-        let tx = Transaction::from_raw(Chain::TRX, tron_tx_str);
+        assert_eq!(klv_tx.sender, "klv1nuf4gurdwkhtdp8jd47758aa59lzvnr4jhxpah0vpwyk3sd7s5jqy6mut7");
 
-        assert_eq!(tx.chain, Chain::TRX);
+        let tron_tx_str = "0a02d8372208e9c73b516bcd78844088c6e8ad9a325a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a1541e825d52582eec346c839b4875376117904a76cbc12154120ab1300cf70c048e4cf5d5b1b33f59653ed662618c0843d70fdfee4ad9a32";
+
+        let tron_tx = Transaction::from_raw(Chain::TRX, tron_tx_str);
+
+        assert_eq!(tron_tx.sender, "TX8h6Df74VpJsXF6sTDz1QJsq3Ec8dABc3");
 
     }
 }

@@ -81,6 +81,11 @@ impl TRX {
         Ok(address::Address::from_keypair(kp).to_string())
     }
 
+    pub fn address_from_bytes(bytes: &[u8]) -> Result<String, Error> {
+        let addr = address::Address::from_bytes(bytes);
+        Ok(addr.to_string())
+    }
+
     #[wasm_bindgen(js_name = "getPath")]
     pub fn get_path(options: &PathOptions) -> Result<String, Error> {
         let index = options.index;
