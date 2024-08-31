@@ -410,6 +410,32 @@ impl TRX {
         let bytes = kos_proto::write_message(&raw_data);
         Ok(hex::encode(bytes))
     }
+
+    pub fn tx_from_raw(data: &str) -> Result<Transaction, Error> {
+        let raw_data_bytes = hex::decode(data).unwrap().clone();
+        let raw_data: kos_proto::tron::transaction::Raw =
+            kos_proto::from_bytes(raw_data_bytes).unwrap();
+
+        let parameter: kos_proto::tron::TransferContract =
+            kos_proto::unpack_from_option_any(&raw_data.contract[0].parameter).unwrap();
+
+        let tx = kos_proto::tron::Transaction {
+            raw_data: Some(raw_data),
+            signature: Vec::new(),
+            ret: Vec::new(),
+        };
+
+        let hash = Hash::from_vec(TRX::hash_transaction(&tx).unwrap()).unwrap();
+
+        let sender = TRX::address_from_bytes(parameter.owner_address.as_slice()).unwrap();
+
+        Ok(Transaction {
+            chain: chain::Chain::TRX,
+            sender,
+            hash,
+            data: Some(TransactionRaw::Tron(tx)),
+        })
+    }
 }
 
 #[cfg(test)]
