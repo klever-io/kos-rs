@@ -201,12 +201,8 @@ impl Transaction {
             Chain::KLV => KLV::tx_from_raw(data).unwrap(),
             Chain::TRX => TRX::tx_from_raw(data).unwrap(),
             Chain::ETH => ETH::tx_from_json(data).unwrap(),
-            Chain::MATIC => {
-                todo!()
-            }
-            Chain::BTC => {
-                todo!()
-            }
+            Chain::MATIC => todo!(),
+            Chain::BTC => todo!(),
             Chain::NONE => {
                 panic!("Invalid Chain")
             }
