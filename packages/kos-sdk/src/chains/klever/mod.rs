@@ -68,11 +68,6 @@ impl KLV {
         Ok(address::Address::from_keypair(keypair).to_string())
     }
 
-    pub fn address_from_bytes(bytes: &[u8]) -> Result<String, Error> {
-        let address = address::Address::from_bytes(bytes);
-        Ok(address.to_string())
-    }
-
     #[wasm_bindgen(js_name = "getPath")]
     pub fn get_path(options: &PathOptions) -> Result<String, Error> {
         Ok(format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, options.index))

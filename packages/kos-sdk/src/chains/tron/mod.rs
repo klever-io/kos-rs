@@ -81,11 +81,6 @@ impl TRX {
         Ok(address::Address::from_keypair(kp).to_string())
     }
 
-    pub fn address_from_bytes(bytes: &[u8]) -> Result<String, Error> {
-        let addr = address::Address::from_bytes(bytes);
-        Ok(addr.to_string())
-    }
-
     #[wasm_bindgen(js_name = "getPath")]
     pub fn get_path(options: &PathOptions) -> Result<String, Error> {
         let index = options.index;
@@ -427,7 +422,7 @@ impl TRX {
 
         let hash = Hash::from_vec(TRX::hash_transaction(&tx).unwrap()).unwrap();
 
-        let sender = TRX::address_from_bytes(parameter.owner_address.as_slice()).unwrap();
+        let sender = address::Address::from_bytes(parameter.owner_address.as_slice()).to_string();
 
         Ok(Transaction {
             chain: chain::Chain::TRX,
