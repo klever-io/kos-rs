@@ -37,5 +37,5 @@ xcuserdata/
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/project.xcworkspace/
 !*.xcodeproj/xcshareddata/
-KOSMobile/aarch64-apple-ios
-KOSMobile/aarch64-apple-ios-sim
+KOSMobile/ios-framework
+KOSMobile/ios-sim-framework
