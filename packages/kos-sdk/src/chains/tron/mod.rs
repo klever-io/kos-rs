@@ -407,12 +407,14 @@ impl TRX {
     }
 
     pub fn tx_from_raw(data: &str) -> Result<Transaction, Error> {
-        let raw_data_bytes = hex::decode(data).unwrap().clone();
+        let raw_data_bytes = hex::decode(data)?;
         let raw_data: kos_proto::tron::transaction::Raw =
             kos_proto::from_bytes(raw_data_bytes).unwrap();
 
         let parameter: kos_proto::tron::TransferContract =
-            kos_proto::unpack_from_option_any(&raw_data.contract[0].parameter).unwrap();
+            kos_proto::unpack_from_option_any(&raw_data.contract[0].parameter).ok_or(
+                Error::InvalidTransaction("Failed to unpack transfer contract".to_string()),
+            )?;
 
         let tx = kos_proto::tron::Transaction {
             raw_data: Some(raw_data),
@@ -420,7 +422,7 @@ impl TRX {
             ret: Vec::new(),
         };
 
-        let hash = Hash::from_vec(TRX::hash_transaction(&tx).unwrap()).unwrap();
+        let hash = Hash::from_vec(TRX::hash_transaction(&tx)?)?;
 
         let sender = address::Address::from_bytes(parameter.owner_address.as_slice()).to_string();
 
@@ -655,5 +657,19 @@ mod tests {
         let invalid_tx = "invalid_json_format";
         let result = TRX::serialize_raw_data_into_hex_string(invalid_tx);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_tx_from_raw() {
+        let tx = "0a02d8372208e9c73b516bcd78844088c6e8ad9a325a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a1541e825d52582eec346c839b4875376117904a76cbc12154120ab1300cf70c048e4cf5d5b1b33f59653ed662618c0843d70fdfee4ad9a32";
+        let result = TRX::tx_from_raw(tx);
+        assert!(result.is_ok());
+        let t = result.unwrap();
+        assert_eq!(t.chain, chain::Chain::TRX);
+        assert_eq!(t.sender, "TX8h6Df74VpJsXF6sTDz1QJsq3Ec8dABc3");
+        assert_eq!(
+            t.hash.to_string(),
+            "3e6c463b2e88d78e912dee3aa31a14aa71c0e56bbdfbdbba012c8af4e45b8834"
+        );
     }
 }
