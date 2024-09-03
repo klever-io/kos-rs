@@ -196,17 +196,18 @@ impl Transaction {
 #[wasm_bindgen]
 impl Transaction {
     #[wasm_bindgen(js_name = fromRaw)]
-    pub fn from_raw(chain: Chain, data: &str) -> Self {
+    pub fn from_raw(chain: Chain, data: &str) -> Result<Transaction, Error> {
         match chain {
-            Chain::KLV => KLV::tx_from_raw(data).unwrap(),
-            Chain::TRX => TRX::tx_from_raw(data).unwrap(),
-            Chain::ETH => ETH::tx_from_json(data).unwrap(),
-            Chain::MATIC => todo!(),
-            Chain::BTC => todo!(),
-            Chain::NONE => panic!(
-                "{:?}",
-                Error::InvalidTransaction("Invalid chain".to_string())
-            ),
+            Chain::KLV => KLV::tx_from_raw(data),
+            Chain::TRX => TRX::tx_from_raw(data),
+            Chain::ETH => ETH::tx_from_json(data),
+            Chain::MATIC => Err(Error::InvalidTransaction(
+                "MATIC chain not implemented".to_string(),
+            )),
+            Chain::BTC => Err(Error::InvalidTransaction(
+                "BTC chain not implemented".to_string(),
+            )),
+            Chain::NONE => Err(Error::InvalidTransaction("Invalid chain".to_string())),
         }
     }
 }
