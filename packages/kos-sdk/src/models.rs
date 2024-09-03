@@ -203,7 +203,10 @@ impl Transaction {
             Chain::ETH => ETH::tx_from_json(data).unwrap(),
             Chain::MATIC => todo!(),
             Chain::BTC => todo!(),
-            Chain::NONE => Err(Error::InvalidTransaction("Invalid chain".to_string())).unwrap(),
+            Chain::NONE => panic!(
+                "{:?}",
+                Error::InvalidTransaction("Invalid chain".to_string())
+            ),
         }
     }
 }
