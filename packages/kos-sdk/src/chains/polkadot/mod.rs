@@ -20,6 +20,8 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 pub struct DOT {}
 
+pub const SIGN_PREFIX: &[u8; 26] = b"\x19Polkadot Signed Message:\n";
+
 pub const BIP44_PATH: u32 = 195;
 pub const BASE_CHAIN: BaseChain = BaseChain {
     name: "Polkadot",
@@ -145,20 +147,21 @@ impl DOT {
     #[wasm_bindgen(js_name = "hash")]
     /// hash digest
     pub fn hash(message: &[u8]) -> Result<Vec<u8>, Error> {
-        let digest = kos_crypto::hash::sha256(message);
+        let digest = kos_crypto::hash::blake2b256(message);
         Ok(digest.to_vec())
     }
 
     #[wasm_bindgen(js_name = "messageHash")]
     /// Append prefix and hash the message
     pub fn message_hash(message: &[u8]) -> Result<Vec<u8>, Error> {
-        todo!()
+        let to_sign = [SIGN_PREFIX, message.len().to_string().as_bytes(), message].concat();
+        DOT::hash(&to_sign)
     }
 
     #[wasm_bindgen(js_name = "signMessage")]
     /// Sign Message with the private key.
     pub fn sign_message(message: &[u8], keypair: &KeyPair) -> Result<Vec<u8>, Error> {
-        Ok(Vec::new())
+        DOT::sign_digest(message, keypair)
     }
 
     #[wasm_bindgen(js_name = "verifyMessageSignature")]

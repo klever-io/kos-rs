@@ -23,7 +23,7 @@ sha2 = { workspace = true }
 sha3 = { workspace = true }
 hmac = { workspace = true }
 secp256k1 = { workspace = true, features = ["rand", "serde", "bitcoin_hashes"] }
-ed25519-dalek = { workspace = true, features = ["serde"]  }
+ed25519-dalek = { workspace = true, features = ["serde"] }
 aes-gcm = "0.10"
 aes = { version = "0.8" }
 cfb-mode = "0.8"
@@ -31,5 +31,4 @@ cbc = { version = "0.1", features = ["block-padding", "std"] }
 pem = "3"
 pbkdf2 = { version = "0.12", features = ["simple"] }
 base64 = "0.21"
-subxt-signer = "0.30.1"
 sp-core = "34.0.0"
