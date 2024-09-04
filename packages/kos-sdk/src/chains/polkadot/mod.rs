@@ -1,5 +1,4 @@
 mod address;
-mod transaction;
 
 use crate::models::BroadcastResult;
 use crate::{
@@ -8,7 +7,6 @@ use crate::{
     models::{PathOptions, Transaction, TransactionRaw},
 };
 use kos_crypto::keypair::KeyPair;
-use kos_crypto::secp256k1::Secp256k1KeyPair;
 use kos_crypto::sr25519::Sr25519KeyPair;
 use kos_types::error::Error;
 use kos_types::hash::Hash;
@@ -230,7 +228,7 @@ mod tests {
     #[test]
     fn test_sign_digest() {
         let kp = super::DOT::keypair_from_bytes(&[0u8; 32]).unwrap();
-        let digest = vec![0u8; 32];
+        let digest = String::from("hello").into_bytes();
         let signature = super::DOT::sign_digest(&digest, &kp).unwrap();
         assert_eq!(signature.len(), 64);
 

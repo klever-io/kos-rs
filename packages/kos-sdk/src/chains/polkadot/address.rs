@@ -1,7 +1,8 @@
-use std::str::FromStr;
-use wasm_bindgen::prelude::wasm_bindgen;
 use kos_crypto::keypair::KeyPair;
 use sp_core::crypto::{Ss58AddressFormat, Ss58Codec};
+use sp_core::sr25519::Public;
+use std::str::FromStr;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 const ADDRESS_LEN: usize = 32;
 #[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
@@ -48,8 +49,7 @@ impl FromStr for Address {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-
-        let decoded = sp_core::sr25519::Public::from_ss58check_with_version(s).map_err(|_| "Invalid address")?;
+        let decoded = Public::from_ss58check_with_version(s).map_err(|_| "Invalid address")?;
 
         decoded.0.len() == ADDRESS_LEN || return Err("Invalid address");
 
@@ -62,7 +62,7 @@ impl FromStr for Address {
 
 impl ::std::fmt::Display for Address {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-        let st = sp_core::sr25519::Public::from_raw(self.0).to_ss58check_with_version(Ss58AddressFormat::custom(0));
+        let st = Public::from_raw(self.0).to_ss58check_with_version(Ss58AddressFormat::custom(0));
 
         st.fmt(f)
     }
