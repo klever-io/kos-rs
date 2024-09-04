@@ -2758,6 +2758,7 @@ dependencies = [
  "kos-types",
  "kos-utils",
  "log",
+ "parity-scale-codec",
  "pbjson",
  "pbjson-types",
  "pem",

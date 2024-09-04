@@ -1,18 +1,22 @@
 mod address;
+mod transaction;
 
-use std::str::FromStr;
-
+use crate::models::BroadcastResult;
 use crate::{
     chain::{self, BaseChain},
+    models,
     models::{PathOptions, Transaction, TransactionRaw},
 };
-use kos_crypto::{keypair::KeyPair};
+use kos_crypto::keypair::KeyPair;
+use kos_crypto::secp256k1::Secp256k1KeyPair;
+use kos_crypto::sr25519::Sr25519KeyPair;
 use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
-
+use sp_core::crypto::Ss58Codec;
+use sp_core::{sr25519, Pair};
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
-use kos_crypto::sr25519::Sr25519KeyPair;
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
@@ -33,6 +37,11 @@ impl DOT {
         BASE_CHAIN
     }
 
+    pub fn random() -> Result<KeyPair, Error> {
+        let mut rng = rand::thread_rng();
+        let kp = Sr25519KeyPair::random(&mut rng);
+        Ok(KeyPair::new_sr25519(kp))
+    }
 
     #[wasm_bindgen(js_name = "keypairFromBytes")]
     pub fn keypair_from_bytes(private_key: &[u8]) -> Result<KeyPair, Error> {
@@ -86,7 +95,29 @@ impl DOT {
 
     #[wasm_bindgen(js_name = "verifyDigest")]
     /// Verify Message signature
-    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<bool, Error> {
+    pub fn verify_digest(digest: &[u8], signature: &[u8], _address: &str) -> Result<bool, Error> {
+        let public = sr25519::Public::from_ss58check(_address).unwrap();
+
+        let signature =
+            sp_core::sr25519::Signature::from_raw(<[u8; 64]>::try_from(signature).unwrap());
+
+        Ok(sr25519::Pair::verify(&signature, digest, &public))
+    }
+
+    pub async fn send(
+        sender: String,
+        receiver: String,
+        amount: BigNumber,
+        options: Option<models::SendOptions>,
+        node_url: Option<String>,
+    ) -> Result<Transaction, Error> {
+        todo!()
+    }
+
+    pub async fn broadcast(
+        tx: crate::models::Transaction,
+        node_url: Option<String>,
+    ) -> Result<BroadcastResult, Error> {
         todo!()
     }
 
@@ -168,7 +199,11 @@ mod tests {
     #[test]
     fn test_keypair_from_mnemonic() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
-        let path = super::DOT::get_path(&super::PathOptions { index: 0, is_legacy: None }).unwrap();
+        let path = super::DOT::get_path(&super::PathOptions {
+            index: 0,
+            is_legacy: None,
+        })
+        .unwrap();
         let kp = super::DOT::keypair_from_mnemonic(mnemonic, &path, None).unwrap();
         let address = super::DOT::get_address_from_keypair(&kp).unwrap();
         assert_eq!(address, "13KVd4f2a4S5pLp4gTTFezyXdPWx27vQ9vS6xBXJ9yWVd7xo");
@@ -176,7 +211,11 @@ mod tests {
 
     #[test]
     fn test_get_path() {
-        let path = super::DOT::get_path(&super::PathOptions { index: 1, is_legacy: None }).unwrap();
+        let path = super::DOT::get_path(&super::PathOptions {
+            index: 1,
+            is_legacy: None,
+        })
+        .unwrap();
 
         assert_eq!(path, "//0");
     }
@@ -188,5 +227,15 @@ mod tests {
         assert_eq!(valid, true);
     }
 
-}
+    #[test]
+    fn test_sign_digest() {
+        let kp = super::DOT::keypair_from_bytes(&[0u8; 32]).unwrap();
+        let digest = vec![0u8; 32];
+        let signature = super::DOT::sign_digest(&digest, &kp).unwrap();
+        assert_eq!(signature.len(), 64);
 
+        let address = super::DOT::get_address_from_keypair(&kp).unwrap();
+        let valid = super::DOT::verify_digest(&digest, &signature, &address).unwrap();
+        assert_eq!(valid, true);
+    }
+}

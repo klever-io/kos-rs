@@ -58,6 +58,7 @@ subxt = "0.37.0"
 subxt-signer = "0.37.0"
 base64 = "0.22.1"
 subxt-core = "0.0.1"
+parity-scale-codec = "3.6.12"
 
 [dev-dependencies]
 sp-core = "34.0.0"
