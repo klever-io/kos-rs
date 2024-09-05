@@ -1693,7 +1693,7 @@ dependencies = [
 
 [[package]]
 name = "kos"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "console_error_panic_hook",
  "futures",
@@ -1712,7 +1712,7 @@ dependencies = [
 
 [[package]]
 name = "kos-crypto"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "aes",
  "aes-gcm",
@@ -1740,7 +1740,7 @@ dependencies = [
 
 [[package]]
 name = "kos-mobile"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "kos-crypto",
@@ -1755,7 +1755,7 @@ dependencies = [
 
 [[package]]
 name = "kos-proto"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bytes",
  "glob",
@@ -1778,7 +1778,7 @@ dependencies = [
 
 [[package]]
 name = "kos-sdk"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base58",
  "bech32",
@@ -1816,7 +1816,7 @@ dependencies = [
 
 [[package]]
 name = "kos-types"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "coins-bip32",
  "coins-bip39",
@@ -1835,7 +1835,7 @@ dependencies = [
 
 [[package]]
 name = "kos-utils"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "kos-types",
  "log",
