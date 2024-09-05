@@ -14,8 +14,9 @@ clear_ios() {
   cd "$BUILD_HOME"
   rm -rf ios/XCFrameworks
   rm -rf ios/binds
-  rm -rf ios/framework/KOSMobile/aarch64-apple-ios
-  rm -rf ios/framework/KOSMobile/aarch64-apple-ios-sim
+  rm -rf ios/framework/KOSMobile/ios-framework
+  rm -rf ios/framework/KOSMobile/ios-sim-framework
+  rm -f ios/*.a
 }
 
 log_status "cleaning android files..."
