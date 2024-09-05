@@ -59,7 +59,7 @@ fn sign_transaction(account: KOSAccount, raw: String) -> Result<KOSTransaction, 
         chain_id: account.chain_id,
         raw: signed_transaction.get_raw()?,
         sender: signed_transaction.sender,
-        signature: todo!("get signature"),
+        signature: String::default(), // TODO: Implement signature
     })
 }
 
