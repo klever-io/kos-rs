@@ -1,10 +1,9 @@
 use hex::FromHexError;
 use hex::ToHex;
-
 use kos_crypto::cipher;
 use kos_crypto::cipher::CipherAlgo;
 use kos_sdk::chain::Chain;
-use kos_sdk::models::PathOptions;
+use kos_sdk::models::{PathOptions, Transaction};
 use kos_sdk::wallet::Wallet;
 use kos_types::error::Error as KosError;
 
@@ -39,6 +38,29 @@ struct KOSAccount {
     pub public_key: String,
     pub address: String,
     pub path: String,
+}
+
+#[derive(uniffi::Record)]
+struct KOSTransaction {
+    pub chain_id: i32,
+    pub raw: String,
+    pub sender: String,
+    pub signature: String,
+}
+
+#[uniffi::export]
+fn sign_transaction(account: KOSAccount, raw: String) -> Result<KOSTransaction, KOSError> {
+    let chain = get_chain_by(account.chain_id)?;
+    let wallet = Wallet::from_private_key(chain, account.private_key.to_string())?;
+    let transaction = Transaction::from_raw(chain, &raw)?;
+    let signed_transaction = wallet.sign(transaction)?;
+
+    Ok(KOSTransaction {
+        chain_id: account.chain_id,
+        raw: signed_transaction.get_raw()?,
+        sender: signed_transaction.sender,
+        signature: todo!("get signature"),
+    })
 }
 
 #[uniffi::export]
@@ -318,5 +340,34 @@ mod tests {
             Ok(_) => panic!("A error was expected but found a decrypted data"),
             Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), "Invalid error"),
         }
+    }
+
+    // Transaction from raw
+    #[test]
+    fn should_sign_raw_transaction() {
+        let chain_id = 38;
+
+        let raw = "{\"RawData\":{\"BandwidthFee\":1000000,\"ChainID\":\"MTAwNDIw\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Version\":1}}";
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false
+        ).unwrap();
+
+        let transaction = sign_transaction(account, raw.to_string()).unwrap();
+
+        println!("raw: {:?}", transaction.raw);
+
+        assert_eq!(transaction.chain_id, chain_id, "The chain_id doesn't match");
+        assert_eq!(
+            transaction.sender, "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
+            "The sender doesn't match"
+        );
+        assert_eq!(
+            transaction.raw, "{\"RawData\":{\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Contract\":[{\"Parameter\":{\"typeUrl\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"BandwidthFee\":1000000,\"Version\":1,\"ChainID\":\"MTAwNDIw\"},\"Signature\":[\"gUZDIPSxSq40QjTBM38/DAAuWTm7D1THo2KWVqhiTYCum5O+OSWwTYlgIU0RgJ6ungg1cuCJPcmYWNgjDKA/DA==\"]}",
+            "The raw doesn't match"
+        );
     }
 }
