@@ -12,8 +12,8 @@
 		6561E0BF2C76772200907790 /* KOSMobile.h in Headers */ = {isa = PBXBuildFile; fileRef = 6561E0B32C76772200907790 /* KOSMobile.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6561E0CB2C76782000907790 /* kos_mobile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6561E0C82C76782000907790 /* kos_mobile.swift */; };
 		6561E0CC2C76782000907790 /* kos_mobileFFI.h in Headers */ = {isa = PBXBuildFile; fileRef = 6561E0CA2C76782000907790 /* kos_mobileFFI.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		6561E0CF2C76784A00907790 /* aarch64-apple-ios-sim-libkos_mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6561E0CE2C76784A00907790 /* aarch64-apple-ios-sim-libkos_mobile.a */; };
-		6561E0D12C76785700907790 /* aarch64-apple-ios-libkos_mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6561E0D02C76785700907790 /* aarch64-apple-ios-libkos_mobile.a */; };
+		65972EF22C874E9C00011338 /* ios-sim-libkos_mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 65972EF02C874E9C00011338 /* ios-sim-libkos_mobile.a */; };
+		65972EF32C874E9C00011338 /* ios-libkos_mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 65972EF12C874E9C00011338 /* ios-libkos_mobile.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,8 +34,8 @@
 		6561E0C82C76782000907790 /* kos_mobile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = kos_mobile.swift; path = ../../../binds/kos_mobile.swift; sourceTree = "<group>"; };
 		6561E0C92C76782000907790 /* kos_mobileFFI.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; name = kos_mobileFFI.modulemap; path = ../../../binds/kos_mobileFFI.modulemap; sourceTree = "<group>"; };
 		6561E0CA2C76782000907790 /* kos_mobileFFI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kos_mobileFFI.h; path = ../../../binds/kos_mobileFFI.h; sourceTree = "<group>"; };
-		6561E0CE2C76784A00907790 /* aarch64-apple-ios-sim-libkos_mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "aarch64-apple-ios-sim-libkos_mobile.a"; path = "../../../../../target/aarch64-apple-ios-sim/release/aarch64-apple-ios-sim-libkos_mobile.a"; sourceTree = "<group>"; };
-		6561E0D02C76785700907790 /* aarch64-apple-ios-libkos_mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "aarch64-apple-ios-libkos_mobile.a"; path = "../../../../../target/aarch64-apple-ios/release/aarch64-apple-ios-libkos_mobile.a"; sourceTree = "<group>"; };
+		65972EF02C874E9C00011338 /* ios-sim-libkos_mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "ios-sim-libkos_mobile.a"; path = "../../ios-sim-libkos_mobile.a"; sourceTree = "<group>"; };
+		65972EF12C874E9C00011338 /* ios-libkos_mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "ios-libkos_mobile.a"; path = "../../ios-libkos_mobile.a"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -43,8 +43,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6561E0D12C76785700907790 /* aarch64-apple-ios-libkos_mobile.a in Frameworks */,
-				6561E0CF2C76784A00907790 /* aarch64-apple-ios-sim-libkos_mobile.a in Frameworks */,
+				65972EF22C874E9C00011338 /* ios-sim-libkos_mobile.a in Frameworks */,
+				65972EF32C874E9C00011338 /* ios-libkos_mobile.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -100,8 +100,8 @@
 		6561E0CD2C76784A00907790 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				6561E0D02C76785700907790 /* aarch64-apple-ios-libkos_mobile.a */,
-				6561E0CE2C76784A00907790 /* aarch64-apple-ios-sim-libkos_mobile.a */,
+				65972EF12C874E9C00011338 /* ios-libkos_mobile.a */,
+				65972EF02C874E9C00011338 /* ios-sim-libkos_mobile.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -379,6 +379,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -387,8 +388,8 @@
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
-				"OTHER_LDFLAGS[sdk=iphoneos*]" = "\"$(SRCROOT)/../../../../../target/aarch64-apple-ios/release/aarch64-apple-ios-libkos_mobile.a\"";
-				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = "\"$(SRCROOT)/../../../../../target/aarch64-apple-ios-sim/release/aarch64-apple-ios-sim-libkos_mobile.a\"";
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = "\"$(SRCROOT)/../../ios-libkos_mobile.a\"";
+				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = "\"$(SRCROOT)/../../ios-sim-libkos_mobile.a\"";
 				PRODUCT_BUNDLE_IDENTIFIER = io.klever.KOSMobile;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -417,6 +418,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -425,8 +427,8 @@
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
-				"OTHER_LDFLAGS[sdk=iphoneos*]" = "\"$(SRCROOT)/../../../../../target/aarch64-apple-ios/release/aarch64-apple-ios-libkos_mobile.a\"";
-				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = "\"$(SRCROOT)/../../../../../target/aarch64-apple-ios-sim/release/aarch64-apple-ios-sim-libkos_mobile.a\"";
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = "\"$(SRCROOT)/../../ios-libkos_mobile.a\"";
+				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = "\"$(SRCROOT)/../../ios-sim-libkos_mobile.a\"";
 				PRODUCT_BUNDLE_IDENTIFIER = io.klever.KOSMobile;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

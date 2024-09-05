@@ -16,7 +16,7 @@ ANDROID_JNI=("arm64-v8a" "armeabi-v7a" "x86" "x86_64")
 OPENSSL_VERSION="openssl-3.2.1"
 OPENSSL_PATH="$BUILD_HOME/android/openssl"
 OPENSSL_GENERATED_LIBS_PATH="$OPENSSL_PATH-libs"
-IOS_ARCHS=("aarch64-apple-ios" "aarch64-apple-ios-sim")
+IOS_ARCHS=("aarch64-apple-ios" "aarch64-apple-ios-sim" "x86_64-apple-ios")
 PACKAGE_NAME="kos_mobile"
 
 # colors
