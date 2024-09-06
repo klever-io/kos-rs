@@ -8,6 +8,7 @@ use crate::{
 use kos_crypto::{ed25519::Ed25519KeyPair, keypair::KeyPair};
 use kos_types::{error::Error, hash::Hash, number::BigNumber};
 
+use pbjson::private::base64;
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
@@ -102,12 +103,15 @@ impl KLV {
                 let digest = KLV::hash_transaction(&klv_tx)?;
                 let sig = KLV::sign_digest(digest.as_slice(), keypair)?;
 
+                let signature = base64::encode(sig.clone());
+
                 new_tx.signature.push(sig);
                 let result = Transaction {
                     chain: tx.chain,
                     sender: tx.sender,
                     hash: Hash::from_vec(digest)?,
                     data: Some(TransactionRaw::Klever(new_tx)),
+                    signature: Some(signature),
                 };
 
                 Ok(result)
@@ -210,6 +214,7 @@ impl KLV {
                     sender: tx.sender,
                     hash: tx_hash,
                     data: tx.data,
+                    signature: None,
                 }))
             }
             None => match result.get("error") {
@@ -282,12 +287,14 @@ impl KLV {
 
         let sender = address::Address::from_bytes(&data.sender);
         let digest = KLV::hash_transaction(&tx)?;
+        let signature = base64::encode(tx.signature.first().unwrap().clone());
 
         Ok(crate::models::Transaction {
             chain: crate::chain::Chain::KLV,
             sender: sender.to_string(),
             hash: Hash::from_slice(&digest)?,
             data: Some(TransactionRaw::Klever(tx)),
+            signature: Some(signature),
         })
     }
 }

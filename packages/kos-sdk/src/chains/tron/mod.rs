@@ -116,6 +116,7 @@ impl TRX {
                 let mut new_tx = trx_tx.clone();
                 let digest = TRX::hash_transaction(&trx_tx)?;
                 let sig = TRX::sign_digest(digest.as_slice(), keypair)?;
+                let hex_sig = hex::encode(sig.clone());
 
                 new_tx.signature.push(sig);
                 let result = Transaction {
@@ -123,6 +124,7 @@ impl TRX {
                     sender: tx.sender,
                     hash: Hash::from_vec(digest)?,
                     data: Some(TransactionRaw::Tron(new_tx)),
+                    signature: Some(hex_sig),
                 };
 
                 Ok(result)
@@ -328,6 +330,7 @@ impl TRX {
             sender,
             hash: Hash::from_vec(digest)?,
             data: Some(TransactionRaw::Tron(tx)),
+            signature: None,
         })
     }
 
@@ -361,6 +364,7 @@ impl TRX {
             sender: tx.sender,
             hash: tx.hash,
             data: tx.data,
+            signature: tx.signature,
         }))
     }
 
@@ -426,11 +430,16 @@ impl TRX {
 
         let sender = address::Address::from_bytes(parameter.owner_address.as_slice()).to_string();
 
+        let binding = tx.clone();
+        let sig = binding.signature.first().unwrap();
+        let signature = hex::encode(sig);
+
         Ok(Transaction {
             chain: chain::Chain::TRX,
             sender,
             hash,
             data: Some(TransactionRaw::Tron(tx)),
+            signature: Some(signature),
         })
     }
 }

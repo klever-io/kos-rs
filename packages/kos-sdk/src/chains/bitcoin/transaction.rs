@@ -46,6 +46,11 @@ impl BTCTransaction {
         bitcoin::consensus::encode::serialize_hex(&self.tx.clone().extract_tx())
     }
 
+    pub fn get_signature(&self) -> Result<String, Error> {
+        let sig = self.tx.clone().extract_tx().wtxid();
+        Ok(sig.to_string())
+    }
+
     pub fn finalize(&mut self) -> Result<(), Error> {
         for inp_idx in 0..self.tx.inputs.len() {
             // todo!("multi sig and redeem type");

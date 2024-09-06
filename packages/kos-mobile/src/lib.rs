@@ -54,12 +54,15 @@ fn sign_transaction(account: KOSAccount, raw: String) -> Result<KOSTransaction, 
     let wallet = Wallet::from_private_key(chain, account.private_key.to_string())?;
     let transaction = Transaction::from_raw(chain, &raw)?;
     let signed_transaction = wallet.sign(transaction)?;
+    let signature = signed_transaction
+        .get_signature()
+        .ok_or(KOSError::KOSDelegate("Signature not found".to_string()))?;
 
     Ok(KOSTransaction {
         chain_id: account.chain_id,
         raw: signed_transaction.get_raw()?,
         sender: signed_transaction.sender,
-        signature: String::default(), // TODO: Implement signature
+        signature,
     })
 }
 

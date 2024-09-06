@@ -148,6 +148,8 @@ pub struct Transaction {
     pub hash: Hash,
     #[wasm_bindgen(skip)]
     pub data: Option<TransactionRaw>,
+    #[wasm_bindgen(skip)]
+    pub signature: Option<String>,
 }
 
 #[wasm_bindgen]
@@ -182,6 +184,11 @@ impl Transaction {
             },
             None => Err(Error::InvalidTransaction("no data found".to_string())),
         }
+    }
+
+    #[wasm_bindgen(js_name = getSignature)]
+    pub fn get_signature(&self) -> Option<String> {
+        self.signature.clone()
     }
 }
 impl Transaction {
