@@ -446,7 +446,7 @@ impl ETH {
             }
         };
 
-        let signature = tx.signature.unwrap().to_standard().to_string();
+        let signature = tx.signature.map(|sig| sig.to_standard().to_string());
 
         let digest = hash_transaction(&tx)?;
 
@@ -455,7 +455,7 @@ impl ETH {
             sender: "".to_string(), //TODO: implement sender on eth decode
             hash: Hash::from_vec(digest)?,
             data: Some(TransactionRaw::Ethereum(tx)),
-            signature: Some(signature),
+            signature,
         })
     }
 
@@ -471,14 +471,14 @@ impl ETH {
             None => "".to_string(),
         };
 
-        let signature = tx.signature.unwrap().to_standard().to_string();
+        let signature = tx.signature.map(|sig| sig.to_standard().to_string());
 
         Ok(crate::models::Transaction {
             chain: chain::Chain::ETH,
             sender,
             hash: Hash::from_vec(digest)?,
             data: Some(TransactionRaw::Ethereum(tx)),
-            signature: Some(signature),
+            signature,
         })
     }
 }

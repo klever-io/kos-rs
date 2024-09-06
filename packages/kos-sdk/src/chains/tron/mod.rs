@@ -431,15 +431,18 @@ impl TRX {
         let sender = address::Address::from_bytes(parameter.owner_address.as_slice()).to_string();
 
         let binding = tx.clone();
-        let sig = binding.signature.first().unwrap();
-        let signature = hex::encode(sig);
+        let sig = binding.signature.first();
+        let signature = match sig {
+            Some(s) => Some(hex::encode(s)),
+            None => None,
+        };
 
         Ok(Transaction {
             chain: chain::Chain::TRX,
             sender,
             hash,
             data: Some(TransactionRaw::Tron(tx)),
-            signature: Some(signature),
+            signature,
         })
     }
 }

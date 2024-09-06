@@ -287,14 +287,14 @@ impl KLV {
 
         let sender = address::Address::from_bytes(&data.sender);
         let digest = KLV::hash_transaction(&tx)?;
-        let signature = base64::encode(tx.signature.first().unwrap().clone());
+        let signature = tx.signature.first().map(|sig| base64::encode(sig.clone()));
 
         Ok(crate::models::Transaction {
             chain: crate::chain::Chain::KLV,
             sender: sender.to_string(),
             hash: Hash::from_slice(&digest)?,
             data: Some(TransactionRaw::Klever(tx)),
-            signature: Some(signature),
+            signature,
         })
     }
 }
