@@ -432,10 +432,7 @@ impl TRX {
 
         let binding = tx.clone();
         let sig = binding.signature.first();
-        let signature = match sig {
-            Some(s) => Some(hex::encode(s)),
-            None => None,
-        };
+        let signature = sig.map(hex::encode);
 
         Ok(Transaction {
             chain: chain::Chain::TRX,
