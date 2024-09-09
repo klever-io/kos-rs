@@ -345,7 +345,6 @@ mod tests {
         }
     }
 
-    // Transaction from raw
     #[test]
     fn should_sign_raw_transaction() {
         let chain_id = 38;
@@ -361,8 +360,6 @@ mod tests {
 
         let transaction = sign_transaction(account, raw.to_string()).unwrap();
 
-        println!("raw: {:?}", transaction.raw);
-
         assert_eq!(transaction.chain_id, chain_id, "The chain_id doesn't match");
         assert_eq!(
             transaction.sender, "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy",
@@ -371,6 +368,10 @@ mod tests {
         assert_eq!(
             transaction.raw, "{\"RawData\":{\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Contract\":[{\"Parameter\":{\"typeUrl\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"BandwidthFee\":1000000,\"Version\":1,\"ChainID\":\"MTAwNDIw\"},\"Signature\":[\"gUZDIPSxSq40QjTBM38/DAAuWTm7D1THo2KWVqhiTYCum5O+OSWwTYlgIU0RgJ6ungg1cuCJPcmYWNgjDKA/DA==\"]}",
             "The raw doesn't match"
+        );
+        assert_eq!(
+            transaction.signature, "gUZDIPSxSq40QjTBM38/DAAuWTm7D1THo2KWVqhiTYCum5O+OSWwTYlgIU0RgJ6ungg1cuCJPcmYWNgjDKA/DA==",
+            "The signature doesn't match"
         );
     }
 }
