@@ -137,9 +137,12 @@ impl BTC {
                 // redeem script
                 btc_tx.finalize()?;
 
+                let signature = btc_tx.get_signature().unwrap_or("".to_string());
+
                 Ok(Transaction {
                     hash: btc_tx.txid_hash()?,
                     data: Some(TransactionRaw::Bitcoin(btc_tx)),
+                    signature: Some(signature),
                     ..tx
                 })
             }
@@ -267,6 +270,7 @@ impl BTC {
             sender,
             hash: Hash::new(&tx.txid().to_string())?,
             data: Some(TransactionRaw::Bitcoin(tx)),
+            signature: None,
         })
     }
 

@@ -1,9 +1,8 @@
-// use crate::klever;
+use crate::chain::Chain;
+use crate::chains::{ETH, KLV, TRX};
 use kos_types::{error::Error, hash::Hash};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
-
-use crate::chain::Chain;
 
 #[derive(Debug, Clone, Serialize)]
 #[wasm_bindgen]
@@ -149,6 +148,8 @@ pub struct Transaction {
     pub hash: Hash,
     #[wasm_bindgen(skip)]
     pub data: Option<TransactionRaw>,
+    #[wasm_bindgen(skip)]
+    pub signature: Option<String>,
 }
 
 #[wasm_bindgen]
@@ -184,14 +185,37 @@ impl Transaction {
             None => Err(Error::InvalidTransaction("no data found".to_string())),
         }
     }
-}
 
+    #[wasm_bindgen(js_name = getSignature)]
+    pub fn get_signature(&self) -> Option<String> {
+        self.signature.clone()
+    }
+}
 impl Transaction {
     pub fn new_data(&self, chain: Chain, data: TransactionRaw) -> Transaction {
         let mut tx = self.clone();
         tx.chain = chain;
         tx.data = Some(data);
         tx
+    }
+}
+
+#[wasm_bindgen]
+impl Transaction {
+    #[wasm_bindgen(js_name = fromRaw)]
+    pub fn from_raw(chain: Chain, data: &str) -> Result<Transaction, Error> {
+        match chain {
+            Chain::KLV => KLV::tx_from_raw(data),
+            Chain::TRX => TRX::tx_from_raw(data),
+            Chain::ETH => ETH::tx_from_json(data),
+            Chain::MATIC => Err(Error::InvalidTransaction(
+                "MATIC chain not implemented".to_string(),
+            )),
+            Chain::BTC => Err(Error::InvalidTransaction(
+                "BTC chain not implemented".to_string(),
+            )),
+            Chain::NONE => Err(Error::InvalidTransaction("Invalid chain".to_string())),
+        }
     }
 }
 
