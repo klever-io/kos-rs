@@ -14,6 +14,7 @@ use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
+use kos_proto::tron::transaction::contract::ContractType;
 use wasm_bindgen::prelude::*;
 use web3::{ethabi, types::U256};
 
@@ -415,10 +416,34 @@ impl TRX {
         let raw_data: kos_proto::tron::transaction::Raw =
             kos_proto::from_bytes(raw_data_bytes).unwrap();
 
-        let parameter: kos_proto::tron::TransferContract =
-            kos_proto::unpack_from_option_any(&raw_data.contract[0].parameter).ok_or(
-                Error::InvalidTransaction("Failed to unpack transfer contract".to_string()),
-            )?;
+        let contract = raw_data
+            .contract
+            .get(0)
+            .ok_or_else(|| Error::InvalidTransaction("Missing contract".to_string()))?;
+        let tx_type = ContractType::from_i32(contract.r#type)
+            .ok_or_else(|| Error::InvalidTransaction("Invalid contract type".to_string()))?;
+
+        let sender: String = match tx_type {
+            ContractType::TransferContract => {
+                let parameter: kos_proto::tron::TransferContract =
+                    kos_proto::unpack_from_option_any(&raw_data.contract.get(0).unwrap().parameter)
+                        .unwrap();
+                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
+            }
+            ContractType::TransferAssetContract => {
+                let parameter: kos_proto::tron::TransferAssetContract =
+                    kos_proto::unpack_from_option_any(&raw_data.contract.get(0).unwrap().parameter)
+                        .unwrap();
+                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
+            }
+            ContractType::TriggerSmartContract => {
+                let parameter: kos_proto::tron::TriggerSmartContract =
+                    kos_proto::unpack_from_option_any(&raw_data.contract.get(0).unwrap().parameter)
+                        .unwrap();
+                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
+            }
+            _ => "".to_string(),
+        };
 
         let tx = kos_proto::tron::Transaction {
             raw_data: Some(raw_data),
@@ -428,11 +453,7 @@ impl TRX {
 
         let hash = Hash::from_vec(TRX::hash_transaction(&tx)?)?;
 
-        let sender = address::Address::from_bytes(parameter.owner_address.as_slice()).to_string();
-
-        let binding = tx.clone();
-        let sig = binding.signature.first();
-        let signature = sig.map(hex::encode);
+        let signature = tx.signature.first().map(hex::encode);
 
         Ok(Transaction {
             chain: chain::Chain::TRX,
@@ -679,6 +700,17 @@ mod tests {
         assert_eq!(
             t.hash.to_string(),
             "3e6c463b2e88d78e912dee3aa31a14aa71c0e56bbdfbdbba012c8af4e45b8834"
+        );
+
+        let trigger_smart_contract_tx = "0a029af222085e42eee56c43056140d0c8aeec9d325ad402081f12cf020a31747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e54726967676572536d617274436f6e74726163741299020a15415ad61eb25c69f75711f059e106bc1ca1b338a814121541ff7155b5df8008fbf3834922b2d52430b27874f518c0843d22e4017ff36ab500000000000000000000000000000000000000000000099d6ced5f1867f3579900000000000000000000000000000000000000000000000000000000000000800000000000000000000000005ad61eb25c69f75711f059e106bc1ca1b338a8140000000000000000000000000000000000000000000000000000000066e0a6d40000000000000000000000000000000000000000000000000000000000000002000000000000000000000000891cdb91d149f23b1a45d9c5ca78a88d0cb44c18000000000000000000000000691a8e6e5b03bf79e133be5ac6cdc0986142e684708afdaaec9d3290018094ebdc03";
+        let result = TRX::tx_from_raw(trigger_smart_contract_tx);
+        assert!(result.is_ok());
+        let t = result.unwrap();
+        assert_eq!(t.chain, chain::Chain::TRX);
+        assert_eq!(t.sender, "TJFWKdqCxgqu4LngZrC6mRvrpT4fGAsznp");
+        assert_eq!(
+            t.hash.to_string(),
+            "066b49fab01944699516efc5c3d636f150c12d7e157e4867c155b29d94edb018"
         );
     }
 }
