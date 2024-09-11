@@ -418,28 +418,35 @@ impl TRX {
 
         let contract = raw_data
             .contract
-            .get(0)
+            .first()
             .ok_or_else(|| Error::InvalidTransaction("Missing contract".to_string()))?;
+
         let tx_type = ContractType::from_i32(contract.r#type)
             .ok_or_else(|| Error::InvalidTransaction("Invalid contract type".to_string()))?;
 
         let sender: String = match tx_type {
             ContractType::TransferContract => {
                 let parameter: kos_proto::tron::TransferContract =
-                    kos_proto::unpack_from_option_any(&raw_data.contract.get(0).unwrap().parameter)
-                        .unwrap();
+                    kos_proto::unpack_from_option_any(
+                        &raw_data.contract.first().unwrap().parameter,
+                    )
+                    .unwrap();
                 address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
             }
             ContractType::TransferAssetContract => {
                 let parameter: kos_proto::tron::TransferAssetContract =
-                    kos_proto::unpack_from_option_any(&raw_data.contract.get(0).unwrap().parameter)
-                        .unwrap();
+                    kos_proto::unpack_from_option_any(
+                        &raw_data.contract.first().unwrap().parameter,
+                    )
+                    .unwrap();
                 address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
             }
             ContractType::TriggerSmartContract => {
                 let parameter: kos_proto::tron::TriggerSmartContract =
-                    kos_proto::unpack_from_option_any(&raw_data.contract.get(0).unwrap().parameter)
-                        .unwrap();
+                    kos_proto::unpack_from_option_any(
+                        &raw_data.contract.first().unwrap().parameter,
+                    )
+                    .unwrap();
                 address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
             }
             _ => "".to_string(),
