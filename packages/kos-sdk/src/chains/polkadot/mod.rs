@@ -14,6 +14,10 @@ use kos_types::number::BigNumber;
 use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair};
 use std::str::FromStr;
+use subxt::ext::codec::Decode;
+use subxt::tx::SubmittableExtrinsic;
+use subxt::utils::H256;
+use subxt::{Metadata, OfflineClient, PolkadotConfig};
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -191,11 +195,55 @@ impl DOT {
         let address = address::Address::from_str(addr);
         Ok(address.is_ok())
     }
+
+    pub fn decode_tx(
+        genesis_hash: &str,
+        spec_version: u32,
+        transaction_version: u32,
+        tx: &str,
+    ) -> Result<Vec<u8>, Error> {
+        let client = DOT::get_client(genesis_hash, spec_version, transaction_version)?;
+        let tx_bytes = hex::decode(tx)?;
+
+        let extrinsic = SubmittableExtrinsic::from_bytes(client.clone(), tx_bytes);
+        Ok(Vec::from((extrinsic.encoded())))
+    }
+}
+
+impl DOT {
+    pub fn get_client(
+        genesis_hash: &str,
+        spec_version: u32,
+        transaction_version: u32,
+    ) -> Result<OfflineClient<PolkadotConfig>, Error> {
+        let _genesis_hash = {
+            let bytes = hex::decode(genesis_hash)?;
+            H256::from_slice(&bytes)
+        };
+
+        let _runtime_version = subxt::rpc::types::RuntimeVersion {
+            spec_version,
+            transaction_version,
+            other: Default::default(),
+        };
+
+        let metadata = {
+            let bytes = std::fs::read("./artifacts/polkadot_metadata_small.scale").unwrap();
+            Metadata::decode(&mut &*bytes).unwrap()
+        };
+
+        Ok(OfflineClient::<PolkadotConfig>::new(
+            _genesis_hash,
+            _runtime_version,
+            metadata,
+        ))
+    }
 }
 
 // Test keypair from mnemonic
 #[cfg(test)]
 mod tests {
+    use subxt::utils::H256;
 
     #[test]
     fn test_keypair_from_mnemonic() {
@@ -238,5 +286,35 @@ mod tests {
         let address = super::DOT::get_address_from_keypair(&kp).unwrap();
         let valid = super::DOT::verify_digest(&digest, &signature, &address).unwrap();
         assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_get_client() {
+        let client = super::DOT::get_client(
+            "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+            1002007,
+            26,
+        )
+        .unwrap();
+
+        assert_eq!(
+            client.genesis_hash(),
+            H256::from(&[
+                145, 177, 113, 187, 21, 142, 45, 56, 72, 250, 35, 169, 241, 194, 81, 130, 251, 142,
+                32, 49, 59, 44, 30, 180, 146, 25, 218, 122, 112, 206, 144, 195
+            ])
+        );
+    }
+
+    #[test]
+    fn test_decode_tx() {
+        let tx = super::DOT::decode_tx(
+            "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+            1002007,
+            26,
+            "0503002534454d30f8a028e42654d6b535e0651d1d026ddf115cef59ae1dd71bae074e9101008e8020000000174a0f001a00000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c391b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c300"
+        ).unwrap();
+
+        assert_eq!(tx.len(), 117);
     }
 }
