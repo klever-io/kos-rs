@@ -292,7 +292,7 @@ impl TRX {
                         &node,
                         &fee_limit,
                     )
-                    .await?
+                        .await?
                 } else {
                     TRX::trigger_asset_transfer(
                         &addr_sender,
@@ -301,7 +301,7 @@ impl TRX {
                         &token,
                         &node,
                     )
-                    .await?
+                        .await?
                 }
             }
             _ => {
@@ -421,36 +421,7 @@ impl TRX {
             .first()
             .ok_or_else(|| Error::InvalidTransaction("Missing contract".to_string()))?;
 
-        let tx_type = ContractType::from_i32(contract.r#type)
-            .ok_or_else(|| Error::InvalidTransaction("Invalid contract type".to_string()))?;
-
-        let sender: String = match tx_type {
-            ContractType::TransferContract => {
-                let parameter: kos_proto::tron::TransferContract =
-                    kos_proto::unpack_from_option_any(
-                        &raw_data.contract.first().unwrap().parameter,
-                    )
-                    .unwrap();
-                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
-            }
-            ContractType::TransferAssetContract => {
-                let parameter: kos_proto::tron::TransferAssetContract =
-                    kos_proto::unpack_from_option_any(
-                        &raw_data.contract.first().unwrap().parameter,
-                    )
-                    .unwrap();
-                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
-            }
-            ContractType::TriggerSmartContract => {
-                let parameter: kos_proto::tron::TriggerSmartContract =
-                    kos_proto::unpack_from_option_any(
-                        &raw_data.contract.first().unwrap().parameter,
-                    )
-                    .unwrap();
-                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
-            }
-            _ => "".to_string(),
-        };
+        let sender: String = TRX::extract_address_from_contract(contract)?;
 
         let tx = kos_proto::tron::Transaction {
             raw_data: Some(raw_data),
@@ -469,6 +440,32 @@ impl TRX {
             data: Some(TransactionRaw::Tron(tx)),
             signature,
         })
+    }
+
+    fn extract_address_from_contract(contract: &kos_proto::tron::transaction::Contract) -> Result<String, Error> {
+        let contract_type = ContractType::from_i32(contract.r#type)
+            .ok_or_else(|| Error::InvalidTransaction("Invalid contract type".to_string()))?;
+
+        let address = match contract_type {
+            ContractType::TransferContract => {
+                let parameter: kos_proto::tron::TransferContract =
+                    kos_proto::unpack_from_option_any(&contract.parameter).unwrap();
+                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
+            }
+            ContractType::TransferAssetContract => {
+                let parameter: kos_proto::tron::TransferAssetContract =
+                    kos_proto::unpack_from_option_any(&contract.parameter).unwrap();
+                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
+            }
+            ContractType::TriggerSmartContract => {
+                let parameter: kos_proto::tron::TriggerSmartContract =
+                    kos_proto::unpack_from_option_any(&contract.parameter).unwrap();
+                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
+            }
+            _ => "".to_string(),
+        };
+
+        Ok(address)
     }
 }
 
