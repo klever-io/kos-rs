@@ -292,7 +292,7 @@ impl TRX {
                         &node,
                         &fee_limit,
                     )
-                        .await?
+                    .await?
                 } else {
                     TRX::trigger_asset_transfer(
                         &addr_sender,
@@ -301,7 +301,7 @@ impl TRX {
                         &token,
                         &node,
                     )
-                        .await?
+                    .await?
                 }
             }
             _ => {
@@ -442,7 +442,9 @@ impl TRX {
         })
     }
 
-    fn extract_address_from_contract(contract: &kos_proto::tron::transaction::Contract) -> Result<String, Error> {
+    fn extract_address_from_contract(
+        contract: &kos_proto::tron::transaction::Contract,
+    ) -> Result<String, Error> {
         let contract_type = ContractType::from_i32(contract.r#type)
             .ok_or_else(|| Error::InvalidTransaction("Invalid contract type".to_string()))?;
 
