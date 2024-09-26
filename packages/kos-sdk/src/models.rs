@@ -70,6 +70,7 @@ kos_types::enum_thing! {
         Ethereum(super::chains::ETHTransaction),
         Polygon(super::chains::MATICTransaction),
         Bitcoin(super::chains::BTCTransaction),
+        Polkadot(super::chains::DOTTransaction)
     }
 }
 
@@ -179,6 +180,9 @@ impl Transaction {
                 }
                 TransactionRaw::Bitcoin(data) => {
                     serde_json::to_string(&data.tx).map_err(|e| e.into())
+                }
+                TransactionRaw::Polkadot(data) => {
+                    serde_json::to_string(&data).map_err(|e| e.into())
                 }
             },
             None => Err(Error::InvalidTransaction("no data found".to_string())),

@@ -1,11 +1,14 @@
 mod address;
+pub mod transaction;
 
+use crate::chains::DOTTransaction;
 use crate::models::BroadcastResult;
 use crate::{
     chain::{self, BaseChain},
     models,
     models::{PathOptions, Transaction, TransactionRaw},
 };
+use base64::{engine::general_purpose as b64_engine, Engine};
 use kos_crypto::keypair::KeyPair;
 use kos_crypto::sr25519::Sr25519KeyPair;
 use kos_types::error::Error;
@@ -14,6 +17,7 @@ use kos_types::number::BigNumber;
 use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair};
 use std::str::FromStr;
+use subxt::client::OfflineClientT;
 use subxt::ext::codec::Decode;
 use subxt::tx::SubmittableExtrinsic;
 use subxt::utils::H256;
@@ -208,6 +212,21 @@ impl DOT {
         let extrinsic = SubmittableExtrinsic::from_bytes(client.clone(), tx_bytes);
         Ok(Vec::from((extrinsic.encoded())))
     }
+
+    pub fn tx_from_raw(raw: &str) -> Result<Transaction, Error> {
+        let b64 = b64_engine::STANDARD;
+
+        let bytes = b64.decode(raw).unwrap();
+
+        let tx = DOTTransaction::from_bytes(bytes).unwrap();
+
+        Ok(Transaction {
+            chain: crate::chain::Chain::DOT,
+            sender: tx.clone().address,
+            hash: Hash::default(),
+            data: Some(TransactionRaw::Polkadot(tx)),
+        })
+    }
 }
 
 impl DOT {
@@ -308,13 +327,13 @@ mod tests {
 
     #[test]
     fn test_decode_tx() {
-        let tx = super::DOT::decode_tx(
-            "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-            1002007,
-            26,
-            "0503002534454d30f8a028e42654d6b535e0651d1d026ddf115cef59ae1dd71bae074e9101008e8020000000174a0f001a00000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c391b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c300"
-        ).unwrap();
+        let raw = "eyJzcGVjVmVyc2lvbiI6IjB4MDAwZjRkZjgiLCJ0cmFuc2FjdGlvblZlcnNpb24iOiIweDAwMDAwMDFhIiwiYWRkcmVzcyI6IjE0bTVvcUxFRFhNZXlkeVU4NEUyZ01NeWtLVHQ3OFFCUUZXTmpLaG5kbTFiZ0NhWCIsImFzc2V0SWQiOiJudWxsIiwiYmxvY2tIYXNoIjoiMHg2MGY4ZmFhNmI1ZGQwZmViYjE3OGU0MmViNjQ0NzE5MzU3YWU1NTViNGNiYWVmZGIzMjIwNGFmMzc5ZjRkNTg2IiwiYmxvY2tOdW1iZXIiOiIweDAxNThmYWE2IiwiZXJhIjoiMHg2NTAyIiwiZ2VuZXNpc0hhc2giOiIweDkxYjE3MWJiMTU4ZTJkMzg0OGZhMjNhOWYxYzI1MTgyZmI4ZTIwMzEzYjJjMWViNDkyMTlkYTdhNzBjZTkwYzMiLCJtZXRhZGF0YUhhc2giOiJudWxsIiwibWV0aG9kIjoiMHgwNTAzMDBhNjUzYWU3OTY2NTU2NWJhN2ZjNjgyYzM4NWIzYzAzOGMyMDkxYWI2ZDYwNTMzNTViOTk1MGExMDhhYzQ4YjA2MDAiLCJtb2RlIjowLCJub25jZSI6IjB4MDAwMDAwMDAiLCJzaWduZWRFeHRlbnNpb25zIjpbIkNoZWNrTm9uWmVyb1NlbmRlciIsIkNoZWNrU3BlY1ZlcnNpb24iLCJDaGVja1R4VmVyc2lvbiIsIkNoZWNrR2VuZXNpcyIsIkNoZWNrTW9ydGFsaXR5IiwiQ2hlY2tOb25jZSIsIkNoZWNrV2VpZ2h0IiwiQ2hhcmdlVHJhbnNhY3Rpb25QYXltZW50IiwiUHJldmFsaWRhdGVBdHRlc3RzIiwiQ2hlY2tNZXRhZGF0YUhhc2giXSwidGlwIjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInZlcnNpb24iOjQsIndpdGhTaWduZWRUcmFuc2FjdGlvbiI6dHJ1ZX0=";
 
-        assert_eq!(tx.len(), 117);
+        let tx = super::DOT::tx_from_raw(raw).unwrap();
+
+        assert_eq!(
+            tx.sender,
+            "14m5oqLEDXMeydyU84E2gMMykKTt78QBQFWNjKhndm1bgCaX"
+        );
     }
 }
