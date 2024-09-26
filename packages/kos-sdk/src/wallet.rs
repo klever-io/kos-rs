@@ -407,6 +407,16 @@ impl Wallet {
             None => Err(Error::WalletManagerError("no keypair".to_string())),
         }
     }
+
+    #[wasm_bindgen(js_name = "verifyMessageSignature")]
+    pub fn verify_message_signature(
+        &self,
+        message: &[u8],
+        signature: &[u8],
+    ) -> Result<bool, Error> {
+        self.chain
+            .verify_message_signature(message, signature, self.public_address.as_str())
+    }
 }
 
 #[wasm_bindgen]
