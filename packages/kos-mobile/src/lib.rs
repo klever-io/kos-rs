@@ -31,7 +31,7 @@ impl From<FromHexError> for KOSError {
     }
 }
 
-#[derive(uniffi::Record, Clone)]
+#[derive(uniffi::Record)]
 struct KOSAccount {
     pub chain_id: i32,
     pub private_key: String,
@@ -152,15 +152,14 @@ fn sign_message(account: KOSAccount, message: String) -> Result<Vec<u8>, KOSErro
 
 #[uniffi::export]
 fn verify_message_signature(
-    account: KOSAccount,
+    address: String,
+    chain_id: i32,
     message: String,
     signature: Vec<u8>,
 ) -> Result<bool, KOSError> {
-    let chain = get_chain_by(account.chain_id)?;
-
-    let wallet = Wallet::from_private_key(chain, account.private_key.to_string())?;
+    let chain = get_chain_by(chain_id)?;
     let message = message.as_bytes();
-    let is_valid = wallet.verify_message_signature(message, &signature)?;
+    let is_valid = chain.verify_message_signature(message, &signature, &address)?;
     Ok(is_valid)
 }
 
@@ -426,8 +425,22 @@ mod tests {
             false
         ).unwrap();
 
-        let signature = sign_message(account.clone(), message.clone()).unwrap();
-        let is_valid = verify_message_signature(account, message, signature).unwrap();
+        let address = account.address.clone();
+        let chain_id = account.chain_id;
+        let signature = sign_message(account, message.clone()).unwrap();
+
+        let is_valid =
+            verify_message_signature(address.clone(), chain_id, message.clone(), signature)
+                .unwrap();
         assert!(is_valid, "The signature is not valid");
+
+        let result = verify_message_signature(address, chain_id, message, vec![0; 64]);
+
+        match result {
+            Err(KOSError::KOSDelegate(err)) => {
+                assert_eq!(err, "Invalid signature: message verification fail", "Invalid error")
+            }
+            _ => panic!("Expected KOSDelegate error with message 'Invalid signature: message verification fail'")
+        }
     }
 }
