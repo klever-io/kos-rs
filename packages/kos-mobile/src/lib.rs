@@ -141,6 +141,28 @@ fn decrypt(data: String, password: String) -> Result<String, KOSError> {
     Ok(String::from_utf8_lossy(&decrypted_data).to_string())
 }
 
+#[uniffi::export]
+fn sign_message(account: KOSAccount, message: String) -> Result<Vec<u8>, KOSError> {
+    let chain = get_chain_by(account.chain_id)?;
+    let wallet = Wallet::from_private_key(chain, account.private_key.to_string())?;
+    let message = message.as_bytes();
+    let signature = wallet.sign_message(message)?;
+    Ok(signature)
+}
+
+#[uniffi::export]
+fn verify_message_signature(
+    address: String,
+    chain_id: i32,
+    message: String,
+    signature: Vec<u8>,
+) -> Result<bool, KOSError> {
+    let chain = get_chain_by(chain_id)?;
+    let message = message.as_bytes();
+    let is_valid = chain.verify_message_signature(message, &signature, &address)?;
+    Ok(is_valid)
+}
+
 fn get_chain_by(id: i32) -> Result<Chain, KOSError> {
     let id_u8 = u8::try_from(id).map_err(|_| KOSError::UnsupportedChain { id: id.to_string() })?;
     let chain = Chain::get_by_code(id_u8)
@@ -373,5 +395,52 @@ mod tests {
             transaction.signature, "gUZDIPSxSq40QjTBM38/DAAuWTm7D1THo2KWVqhiTYCum5O+OSWwTYlgIU0RgJ6ungg1cuCJPcmYWNgjDKA/DA==",
             "The signature doesn't match"
         );
+    }
+
+    #[test]
+    fn should_sign_message() {
+        let chain_id = 38;
+        let message = "Hello World".to_string();
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false
+        ).unwrap();
+
+        let signature = sign_message(account, message).unwrap();
+        assert_eq!(signature.len(), 64, "The signature length doesn't match");
+    }
+
+    #[test]
+    fn should_verify_message_signature() {
+        let chain_id = 38;
+        let message = "Hello World".to_string();
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false
+        ).unwrap();
+
+        let address = account.address.clone();
+        let chain_id = account.chain_id;
+        let signature = sign_message(account, message.clone()).unwrap();
+
+        let is_valid =
+            verify_message_signature(address.clone(), chain_id, message.clone(), signature)
+                .unwrap();
+        assert!(is_valid, "The signature is not valid");
+
+        let result = verify_message_signature(address, chain_id, message, vec![0; 64]);
+
+        match result {
+            Err(KOSError::KOSDelegate(err)) => {
+                assert_eq!(err, "Invalid signature: message verification fail", "Invalid error")
+            }
+            _ => panic!("Expected KOSDelegate error with message 'Invalid signature: message verification fail'")
+        }
     }
 }

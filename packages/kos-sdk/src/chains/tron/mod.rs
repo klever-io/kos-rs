@@ -105,8 +105,22 @@ impl TRX {
 
     #[wasm_bindgen(js_name = "verifyDigest")]
     /// Verify Message signature
-    pub fn verify_digest(_digest: &[u8], _signature: &[u8], _address: &str) -> Result<bool, Error> {
-        todo!()
+    pub fn verify_digest(digest: &[u8], signature: &[u8], address: &str) -> Result<bool, Error> {
+        let recovered = TRX::verify_message(digest, signature)?;
+        Ok(recovered == address)
+    }
+
+    #[wasm_bindgen(js_name = "verifyMessage")]
+    /// Verify Message signature
+    pub fn verify_message(digest: &[u8], signature: &[u8]) -> Result<String, Error> {
+        let pub_key = Secp256k1KeyPair::recover(digest, signature)
+            .map_err(|_| Error::InvalidSignature("failed to recover public key"))?;
+
+        let public: [u8; 64] = pub_key
+            .try_into()
+            .map_err(|_| Error::InvalidSignature("failed to convert public key"))?;
+
+        Ok(address::Address::from_public(public).to_string())
     }
 
     #[wasm_bindgen(js_name = "sign")]
@@ -154,8 +168,7 @@ impl TRX {
     /// Append prefix and hash the message
     pub fn message_hash(message: &[u8]) -> Result<Vec<u8>, Error> {
         let to_sign = [SIGN_PREFIX, message.len().to_string().as_bytes(), message].concat();
-
-        TRX::hash(&to_sign)
+        Ok(Vec::from(kos_crypto::hash::keccak256(&to_sign)))
     }
 
     #[wasm_bindgen(js_name = "signMessage")]
@@ -718,5 +731,37 @@ mod tests {
             t.hash.to_string(),
             "066b49fab01944699516efc5c3d636f150c12d7e157e4867c155b29d94edb018"
         );
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let message = "Hello, World!";
+        let keypair = get_default_secret();
+        let result = TRX::sign_message(message.as_bytes(), &keypair);
+        assert!(result.is_ok());
+        let sig = result.unwrap();
+        assert_eq!(sig.len(), 65);
+    }
+
+    #[test]
+    fn test_verify_message() {
+        let message = "Hello, World!";
+        let keypair = get_default_secret();
+        let sig = TRX::sign_message(message.as_bytes(), &keypair).unwrap();
+        let digest = TRX::message_hash(message.as_bytes()).unwrap();
+        let result = TRX::verify_message(digest.as_slice(), &sig);
+        assert!(result.is_ok());
+        let addr = result.unwrap();
+        assert_eq!(addr, DEFAULT_ADDRESS);
+    }
+
+    #[test]
+    fn test_verify_message_signature() {
+        let message = "Hello, World!";
+        let keypair = get_default_secret();
+        let sig = TRX::sign_message(message.as_bytes(), &keypair).unwrap();
+        let result = TRX::verify_message_signature(message.as_bytes(), &sig, DEFAULT_ADDRESS);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true);
     }
 }
