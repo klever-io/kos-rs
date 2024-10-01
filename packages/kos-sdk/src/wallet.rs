@@ -338,6 +338,9 @@ impl Wallet {
 
     #[wasm_bindgen(js_name = "getKeypair")]
     pub fn get_keypair(&self) -> Option<KeyPair> {
+        if self.is_locked {
+            return None;
+        }
         self.keypair.clone()
     }
 

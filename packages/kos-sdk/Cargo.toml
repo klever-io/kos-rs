@@ -32,7 +32,7 @@ hex = { workspace = true }
 rand = { workspace = true }
 coins-bip39 = { workspace = true }
 pem = "3"
-web3 = { version = "0.19", default-features = false, features = ["http-tls", "wasm"] }
+web3 = { version = "0.19.0", default-features = false, features = ["http-tls", "wasm"] }
 bitcoin = { version = "0.30" }
 secp256k1 = { workspace = true, features = ["serde", "bitcoin_hashes"] }
 rlp = "0.5"
@@ -57,3 +57,6 @@ dotenvy = "0.15.7"
 
 [build-dependencies]
 dotenv-build = "0.1"
+
+[patch.crates-io]
+derive_more = "=1.0.0"
