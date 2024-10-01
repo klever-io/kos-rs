@@ -336,6 +336,11 @@ impl Wallet {
         }
     }
 
+    #[wasm_bindgen(js_name = "getKeypair")]
+    pub fn get_keypair(&self) -> Option<KeyPair> {
+        self.keypair.clone()
+    }
+
     #[wasm_bindgen(js_name = "getMnemonic")]
     /// get wallet mnemonic if wallet is created from mnemonic
     pub fn get_mnemonic(&self) -> String {

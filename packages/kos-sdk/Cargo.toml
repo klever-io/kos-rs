@@ -49,6 +49,7 @@ kos-utils = { workspace = true }
 pbjson = { workspace = true }
 pbjson-types = { workspace = true }
 prost = { workspace = true }
+alloy-dyn-abi = { version = "0.8.5", features = ["eip712"] }
 
 [dev-dependencies]
 tokio-test = "*"

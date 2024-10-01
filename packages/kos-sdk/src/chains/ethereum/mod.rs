@@ -13,8 +13,10 @@ use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
+use alloy_dyn_abi::TypedData;
 use rlp::Rlp;
 use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
+use serde::{Deserialize, Serialize};
 use std::{ops::Div, str::FromStr};
 use wasm_bindgen::prelude::*;
 use web3::ethabi;
@@ -163,6 +165,15 @@ impl ETH {
         let to_sign = [SIGN_PREFIX, message.len().to_string().as_bytes(), message].concat();
 
         ETH::hash(&to_sign)
+    }
+
+    #[wasm_bindgen(js_name = "signTypeDataV4")]
+    pub fn sign_type_data_v4(data: &str, keypair: &KeyPair) -> Result<Vec<u8>, Error> {
+        let typed_data: TypedData = serde_json::from_str(data)?;
+        let digest = typed_data
+            .eip712_signing_hash()
+            .map_err(|e| Error::InvalidMessage(format!("failed to sign typed data: {}", e)))?;
+        ETH::sign_digest(digest.as_slice(), keypair)
     }
 
     #[wasm_bindgen(js_name = "signMessage")]
@@ -745,5 +756,55 @@ mod tests {
         assert_eq!(eth_tx.gas, U256::from(0));
         assert_eq!(eth_tx.value, U256::from(0));
         assert_eq!(eth_tx.signature, None);
+    }
+
+    #[test]
+    fn sign_typed_data() {
+        let data = r#"{
+            "types": {
+                "EIP712Domain": [
+                    { "name": "name", "type": "string" },
+                    { "name": "version", "type": "string" },
+                    { "name": "chainId", "type": "uint256" },
+                    { "name": "verifyingContract", "type": "address" }
+                ],
+                "Person": [
+                    { "name": "name", "type": "string" },
+                    { "name": "wallet", "type": "address" }
+                ],
+                "Mail": [
+                    { "name": "from", "type": "Person" },
+                    { "name": "to", "type": "Person" },
+                    { "name": "contents", "type": "string" }
+                ]
+            },
+            "primaryType": "Mail",
+            "domain": {
+                "name": "Ether Mail",
+                "version": "1",
+                "chainId": 1,
+                "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+            },
+            "message": {
+                "from": {
+                    "name": "Cow",
+                    "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+                },
+                "to": {
+                    "name": "Bob",
+                    "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+                },
+                "contents": "Hello, Bob!"
+            }
+        }"#;
+
+        let keypair = get_default_secret();
+        let sig = ETH::sign_type_data_v4(data, &keypair).unwrap();
+
+        assert_eq!(
+            hex::encode(sig.clone()),
+            "5b9ee7ebad3acd6ca243732900203a8a9e59b871345cb9b229a1936e11f5ad8967c46a0d05027ccd880bcc49e18877a53b8e4813558a1fd165ebb875c4a447c201"
+        );
+        assert_eq!(sig.len(), 65);
     }
 }
