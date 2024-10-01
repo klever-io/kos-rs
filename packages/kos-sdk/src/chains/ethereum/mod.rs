@@ -16,7 +16,6 @@ use kos_types::number::BigNumber;
 use alloy_dyn_abi::TypedData;
 use rlp::Rlp;
 use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
-use serde::{Deserialize, Serialize};
 use std::{ops::Div, str::FromStr};
 use wasm_bindgen::prelude::*;
 use web3::ethabi;
