@@ -76,7 +76,9 @@ fn sign_typed_data_v4(account: KOSAccount, data: String) -> Result<Vec<u8>, KOSE
         });
     }
     let wallet = Wallet::from_private_key(chain, account.private_key.to_string())?;
-    let keypair = wallet.get_keypair().unwrap();
+    let keypair = wallet
+        .get_keypair()
+        .ok_or_else(|| KOSError::KOSDelegate("Failed to get keypair".to_string()))?;
     let signature = ETH::sign_type_data_v4(&data, &keypair)?;
     Ok(signature)
 }
