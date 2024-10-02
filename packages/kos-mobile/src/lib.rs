@@ -3,6 +3,7 @@ use hex::ToHex;
 use kos_crypto::cipher;
 use kos_crypto::cipher::CipherAlgo;
 use kos_sdk::chain::Chain;
+use kos_sdk::chains::ETH;
 use kos_sdk::models::{PathOptions, Transaction};
 use kos_sdk::wallet::Wallet;
 use kos_types::error::Error as KosError;
@@ -64,6 +65,20 @@ fn sign_transaction(account: KOSAccount, raw: String) -> Result<KOSTransaction, 
         sender: signed_transaction.sender,
         signature,
     })
+}
+
+#[uniffi::export]
+fn sign_typed_data_v4(account: KOSAccount, data: String) -> Result<Vec<u8>, KOSError> {
+    let chain = get_chain_by(account.chain_id)?;
+    if chain != Chain::ETH {
+        return Err(KOSError::UnsupportedChain {
+            id: account.chain_id.to_string(),
+        });
+    }
+    let wallet = Wallet::from_private_key(chain, account.private_key.to_string())?;
+    let keypair = wallet.get_keypair().unwrap();
+    let signature = ETH::sign_type_data_v4(&data, &keypair)?;
+    Ok(signature)
 }
 
 #[uniffi::export]
@@ -372,6 +387,63 @@ mod tests {
         assert_eq!(
             transaction.signature, "gUZDIPSxSq40QjTBM38/DAAuWTm7D1THo2KWVqhiTYCum5O+OSWwTYlgIU0RgJ6ungg1cuCJPcmYWNgjDKA/DA==",
             "The signature doesn't match"
+        );
+    }
+
+    #[test]
+    fn should_sign_typed_data_v4() {
+        let chain_id = 3;
+        let data = r#"{
+            "types": {
+                "EIP712Domain": [
+                    { "name": "name", "type": "string" },
+                    { "name": "version", "type": "string" },
+                    { "name": "chainId", "type": "uint256" },
+                    { "name": "verifyingContract", "type": "address" }
+                ],
+                "Person": [
+                    { "name": "name", "type": "string" },
+                    { "name": "wallet", "type": "address" }
+                ],
+                "Mail": [
+                    { "name": "from", "type": "Person" },
+                    { "name": "to", "type": "Person" },
+                    { "name": "contents", "type": "string" }
+                ]
+            },
+            "primaryType": "Mail",
+            "domain": {
+                "name": "Ether Mail",
+                "version": "1",
+                "chainId": 1,
+                "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+            },
+            "message": {
+                "from": {
+                    "name": "Cow",
+                    "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+                },
+                "to": {
+                    "name": "Bob",
+                    "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+                },
+                "contents": "Hello, Bob!"
+            }
+        }"#;
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false
+        ).unwrap();
+
+        let signature = sign_typed_data_v4(account, data.to_string()).unwrap();
+
+        assert_eq!(signature.len(), 65, "The signature length doesn't match");
+
+        assert_eq!(
+            hex::encode(signature.clone()),
+            "5b9ee7ebad3acd6ca243732900203a8a9e59b871345cb9b229a1936e11f5ad8967c46a0d05027ccd880bcc49e18877a53b8e4813558a1fd165ebb875c4a447c201"
         );
     }
 }

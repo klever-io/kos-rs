@@ -171,7 +171,7 @@ impl ETH {
         let typed_data: TypedData = serde_json::from_str(data)?;
         let digest = typed_data
             .eip712_signing_hash()
-            .map_err(|e| Error::InvalidMessage(format!("failed to sign typed data: {}", e)))?;
+            .map_err(|_e| Error::InvalidMessage("failed to sign typed data".to_string()))?;
         ETH::sign_digest(digest.as_slice(), keypair)
     }
 
