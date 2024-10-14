@@ -14,12 +14,17 @@ use kos_crypto::sr25519::Sr25519KeyPair;
 use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
+use parity_scale_codec::Decode;
+
 use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair};
 use std::str::FromStr;
-use subxt::client::OfflineClientT;
-use subxt::ext::codec::Decode;
-use subxt::tx::SubmittableExtrinsic;
+use subxt::client::{OfflineClientT, RuntimeVersion};
+use subxt::dynamic::Value;
+use subxt::ext::scale_decode::DecodeAsType;
+use subxt::ext::subxt_core;
+use subxt::ext::subxt_core::tx::payload::ValidationDetails;
+use subxt::tx::Payload;
 use subxt::utils::H256;
 use subxt::{Metadata, OfflineClient, PolkadotConfig};
 use wasm_bindgen::prelude::*;
@@ -37,6 +42,19 @@ pub const BASE_CHAIN: BaseChain = BaseChain {
     precision: 10,
     chain_code: 21,
 };
+
+struct CallData {
+    pallet: String,
+    call: String,
+    args: Vec<Value>,
+}
+
+fn to_bytes(hex_str: &str) -> Vec<u8> {
+    let hex_str = hex_str
+        .strip_prefix("0x")
+        .expect("0x should prefix hex encoded bytes");
+    hex::decode(hex_str).expect("valid bytes from hex")
+}
 
 #[wasm_bindgen]
 impl DOT {
@@ -200,17 +218,85 @@ impl DOT {
         Ok(address.is_ok())
     }
 
-    pub fn decode_tx(
+    pub fn decode_extrinsic(
         genesis_hash: &str,
         spec_version: u32,
         transaction_version: u32,
         tx: &str,
     ) -> Result<Vec<u8>, Error> {
         let client = DOT::get_client(genesis_hash, spec_version, transaction_version)?;
-        let tx_bytes = hex::decode(tx)?;
+        let data = &mut &*to_bytes(
+            "0x04050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b0600",
+        );
 
-        let extrinsic = SubmittableExtrinsic::from_bytes(client.clone(), tx_bytes);
-        Ok(Vec::from((extrinsic.encoded())))
+        if data.is_empty() {
+            return Err(Error::InvalidTransaction("empty transaction".to_string()));
+        }
+
+        let is_signed = data[0] & 0b1000_0000 != 0;
+        let version = data[0] & 0b0111_1111;
+        *data = &data[1..];
+
+        if version != 4 {
+            return Err(Error::InvalidTransaction(format!(
+                "unsupported extrinsic version: {}",
+                version
+            )));
+        }
+
+        let call_data = DOT::decode_call_data(data, client)?;
+
+        Ok(vec![0u8; 32])
+    }
+
+    fn decode_call_data(
+        data: &mut &[u8],
+        client: OfflineClient<PolkadotConfig>,
+    ) -> Result<CallData, Error> {
+        let metadata = client.metadata();
+
+        // Pluck out the u8's representing the pallet and call enum next.
+        if data.len() < 2 {
+            return Err(Error::InvalidTransaction(
+                "expected at least 2 more bytes for the pallet/call index".to_string(),
+            ));
+        }
+        let pallet_index = u8::decode(data).unwrap();
+        let call_index = u8::decode(data).unwrap();
+        let adjusted_pallet_index = pallet_index.saturating_sub(1); // 1-indexed
+
+        let pallet_name = metadata
+            .pallet_by_index(adjusted_pallet_index)
+            .ok_or_else(|| {
+                Error::InvalidTransaction(format!(
+                    "pallet index {} out of bounds",
+                    adjusted_pallet_index
+                ))
+            })?;
+
+        let call_variant = pallet_name.call_variant_by_index(call_index).unwrap();
+        println!(
+            "pallet name: {}, call name: {}",
+            pallet_name.name(),
+            call_variant.name
+        );
+
+        let arguments = call_variant
+            .clone()
+            .fields
+            .iter()
+            .map(|field| {
+                let id = field.ty.id;
+                Value::decode_as_type(data, id.into(), metadata.types())
+            })
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+
+        Ok(CallData {
+            pallet: pallet_name.name().to_string(),
+            call: call_variant.name.to_string(),
+            args: arguments,
+        })
     }
 
     pub fn tx_from_raw(raw: &str) -> Result<Transaction, Error> {
@@ -240,14 +326,13 @@ impl DOT {
             H256::from_slice(&bytes)
         };
 
-        let _runtime_version = subxt::rpc::types::RuntimeVersion {
+        let _runtime_version = RuntimeVersion {
             spec_version,
             transaction_version,
-            other: Default::default(),
         };
 
         let metadata = {
-            let bytes = std::fs::read("./artifacts/polkadot_metadata_small.scale").unwrap();
+            let bytes = std::fs::read("./artifacts/polkadot_metadata_full.scale").unwrap();
             Metadata::decode(&mut &*bytes).unwrap()
         };
 
@@ -259,9 +344,12 @@ impl DOT {
     }
 }
 
-// Test keypair from mnemonic
 #[cfg(test)]
 mod tests {
+    use crate::chains::DOT;
+    use prost::Message;
+    use subxt::client::OfflineClientT;
+    use subxt::tx::Payload;
     use subxt::utils::H256;
 
     #[test]
@@ -335,5 +423,31 @@ mod tests {
             tx.sender,
             "14m5oqLEDXMeydyU84E2gMMykKTt78QBQFWNjKhndm1bgCaX"
         );
+    }
+
+    #[test]
+    fn test_decode_call_data() {
+        let client = DOT::get_client(
+            "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+            1003000,
+            26,
+        )
+        .unwrap();
+
+        let call_data_hex =
+            "0x050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b060700b08ef01b";
+
+        let call_data_bytes = hex::decode(call_data_hex.strip_prefix("0x").unwrap()).unwrap();
+
+        let call_data_cursor = &mut &*call_data_bytes;
+
+        let decoded = super::DOT::decode_call_data(call_data_cursor, client.clone()).unwrap();
+
+        let payload = subxt::dynamic::tx(decoded.pallet, decoded.call, decoded.args);
+
+        let partial_tx = client
+            .tx()
+            .create_partial_signed_offline(&payload, Default::default())
+            .unwrap();
     }
 }

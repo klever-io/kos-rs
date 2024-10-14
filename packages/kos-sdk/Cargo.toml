@@ -57,7 +57,9 @@ prost = { workspace = true }
 base64 = "0.22.1"
 sp-core = "34.0.0"
 sp-runtime = "39.0.0"
-subxt = "0.30.1"
+subxt = "0.37.0"
+scale-value = "0.16.3"
+parity-scale-codec = "3.6.12"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
