@@ -4,7 +4,7 @@ pub mod transaction;
 use crate::chains::DOTTransaction;
 use crate::models::BroadcastResult;
 use crate::{
-    chain::{self, BaseChain},
+    chain::BaseChain,
     models,
     models::{PathOptions, Transaction, TransactionRaw},
 };
@@ -21,9 +21,8 @@ use sp_core::{sr25519, Pair};
 use std::str::FromStr;
 use subxt::client::{OfflineClientT, RuntimeVersion};
 use subxt::dynamic::Value;
+use subxt::ext::frame_metadata::RuntimeMetadataPrefixed;
 use subxt::ext::scale_decode::DecodeAsType;
-use subxt::ext::subxt_core;
-use subxt::ext::subxt_core::tx::payload::ValidationDetails;
 use subxt::tx::Payload;
 use subxt::utils::H256;
 use subxt::{Metadata, OfflineClient, PolkadotConfig};
@@ -218,36 +217,36 @@ impl DOT {
         Ok(address.is_ok())
     }
 
-    pub fn decode_extrinsic(
-        genesis_hash: &str,
-        spec_version: u32,
-        transaction_version: u32,
-        tx: &str,
-    ) -> Result<Vec<u8>, Error> {
-        let client = DOT::get_client(genesis_hash, spec_version, transaction_version)?;
-        let data = &mut &*to_bytes(
-            "0x04050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b0600",
-        );
-
-        if data.is_empty() {
-            return Err(Error::InvalidTransaction("empty transaction".to_string()));
-        }
-
-        let is_signed = data[0] & 0b1000_0000 != 0;
-        let version = data[0] & 0b0111_1111;
-        *data = &data[1..];
-
-        if version != 4 {
-            return Err(Error::InvalidTransaction(format!(
-                "unsupported extrinsic version: {}",
-                version
-            )));
-        }
-
-        let call_data = DOT::decode_call_data(data, client)?;
-
-        Ok(vec![0u8; 32])
-    }
+    // pub fn decode_extrinsic(
+    //     genesis_hash: &str,
+    //     spec_version: u32,
+    //     transaction_version: u32,
+    //     tx: &str,
+    // ) -> Result<Vec<u8>, Error> {
+    //     let client = DOT::get_client(genesis_hash, spec_version, transaction_version)?;
+    //     let data = &mut &*to_bytes(
+    //         "0x04050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b0600",
+    //     );
+    //
+    //     if data.is_empty() {
+    //         return Err(Error::InvalidTransaction("empty transaction".to_string()));
+    //     }
+    //
+    //     let is_signed = data[0] & 0b1000_0000 != 0;
+    //     let version = data[0] & 0b0111_1111;
+    //     *data = &data[1..];
+    //
+    //     if version != 4 {
+    //         return Err(Error::InvalidTransaction(format!(
+    //             "unsupported extrinsic version: {}",
+    //             version
+    //         )));
+    //     }
+    //
+    //     let call_data = DOT::decode_call_data(data, client)?;
+    //
+    //     Ok(vec![0u8; 32])
+    // }
 
     fn decode_call_data(
         data: &mut &[u8],
@@ -263,16 +262,10 @@ impl DOT {
         }
         let pallet_index = u8::decode(data).unwrap();
         let call_index = u8::decode(data).unwrap();
-        let adjusted_pallet_index = pallet_index.saturating_sub(1); // 1-indexed
 
-        let pallet_name = metadata
-            .pallet_by_index(adjusted_pallet_index)
-            .ok_or_else(|| {
-                Error::InvalidTransaction(format!(
-                    "pallet index {} out of bounds",
-                    adjusted_pallet_index
-                ))
-            })?;
+        let pallet_name = metadata.pallet_by_index(pallet_index).ok_or_else(|| {
+            Error::InvalidTransaction(format!("pallet index {} out of bounds", pallet_index))
+        })?;
 
         let call_variant = pallet_name.call_variant_by_index(call_index).unwrap();
         println!(
@@ -320,6 +313,7 @@ impl DOT {
         genesis_hash: &str,
         spec_version: u32,
         transaction_version: u32,
+        raw_metadata: &str,
     ) -> Result<OfflineClient<PolkadotConfig>, Error> {
         let _genesis_hash = {
             let bytes = hex::decode(genesis_hash)?;
@@ -331,10 +325,12 @@ impl DOT {
             transaction_version,
         };
 
-        let metadata = {
-            let bytes = std::fs::read("./artifacts/polkadot_metadata_full.scale").unwrap();
-            Metadata::decode(&mut &*bytes).unwrap()
-        };
+        let binding = to_bytes(raw_metadata);
+        let bytes = binding.as_slice();
+
+        let prefixed_metadata = RuntimeMetadataPrefixed::decode(&mut &*bytes).unwrap();
+
+        let metadata = Metadata::try_from(prefixed_metadata).unwrap();
 
         Ok(OfflineClient::<PolkadotConfig>::new(
             _genesis_hash,
@@ -349,8 +345,7 @@ mod tests {
     use crate::chains::DOT;
     use prost::Message;
     use subxt::client::OfflineClientT;
-    use subxt::tx::Payload;
-    use subxt::utils::H256;
+    use subxt::utils::{MultiAddress, MultiSignature, H256};
 
     #[test]
     fn test_keypair_from_mnemonic() {
@@ -401,6 +396,7 @@ mod tests {
             "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
             1002007,
             26,
+            "",
         )
         .unwrap();
 
@@ -431,11 +427,12 @@ mod tests {
             "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
             1003000,
             26,
+            "...raw metadata...",
         )
         .unwrap();
 
         let call_data_hex =
-            "0x050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b060700b08ef01b";
+            "0x0503002534454d30f8a028e42654d6b535e0651d1d026ddf115cef59ae1dd71bae074e910100322121000000f84d0f001a00000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c391b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c300";
 
         let call_data_bytes = hex::decode(call_data_hex.strip_prefix("0x").unwrap()).unwrap();
 
@@ -449,5 +446,18 @@ mod tests {
             .tx()
             .create_partial_signed_offline(&payload, Default::default())
             .unwrap();
+
+        let signer_payload = partial_tx.signer_payload();
+
+        let kp = super::DOT::keypair_from_bytes(&[0u8; 32]).unwrap();
+        let signature = super::DOT::sign_digest(&signer_payload, &kp).unwrap();
+
+        let address =
+            MultiAddress::Id(super::address::Address::from_keypair(&kp).to_account_id32());
+        let signature = MultiSignature::Sr25519(<[u8; 64]>::try_from(signature).unwrap());
+
+        let submittable = partial_tx.sign_with_address_and_signature(&address, &signature);
+
+        println!("{:?}", hex::encode(submittable.encoded()));
     }
 }
