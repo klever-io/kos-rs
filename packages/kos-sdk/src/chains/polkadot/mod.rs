@@ -1,4 +1,5 @@
 mod address;
+mod requests;
 pub mod transaction;
 
 use crate::chains::DOTTransaction;
@@ -14,7 +15,7 @@ use kos_crypto::sr25519::Sr25519KeyPair;
 use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
-use parity_scale_codec::Decode;
+use parity_scale_codec::{Decode, Encode};
 
 use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair};
@@ -217,36 +218,41 @@ impl DOT {
         Ok(address.is_ok())
     }
 
-    // pub fn decode_extrinsic(
-    //     genesis_hash: &str,
-    //     spec_version: u32,
-    //     transaction_version: u32,
-    //     tx: &str,
-    // ) -> Result<Vec<u8>, Error> {
-    //     let client = DOT::get_client(genesis_hash, spec_version, transaction_version)?;
-    //     let data = &mut &*to_bytes(
-    //         "0x04050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b0600",
-    //     );
-    //
-    //     if data.is_empty() {
-    //         return Err(Error::InvalidTransaction("empty transaction".to_string()));
-    //     }
-    //
-    //     let is_signed = data[0] & 0b1000_0000 != 0;
-    //     let version = data[0] & 0b0111_1111;
-    //     *data = &data[1..];
-    //
-    //     if version != 4 {
-    //         return Err(Error::InvalidTransaction(format!(
-    //             "unsupported extrinsic version: {}",
-    //             version
-    //         )));
-    //     }
-    //
-    //     let call_data = DOT::decode_call_data(data, client)?;
-    //
-    //     Ok(vec![0u8; 32])
-    // }
+    pub fn decode_extrinsic(
+        genesis_hash: &str,
+        spec_version: u32,
+        transaction_version: u32,
+        tx: &str,
+    ) -> Result<Vec<u8>, Error> {
+        let metadata_bytes = {
+            let bytes = std::fs::read("./artifacts/dot-klever-node.scale").unwrap();
+            Metadata::decode(&mut &*bytes).unwrap()
+        }
+        .encode();
+
+        let metadata = format!("0x{}", hex::encode(metadata_bytes));
+        let client = DOT::get_client(genesis_hash, spec_version, transaction_version, &metadata)?;
+        let data = &mut &*to_bytes(tx);
+
+        if data.is_empty() {
+            return Err(Error::InvalidTransaction("empty transaction".to_string()));
+        }
+
+        let is_signed = data[0] & 0b1000_0000 != 0;
+        let version = data[0] & 0b0111_1111;
+        *data = &data[1..];
+
+        if version != 4 {
+            return Err(Error::InvalidTransaction(format!(
+                "unsupported extrinsic version: {}",
+                version
+            )));
+        }
+
+        let call_data = DOT::decode_call_data(data, client)?;
+
+        Ok(vec![0u8; 32])
+    }
 
     fn decode_call_data(
         data: &mut &[u8],
@@ -292,12 +298,40 @@ impl DOT {
         })
     }
 
-    pub fn tx_from_raw(raw: &str) -> Result<Transaction, Error> {
+    pub fn tx_from_json(raw: &str) -> Result<Transaction, Error> {
         let b64 = b64_engine::STANDARD;
 
         let bytes = b64.decode(raw).unwrap();
 
-        let tx = DOTTransaction::from_bytes(bytes).unwrap();
+        let mut tx = DOTTransaction::from_bytes(bytes).unwrap();
+
+        let metadata_bytes = {
+            let bytes = std::fs::read("./artifacts/dot-klever-node.scale").unwrap();
+            Metadata::decode(&mut &*bytes).unwrap()
+        }
+        .encode();
+
+        let metadata = format!("0x{}", hex::encode(metadata_bytes));
+
+        let client = DOT::get_client(
+            &*tx.genesis_hash,
+            tx.spec_version.parse().unwrap(),
+            tx.transaction_version.parse().unwrap(),
+            &metadata,
+        )?;
+
+        let method = hex::decode(&mut tx.method)?;
+
+        let method_bytes = &mut &*method;
+
+        let call_data = DOT::decode_call_data(method_bytes, client.clone())?;
+
+        let payload = subxt::dynamic::tx(call_data.pallet, call_data.call, call_data.args);
+
+        let partial_tx = client
+            .tx()
+            .create_partial_signed_offline(&payload, Default::default())
+            .unwrap();
 
         Ok(Transaction {
             chain: crate::chain::Chain::DOT,
@@ -343,26 +377,28 @@ impl DOT {
 #[cfg(test)]
 mod tests {
     use crate::chains::DOT;
+    use parity_scale_codec::{Decode, Encode};
     use prost::Message;
     use subxt::client::OfflineClientT;
     use subxt::utils::{MultiAddress, MultiSignature, H256};
+    use subxt::Metadata;
 
     #[test]
     fn test_keypair_from_mnemonic() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
-        let path = super::DOT::get_path(&super::PathOptions {
+        let path = DOT::get_path(&super::PathOptions {
             index: 0,
             is_legacy: None,
         })
         .unwrap();
-        let kp = super::DOT::keypair_from_mnemonic(mnemonic, &path, None).unwrap();
-        let address = super::DOT::get_address_from_keypair(&kp).unwrap();
+        let kp = DOT::keypair_from_mnemonic(mnemonic, &path, None).unwrap();
+        let address = DOT::get_address_from_keypair(&kp).unwrap();
         assert_eq!(address, "13KVd4f2a4S5pLp4gTTFezyXdPWx27vQ9vS6xBXJ9yWVd7xo");
     }
 
     #[test]
     fn test_get_path() {
-        let path = super::DOT::get_path(&super::PathOptions {
+        let path = DOT::get_path(&super::PathOptions {
             index: 1,
             is_legacy: None,
         })
@@ -374,29 +410,37 @@ mod tests {
     #[test]
     fn test_validate_address() {
         let address = "13KVd4f2a4S5pLp4gTTFezyXdPWx27vQ9vS6xBXJ9yWVd7xo";
-        let valid = super::DOT::validate_address(address, None).unwrap();
+        let valid = DOT::validate_address(address, None).unwrap();
         assert_eq!(valid, true);
     }
 
     #[test]
     fn test_sign_digest() {
-        let kp = super::DOT::keypair_from_bytes(&[0u8; 32]).unwrap();
+        let kp = DOT::keypair_from_bytes(&[0u8; 32]).unwrap();
         let digest = String::from("hello").into_bytes();
-        let signature = super::DOT::sign_digest(&digest, &kp).unwrap();
+        let signature = DOT::sign_digest(&digest, &kp).unwrap();
         assert_eq!(signature.len(), 64);
 
-        let address = super::DOT::get_address_from_keypair(&kp).unwrap();
-        let valid = super::DOT::verify_digest(&digest, &signature, &address).unwrap();
+        let address = DOT::get_address_from_keypair(&kp).unwrap();
+        let valid = DOT::verify_digest(&digest, &signature, &address).unwrap();
         assert_eq!(valid, true);
     }
 
     #[test]
     fn test_get_client() {
-        let client = super::DOT::get_client(
+        let metadata_bytes = {
+            let bytes = std::fs::read("./artifacts/dot-klever-node.scale").unwrap();
+            Metadata::decode(&mut &*bytes).unwrap()
+        }
+        .encode();
+
+        let metadata = format!("0x{}", hex::encode(metadata_bytes));
+
+        let client = DOT::get_client(
             "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
             1002007,
             26,
-            "",
+            &metadata,
         )
         .unwrap();
 
@@ -413,7 +457,7 @@ mod tests {
     fn test_decode_tx() {
         let raw = "eyJzcGVjVmVyc2lvbiI6IjB4MDAwZjRkZjgiLCJ0cmFuc2FjdGlvblZlcnNpb24iOiIweDAwMDAwMDFhIiwiYWRkcmVzcyI6IjE0bTVvcUxFRFhNZXlkeVU4NEUyZ01NeWtLVHQ3OFFCUUZXTmpLaG5kbTFiZ0NhWCIsImFzc2V0SWQiOiJudWxsIiwiYmxvY2tIYXNoIjoiMHg2MGY4ZmFhNmI1ZGQwZmViYjE3OGU0MmViNjQ0NzE5MzU3YWU1NTViNGNiYWVmZGIzMjIwNGFmMzc5ZjRkNTg2IiwiYmxvY2tOdW1iZXIiOiIweDAxNThmYWE2IiwiZXJhIjoiMHg2NTAyIiwiZ2VuZXNpc0hhc2giOiIweDkxYjE3MWJiMTU4ZTJkMzg0OGZhMjNhOWYxYzI1MTgyZmI4ZTIwMzEzYjJjMWViNDkyMTlkYTdhNzBjZTkwYzMiLCJtZXRhZGF0YUhhc2giOiJudWxsIiwibWV0aG9kIjoiMHgwNTAzMDBhNjUzYWU3OTY2NTU2NWJhN2ZjNjgyYzM4NWIzYzAzOGMyMDkxYWI2ZDYwNTMzNTViOTk1MGExMDhhYzQ4YjA2MDAiLCJtb2RlIjowLCJub25jZSI6IjB4MDAwMDAwMDAiLCJzaWduZWRFeHRlbnNpb25zIjpbIkNoZWNrTm9uWmVyb1NlbmRlciIsIkNoZWNrU3BlY1ZlcnNpb24iLCJDaGVja1R4VmVyc2lvbiIsIkNoZWNrR2VuZXNpcyIsIkNoZWNrTW9ydGFsaXR5IiwiQ2hlY2tOb25jZSIsIkNoZWNrV2VpZ2h0IiwiQ2hhcmdlVHJhbnNhY3Rpb25QYXltZW50IiwiUHJldmFsaWRhdGVBdHRlc3RzIiwiQ2hlY2tNZXRhZGF0YUhhc2giXSwidGlwIjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInZlcnNpb24iOjQsIndpdGhTaWduZWRUcmFuc2FjdGlvbiI6dHJ1ZX0=";
 
-        let tx = super::DOT::tx_from_raw(raw).unwrap();
+        let tx = DOT::tx_from_json(raw).unwrap();
 
         assert_eq!(
             tx.sender,
@@ -423,11 +467,19 @@ mod tests {
 
     #[test]
     fn test_decode_call_data() {
+        let metadata_bytes = {
+            let bytes = std::fs::read("./artifacts/dot-klever-node.scale").unwrap();
+            Metadata::decode(&mut &*bytes).unwrap()
+        }
+        .encode();
+
+        let metadata = format!("0x{}", hex::encode(metadata_bytes));
+
         let client = DOT::get_client(
             "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
             1003000,
             26,
-            "...raw metadata...",
+            &metadata,
         )
         .unwrap();
 
@@ -438,7 +490,7 @@ mod tests {
 
         let call_data_cursor = &mut &*call_data_bytes;
 
-        let decoded = super::DOT::decode_call_data(call_data_cursor, client.clone()).unwrap();
+        let decoded = DOT::decode_call_data(call_data_cursor, client.clone()).unwrap();
 
         let payload = subxt::dynamic::tx(decoded.pallet, decoded.call, decoded.args);
 
@@ -449,8 +501,8 @@ mod tests {
 
         let signer_payload = partial_tx.signer_payload();
 
-        let kp = super::DOT::keypair_from_bytes(&[0u8; 32]).unwrap();
-        let signature = super::DOT::sign_digest(&signer_payload, &kp).unwrap();
+        let kp = DOT::keypair_from_bytes(&[0u8; 32]).unwrap();
+        let signature = DOT::sign_digest(&signer_payload, &kp).unwrap();
 
         let address =
             MultiAddress::Id(super::address::Address::from_keypair(&kp).to_account_id32());
