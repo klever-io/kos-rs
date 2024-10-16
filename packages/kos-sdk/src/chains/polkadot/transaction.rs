@@ -27,6 +27,7 @@ pub struct Transaction {
     pub version: i64,
     #[serde(rename = "withSignedTransaction")]
     pub with_signed_transaction: bool,
+    pub signature: Option<String>,
 }
 
 impl Transaction {
