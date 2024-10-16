@@ -9,7 +9,7 @@ use crate::{
     models,
     models::{PathOptions, Transaction, TransactionRaw},
 };
-use base64::{engine::general_purpose as b64_engine, Engine};
+use base64::Engine;
 use kos_crypto::keypair::KeyPair;
 use kos_crypto::sr25519::Sr25519KeyPair;
 use kos_types::error::Error;
@@ -25,11 +25,10 @@ use subxt::client::{OfflineClientT, RuntimeVersion};
 use subxt::dynamic::Value;
 use subxt::ext::frame_metadata::RuntimeMetadataPrefixed;
 use subxt::ext::scale_decode::DecodeAsType;
-use subxt::tx::Payload;
-use subxt::utils::{MultiAddress, MultiSignature, H256};
+use subxt::tx::{Payload, SubmittableExtrinsic};
+use subxt::utils::{AccountId32, MultiAddress, MultiSignature, H256};
 use subxt::{Metadata, OfflineClient, PolkadotConfig};
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::js_sys::Atomics::sub;
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
@@ -37,7 +36,6 @@ pub struct DOT {}
 
 pub const SIGN_PREFIX: &[u8; 26] = b"\x19Polkadot Signed Message:\n";
 
-pub const BIP44_PATH: u32 = 195;
 pub const BASE_CHAIN: BaseChain = BaseChain {
     name: "Polkadot",
     symbol: "DOT",
@@ -46,7 +44,7 @@ pub const BASE_CHAIN: BaseChain = BaseChain {
 };
 
 #[wasm_bindgen]
-struct CallData {
+pub struct CallData {
     pallet: String,
     call: String,
     args: Vec<Value>,
@@ -106,7 +104,7 @@ impl DOT {
     pub fn get_path(options: &PathOptions) -> Result<String, Error> {
         let index = options.index;
 
-        if (index == 0) {
+        if index == 0 {
             return Ok(String::new());
         }
 
@@ -118,8 +116,7 @@ impl DOT {
     #[wasm_bindgen(js_name = "signDigest")]
     /// Sign digest data with the private key.
     pub fn sign_digest(digest: &[u8], keypair: &KeyPair) -> Result<Vec<u8>, Error> {
-        let raw = keypair.sign_digest(digest);
-        Ok(raw)
+        Ok(keypair.sign_digest(digest))
     }
 
     #[wasm_bindgen(js_name = "verifyDigest")]
@@ -127,25 +124,24 @@ impl DOT {
     pub fn verify_digest(digest: &[u8], signature: &[u8], _address: &str) -> Result<bool, Error> {
         let public = sr25519::Public::from_ss58check(_address).unwrap();
 
-        let signature =
-            sp_core::sr25519::Signature::from_raw(<[u8; 64]>::try_from(signature).unwrap());
+        let signature = sr25519::Signature::from_raw(<[u8; 64]>::try_from(signature).unwrap());
 
         Ok(sr25519::Pair::verify(&signature, digest, &public))
     }
 
     pub async fn send(
-        sender: String,
-        receiver: String,
-        amount: BigNumber,
-        options: Option<models::SendOptions>,
-        node_url: Option<String>,
+        _sender: String,
+        _receiver: String,
+        _amount: BigNumber,
+        _options: Option<models::SendOptions>,
+        _node_url: Option<String>,
     ) -> Result<Transaction, Error> {
         todo!()
     }
 
     pub async fn broadcast(
-        tx: crate::models::Transaction,
-        node_url: Option<String>,
+        _tx: Transaction,
+        _node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
         todo!()
     }
@@ -172,9 +168,6 @@ impl DOT {
                 let transaction_version =
                     u32::from_str_radix(new_tx.transaction_version.strip_prefix("0x").unwrap(), 16)
                         .unwrap();
-
-                println!("spec_version: {:?}", spec_version);
-                println!("transaction_version: {:?}", transaction_version);
 
                 let client = DOT::get_client(
                     &*new_tx.genesis_hash.strip_prefix("0x").unwrap(),
@@ -256,9 +249,9 @@ impl DOT {
 
     #[wasm_bindgen(js_name = "getBalance")]
     pub async fn get_balance(
-        addr: &str,
-        token: Option<String>,
-        node_url: Option<String>,
+        _addr: &str,
+        _token: Option<String>,
+        _node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
         Ok(BigNumber::from(0))
     }
@@ -394,14 +387,54 @@ impl DOT {
             metadata,
         ))
     }
+
+    pub fn get_submittable_extrinsic(
+        tx: DOTTransaction,
+    ) -> Result<SubmittableExtrinsic<PolkadotConfig, OfflineClient<PolkadotConfig>>, Error> {
+        let metadata_bytes = {
+            let bytes = std::fs::read("./artifacts/dot-klever-node.scale").unwrap();
+            Metadata::decode(&mut &*bytes).unwrap()
+        }
+        .encode();
+
+        let metadata = format!("0x{}", hex::encode(metadata_bytes));
+
+        let client = DOT::get_client(
+            &*tx.genesis_hash.strip_prefix("0x").unwrap(),
+            u32::from_str_radix(tx.spec_version.strip_prefix("0x").unwrap(), 16).unwrap(),
+            u32::from_str_radix(tx.transaction_version.strip_prefix("0x").unwrap(), 16).unwrap(),
+            &metadata,
+        )
+        .unwrap();
+
+        let method = hex::decode(&mut tx.method.strip_prefix("0x").unwrap().to_string()).unwrap();
+        let method_bytes = &mut &*method;
+
+        let payload = {
+            let call_data = DOT::decode_call_data(method_bytes, client.clone()).unwrap();
+            subxt::dynamic::tx(call_data.pallet, call_data.call, call_data.args)
+        };
+
+        let partial_tx = client
+            .tx()
+            .create_partial_signed_offline(&payload, Default::default())
+            .unwrap();
+
+        let signature = Some(hex::decode(tx.signature.unwrap()).unwrap()).unwrap();
+
+        let address = MultiAddress::Id(AccountId32::from_str(&tx.address).unwrap());
+        let signature = MultiSignature::Sr25519(<[u8; 64]>::try_from(signature).unwrap());
+
+        let submittable = partial_tx.sign_with_address_and_signature(&address, &signature);
+
+        Ok(submittable)
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::chains::polkadot::to_bytes;
     use crate::chains::DOT;
     use parity_scale_codec::{Decode, Encode};
-    use prost::Message;
     use serde_json::json;
     use subxt::client::OfflineClientT;
     use subxt::utils::{MultiAddress, MultiSignature, H256};
@@ -492,8 +525,6 @@ mod tests {
     #[test]
     fn decode_extrinsic() {
         let ext = "0x040503002534454d30f8a028e42654d6b535e0651d1d026ddf115cef59ae1dd71bae074e910100ee2a21000000fb4d0f001a00000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c391b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c300";
-
-        let ext_bytes = &mut &*to_bytes(ext);
 
         let decoded = DOT::decode_extrinsic(
             "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
@@ -586,7 +617,6 @@ mod tests {
             "tip": "0x00000000000000000000000000000000",
             "version": 4,
             "withSignedTransaction": true,
-            "signature": ""
         });
 
         let kp = DOT::keypair_from_mnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", "//0", None).unwrap();

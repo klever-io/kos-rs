@@ -1,9 +1,7 @@
-use coins_bip32::path::DerivationPath;
 use coins_bip39::{English, Mnemonic};
 use kos_types::{error::Error, Bytes32};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use sp_core::crypto::VrfPublic;
-use sp_core::{ed25519, sr25519, Pair};
+use sp_core::{sr25519, Pair};
 use std::str::FromStr;
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -13,7 +11,7 @@ pub struct Sr25519KeyPair {
 }
 
 impl Serialize for Sr25519KeyPair {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
@@ -22,7 +20,7 @@ impl Serialize for Sr25519KeyPair {
 }
 
 impl<'de> Deserialize<'de> for Sr25519KeyPair {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 use crate::chain::Chain;
+use crate::chains::DOT;
 
 #[derive(Debug, Clone, Serialize)]
 #[wasm_bindgen]
@@ -182,7 +183,10 @@ impl Transaction {
                     serde_json::to_string(&data.tx).map_err(|e| e.into())
                 }
                 TransactionRaw::Polkadot(data) => {
-                    serde_json::to_string(&data).map_err(|e| e.into())
+                    let extrinsic = DOT::get_submittable_extrinsic(data.clone())
+                        .expect("Error getting submittable extrinsic");
+
+                    Ok(hex::encode(extrinsic.encoded()))
                 }
             },
             None => Err(Error::InvalidTransaction("no data found".to_string())),

@@ -57,7 +57,9 @@ impl FromStr for Address {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let decoded = Public::from_ss58check_with_version(s).map_err(|_| "Invalid address")?;
 
-        decoded.0.len() == ADDRESS_LEN || return Err("Invalid address");
+        if decoded.0.len() != ADDRESS_LEN {
+            return Err("Invalid address length");
+        }
 
         let mut raw = [0u8; ADDRESS_LEN];
         raw.copy_from_slice(&decoded.0);
