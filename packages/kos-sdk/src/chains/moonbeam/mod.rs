@@ -50,7 +50,7 @@ fn convert_options(
 
 fn convert_transaction(tx: models::Transaction) -> Result<models::Transaction, Error> {
     match tx.data.clone() {
-        Some(TransactionRaw::Polygon(tx_moonbeam)) => {
+        Some(TransactionRaw::Moonbeam(tx_moonbeam)) => {
             Ok(tx.new_data(Chain::GLMR, TransactionRaw::Ethereum(tx_moonbeam.eth)))
         }
         Some(TransactionRaw::Ethereum(tx_eth)) => Ok(tx.new_data(
@@ -116,7 +116,6 @@ impl GLMR {
     pub fn sign(tx: models::Transaction, keypair: &KeyPair) -> Result<models::Transaction, Error> {
         let result = ETH::sign(convert_transaction(tx)?, keypair);
 
-        // convert back to polygon tx enum
         convert_transaction(result?)
     }
 
@@ -275,14 +274,16 @@ mod tests {
 
         assert_eq!(
             tx.hash.to_string(),
-            "ce4fdd2a2d7767a4d4df8533bd1218a51755e6d15f814a20d3fa834e27c8602c"
+            "3f46bcae2c147f935ab04f67e8fd3dce4e00a678d28dba02032f20e907d50b39"
         );
 
         let signed = GLMR::sign(tx, &get_default_secret());
+
         assert!(signed.is_ok());
+
         assert_eq!(
             signed.unwrap().hash.to_string(),
-            "df531bd12423bc8c2a047c01a30b1513a41b47e81d75904a703bdb1d8962bd22"
+            "16a2934180aa7888a979fcabfe0853a42241eaaa1d18b005923ae7875072ae23"
         );
     }
 
@@ -312,9 +313,10 @@ mod tests {
             None,
         ))
         .unwrap();
+
         assert_eq!(
             tx.hash.to_string(),
-            "531d345f8aa0a5ff3625d758e53ff601fa8e2a060bc7a3a1b83e50e927fbb5f5"
+            "8c27958a5dee222dede52d0dbcc529040443af6a8317890b8d8acb5bbd293ec6"
         );
 
         let moonbeam_tx = match tx.data.clone() {
@@ -329,7 +331,7 @@ mod tests {
         assert!(signed.is_ok());
         assert_eq!(
             signed.unwrap().hash.to_string(),
-            "1b570ed15ef11db9860618fce69ac0a6b50cef5403cefa94c86483103ae2bde3"
+            "aedb7da9691d1a7968855e91cb2161b1d83393aec339b886ca327033e8ce9894"
         );
     }
 
@@ -346,11 +348,11 @@ mod tests {
         init();
         let balance = tokio_test::block_on(GLMR::get_balance(
             DEFAULT_ADDRESS,
-            Some("0x19a935cbaaa4099072479d521962588d7857d717".to_string()),
+            Some("0x0000000000000000000000000000000000000802".to_string()),
             None,
         ));
         assert!(balance.is_ok());
 
-        assert_eq!(balance.unwrap().to_string(), "1000000000000000000000");
+        assert_eq!(balance.unwrap().to_string(), "0");
     }
 }
