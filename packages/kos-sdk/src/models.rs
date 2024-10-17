@@ -69,6 +69,7 @@ kos_types::enum_thing! {
         Ethereum(super::chains::ETHTransaction),
         Polygon(super::chains::MATICTransaction),
         Bitcoin(super::chains::BTCTransaction),
+        Moonbeam(super::chains::GLMRTransaction)
     }
 }
 
@@ -80,6 +81,7 @@ kos_types::enum_thing! {
         Ethereum(kos_proto::options::ETHOptions),
         Polygon(kos_proto::options::MATICOptions),
         Bitcoin(kos_proto::options::BTCOptions),
+        Moonbeam(kos_proto::options::GLMROptions)
     }
 }
 
@@ -178,6 +180,10 @@ impl Transaction {
                     let encoded = data.eth.encode()?;
                     Ok(hex::encode(encoded))
                 }
+                TransactionRaw::Moonbeam(data) => {
+                    let encoded = data.eth.encode()?;
+                    Ok(hex::encode(encoded))
+                }
                 TransactionRaw::Bitcoin(data) => {
                     serde_json::to_string(&data.tx).map_err(|e| e.into())
                 }
@@ -210,6 +216,9 @@ impl Transaction {
             Chain::ETH => ETH::tx_from_json(data),
             Chain::MATIC => Err(Error::InvalidTransaction(
                 "MATIC chain not implemented".to_string(),
+            )),
+            Chain::GLMR => Err(Error::InvalidTransaction(
+                "GLMR chain not implemented".to_string(),
             )),
             Chain::BTC => Err(Error::InvalidTransaction(
                 "BTC chain not implemented".to_string(),
