@@ -14,6 +14,7 @@ use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 
+use kos_proto::tron::transaction::contract::ContractType;
 use wasm_bindgen::prelude::*;
 use web3::{ethabi, types::U256};
 
@@ -116,6 +117,7 @@ impl TRX {
                 let mut new_tx = trx_tx.clone();
                 let digest = TRX::hash_transaction(&trx_tx)?;
                 let sig = TRX::sign_digest(digest.as_slice(), keypair)?;
+                let hex_sig = hex::encode(sig.clone());
 
                 new_tx.signature.push(sig);
                 let result = Transaction {
@@ -123,6 +125,7 @@ impl TRX {
                     sender: tx.sender,
                     hash: Hash::from_vec(digest)?,
                     data: Some(TransactionRaw::Tron(new_tx)),
+                    signature: Some(hex_sig),
                 };
 
                 Ok(result)
@@ -328,6 +331,7 @@ impl TRX {
             sender,
             hash: Hash::from_vec(digest)?,
             data: Some(TransactionRaw::Tron(tx)),
+            signature: None,
         })
     }
 
@@ -361,6 +365,7 @@ impl TRX {
             sender: tx.sender,
             hash: tx.hash,
             data: tx.data,
+            signature: tx.signature,
         }))
     }
 
@@ -404,6 +409,65 @@ impl TRX {
         ))?;
         let bytes = kos_proto::write_message(&raw_data);
         Ok(hex::encode(bytes))
+    }
+
+    pub fn tx_from_raw(data: &str) -> Result<Transaction, Error> {
+        let raw_data_bytes = hex::decode(data)?;
+        let raw_data: kos_proto::tron::transaction::Raw =
+            kos_proto::from_bytes(raw_data_bytes).unwrap();
+
+        let contract = raw_data
+            .contract
+            .first()
+            .ok_or_else(|| Error::InvalidTransaction("Missing contract".to_string()))?;
+
+        let sender: String = TRX::extract_address_from_contract(contract)?;
+
+        let tx = kos_proto::tron::Transaction {
+            raw_data: Some(raw_data),
+            signature: Vec::new(),
+            ret: Vec::new(),
+        };
+
+        let hash = Hash::from_vec(TRX::hash_transaction(&tx)?)?;
+
+        let signature = tx.signature.first().map(hex::encode);
+
+        Ok(Transaction {
+            chain: chain::Chain::TRX,
+            sender,
+            hash,
+            data: Some(TransactionRaw::Tron(tx)),
+            signature,
+        })
+    }
+
+    fn extract_address_from_contract(
+        contract: &kos_proto::tron::transaction::Contract,
+    ) -> Result<String, Error> {
+        let contract_type = ContractType::from_i32(contract.r#type)
+            .ok_or_else(|| Error::InvalidTransaction("Invalid contract type".to_string()))?;
+
+        let address = match contract_type {
+            ContractType::TransferContract => {
+                let parameter: kos_proto::tron::TransferContract =
+                    kos_proto::unpack_from_option_any(&contract.parameter).unwrap();
+                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
+            }
+            ContractType::TransferAssetContract => {
+                let parameter: kos_proto::tron::TransferAssetContract =
+                    kos_proto::unpack_from_option_any(&contract.parameter).unwrap();
+                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
+            }
+            ContractType::TriggerSmartContract => {
+                let parameter: kos_proto::tron::TriggerSmartContract =
+                    kos_proto::unpack_from_option_any(&contract.parameter).unwrap();
+                address::Address::from_bytes(parameter.owner_address.as_slice()).to_string()
+            }
+            _ => "".to_string(),
+        };
+
+        Ok(address)
     }
 }
 
@@ -629,5 +693,30 @@ mod tests {
         let invalid_tx = "invalid_json_format";
         let result = TRX::serialize_raw_data_into_hex_string(invalid_tx);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_tx_from_raw() {
+        let tx = "0a02d8372208e9c73b516bcd78844088c6e8ad9a325a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a1541e825d52582eec346c839b4875376117904a76cbc12154120ab1300cf70c048e4cf5d5b1b33f59653ed662618c0843d70fdfee4ad9a32";
+        let result = TRX::tx_from_raw(tx);
+        assert!(result.is_ok());
+        let t = result.unwrap();
+        assert_eq!(t.chain, chain::Chain::TRX);
+        assert_eq!(t.sender, "TX8h6Df74VpJsXF6sTDz1QJsq3Ec8dABc3");
+        assert_eq!(
+            t.hash.to_string(),
+            "3e6c463b2e88d78e912dee3aa31a14aa71c0e56bbdfbdbba012c8af4e45b8834"
+        );
+
+        let trigger_smart_contract_tx = "0a029af222085e42eee56c43056140d0c8aeec9d325ad402081f12cf020a31747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e54726967676572536d617274436f6e74726163741299020a15415ad61eb25c69f75711f059e106bc1ca1b338a814121541ff7155b5df8008fbf3834922b2d52430b27874f518c0843d22e4017ff36ab500000000000000000000000000000000000000000000099d6ced5f1867f3579900000000000000000000000000000000000000000000000000000000000000800000000000000000000000005ad61eb25c69f75711f059e106bc1ca1b338a8140000000000000000000000000000000000000000000000000000000066e0a6d40000000000000000000000000000000000000000000000000000000000000002000000000000000000000000891cdb91d149f23b1a45d9c5ca78a88d0cb44c18000000000000000000000000691a8e6e5b03bf79e133be5ac6cdc0986142e684708afdaaec9d3290018094ebdc03";
+        let result = TRX::tx_from_raw(trigger_smart_contract_tx);
+        assert!(result.is_ok());
+        let t = result.unwrap();
+        assert_eq!(t.chain, chain::Chain::TRX);
+        assert_eq!(t.sender, "TJFWKdqCxgqu4LngZrC6mRvrpT4fGAsznp");
+        assert_eq!(
+            t.hash.to_string(),
+            "066b49fab01944699516efc5c3d636f150c12d7e157e4867c155b29d94edb018"
+        );
     }
 }

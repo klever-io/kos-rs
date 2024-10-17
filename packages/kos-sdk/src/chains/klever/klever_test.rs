@@ -58,6 +58,7 @@ mod klever_test {
             hash: Hash::new("0x0000000000000000000000000000000000000000000000000000000000000000")
                 .unwrap(),
             data: Some(TransactionRaw::Klever(klv_tx)),
+            signature: None,
         };
 
         let result = tokio_test::block_on(KLV::broadcast(to_broadcast, None));

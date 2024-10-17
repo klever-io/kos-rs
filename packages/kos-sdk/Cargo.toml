@@ -47,6 +47,8 @@ reqwest = { workspace = true, default-features = false, features = [
 ] }
 wasm-bindgen-futures = "0.4"
 
+lazy_static = { workspace = true }
+
 kos-types = { workspace = true, features = ["serde"] }
 kos-crypto = { workspace = true }
 kos-proto = { workspace = true }

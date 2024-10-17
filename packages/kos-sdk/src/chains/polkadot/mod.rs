@@ -207,6 +207,7 @@ impl DOT {
                     sender: tx.sender,
                     hash: Hash::from_vec(submittable.hash().encode())?,
                     data: Some(TransactionRaw::Polkadot(new_tx)),
+                    signature: Some(hex::encode(signature.encode())),
                 };
 
                 Ok(result)
@@ -352,7 +353,8 @@ impl DOT {
             chain: crate::chain::Chain::DOT,
             sender: tx.clone().address,
             hash: Hash::default(),
-            data: Some(TransactionRaw::Polkadot(tx)),
+            data: Some(TransactionRaw::Polkadot(tx.clone())),
+            signature: tx.signature,
         })
     }
 }

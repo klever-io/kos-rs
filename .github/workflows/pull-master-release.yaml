@@ -31,7 +31,7 @@ jobs:
           with_cache: true
 
       - name: Restore .env file
-        run: echo $NODES_ENV | base64 -d > packages/kos-sdk/.env.nodes
+        run: echo "$NODES_ENV" | base64 -d > packages/kos-sdk/.env.nodes
         env:
           NODES_ENV: ${{ secrets.NODES_ENV }}
 
@@ -58,13 +58,6 @@ jobs:
       #     name: codecov-umbrella
       #     fail_ci_if_error: true
 
-      - name: Setup GitHub CLI
-        run: |
-          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
-          sudo apt-add-repository https://cli.github.com/packages
-          sudo apt update
-          sudo apt install gh
-
       - name: Get PR title
         id: pr_data
         run: |
@@ -79,19 +72,15 @@ jobs:
       - name: Build
         run: make webpack-npm
 
-      - name: Capture Release Notes
-        id: release_notes
-        run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0)
-          RELEASE_NOTES=$(git log --oneline $LATEST_TAG..HEAD)
-          echo "::set-output name=notes::$RELEASE_NOTES"
+      - name: Package kos-js
+        run: zip -r ./demo/kos-js.zip ./demo/kos || { echo 'Packaging failed'; exit 1; }
 
       - name: Create GitHub Release
         run: |
           VERSION=$(cat VERSION)
-          gh release create "v$VERSION" ./demo/kos --title "Release v$VERSION" --notes "${{ steps.release_notes.outputs.notes }}"
+          gh release create "v$VERSION" ./demo/kos-js.zip --title "Release v$VERSION" --generate-notes --target master || { echo 'Release creation failed'; exit 1; }
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GIT_PASS }}
 
       - name: Setup npm module
         uses: actions/setup-node@v3

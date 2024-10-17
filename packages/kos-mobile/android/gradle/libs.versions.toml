@@ -1,0 +1,13 @@
+[versions]
+agp = "8.3.1"
+kotlin = "1.9.23"
+jna = "5.13.0"
+junit = "4.13.2"
+
+[libraries]
+java-jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+[plugins]
+android-library = { id = "com.android.library", version.ref = "agp" }
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
