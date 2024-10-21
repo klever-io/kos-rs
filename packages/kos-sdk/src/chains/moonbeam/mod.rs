@@ -11,6 +11,9 @@ use kos_types::number::BigNumber;
 
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
+use kos_types::hash::Hash;
+use crate::chain;
+use crate::chains::ethereum::transaction;
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
@@ -18,6 +21,12 @@ use wasm_bindgen::prelude::*;
 pub struct GLMR {}
 
 pub const CHAIN_ID: u64 = 1284;
+
+pub fn hash_transaction(moonbeam_tx: &transaction::Transaction) -> Result<Vec<u8>, Error> {
+    let bytes = moonbeam_tx.encode()?;
+    let digest = GLMR::hash(&bytes)?;
+    Ok(digest)
+}
 
 pub const BASE_CHAIN: BaseChain = BaseChain {
     name: "Moonbeam",
@@ -162,7 +171,7 @@ impl GLMR {
         let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("GLMR"));
         ETH::gas_price(Some(node)).await
     }
-
+    #[wasm_bindgen(js_name="send")]
     pub async fn send(
         sender: String,
         receiver: String,
@@ -199,11 +208,36 @@ impl GLMR {
     ) -> Result<bool, Error> {
         ETH::validate_address(address, option)
     }
+
+    #[wasm_bindgen(js_name = "txFromJson")]
+    pub fn tx_from_json(raw: &str) -> Result<crate::models::Transaction, Error> {
+        let tx: transaction::Transaction = serde_json::from_str(raw)?;
+        let digest = hash_transaction(&tx)?;
+
+        let sender = match tx.from {
+            Some(addr) => addr.to_string(),
+            None => "".to_string(),
+        };
+
+        let signature = tx.signature.map(|sig| sig.to_standard().to_string());
+
+        Ok(crate::models::Transaction {
+            chain: chain::Chain::GLMR,
+            sender,
+            hash: Hash::from_vec(digest)?,
+            data: Some(TransactionRaw::Ethereum(tx)),
+            signature,
+        })
+    }
 }
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use hex::FromHex;
+    use web3::types::U256;
     use kos_crypto::secp256k1::Secp256k1KeyPair;
     use kos_types::Bytes32;
 
@@ -251,6 +285,7 @@ mod tests {
 
     #[test]
     fn test_send_and_sign() {
+        init();
         let options = models::SendOptions {
             data: Some(models::Options::Moonbeam(kos_proto::options::GLMROptions {
                 eth: kos_proto::options::ETHOptions {
@@ -289,7 +324,7 @@ mod tests {
 
     #[test]
     fn test_send_erc20() {
-        std::env::set_var("NODE_GLMR", "https://moonbeam.node.klever.io");
+init();
         let options = models::SendOptions {
             data: Some(models::Options::Moonbeam(kos_proto::options::GLMROptions {
                 eth: kos_proto::options::ETHOptions {
@@ -354,5 +389,39 @@ mod tests {
         assert!(balance.is_ok());
 
         assert_eq!(balance.unwrap().to_string(), "0");
+    }
+
+    #[test]
+    fn test_decode_json() {
+        let json = r#"{
+        "from":"0x4cbeee256240c92a9ad920ea6f4d7df6466d2cdc",
+        "maxPriorityFeePerGas":null,"maxFeePerGas":null,
+         "gas": "0x00",
+         "value": "0x00",
+         "data":"0xa9059cbb000000000000000000000000ac4145fef6c828e8ae017207ad944c988ccb2cf700000000000000000000000000000000000000000000000000000000000f4240",
+         "to":"0xdac17f958d2ee523a2206206994597c13d831ec7",
+         "nonce":"0x00"}"#;
+        let tx = GLMR::tx_from_json(json).unwrap();
+
+        assert_eq!(tx.chain, chain::Chain::GLMR);
+
+        let moonbeam_tx = match tx.data {
+            Some(TransactionRaw::Ethereum(tx)) => tx,
+            _ => panic!("invalid tx"),
+        };
+
+        assert_eq!(moonbeam_tx.chain_id, None);
+        assert_eq!(moonbeam_tx.nonce, U256::from_dec_str("0").unwrap());
+        assert_eq!(
+            moonbeam_tx.from.unwrap().to_string(),
+            "0x4cBeee256240c92A9ad920ea6f4d7Df6466D2Cdc"
+        );
+        assert_eq!(
+            moonbeam_tx.to.unwrap().to_string(),
+            "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+        );
+        assert_eq!(moonbeam_tx.gas, U256::from(0));
+        assert_eq!(moonbeam_tx.value, U256::from(0));
+        assert_eq!(moonbeam_tx.signature, None);
     }
 }

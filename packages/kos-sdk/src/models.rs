@@ -1,5 +1,5 @@
 use crate::chain::Chain;
-use crate::chains::{ETH, KLV, TRX};
+use crate::chains::{ETH, GLMR, KLV, TRX};
 use kos_types::{error::Error, hash::Hash};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -214,11 +214,9 @@ impl Transaction {
             Chain::KLV => KLV::tx_from_raw(data),
             Chain::TRX => TRX::tx_from_raw(data),
             Chain::ETH => ETH::tx_from_json(data),
+            Chain::GLMR => GLMR::tx_from_json(data),
             Chain::MATIC => Err(Error::InvalidTransaction(
                 "MATIC chain not implemented".to_string(),
-            )),
-            Chain::GLMR => Err(Error::InvalidTransaction(
-                "GLMR chain not implemented".to_string(),
             )),
             Chain::BTC => Err(Error::InvalidTransaction(
                 "BTC chain not implemented".to_string(),
