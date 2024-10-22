@@ -1,5 +1,5 @@
 use crate::chain::Chain;
-use crate::chains::{ETH, KLV, TRX};
+use crate::chains::{ETH, GLMR, KLV, TRX};
 use kos_types::{error::Error, hash::Hash};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -69,6 +69,7 @@ kos_types::enum_thing! {
         Ethereum(super::chains::ETHTransaction),
         Polygon(super::chains::MATICTransaction),
         Bitcoin(super::chains::BTCTransaction),
+        Moonbeam(super::chains::GLMRTransaction)
     }
 }
 
@@ -80,6 +81,7 @@ kos_types::enum_thing! {
         Ethereum(kos_proto::options::ETHOptions),
         Polygon(kos_proto::options::MATICOptions),
         Bitcoin(kos_proto::options::BTCOptions),
+        Moonbeam(kos_proto::options::GLMROptions)
     }
 }
 
@@ -178,6 +180,10 @@ impl Transaction {
                     let encoded = data.eth.encode()?;
                     Ok(hex::encode(encoded))
                 }
+                TransactionRaw::Moonbeam(data) => {
+                    let encoded = data.eth.encode()?;
+                    Ok(hex::encode(encoded))
+                }
                 TransactionRaw::Bitcoin(data) => {
                     serde_json::to_string(&data.tx).map_err(|e| e.into())
                 }
@@ -208,6 +214,7 @@ impl Transaction {
             Chain::KLV => KLV::tx_from_raw(data),
             Chain::TRX => TRX::tx_from_raw(data),
             Chain::ETH => ETH::tx_from_json(data),
+            Chain::GLMR => GLMR::tx_from_json(data),
             Chain::MATIC => Err(Error::InvalidTransaction(
                 "MATIC chain not implemented".to_string(),
             )),

@@ -298,6 +298,30 @@ impl MATICOptions {
         self.eth.clone()
     }
 }
+#[derive(Deserialize, Serialize, Default, Clone, Debug)]
+#[wasm_bindgen]
+pub struct GLMROptions {
+    #[wasm_bindgen(skip)]
+    pub eth: ETHOptions,
+}
+
+#[wasm_bindgen]
+impl GLMROptions {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    #[wasm_bindgen(js_name = setETHOptions)]
+    pub fn set_eth_options(&mut self, options: &ETHOptions) {
+        self.eth = options.clone();
+    }
+
+    #[wasm_bindgen(js_name = getETHOptions)]
+    pub fn get_eth_options(&self) -> ETHOptions {
+        self.eth.clone()
+    }
+}
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 #[wasm_bindgen]
