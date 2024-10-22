@@ -9,11 +9,11 @@ use kos_crypto::keypair::KeyPair;
 use kos_types::error::Error;
 use kos_types::number::BigNumber;
 
-use serde::Serialize;
-use wasm_bindgen::prelude::*;
-use kos_types::hash::Hash;
 use crate::chain;
 use crate::chains::ethereum::transaction;
+use kos_types::hash::Hash;
+use serde::Serialize;
+use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
@@ -171,7 +171,7 @@ impl GLMR {
         let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("GLMR"));
         ETH::gas_price(Some(node)).await
     }
-    #[wasm_bindgen(js_name="send")]
+    #[wasm_bindgen(js_name = "send")]
     pub async fn send(
         sender: String,
         receiver: String,
@@ -230,17 +230,13 @@ impl GLMR {
         })
     }
 }
-
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use hex::FromHex;
-    use web3::types::U256;
     use kos_crypto::secp256k1::Secp256k1KeyPair;
     use kos_types::Bytes32;
-
+    use web3::types::U256;
     const DEFAULT_PRIVATE_KEY: &str =
         "1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727";
     const DEFAULT_ADDRESS: &str = "0x9858EfFD232B4033E47d90003D41EC34EcaEda94";
@@ -324,7 +320,7 @@ mod tests {
 
     #[test]
     fn test_send_erc20() {
-init();
+        init();
         let options = models::SendOptions {
             data: Some(models::Options::Moonbeam(kos_proto::options::GLMROptions {
                 eth: kos_proto::options::ETHOptions {
