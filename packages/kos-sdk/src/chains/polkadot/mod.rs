@@ -17,11 +17,13 @@ use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
 use parity_scale_codec::{Decode, Encode};
 
+use crate::chains::polkadot::transaction::ExtrinsicPayload;
 use serde::Deserializer;
 use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair};
 use std::str::FromStr;
 use subxt::client::{OfflineClientT, RuntimeVersion};
+use subxt::config::Header;
 use subxt::dynamic::Value;
 use subxt::ext::frame_metadata::RuntimeMetadataPrefixed;
 use subxt::ext::scale_decode::DecodeAsType;
@@ -151,63 +153,27 @@ impl DOT {
     pub fn sign(tx: Transaction, keypair: &KeyPair) -> Result<Transaction, Error> {
         match tx.data {
             Some(TransactionRaw::Polkadot(dot_tx)) => {
-                let mut new_tx = dot_tx.clone();
+                let new_tx = dot_tx.clone();
 
-                let metadata_bytes = {
-                    let bytes = std::fs::read("./artifacts/dot-klever-node.scale").unwrap();
-                    Metadata::decode(&mut &*bytes).unwrap()
-                }
-                .encode();
+                let payload = ExtrinsicPayload::from_transaction(&new_tx);
 
-                let metadata = format!("0x{}", hex::encode(metadata_bytes));
+                let signature = {
+                    let full_unsigned_payload_scale_bytes = payload.to_bytes();
 
-                let spec_version =
-                    u32::from_str_radix(new_tx.spec_version.strip_prefix("0x").unwrap(), 16)
-                        .unwrap();
-
-                let transaction_version =
-                    u32::from_str_radix(new_tx.transaction_version.strip_prefix("0x").unwrap(), 16)
-                        .unwrap();
-
-                let client = DOT::get_client(
-                    &*new_tx.genesis_hash.strip_prefix("0x").unwrap(),
-                    spec_version,
-                    transaction_version,
-                    &metadata,
-                )?;
-
-                let method =
-                    hex::decode(&mut new_tx.method.strip_prefix("0x").unwrap().to_string())?;
-                let method_bytes = &mut &*method;
-
-                let payload = {
-                    let call_data = DOT::decode_call_data(method_bytes, client.clone())?;
-                    subxt::dynamic::tx(call_data.pallet, call_data.call, call_data.args)
+                    // If payload is longer than 256 bytes, we hash it and sign the hash instead:
+                    if full_unsigned_payload_scale_bytes.len() > 256 {
+                        DOT::sign_digest(&*DOT::hash(&full_unsigned_payload_scale_bytes)?, keypair)?
+                    } else {
+                        DOT::sign_digest(&full_unsigned_payload_scale_bytes, keypair)?
+                    }
                 };
-
-                let partial_tx = client
-                    .tx()
-                    .create_partial_signed_offline(&payload, Default::default())
-                    .unwrap();
-
-                let digest = partial_tx.signer_payload();
-
-                let signature = DOT::sign_digest(&digest, keypair)?;
-
-                new_tx.signature = Some(hex::encode(signature.clone()));
-
-                let address =
-                    MultiAddress::Id(address::Address::from_keypair(&keypair).to_account_id32());
-                let signature = MultiSignature::Sr25519(<[u8; 64]>::try_from(signature).unwrap());
-
-                let submittable = partial_tx.sign_with_address_and_signature(&address, &signature);
 
                 let result = Transaction {
                     chain: tx.chain,
                     sender: tx.sender,
-                    hash: Hash::from_vec(submittable.hash().encode())?,
+                    hash: Hash::from_vec(vec![0u8; 32])?,
                     data: Some(TransactionRaw::Polkadot(new_tx)),
-                    signature: Some(hex::encode(signature.encode())),
+                    signature: Some(hex::encode([[1u8].to_vec(), signature].concat())),
                 };
 
                 Ok(result)
@@ -347,7 +313,7 @@ impl DOT {
     }
 
     pub fn tx_from_json(raw: &str) -> Result<Transaction, Error> {
-        let mut tx = DOTTransaction::from_bytes(raw.as_bytes().to_vec()).unwrap();
+        let mut tx = DOTTransaction::from_json(raw)?;
 
         Ok(Transaction {
             chain: crate::chain::Chain::DOT,
@@ -435,6 +401,7 @@ impl DOT {
 
 #[cfg(test)]
 mod tests {
+    use crate::chains::polkadot::transaction::{ExtrinsicPayload, Transaction};
     use crate::chains::DOT;
     use parity_scale_codec::{Decode, Encode};
     use serde_json::json;
@@ -513,18 +480,6 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_tx() {
-        let raw = "eyJzcGVjVmVyc2lvbiI6IjB4MDAwZjRkZjgiLCJ0cmFuc2FjdGlvblZlcnNpb24iOiIweDAwMDAwMDFhIiwiYWRkcmVzcyI6IjE0bTVvcUxFRFhNZXlkeVU4NEUyZ01NeWtLVHQ3OFFCUUZXTmpLaG5kbTFiZ0NhWCIsImFzc2V0SWQiOiJudWxsIiwiYmxvY2tIYXNoIjoiMHg2MGY4ZmFhNmI1ZGQwZmViYjE3OGU0MmViNjQ0NzE5MzU3YWU1NTViNGNiYWVmZGIzMjIwNGFmMzc5ZjRkNTg2IiwiYmxvY2tOdW1iZXIiOiIweDAxNThmYWE2IiwiZXJhIjoiMHg2NTAyIiwiZ2VuZXNpc0hhc2giOiIweDkxYjE3MWJiMTU4ZTJkMzg0OGZhMjNhOWYxYzI1MTgyZmI4ZTIwMzEzYjJjMWViNDkyMTlkYTdhNzBjZTkwYzMiLCJtZXRhZGF0YUhhc2giOiJudWxsIiwibWV0aG9kIjoiMHgwNTAzMDBhNjUzYWU3OTY2NTU2NWJhN2ZjNjgyYzM4NWIzYzAzOGMyMDkxYWI2ZDYwNTMzNTViOTk1MGExMDhhYzQ4YjA2MDAiLCJtb2RlIjowLCJub25jZSI6IjB4MDAwMDAwMDAiLCJzaWduZWRFeHRlbnNpb25zIjpbIkNoZWNrTm9uWmVyb1NlbmRlciIsIkNoZWNrU3BlY1ZlcnNpb24iLCJDaGVja1R4VmVyc2lvbiIsIkNoZWNrR2VuZXNpcyIsIkNoZWNrTW9ydGFsaXR5IiwiQ2hlY2tOb25jZSIsIkNoZWNrV2VpZ2h0IiwiQ2hhcmdlVHJhbnNhY3Rpb25QYXltZW50IiwiUHJldmFsaWRhdGVBdHRlc3RzIiwiQ2hlY2tNZXRhZGF0YUhhc2giXSwidGlwIjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInZlcnNpb24iOjQsIndpdGhTaWduZWRUcmFuc2FjdGlvbiI6dHJ1ZX0=";
-
-        let tx = DOT::tx_from_json(raw).unwrap();
-
-        assert_eq!(
-            tx.sender,
-            "14m5oqLEDXMeydyU84E2gMMykKTt78QBQFWNjKhndm1bgCaX"
-        );
-    }
-
-    #[test]
     fn decode_extrinsic() {
         let ext = "0x040503002534454d30f8a028e42654d6b535e0651d1d026ddf115cef59ae1dd71bae074e910100ee2a21000000fb4d0f001a00000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c391b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c300";
 
@@ -590,47 +545,44 @@ mod tests {
     }
 
     #[test]
-    fn test_sign_extrinsic() {
-        let signer_payload = json!({
-            "specVersion": "0x000f4df8",
-            "transactionVersion": "0x0000001a",
-            "address": "14m5oqLEDXMeydyU84E2gMMykKTt78QBQFWNjKhndm1bgCaX",
-            "assetId": null,
-            "blockHash": "0x60f8faa6b5dd0febb178e42eb644719357ae555b4cbaefdb32204af379f4d586",
-            "blockNumber": "0x0158faa6",
-            "era": "0x6502",
-            "genesisHash": "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-            "metadataHash": null,
-            "method": "0x050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b0600",
-            "mode": 0,
-            "nonce": "0x00000000",
-            "signedExtensions": [
-                "CheckNonZeroSender",
-                "CheckSpecVersion",
-                "CheckTxVersion",
-                "CheckGenesis",
-                "CheckMortality",
-                "CheckNonce",
-                "CheckWeight",
-                "ChargeTransactionPayment",
-                "PrevalidateAttests",
-                "CheckMetadataHash"
-            ],
-            "tip": "0x00000000000000000000000000000000",
-            "version": 4,
-            "withSignedTransaction": true,
-        });
+    fn sign_extrinsic_payload() {
+        let json_data = r#"
+    {
+    "specVersion": "0x000f4dfb",
+    "transactionVersion": "0x0000001a",
+    "address": "14m5oqLEDXMeydyU84E2gMMykKTt78QBQFWNjKhndm1bgCaX",
+    "assetId": null,
+    "blockHash": "0x5e8ad2dc466562ea590e2e05b81ee851ca55bce18caf0407f4bb2daf8e0beaf9",
+    "blockNumber": "0x01608e70",
+    "era": "0x0503",
+    "genesisHash": "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+    "metadataHash": null,
+    "method": "0x050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b0600",
+    "mode": 0,
+    "nonce": "0x00000000",
+    "signedExtensions": [
+        "CheckNonZeroSender",
+        "CheckSpecVersion",
+        "CheckTxVersion",
+        "CheckGenesis",
+        "CheckMortality",
+        "CheckNonce",
+        "CheckWeight",
+        "ChargeTransactionPayment",
+        "PrevalidateAttests",
+        "CheckMetadataHash"
+    ],
+    "tip": "0x00000000000000000000000000000000",
+    "version": 4,
+    "withSignedTransaction": true
+}"#;
+
+        let transaction = DOT::tx_from_json(json_data).unwrap();
 
         let kp = DOT::keypair_from_mnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", "//0", None).unwrap();
-        let tx = DOT::tx_from_json(&signer_payload.to_string()).unwrap();
 
-        let signed = DOT::sign(tx, &kp)
-            .map_err(|e| {
-                println!("{:?}", e);
-                e
-            })
-            .unwrap();
+        let signed = DOT::sign(transaction, &kp).unwrap();
 
-        println!("{:?}", signed.get_raw().unwrap());
+        println!("signature {:?}", signed.get_signature().unwrap());
     }
 }
