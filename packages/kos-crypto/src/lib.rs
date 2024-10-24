@@ -5,3 +5,4 @@ pub mod hash;
 pub mod keypair;
 pub mod mnemonic;
 pub mod secp256k1;
+pub mod sr25519;

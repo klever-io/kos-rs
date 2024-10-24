@@ -1,9 +1,10 @@
-use crate::chain::Chain;
-use crate::chains::{ETH, KLV, TRX};
+// use crate::klever;
 use kos_types::{error::Error, hash::Hash};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
+use crate::chain::Chain;
+use crate::chains::{DOT, ETH, KLV, TRX};
 #[derive(Debug, Clone, Serialize)]
 #[wasm_bindgen]
 pub struct BroadcastResult {
@@ -69,6 +70,7 @@ kos_types::enum_thing! {
         Ethereum(super::chains::ETHTransaction),
         Polygon(super::chains::MATICTransaction),
         Bitcoin(super::chains::BTCTransaction),
+        Polkadot(super::chains::DOTTransaction)
     }
 }
 
@@ -181,6 +183,12 @@ impl Transaction {
                 TransactionRaw::Bitcoin(data) => {
                     serde_json::to_string(&data.tx).map_err(|e| e.into())
                 }
+                TransactionRaw::Polkadot(data) => {
+                    let extrinsic = DOT::get_submittable_extrinsic(data.clone())
+                        .expect("Error getting submittable extrinsic");
+
+                    Ok(hex::encode(extrinsic.encoded()))
+                }
             },
             None => Err(Error::InvalidTransaction("no data found".to_string())),
         }
@@ -208,6 +216,7 @@ impl Transaction {
             Chain::KLV => KLV::tx_from_raw(data),
             Chain::TRX => TRX::tx_from_raw(data),
             Chain::ETH => ETH::tx_from_json(data),
+            Chain::DOT => DOT::tx_from_json(data),
             Chain::MATIC => Err(Error::InvalidTransaction(
                 "MATIC chain not implemented".to_string(),
             )),
