@@ -1,5 +1,4 @@
 mod address;
-mod requests;
 pub mod transaction;
 
 use crate::chains::DOTTransaction;
@@ -22,14 +21,6 @@ use serde::Deserializer;
 use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair};
 use std::str::FromStr;
-use subxt::client::{OfflineClientT, RuntimeVersion};
-use subxt::config::Header;
-use subxt::dynamic::Value;
-use subxt::ext::frame_metadata::RuntimeMetadataPrefixed;
-use subxt::ext::scale_decode::DecodeAsType;
-use subxt::tx::{Payload, SubmittableExtrinsic};
-use subxt::utils::{AccountId32, MultiAddress, MultiSignature, H256};
-use subxt::{Metadata, OfflineClient, PolkadotConfig};
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -44,20 +35,6 @@ pub const BASE_CHAIN: BaseChain = BaseChain {
     precision: 10,
     chain_code: 21,
 };
-
-#[wasm_bindgen]
-pub struct CallData {
-    pallet: String,
-    call: String,
-    args: Vec<Value>,
-}
-
-fn to_bytes(hex_str: &str) -> Vec<u8> {
-    let hex_str = hex_str
-        .strip_prefix("0x")
-        .expect("0x should prefix hex encoded bytes");
-    hex::decode(hex_str).expect("valid bytes from hex")
-}
 
 #[wasm_bindgen]
 impl DOT {
@@ -207,11 +184,11 @@ impl DOT {
     #[wasm_bindgen(js_name = "verifyMessageSignature")]
     /// Verify Message signature
     pub fn verify_message_signature(
-        message: &[u8],
-        signature: &[u8],
-        address: &str,
+        _message: &[u8],
+        _signature: &[u8],
+        _address: &str,
     ) -> Result<bool, Error> {
-        Ok(true)
+        todo!()
     }
 
     #[wasm_bindgen(js_name = "getBalance")]
@@ -226,94 +203,14 @@ impl DOT {
     #[wasm_bindgen(js_name = "validateAddress")]
     pub fn validate_address(
         addr: &str,
-        _option: Option<crate::models::AddressOptions>,
+        _option: Option<models::AddressOptions>,
     ) -> Result<bool, Error> {
         let address = address::Address::from_str(addr);
         Ok(address.is_ok())
     }
 
-    pub fn decode_extrinsic(
-        genesis_hash: &str,
-        spec_version: u32,
-        transaction_version: u32,
-        tx: &str,
-    ) -> Result<CallData, Error> {
-        let metadata_bytes = {
-            let bytes = std::fs::read("./artifacts/dot-klever-node.scale").unwrap();
-            Metadata::decode(&mut &*bytes).unwrap()
-        }
-        .encode();
-
-        let metadata = format!("0x{}", hex::encode(metadata_bytes));
-        let client = DOT::get_client(genesis_hash, spec_version, transaction_version, &metadata)?;
-        let data = &mut &*to_bytes(tx);
-
-        if data.is_empty() {
-            return Err(Error::InvalidTransaction("empty transaction".to_string()));
-        }
-
-        let is_signed = data[0] & 0b1000_0000 != 0;
-        let version = data[0] & 0b0111_1111;
-        *data = &data[1..];
-
-        if version != 4 {
-            return Err(Error::InvalidTransaction(format!(
-                "unsupported extrinsic version: {}",
-                version
-            )));
-        }
-
-        let call_data = DOT::decode_call_data(data, client)?;
-
-        Ok(call_data)
-    }
-
-    fn decode_call_data(
-        data: &mut &[u8],
-        client: OfflineClient<PolkadotConfig>,
-    ) -> Result<CallData, Error> {
-        let metadata = client.metadata();
-
-        // Pluck out the u8's representing the pallet and call enum next.
-        if data.len() < 2 {
-            return Err(Error::InvalidTransaction(
-                "expected at least 2 more bytes for the pallet/call index".to_string(),
-            ));
-        }
-        let pallet_index = u8::decode(data).unwrap();
-        let call_index = u8::decode(data).unwrap();
-
-        let pallet_name = metadata.pallet_by_index(pallet_index).ok_or_else(|| {
-            Error::InvalidTransaction(format!("pallet index {} out of bounds", pallet_index))
-        })?;
-
-        let call_variant = pallet_name.call_variant_by_index(call_index).unwrap();
-        println!(
-            "pallet name: {}, call name: {}",
-            pallet_name.name(),
-            call_variant.name
-        );
-
-        let arguments = call_variant
-            .clone()
-            .fields
-            .iter()
-            .map(|field| {
-                let id = field.ty.id;
-                Value::decode_as_type(data, id.into(), metadata.types())
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .unwrap();
-
-        Ok(CallData {
-            pallet: pallet_name.name().to_string(),
-            call: call_variant.name.to_string(),
-            args: arguments,
-        })
-    }
-
     pub fn tx_from_json(raw: &str) -> Result<Transaction, Error> {
-        let mut tx = DOTTransaction::from_json(raw)?;
+        let tx = DOTTransaction::from_json(raw)?;
 
         Ok(Transaction {
             chain: crate::chain::Chain::DOT,
@@ -325,89 +222,9 @@ impl DOT {
     }
 }
 
-impl DOT {
-    pub fn get_client(
-        genesis_hash: &str,
-        spec_version: u32,
-        transaction_version: u32,
-        raw_metadata: &str,
-    ) -> Result<OfflineClient<PolkadotConfig>, Error> {
-        let _genesis_hash = {
-            let bytes = hex::decode(genesis_hash)?;
-            H256::from_slice(&bytes)
-        };
-
-        let _runtime_version = RuntimeVersion {
-            spec_version,
-            transaction_version,
-        };
-
-        let binding = to_bytes(raw_metadata);
-        let bytes = binding.as_slice();
-
-        let prefixed_metadata = RuntimeMetadataPrefixed::decode(&mut &*bytes).unwrap();
-
-        let metadata = Metadata::try_from(prefixed_metadata).unwrap();
-
-        Ok(OfflineClient::<PolkadotConfig>::new(
-            _genesis_hash,
-            _runtime_version,
-            metadata,
-        ))
-    }
-
-    pub fn get_submittable_extrinsic(
-        tx: DOTTransaction,
-    ) -> Result<SubmittableExtrinsic<PolkadotConfig, OfflineClient<PolkadotConfig>>, Error> {
-        let metadata_bytes = {
-            let bytes = std::fs::read("./artifacts/dot-klever-node.scale").unwrap();
-            Metadata::decode(&mut &*bytes).unwrap()
-        }
-        .encode();
-
-        let metadata = format!("0x{}", hex::encode(metadata_bytes));
-
-        let client = DOT::get_client(
-            &*tx.genesis_hash.strip_prefix("0x").unwrap(),
-            u32::from_str_radix(tx.spec_version.strip_prefix("0x").unwrap(), 16).unwrap(),
-            u32::from_str_radix(tx.transaction_version.strip_prefix("0x").unwrap(), 16).unwrap(),
-            &metadata,
-        )
-        .unwrap();
-
-        let method = hex::decode(&mut tx.method.strip_prefix("0x").unwrap().to_string()).unwrap();
-        let method_bytes = &mut &*method;
-
-        let payload = {
-            let call_data = DOT::decode_call_data(method_bytes, client.clone()).unwrap();
-            subxt::dynamic::tx(call_data.pallet, call_data.call, call_data.args)
-        };
-
-        let partial_tx = client
-            .tx()
-            .create_partial_signed_offline(&payload, Default::default())
-            .unwrap();
-
-        let signature = Some(hex::decode(tx.signature.unwrap()).unwrap()).unwrap();
-
-        let address = MultiAddress::Id(AccountId32::from_str(&tx.address).unwrap());
-        let signature = MultiSignature::Sr25519(<[u8; 64]>::try_from(signature).unwrap());
-
-        let submittable = partial_tx.sign_with_address_and_signature(&address, &signature);
-
-        Ok(submittable)
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::chains::polkadot::transaction::{ExtrinsicPayload, Transaction};
     use crate::chains::DOT;
-    use parity_scale_codec::{Decode, Encode};
-    use serde_json::json;
-    use subxt::client::OfflineClientT;
-    use subxt::utils::{MultiAddress, MultiSignature, H256};
-    use subxt::Metadata;
 
     #[test]
     fn test_keypair_from_mnemonic() {
@@ -453,129 +270,37 @@ mod tests {
     }
 
     #[test]
-    fn test_get_client() {
-        let metadata_bytes = {
-            let bytes = std::fs::read("./artifacts/dot-klever-node.scale").unwrap();
-            Metadata::decode(&mut &*bytes).unwrap()
-        }
-        .encode();
-
-        let metadata = format!("0x{}", hex::encode(metadata_bytes));
-
-        let client = DOT::get_client(
-            "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-            1002007,
-            26,
-            &metadata,
-        )
-        .unwrap();
-
-        assert_eq!(
-            client.genesis_hash(),
-            H256::from(&[
-                145, 177, 113, 187, 21, 142, 45, 56, 72, 250, 35, 169, 241, 194, 81, 130, 251, 142,
-                32, 49, 59, 44, 30, 180, 146, 25, 218, 122, 112, 206, 144, 195
-            ])
-        );
-    }
-
-    #[test]
-    fn decode_extrinsic() {
-        let ext = "0x040503002534454d30f8a028e42654d6b535e0651d1d026ddf115cef59ae1dd71bae074e910100ee2a21000000fb4d0f001a00000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c391b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c300";
-
-        let decoded = DOT::decode_extrinsic(
-            "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-            1003000,
-            26,
-            ext,
-        )
-        .unwrap();
-
-        for arg in decoded.args {
-            println!("{:?}", arg);
-        }
-    }
-
-    #[test]
-    fn test_decode_call_data() {
-        let metadata_bytes = {
-            let bytes = std::fs::read("./artifacts/dot-klever-node.scale").unwrap();
-            Metadata::decode(&mut &*bytes).unwrap()
-        }
-        .encode();
-
-        let metadata = format!("0x{}", hex::encode(metadata_bytes));
-
-        let client = DOT::get_client(
-            "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-            1003000,
-            26,
-            &metadata,
-        )
-        .unwrap();
-
-        let call_data_hex =
-            "0x0503002534454d30f8a028e42654d6b535e0651d1d026ddf115cef59ae1dd71bae074e910100322121000000f84d0f001a00000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c391b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c300";
-
-        let call_data_bytes = hex::decode(call_data_hex.strip_prefix("0x").unwrap()).unwrap();
-
-        let call_data_cursor = &mut &*call_data_bytes;
-
-        let decoded = DOT::decode_call_data(call_data_cursor, client.clone()).unwrap();
-
-        let payload = subxt::dynamic::tx(decoded.pallet, decoded.call, decoded.args);
-
-        let partial_tx = client
-            .tx()
-            .create_partial_signed_offline(&payload, Default::default())
-            .unwrap();
-
-        let signer_payload = partial_tx.signer_payload();
-
-        let kp = DOT::keypair_from_bytes(&[0u8; 32]).unwrap();
-        let signature = DOT::sign_digest(&signer_payload, &kp).unwrap();
-
-        let address =
-            MultiAddress::Id(super::address::Address::from_keypair(&kp).to_account_id32());
-        let signature = MultiSignature::Sr25519(<[u8; 64]>::try_from(signature).unwrap());
-
-        let submittable = partial_tx.sign_with_address_and_signature(&address, &signature);
-
-        println!("{:?}", hex::encode(submittable.encoded()));
-    }
-
-    #[test]
-    fn sign_extrinsic_payload() {
+    fn test_sign_extrinsic_payload() {
         let json_data = r#"
-    {
-    "specVersion": "0x000f4dfb",
-    "transactionVersion": "0x0000001a",
-    "address": "14m5oqLEDXMeydyU84E2gMMykKTt78QBQFWNjKhndm1bgCaX",
-    "assetId": null,
-    "blockHash": "0x5e8ad2dc466562ea590e2e05b81ee851ca55bce18caf0407f4bb2daf8e0beaf9",
-    "blockNumber": "0x01608e70",
-    "era": "0x0503",
-    "genesisHash": "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-    "metadataHash": null,
-    "method": "0x050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b0600",
-    "mode": 0,
-    "nonce": "0x00000000",
-    "signedExtensions": [
-        "CheckNonZeroSender",
-        "CheckSpecVersion",
-        "CheckTxVersion",
-        "CheckGenesis",
-        "CheckMortality",
-        "CheckNonce",
-        "CheckWeight",
-        "ChargeTransactionPayment",
-        "PrevalidateAttests",
-        "CheckMetadataHash"
-    ],
-    "tip": "0x00000000000000000000000000000000",
-    "version": 4,
-    "withSignedTransaction": true
-}"#;
+                {
+                "specVersion": "0x000f4dfb",
+                "transactionVersion": "0x0000001a",
+                "address": "14m5oqLEDXMeydyU84E2gMMykKTt78QBQFWNjKhndm1bgCaX",
+                "assetId": null,
+                "blockHash": "0x5e8ad2dc466562ea590e2e05b81ee851ca55bce18caf0407f4bb2daf8e0beaf9",
+                "blockNumber": "0x01608e70",
+                "era": "0x0503",
+                "genesisHash": "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+                "metadataHash": null,
+                "method": "0x050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b0600",
+                "mode": 0,
+                "nonce": "0x00000000",
+                "signedExtensions": [
+                    "CheckNonZeroSender",
+                    "CheckSpecVersion",
+                    "CheckTxVersion",
+                    "CheckGenesis",
+                    "CheckMortality",
+                    "CheckNonce",
+                    "CheckWeight",
+                    "ChargeTransactionPayment",
+                    "PrevalidateAttests",
+                    "CheckMetadataHash"
+                ],
+                "tip": "0x00000000000000000000000000000000",
+                "version": 4,
+                "withSignedTransaction": true
+            }"#;
 
         let transaction = DOT::tx_from_json(json_data).unwrap();
 
@@ -583,6 +308,6 @@ mod tests {
 
         let signed = DOT::sign(transaction, &kp).unwrap();
 
-        println!("signature {:?}", signed.get_signature().unwrap());
+        assert_eq!(signed.get_signature().unwrap().len(), 130);
     }
 }

@@ -1,6 +1,5 @@
 use parity_scale_codec::{Compact, Decode, Encode};
 use serde::{Deserialize, Serialize};
-use subxt::utils::Era;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Transaction {
@@ -42,47 +41,39 @@ pub struct ExtrinsicPayload {
     method: Vec<u8>,
     nonce: u32,
     tip: u128,
+    mode: u8,
     spec_version: u32,
     transaction_version: u32,
     genesis_hash: [u8; 32],
     block_hash: [u8; 32],
-    era: Era,
+    metadata_hash: Vec<u8>,
+    era: Vec<u8>,
 }
 
 impl ExtrinsicPayload {
     pub fn from_transaction(tx: &Transaction) -> Self {
-        let spec_version =
-            u32::from_str_radix(tx.spec_version.trim_start_matches("0x"), 16).unwrap();
-        let transaction_version =
-            u32::from_str_radix(tx.transaction_version.trim_start_matches("0x"), 16).unwrap();
-        let nonce = u32::from_str_radix(tx.nonce.trim_start_matches("0x"), 16).unwrap();
-        let tip = u128::from_str_radix(tx.tip.trim_start_matches("0x"), 16).unwrap();
-        let genesis_hash = hex::decode(tx.genesis_hash.trim_start_matches("0x"))
-            .unwrap()
-            .try_into()
-            .unwrap();
-        let block_hash = hex::decode(tx.block_hash.trim_start_matches("0x"))
-            .unwrap()
-            .try_into()
-            .unwrap();
-
-        let era = Era::decode(
-            &mut hex::decode(tx.era.trim_start_matches("0x"))
-                .unwrap()
-                .as_slice(),
-        )
-        .unwrap();
-
+        let spec_version = parse_hex_to_u32(&tx.spec_version);
+        let transaction_version = parse_hex_to_u32(&tx.transaction_version);
+        let nonce = parse_hex_to_u32(&tx.nonce);
+        let tip = parse_hex_to_u128(&tx.tip);
+        let mode = tx.mode.try_into().unwrap();
+        let genesis_hash = parse_hex(&tx.genesis_hash).try_into().unwrap();
+        let block_hash = parse_hex(&tx.block_hash).try_into().unwrap();
+        let metadata_hash =
+            parse_hex(&tx.metadata_hash.clone().unwrap_or_else(|| "00".to_string()));
+        let era = parse_hex(&tx.era.clone());
         let method = hex::decode(tx.method.trim_start_matches("0x")).unwrap();
 
         ExtrinsicPayload {
             method,
             nonce,
             tip,
+            mode,
             spec_version,
             transaction_version,
             genesis_hash,
             block_hash,
+            metadata_hash,
             era,
         }
     }
@@ -90,18 +81,28 @@ impl ExtrinsicPayload {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
         bytes.extend(self.method.clone());
-        bytes.extend(&self.era.encode());
+        bytes.extend(&self.era.clone());
         bytes.extend(Compact(self.nonce).encode());
         bytes.extend(Compact(self.tip).encode());
-        // Encode mode
-        bytes.extend(&[0]);
+        bytes.extend(&self.mode.encode());
         bytes.extend(&self.spec_version.encode());
         bytes.extend(&self.transaction_version.encode());
         bytes.extend(&self.genesis_hash);
         bytes.extend(&self.block_hash);
-        // Encode metadata_hash
-        bytes.extend(&[0]);
+        bytes.extend(&self.metadata_hash);
 
         bytes
     }
+}
+
+fn parse_hex_to_u32(hex_str: &str) -> u32 {
+    u32::from_str_radix(hex_str.trim_start_matches("0x"), 16).unwrap()
+}
+
+fn parse_hex_to_u128(hex_str: &str) -> u128 {
+    u128::from_str_radix(hex_str.trim_start_matches("0x"), 16).unwrap()
+}
+
+fn parse_hex(hex_str: &String) -> Vec<u8> {
+    hex::decode(hex_str.trim_start_matches("0x")).unwrap()
 }

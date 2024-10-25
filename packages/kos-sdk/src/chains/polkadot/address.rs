@@ -2,7 +2,6 @@ use kos_crypto::keypair::KeyPair;
 use sp_core::crypto::{Ss58AddressFormat, Ss58Codec};
 use sp_core::sr25519::Public;
 use std::str::FromStr;
-use subxt::utils::AccountId32;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 const ADDRESS_LEN: usize = 32;
@@ -43,11 +42,6 @@ impl Address {
     /// To hex address
     pub fn to_hex_address(self) -> String {
         hex::encode(self.0)
-    }
-
-    /// to AccountId32
-    pub fn to_account_id32(&self) -> AccountId32 {
-        AccountId32::from(self.0)
     }
 }
 

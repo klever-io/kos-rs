@@ -184,10 +184,7 @@ impl Transaction {
                     serde_json::to_string(&data.tx).map_err(|e| e.into())
                 }
                 TransactionRaw::Polkadot(data) => {
-                    let extrinsic = DOT::get_submittable_extrinsic(data.clone())
-                        .expect("Error getting submittable extrinsic");
-
-                    Ok(hex::encode(extrinsic.encoded()))
+                    todo!()
                 }
             },
             None => Err(Error::InvalidTransaction("no data found".to_string())),

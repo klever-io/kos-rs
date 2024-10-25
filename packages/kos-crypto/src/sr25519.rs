@@ -69,10 +69,8 @@ impl Sr25519KeyPair {
         // Convert mnemonic to seed
         let seed = format!("{}{}", m.to_phrase(), path);
 
-        println!("Seed: {}", seed);
-
         // Derive keypair based on the provided path and seed
-        let keypair = sr25519::Pair::from_string(&seed, password).unwrap();
+        let keypair = Pair::from_string(&seed, password).unwrap();
 
         Ok(Self { keypair })
     }
@@ -90,10 +88,9 @@ impl Sr25519KeyPair {
     }
 
     pub fn verify_digest(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
-        let public = sp_core::sr25519::Public::from_raw(<[u8; 32]>::try_from(public_key).unwrap());
+        let public = sr25519::Public::from_raw(<[u8; 32]>::try_from(public_key).unwrap());
 
-        let signature =
-            sp_core::sr25519::Signature::from_raw(<[u8; 64]>::try_from(signature).unwrap());
+        let signature = sr25519::Signature::from_raw(<[u8; 64]>::try_from(signature).unwrap());
 
         sr25519::Pair::verify(&signature, message, &public)
     }
