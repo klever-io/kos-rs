@@ -1,4 +1,4 @@
-mod address;
+pub(crate) mod address;
 pub mod transaction;
 
 use crate::chains::DOTTransaction;
@@ -28,6 +28,7 @@ use wasm_bindgen::prelude::*;
 pub struct DOT {}
 
 pub const SIGN_PREFIX: &[u8; 26] = b"\x19Polkadot Signed Message:\n";
+const SS58_PREFIX: u16 = 0;
 
 pub const BASE_CHAIN: BaseChain = BaseChain {
     name: "Polkadot",
@@ -76,7 +77,7 @@ impl DOT {
 
     #[wasm_bindgen(js_name = "getAddressFromKeyPair")]
     pub fn get_address_from_keypair(kp: &KeyPair) -> Result<String, Error> {
-        Ok(address::Address::from_keypair(kp).to_string())
+        Ok(address::Address::from_keypair(kp).to_ss58check(SS58_PREFIX))
     }
 
     #[wasm_bindgen(js_name = "getPath")]

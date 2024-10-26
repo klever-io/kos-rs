@@ -1,7 +1,7 @@
 use parity_scale_codec::{Compact, Decode, Encode};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Transaction {
     #[serde(rename = "specVersion")]
     pub spec_version: String,

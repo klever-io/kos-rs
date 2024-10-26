@@ -43,6 +43,10 @@ impl Address {
     pub fn to_hex_address(self) -> String {
         hex::encode(self.0)
     }
+
+    pub fn to_ss58check(self, custom: u16) -> String {
+        Public::from_raw(self.0).to_ss58check_with_version(Ss58AddressFormat::custom(custom))
+    }
 }
 
 impl FromStr for Address {
@@ -59,13 +63,5 @@ impl FromStr for Address {
         raw.copy_from_slice(&decoded.0);
 
         Ok(Address(raw))
-    }
-}
-
-impl ::std::fmt::Display for Address {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-        let st = Public::from_raw(self.0).to_ss58check_with_version(Ss58AddressFormat::custom(0));
-
-        st.fmt(f)
     }
 }
