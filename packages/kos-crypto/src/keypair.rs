@@ -21,7 +21,7 @@ pub struct KeyPair {
     key_type: KeyType,
     ed25519: Option<ed25519::Ed25519KeyPair>,
     secp256k1: Option<secp256k1::Secp256k1KeyPair>,
-    sr25519: Option<sr25519::Sr25519KeyPair>
+    sr25519: Option<sr25519::Sr25519KeyPair>,
 }
 
 #[wasm_bindgen]
@@ -67,8 +67,6 @@ impl KeyPair {
     }
 }
 
-
-
 impl KeyPair {
     pub fn sign_digest(&self, digest: &[u8]) -> Vec<u8> {
         match self.key_type {
@@ -103,7 +101,6 @@ impl KeyPair {
                 .as_ref()
                 .unwrap()
                 .verify_digest(digest, signature, public_key),
-
         }
     }
 }
@@ -128,7 +125,7 @@ impl KeyPair {
             KeyType::Secp256k1 | KeyType::Secp256k1Compressed => {
                 self.secp256k1.as_ref().unwrap().public_key()
             }
-            KeyType::Sr25519 => self.sr25519.as_ref().unwrap().public_key()
+            KeyType::Sr25519 => self.sr25519.as_ref().unwrap().public_key(),
         }
     }
 
@@ -144,7 +141,7 @@ impl KeyPair {
             KeyType::Secp256k1 | KeyType::Secp256k1Compressed => {
                 self.secp256k1.as_ref().unwrap().secret_key()
             }
-            KeyType::Sr25519 => Vec::new() // Find a way to get secret key
+            KeyType::Sr25519 => self.sr25519.as_ref().unwrap().secret_key(),
         }
     }
 

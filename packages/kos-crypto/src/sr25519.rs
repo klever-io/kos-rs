@@ -80,6 +80,10 @@ impl Sr25519KeyPair {
     pub fn public_key(&self) -> Vec<u8> {
         self.keypair.public().0.to_vec()
     }
+
+    pub fn secret_key(&self) -> Vec<u8> {
+        self.keypair.to_raw_vec()
+    }
 }
 
 impl Sr25519KeyPair {
