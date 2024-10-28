@@ -1,3 +1,4 @@
+mod avail;
 mod bitcoin;
 mod default;
 mod ethereum;
@@ -9,6 +10,7 @@ mod polygon;
 mod tron;
 
 pub use self::bitcoin::BTC;
+pub use avail::AVAIL;
 pub use default::NONE;
 pub use ethereum::ETH;
 pub use klever::KLV;
@@ -18,8 +20,7 @@ pub use polygon::MATIC;
 pub use tron::TRX;
 
 pub use ethereum::transaction::Transaction as ETHTransaction;
-pub use kusama::Transaction as KSMTransaction;
-pub use polkadot::transaction::Transaction as DOTTransaction;
+pub use polkadot::transaction::Transaction as SubstrateTransaction;
 pub use polygon::Transaction as MATICTransaction;
 
 pub use self::bitcoin::transaction::BTCTransaction;

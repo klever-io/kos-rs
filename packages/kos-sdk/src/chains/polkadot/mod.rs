@@ -1,7 +1,7 @@
 pub(crate) mod address;
 pub mod transaction;
 
-use crate::chains::DOTTransaction;
+use crate::chains::SubstrateTransaction;
 use crate::models::BroadcastResult;
 use crate::{
     chain::BaseChain,
@@ -130,7 +130,7 @@ impl DOT {
     /// Hash and Sign data with the private key.
     pub fn sign(tx: Transaction, keypair: &KeyPair) -> Result<Transaction, Error> {
         match tx.data {
-            Some(TransactionRaw::Polkadot(dot_tx)) => {
+            Some(TransactionRaw::Substrate(dot_tx)) => {
                 let new_tx = dot_tx.clone();
 
                 let payload = ExtrinsicPayload::from_transaction(&new_tx);
@@ -150,14 +150,14 @@ impl DOT {
                     chain: tx.chain,
                     sender: tx.sender,
                     hash: Hash::from_vec(vec![0u8; 32])?,
-                    data: Some(TransactionRaw::Polkadot(new_tx)),
+                    data: Some(TransactionRaw::Substrate(new_tx)),
                     signature: Some(hex::encode([[1u8].to_vec(), signature].concat())),
                 };
 
                 Ok(result)
             }
             _ => Err(Error::InvalidMessage(
-                "not a polkadot transaction".to_string(),
+                "not a substrate transaction".to_string(),
             )),
         }
     }
@@ -211,13 +211,13 @@ impl DOT {
     }
 
     pub fn tx_from_json(raw: &str) -> Result<Transaction, Error> {
-        let tx = DOTTransaction::from_json(raw)?;
+        let tx = SubstrateTransaction::from_json(raw)?;
 
         Ok(Transaction {
             chain: crate::chain::Chain::DOT,
             sender: tx.clone().address,
             hash: Hash::default(),
-            data: Some(TransactionRaw::Polkadot(tx.clone())),
+            data: Some(TransactionRaw::Substrate(tx.clone())),
             signature: tx.signature,
         })
     }

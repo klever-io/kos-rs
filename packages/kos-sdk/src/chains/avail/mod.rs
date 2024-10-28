@@ -15,19 +15,19 @@ use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
 #[wasm_bindgen]
-pub struct KSM {}
+pub struct AVAIL {}
 
-const SS58_PREFIX: u16 = 2;
+const SS58_PREFIX: u16 = 42;
 
 pub const BASE_CHAIN: BaseChain = BaseChain {
-    name: "Kusama",
-    symbol: "KSM",
-    precision: 12,
-    chain_code: 27,
+    name: "Avail",
+    symbol: "AVAIL",
+    precision: 18,
+    chain_code: 62,
 };
 
 #[wasm_bindgen]
-impl KSM {
+impl AVAIL {
     #[wasm_bindgen(js_name = "baseChain")]
     pub fn base_chain() -> BaseChain {
         BASE_CHAIN
@@ -114,7 +114,7 @@ impl KSM {
         token: Option<String>,
         node_url: Option<String>,
     ) -> Result<BigNumber, Error> {
-        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("KSM"));
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("AVAIL"));
         DOT::get_balance(address, token, Some(node)).await
     }
 
@@ -133,7 +133,7 @@ impl KSM {
         tx: models::Transaction,
         node_url: Option<String>,
     ) -> Result<BroadcastResult, Error> {
-        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("KSM"));
+        let node = node_url.unwrap_or_else(|| crate::utils::get_node_url("AVAIL"));
         let result = DOT::broadcast(tx, Some(node)).await?;
         Ok(BroadcastResult::new(result.tx))
     }
@@ -146,11 +146,11 @@ impl KSM {
         DOT::validate_address(address, option)
     }
 
-    pub fn tx_from_json(raw: &str) -> Result<Transaction, Error> {
+    pub fn tx_from_json(raw: &str) -> Result<models::Transaction, Error> {
         let tx = SubstrateTransaction::from_json(raw)?;
 
         Ok(Transaction {
-            chain: crate::chain::Chain::KSM,
+            chain: crate::chain::Chain::AVAIL,
             sender: tx.clone().address,
             hash: Hash::default(),
             data: Some(TransactionRaw::Substrate(tx.clone())),
@@ -161,24 +161,24 @@ impl KSM {
 #[cfg(test)]
 mod tests {
     use crate::chain::Chain;
-    use crate::chains::KSM;
+    use crate::chains::AVAIL;
 
     #[test]
     fn test_keypair_from_mnemonic() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
-        let path = KSM::get_path(&super::PathOptions {
+        let path = AVAIL::get_path(&super::PathOptions {
             index: 0,
             is_legacy: None,
         })
         .unwrap();
-        let kp = KSM::keypair_from_mnemonic(mnemonic, &path, None).unwrap();
-        let address = KSM::get_address_from_keypair(&kp).unwrap();
-        assert_eq!(address, "Etp93jqLeBY8TczVXDJQoWNvMoY8VBSXoYNBYou5ghUBeC1");
+        let kp = AVAIL::keypair_from_mnemonic(mnemonic, &path, None).unwrap();
+        let address = AVAIL::get_address_from_keypair(&kp).unwrap();
+        assert_eq!(address, "5EPCUjPxiHAcNooYipQFWr9NmmXJKpNG5RhcntXwbtUySrgH");
     }
 
     #[test]
     fn test_get_path() {
-        let path = KSM::get_path(&super::PathOptions {
+        let path = AVAIL::get_path(&super::PathOptions {
             index: 1,
             is_legacy: None,
         })
@@ -190,62 +190,62 @@ mod tests {
     #[test]
     fn test_validate_address() {
         let address = "Etp93jqLeBY8TczVXDJQoWNvMoY8VBSXoYNBYou5ghUBeC1";
-        let valid = KSM::validate_address(address, None).unwrap();
+        let valid = AVAIL::validate_address(address, None).unwrap();
         assert_eq!(valid, true);
     }
 
     #[test]
     fn test_sign_digest() {
-        let kp = KSM::keypair_from_bytes(&[0u8; 32]).unwrap();
+        let kp = AVAIL::keypair_from_bytes(&[0u8; 32]).unwrap();
         let digest = String::from("hello").into_bytes();
-        let signature = KSM::sign_digest(&digest, &kp).unwrap();
+        let signature = AVAIL::sign_digest(&digest, &kp).unwrap();
         assert_eq!(signature.len(), 64);
 
-        let address = KSM::get_address_from_keypair(&kp).unwrap();
-        let valid = KSM::verify_digest(&digest, &signature, &address).unwrap();
+        let address = AVAIL::get_address_from_keypair(&kp).unwrap();
+        let valid = AVAIL::verify_digest(&digest, &signature, &address).unwrap();
         assert_eq!(valid, true);
     }
 
     #[test]
     fn test_sign_extrinsic_payload() {
         let json_data = r#"
-                {
-                "specVersion": "0x000f4dfb",
-                "transactionVersion": "0x0000001a",
-                "address": "Etp93jqLeBY8TczVXDJQoWNvMoY8VBSXoYNBYou5ghUBeC1",
-                "assetId": null,
-                "blockHash": "0x5e8ad2dc466562ea590e2e05b81ee851ca55bce18caf0407f4bb2daf8e0beaf9",
-                "blockNumber": "0x01608e70",
-                "era": "0x0503",
-                "genesisHash": "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-                "metadataHash": null,
-                "method": "0x050300a653ae79665565ba7fc682c385b3c038c2091ab6d6053355b9950a108ac48b0600",
-                "mode": 0,
-                "nonce": "0x00000000",
-                "signedExtensions": [
-                    "CheckNonZeroSender",
-                    "CheckSpecVersion",
-                    "CheckTxVersion",
-                    "CheckGenesis",
-                    "CheckMortality",
-                    "CheckNonce",
-                    "CheckWeight",
-                    "ChargeTransactionPayment",
-                    "PrevalidateAttests",
-                    "CheckMetadataHash"
-                ],
-                "tip": "0x00000000000000000000000000000000",
-                "version": 4,
-                "withSignedTransaction": true
-            }"#;
+          {
+            "appId": 0,
+            "specVersion": "0x00000027",
+            "transactionVersion": "0x00000001",
+            "address": "5H9CP2zS3ufvZLcxc3rB2Go6ujr6c1FyE4AjFk7E19vCZyK4",
+            "assetId": null,
+            "blockHash": "0xc2ff0603e37eb015106f24a4f6eb3fbca3aef2e21cd19c654f88853337bf4d7d",
+            "blockNumber": "0x0007ab6d",
+            "era": "0xd400",
+            "genesisHash": "0xb91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a",
+            "metadataHash": null,
+            "method": "0x060300e09a2af0eb7f9adcc71e489111ff691cf8430e6f1d86969156a822218217411500",
+            "mode": 0,
+            "nonce": "0x00000010",
+            "signedExtensions": [
+                "CheckNonZeroSender",
+                "CheckSpecVersion",
+                "CheckTxVersion",
+                "CheckGenesis",
+                "CheckMortality",
+                "CheckNonce",
+                "CheckWeight",
+                "ChargeTransactionPayment",
+                "CheckAppId"
+            ],
+            "tip": "0x00000000000000000000000000000000",
+            "version": 4,
+            "withSignedTransaction": true
+        }"#;
 
-        let transaction = KSM::tx_from_json(json_data).unwrap();
+        let transaction = AVAIL::tx_from_json(json_data).unwrap();
 
-        let kp = KSM::keypair_from_mnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", "//0", None).unwrap();
+        let kp = AVAIL::keypair_from_mnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", "//0", None).unwrap();
 
-        let signed = KSM::sign(transaction, &kp).unwrap();
+        let signed = AVAIL::sign(transaction, &kp).unwrap();
 
         assert_eq!(signed.get_signature().unwrap().len(), 130);
-        assert_eq!(signed.chain, Chain::KSM);
+        assert_eq!(signed.chain, Chain::AVAIL);
     }
 }

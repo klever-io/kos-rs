@@ -21,6 +21,8 @@ pub struct Transaction {
     pub metadata_hash: Option<String>,
     pub method: String,
     pub mode: i64,
+    #[serde(rename = "appId")]
+    pub app_id: Option<u32>,
     pub nonce: String,
     #[serde(rename = "signedExtensions")]
     pub signed_extensions: Vec<String>,
@@ -48,6 +50,7 @@ pub struct ExtrinsicPayload {
     block_hash: [u8; 32],
     metadata_hash: Vec<u8>,
     era: Vec<u8>,
+    app_id: Option<u32>,
 }
 
 impl ExtrinsicPayload {
@@ -63,6 +66,7 @@ impl ExtrinsicPayload {
             parse_hex(&tx.metadata_hash.clone().unwrap_or_else(|| "00".to_string()));
         let era = parse_hex(&tx.era.clone());
         let method = hex::decode(tx.method.trim_start_matches("0x")).unwrap();
+        let app_id = tx.app_id.try_into().unwrap();
 
         ExtrinsicPayload {
             method,
@@ -75,6 +79,7 @@ impl ExtrinsicPayload {
             block_hash,
             metadata_hash,
             era,
+            app_id,
         }
     }
 
@@ -84,12 +89,20 @@ impl ExtrinsicPayload {
         bytes.extend(&self.era.clone());
         bytes.extend(Compact(self.nonce).encode());
         bytes.extend(Compact(self.tip).encode());
-        bytes.extend(&self.mode.encode());
+
+        if let Some(app_id) = self.app_id {
+            bytes.extend(Compact(app_id).encode());
+        } else {
+            bytes.extend(&self.mode.encode());
+        }
+
         bytes.extend(&self.spec_version.encode());
         bytes.extend(&self.transaction_version.encode());
         bytes.extend(&self.genesis_hash);
         bytes.extend(&self.block_hash);
-        bytes.extend(&self.metadata_hash);
+        if self.app_id.is_none() {
+            bytes.extend(&self.metadata_hash);
+        }
 
         bytes
     }

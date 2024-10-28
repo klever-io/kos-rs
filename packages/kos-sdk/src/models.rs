@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 use crate::chain::Chain;
-use crate::chains::{DOT, ETH, KLV, KSM, TRX};
+use crate::chains::{AVAIL, DOT, ETH, KLV, KSM, TRX};
 #[derive(Debug, Clone, Serialize)]
 #[wasm_bindgen]
 pub struct BroadcastResult {
@@ -70,8 +70,7 @@ kos_types::enum_thing! {
         Ethereum(super::chains::ETHTransaction),
         Polygon(super::chains::MATICTransaction),
         Bitcoin(super::chains::BTCTransaction),
-        Polkadot(super::chains::DOTTransaction),
-        Kusama(super::chains::KSMTransaction)
+        Substrate(super::chains::SubstrateTransaction),
     }
 }
 
@@ -184,10 +183,7 @@ impl Transaction {
                 TransactionRaw::Bitcoin(data) => {
                     serde_json::to_string(&data.tx).map_err(|e| e.into())
                 }
-                TransactionRaw::Polkadot(data) => {
-                    todo!()
-                }
-                TransactionRaw::Kusama(data) => {
+                TransactionRaw::Substrate(data) => {
                     todo!()
                 }
             },
@@ -219,6 +215,7 @@ impl Transaction {
             Chain::ETH => ETH::tx_from_json(data),
             Chain::DOT => DOT::tx_from_json(data),
             Chain::KSM => KSM::tx_from_json(data),
+            Chain::AVAIL => AVAIL::tx_from_json(data),
             Chain::MATIC => Err(Error::InvalidTransaction(
                 "MATIC chain not implemented".to_string(),
             )),
