@@ -183,7 +183,7 @@ impl Transaction {
                 TransactionRaw::Bitcoin(data) => {
                     serde_json::to_string(&data.tx).map_err(|e| e.into())
                 }
-                TransactionRaw::Substrate(data) => {
+                TransactionRaw::Substrate(_data) => {
                     todo!()
                 }
             },

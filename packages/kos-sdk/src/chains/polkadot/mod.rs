@@ -8,16 +8,13 @@ use crate::{
     models,
     models::{PathOptions, Transaction, TransactionRaw},
 };
-use base64::Engine;
 use kos_crypto::keypair::KeyPair;
 use kos_crypto::sr25519::Sr25519KeyPair;
 use kos_types::error::Error;
 use kos_types::hash::Hash;
 use kos_types::number::BigNumber;
-use parity_scale_codec::{Decode, Encode};
 
 use crate::chains::polkadot::transaction::ExtrinsicPayload;
-use serde::Deserializer;
 use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair};
 use std::str::FromStr;
@@ -140,7 +137,7 @@ impl DOT {
 
                     // If payload is longer than 256 bytes, we hash it and sign the hash instead:
                     if full_unsigned_payload_scale_bytes.len() > 256 {
-                        DOT::sign_digest(&*DOT::hash(&full_unsigned_payload_scale_bytes)?, keypair)?
+                        DOT::sign_digest(&DOT::hash(&full_unsigned_payload_scale_bytes)?, keypair)?
                     } else {
                         DOT::sign_digest(&full_unsigned_payload_scale_bytes, keypair)?
                     }

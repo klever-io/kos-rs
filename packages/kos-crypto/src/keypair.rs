@@ -3,7 +3,6 @@ use crate::secp256k1;
 use crate::sr25519;
 
 use std::fmt;
-use std::fmt::Pointer;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

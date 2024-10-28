@@ -1,4 +1,4 @@
-use parity_scale_codec::{Compact, Decode, Encode};
+use parity_scale_codec::{Compact, Encode};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -66,7 +66,7 @@ impl ExtrinsicPayload {
             parse_hex(&tx.metadata_hash.clone().unwrap_or_else(|| "00".to_string()));
         let era = parse_hex(&tx.era.clone());
         let method = hex::decode(tx.method.trim_start_matches("0x")).unwrap();
-        let app_id = tx.app_id.try_into().unwrap();
+        let app_id = tx.app_id;
 
         ExtrinsicPayload {
             method,
@@ -116,6 +116,6 @@ fn parse_hex_to_u128(hex_str: &str) -> u128 {
     u128::from_str_radix(hex_str.trim_start_matches("0x"), 16).unwrap()
 }
 
-fn parse_hex(hex_str: &String) -> Vec<u8> {
+fn parse_hex(hex_str: &str) -> Vec<u8> {
     hex::decode(hex_str.trim_start_matches("0x")).unwrap()
 }

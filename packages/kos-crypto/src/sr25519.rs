@@ -2,7 +2,6 @@ use coins_bip39::{English, Mnemonic};
 use kos_types::{error::Error, Bytes32};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sp_core::{sr25519, Pair};
-use std::str::FromStr;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]

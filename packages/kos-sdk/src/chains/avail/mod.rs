@@ -10,7 +10,6 @@ use kos_types::number::BigNumber;
 
 use super::DOT;
 use kos_types::hash::Hash;
-use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
