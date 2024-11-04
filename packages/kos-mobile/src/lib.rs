@@ -1,11 +1,6 @@
 use hex::FromHexError;
 use hex::ToHex;
-use kos_crypto::cipher;
-use kos_crypto::cipher::CipherAlgo;
-use kos_sdk::chain::Chain;
-use kos_sdk::models::{PathOptions, Transaction};
-use kos_sdk::wallet::Wallet;
-use kos_types::error::Error as KosError;
+use kos::chains::{get_chain_by_id, Chain, ChainError, Transaction};
 
 uniffi::setup_scaffolding!();
 
@@ -19,8 +14,8 @@ enum KOSError {
     HexDecode(String),
 }
 
-impl From<KosError> for KOSError {
-    fn from(err: KosError) -> Self {
+impl From<ChainError> for KOSError {
+    fn from(err: ChainError) -> Self {
         KOSError::KOSDelegate(err.to_string())
     }
 }
@@ -49,31 +44,13 @@ struct KOSTransaction {
 }
 
 #[uniffi::export]
-fn sign_transaction(account: KOSAccount, raw: String) -> Result<KOSTransaction, KOSError> {
-    let chain = get_chain_by(account.chain_id)?;
-    let wallet = Wallet::from_private_key(chain, account.private_key.to_string())?;
-    let transaction = Transaction::from_raw(chain, &raw)?;
-    let signed_transaction = wallet.sign(transaction)?;
-    let signature = signed_transaction
-        .get_signature()
-        .ok_or(KOSError::KOSDelegate("Signature not found".to_string()))?;
-
-    Ok(KOSTransaction {
-        chain_id: account.chain_id,
-        raw: signed_transaction.get_raw()?,
-        sender: signed_transaction.sender,
-        signature,
-    })
-}
-
-#[uniffi::export]
 fn generate_mnemonic(size: i32) -> Result<String, KOSError> {
-    Ok(kos_crypto::mnemonic::generate_mnemonic(size as usize)?.to_phrase())
+    Ok(kos::crypto::mnemonic::generate_mnemonic(size as usize)?.to_phrase())
 }
 
 #[uniffi::export]
 fn validate_mnemonic(mnemonic: String) -> bool {
-    kos_crypto::mnemonic::validate_mnemonic(mnemonic.as_str()).is_ok()
+    kos::crypto::mnemonic::validate_mnemonic(mnemonic.as_str()).is_ok()
 }
 
 #[uniffi::export]
@@ -87,16 +64,17 @@ fn generate_wallet_from_mnemonic(
         return Err(KOSError::KOSDelegate("Invalid mnemonic".to_string()));
     }
     let chain = get_chain_by(chain_id)?;
-    let mut path_options = PathOptions::new(index as u32);
-    path_options.set_legacy(use_legacy_path);
-    let path = chain.get_path(&path_options)?;
-    let wallet = Wallet::from_mnemonic(chain, mnemonic, path, None)?;
+    let seed = chain.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
+    let private_key = chain.derive(seed, String::new()).unwrap();
+
+    let public_key = chain.get_pbk(private_key.clone()).unwrap();
+
     Ok(KOSAccount {
         chain_id,
-        private_key: wallet.get_private_key(),
-        public_key: wallet.get_public_key(),
-        address: wallet.get_address(),
-        path: wallet.get_path(),
+        private_key: hex::encode(private_key),
+        public_key: hex::encode(public_key.clone()),
+        address: chain.get_address(public_key)?,
+        path: String::new(), // TODO: implement path
     })
 }
 
@@ -106,46 +84,66 @@ fn generate_wallet_from_private_key(
     private_key: String,
 ) -> Result<KOSAccount, KOSError> {
     let chain = get_chain_by(chain_id)?;
-    let wallet = Wallet::from_private_key(chain, private_key)?;
+
+    let public_key = chain.get_pbk(hex::decode(private_key.clone())?)?;
+    let address = chain.get_address(public_key.clone())?;
     Ok(KOSAccount {
         chain_id,
-        private_key: wallet.get_private_key(),
-        public_key: wallet.get_public_key(),
-        address: wallet.get_address(),
-        path: wallet.get_path(),
+        private_key: private_key.clone(),
+        public_key: hex::encode(public_key.clone()),
+        address,
+        path: String::new(), // TODO: implement path
     })
 }
 
 #[uniffi::export]
 fn encrypt_with_gmc(data: String, password: String) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::GMC.encrypt(data.as_bytes(), password.as_str())?;
-    Ok(encrypted_data.encode_hex())
+    todo!()
 }
 
 #[uniffi::export]
 fn encrypt_with_cbc(data: String, password: String) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::CBC.encrypt(data.as_bytes(), password.as_str())?;
-    Ok(encrypted_data.encode_hex())
+    todo!()
 }
 
 #[uniffi::export]
 fn encrypt_with_cfb(data: String, password: String) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::CFB.encrypt(data.as_bytes(), password.as_str())?;
-    Ok(encrypted_data.encode_hex())
+    todo!()
 }
 
 #[uniffi::export]
 fn decrypt(data: String, password: String) -> Result<String, KOSError> {
-    let data_in_byte = hex::decode(data)?;
-    let decrypted_data = cipher::decrypt(&data_in_byte, password.as_str())?;
-    Ok(String::from_utf8_lossy(&decrypted_data).to_string())
+    todo!()
 }
 
-fn get_chain_by(id: i32) -> Result<Chain, KOSError> {
-    let id_u8 = u8::try_from(id).map_err(|_| KOSError::UnsupportedChain { id: id.to_string() })?;
-    let chain = Chain::get_by_code(id_u8)
-        .ok_or_else(|| KOSError::UnsupportedChain { id: id.to_string() })?;
+fn get_chain_by(id: i32) -> Result<Box<dyn Chain>, KOSError> {
+    let id_u8 = u32::try_from(id).map_err(|_| KOSError::UnsupportedChain { id: id.to_string() })?;
+    let chain =
+        get_chain_by_id(id_u8).ok_or_else(|| KOSError::UnsupportedChain { id: id.to_string() })?;
+
     Ok(chain)
+}
+
+#[uniffi::export]
+fn sign_transaction(account: KOSAccount, raw: String) -> Result<KOSTransaction, KOSError> {
+    let chain = get_chain_by(account.chain_id)?;
+    let raw_tx_bytes = hex::decode(raw.clone())?;
+    let transaction = Transaction {
+        raw_data: raw_tx_bytes,
+        signature: Vec::new(),
+        tx_hash: Vec::new(),
+    };
+    let pk = hex::decode(account.private_key.clone())?;
+
+    let signed_transaction = chain.sign_tx(pk, transaction)?;
+    let signature = signed_transaction.signature;
+
+    Ok(KOSTransaction {
+        chain_id: account.chain_id,
+        raw: hex::encode(signed_transaction.raw_data),
+        sender: account.address,
+        signature: hex::encode(signature),
+    })
 }
 
 #[cfg(test)]

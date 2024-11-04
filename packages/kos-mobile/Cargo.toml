@@ -16,11 +16,7 @@ name = "uniffi-bindgen"
 path = "src/bin/uniffi-bindgen.rs"
 
 [dependencies]
-kos-types = { workspace = true, features = ["serde"] }
-kos-crypto = { workspace = true }
-kos-proto = { workspace = true }
-kos-utils = { workspace = true }
-kos-sdk = { workspace = true, features = ["serde"] }
+kos = { workspace = true }
 
 hex = { workspace = true }
 lazy_static = { workspace = true }
