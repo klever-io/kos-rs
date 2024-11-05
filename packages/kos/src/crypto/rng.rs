@@ -1,13 +1,16 @@
-use rand_core::{CryptoRng, Error, RngCore};
+use rand_core::{CryptoRng, RngCore};
 
+#[cfg(not(target_arch = "x86_64"))]
 extern "C" {
     #[allow(dead_code)]
     fn random_buffer(p_buffer: *mut u8, size: u32);
 }
 
+#[cfg(not(target_arch = "x86_64"))]
 #[allow(dead_code)]
 struct MyRng;
 
+#[cfg(not(target_arch = "x86_64"))]
 impl RngCore for MyRng {
     fn next_u32(&mut self) -> u32 {
         let mut buf = [0u8; 4];
@@ -37,6 +40,7 @@ impl RngCore for MyRng {
     }
 }
 
+#[cfg(not(target_arch = "x86_64"))]
 impl CryptoRng for MyRng {}
 
 #[cfg(target_arch = "x86_64")]

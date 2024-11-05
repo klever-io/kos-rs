@@ -6,7 +6,7 @@ use crate::crypto::bignum::U256;
 
 #[derive(Decode)]
 pub struct Call {
-    pub call_index: CallIndex,
+    pub _call_index: CallIndex,
     pub args: [u8; 100],
 }
 

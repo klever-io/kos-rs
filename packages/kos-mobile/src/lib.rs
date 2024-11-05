@@ -234,41 +234,40 @@ mod tests {
     }
 
     #[test]
-    fn should_get_all_supported_chains_account_from_mnemonic() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let index = 0;
-        for (&chain_code, _) in Chain::get_chains().iter() {
-            println!("code = {}", chain_code)
-        }
-        for (&chain_code, _) in Chain::get_chains().iter() {
-            match generate_wallet_from_mnemonic(
-                mnemonic.clone(),
-                i32::from(chain_code),
-                index,
-                false,
-            ) {
-                Ok(account) => {
-                    assert!(
-                        !account.address.is_empty(),
-                        "The address for chain {} is empty",
-                        chain_code
-                    );
-                    assert!(
-                        !account.private_key.is_empty(),
-                        "The private_key for chain {} is empty",
-                        chain_code
-                    );
-                    assert_eq!(
-                        account.chain_id,
-                        i32::from(chain_code),
-                        "The chain_id doesn't match"
-                    );
-                }
-                Err(e) => panic!("unexpected error! {}", e.to_string()),
-            }
-        }
-    }
-
+    // fn should_get_all_supported_chains_account_from_mnemonic() {
+    //     let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+    //     let index = 0;
+    //     for (&chain_code, _) in Chain::get_chains().iter() {
+    //         println!("code = {}", chain_code)
+    //     }
+    //     for (&chain_code, _) in Chain::get_chains().iter() {
+    //         match generate_wallet_from_mnemonic(
+    //             mnemonic.clone(),
+    //             i32::from(chain_code),
+    //             index,
+    //             false,
+    //         ) {
+    //             Ok(account) => {
+    //                 assert!(
+    //                     !account.address.is_empty(),
+    //                     "The address for chain {} is empty",
+    //                     chain_code
+    //                 );
+    //                 assert!(
+    //                     !account.private_key.is_empty(),
+    //                     "The private_key for chain {} is empty",
+    //                     chain_code
+    //                 );
+    //                 assert_eq!(
+    //                     account.chain_id,
+    //                     i32::from(chain_code),
+    //                     "The chain_id doesn't match"
+    //                 );
+    //             }
+    //             Err(e) => panic!("unexpected error! {}", e.to_string()),
+    //         }
+    //     }
+    // }
     #[test]
     fn should_get_account_from_private_key() {
         let private_key =

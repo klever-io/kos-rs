@@ -13,7 +13,7 @@ build = "build.rs"
 [lib]
 name = "kos"
 crate-type = ["staticlib", "cdylib", "rlib"]
-#
+
 #
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [profile.release]
