@@ -1,0 +1,3 @@
+[submodule "packages/kos/src/protos/tron"]
+	path = packages/kos/src/protos/tron
+	url = https://github.com/tronprotocol/protocol.git
