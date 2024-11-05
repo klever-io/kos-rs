@@ -6,7 +6,7 @@ use crate::crypto::sr25519::{Sr25519, Sr25519Error, Sr25519Trait};
 use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
-use bip39_dict::{Entropy, ENGLISH};
+use bip39_dict::Entropy;
 use core::fmt::{Display, Formatter};
 use core::num::ParseIntError;
 use core::str::FromStr;

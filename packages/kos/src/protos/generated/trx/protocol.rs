@@ -1504,6 +1504,8 @@ pub struct HelloMessage {
     pub node_type: i32,
     #[prost(int64, tag = "10")]
     pub lowest_block_num: i64,
+    #[prost(bytes = "vec", tag = "11")]
+    pub code_version: ::prost::alloc::vec::Vec<u8>,
 }
 /// Nested message and enum types in `HelloMessage`.
 pub mod hello_message {

@@ -7,20 +7,21 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
+build = "build.rs"
 
 ## Only necessary if using Protobuf well-known types:
-#[lib]
-#name = "kos"
-#crate-type = ["staticlib", "cdylib"]
+[lib]
+name = "kos"
+crate-type = ["staticlib", "cdylib", "rlib"]
 #
 #
-## See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-#[profile.release]
-#opt-level = 'z' # Optimize for size
-#lto = true # Enable Link Time Optimization
-#panic = 'abort' # Generally reduces size for embedded systems
-#codegen-units = 1 # more aggressive code merging
-#strip = true # Strip symbols from the final binary
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[profile.release]
+opt-level = 'z' # Optimize for size
+lto = true # Enable Link Time Optimization
+panic = 'abort' # Generally reduces size for embedded systems
+codegen-units = 1 # more aggressive code merging
+strip = true # Strip symbols from the final binary
 
 [profile.dev]
 panic = 'abort'
