@@ -3,6 +3,7 @@ use crate::chains::{Chain, ChainError, Transaction, TxInfo};
 use crate::crypto::bip32;
 use crate::crypto::hash::ripemd160_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
+use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
 use bech32::{u5, Variant};
@@ -31,6 +32,13 @@ impl Chain for BNB {
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
         let pvk = bip32::derive(&seed, path)?;
         Ok(pvk.to_vec())
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/714'/0'/0/{}", index),
+        }
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -97,7 +105,8 @@ mod test {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
 
         let seed = bnb.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let pvk = bnb.derive(seed, "m/44'/714'/0'/0/0".to_string()).unwrap();
+        let path = bnb.get_path(0, None);
+        let pvk = bnb.derive(seed, path).unwrap();
         let pbk = bnb.get_pbk(pvk.clone()).unwrap();
 
         let addr = bnb.get_address(pbk.clone()).unwrap();

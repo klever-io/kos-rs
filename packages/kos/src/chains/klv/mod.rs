@@ -5,6 +5,7 @@ use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use crate::crypto::hash::{blake2b_digest, keccak256_digest};
 use crate::protos::generated::klv::proto;
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use bech32::{u5, Variant};
@@ -15,6 +16,8 @@ use crate::crypto::bignum::U256;
 use prost::Message;
 
 const KLEVER_MESSAGE_PREFIX: &str = "\x17Klever Signed Message:\n";
+
+pub const BIP44_PATH: u32 = 690;
 
 pub struct KLV {}
 
@@ -50,6 +53,14 @@ impl Chain for KLV {
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
         let result = bip32::derive_ed25519(&seed, path)?;
         Ok(Vec::from(result))
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        let mut path = format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, index);
+        if let Some(custom_path) = &custom_path {
+            path = custom_path.clone();
+        }
+        path
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -158,7 +169,7 @@ mod test {
     #[test]
     fn test_derive() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = String::from("m/44'/690'/0'/0'/0'");
+        let path = crate::chains::klv::KLV {}.get_path(0, None);
 
         let seed = crate::chains::klv::KLV {}
             .mnemonic_to_seed(mnemonic, String::new())
@@ -177,7 +188,7 @@ mod test {
     #[test]
     fn test_sign_raw() {
         let mnemonic =
-            "permit best kiwi blast purchase cook grab present have hurdle quarter steak"
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
                 .to_string();
         let path = String::from("m/44'/690'/0'/0'/0'");
 
@@ -213,7 +224,7 @@ mod test {
         let result_tx = crate::chains::klv::KLV {}.sign_tx(pvk, tx).unwrap();
         assert_eq!(
             result_tx.tx_hash,
-            hex::decode("318d85981adc675bf7accae68d4627dca8b59f13d16e5cd23fa1a011181b8479")
+            hex::decode("0f47f28830f7aa9607a7a462b267003f94b4ef2c5c28ac8763cfc68e8fe10915")
                 .unwrap()
         )
     }

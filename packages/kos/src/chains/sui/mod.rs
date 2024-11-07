@@ -3,6 +3,7 @@ use crate::chains::{Chain, ChainError, Transaction, TxInfo};
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use crate::crypto::hash::blake2b_digest;
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
@@ -28,6 +29,13 @@ impl Chain for SUI {
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
         let result = bip32::derive_ed25519(&seed, path)?;
         Ok(Vec::from(result))
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/784'/0'/0'/{}'", index),
+        }
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -108,9 +116,8 @@ mod test {
 
         let sui = super::SUI {};
         let seed = sui.mnemonic_to_seed(mnemonic, String::new()).unwrap();
-        let pvk = sui
-            .derive(seed.clone(), "m/44'/784'/0'/0'/0'".to_string())
-            .unwrap();
+        let path = sui.get_path(0, None);
+        let pvk = sui.derive(seed.clone(), path).unwrap();
         let pbk = sui.get_pbk(pvk.clone()).unwrap();
         let addr = sui.get_address(pbk.clone()).unwrap();
         assert_eq!(

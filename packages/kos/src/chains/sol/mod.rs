@@ -3,6 +3,7 @@ use crate::chains::{Chain, ChainError, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
+use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
 
@@ -28,6 +29,13 @@ impl Chain for SOL {
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
         let result = bip32::derive_ed25519(&seed, path)?;
         Ok(Vec::from(result))
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/501'/0'/0'/{}'", index),
+        }
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -75,9 +83,10 @@ mod test {
     fn test_derive() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
 
-        let sol = super::SOL {};
+        let sol = SOL {};
         let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
+        let path = sol.get_path(0, None);
+        let pvk = sol.derive(seed, path).unwrap();
         let pbk = sol.get_pbk(pvk).unwrap();
         let addr = sol.get_address(pbk).unwrap();
         assert_eq!(addr, "B9sVeu4rJU12oUrUtzjc6BSNuEXdfvurZkdcaTVkP2LY");

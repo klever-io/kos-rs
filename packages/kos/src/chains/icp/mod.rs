@@ -4,8 +4,8 @@ use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use crate::crypto::hash::sha224_digest;
 use alloc::string::{String, ToString};
-use alloc::vec;
 use alloc::vec::Vec;
+use alloc::{format, vec};
 
 const ASN1_ED25519_HEADER: [u8; 12] = [48u8, 42, 48, 5, 6, 3, 43, 101, 112, 3, 33, 0];
 const ICP_TAIL: u8 = 2;
@@ -33,6 +33,13 @@ impl Chain for ICP {
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
         let result = bip32::derive_ed25519(&seed, path)?;
         Ok(Vec::from(result))
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/223'/0'/0'/{}", index),
+        }
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -146,7 +153,8 @@ mod test {
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let pvk = icp.derive(seed, "m/44'/223'/0'/0'/0".to_string()).unwrap();
+        let path = icp.get_path(0, None);
+        let pvk = icp.derive(seed, path).unwrap();
         let pbk = icp.get_pbk(pvk).unwrap();
 
         let addr = icp.get_address(pbk).unwrap();

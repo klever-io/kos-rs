@@ -4,8 +4,8 @@ use crate::crypto::bip32;
 use crate::crypto::hash::ripemd160_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use alloc::string::String;
-use alloc::vec;
 use alloc::vec::Vec;
+use alloc::{format, vec};
 
 const BCH_CHARSET: &str = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 const BCH_PREFIX: &str = "bitcoincash";
@@ -94,6 +94,13 @@ impl Chain for BCH {
         Ok(pvk.to_vec())
     }
 
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/145'/0'/0/{}", index),
+        }
+    }
+
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         let mut pvk_bytes = private_key_from_vec(&private_key)?;
         let pbk = Secp256K1::private_to_public_compressed(&pvk_bytes)?;
@@ -160,16 +167,15 @@ mod test {
 
     #[test]
     fn test_bch_address() {
-        let bch = super::BCH{};
+        let bch = super::BCH {};
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
 
         let seed = bch.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let pvk = bch.derive(seed, "m/44'/145'/0'/0/0".to_string()).unwrap();
+        let path = bch.get_path(0, None);
+        let pvk = bch.derive(seed, path).unwrap();
         let pbk = bch.get_pbk(pvk).unwrap();
         let addr = bch.get_address(pbk).unwrap();
 
         assert_eq!(addr, "qqyx49mu0kkn9ftfj6hje6g2wfer34yfnq5tahq3q6");
     }
 }
-
-

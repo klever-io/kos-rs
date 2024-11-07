@@ -5,6 +5,7 @@ use crate::chains::{Chain, ChainError, Transaction, TxInfo};
 use crate::crypto::hash::blake2b_64_digest;
 use crate::crypto::sr25519::Sr25519Trait;
 use crate::crypto::{b58, bip32, sr25519};
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use models::{Call, CallArgs};
@@ -53,6 +54,18 @@ impl Chain for Substrate {
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
         let pvk = bip32::derive_sr25519(&seed, path)?;
         Ok(pvk.to_vec())
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => {
+                if index == 0 {
+                    return "".to_string();
+                }
+                format!("//{}", index)
+            }
+        }
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -137,7 +150,7 @@ mod test {
         let dot = super::Substrate::new(0, "Polkadot", "DOT");
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = String::from("");
+        let path = dot.get_path(0, None);
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = dot.derive(seed, path).unwrap();

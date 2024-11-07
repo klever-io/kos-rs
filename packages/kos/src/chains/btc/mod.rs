@@ -5,8 +5,8 @@ use crate::crypto::bip32;
 use crate::crypto::hash::{ripemd160_digest, sha256_digest};
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use alloc::string::{String, ToString};
-use alloc::vec;
 use alloc::vec::Vec;
+use alloc::{format, vec};
 use bech32::{u5, Variant};
 
 pub struct BTC {
@@ -107,6 +107,13 @@ impl Chain for BTC {
         Ok(pvk.to_vec())
     }
 
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/84'/0'/0'/0/{}", index),
+        }
+    }
+
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         if private_key.len() != 32 {
             return Err(ChainError::InvalidPrivateKey);
@@ -160,13 +167,13 @@ mod test {
 
     #[test]
     fn test_derive() {
-        let menmonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = "m/84'/0'/0'/0/0".to_string();
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let expected =
             hex::decode("4604b4b710fe91f584fff084e1a9159fe4f8408fff380596a604948474ce4fa3")
                 .unwrap();
         let btc = BTC::new();
-        let seed = btc.mnemonic_to_seed(menmonic, "".to_string()).unwrap();
+        let path = btc.get_path(0, None);
+        let seed = btc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let res = btc.derive(seed, path).unwrap();
         assert_eq!(res, expected);
     }
@@ -184,11 +191,11 @@ mod test {
 
     #[test]
     fn test_get_addr_legacy() {
-        let menmonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let path = "m/44'/3'/0'/0/0".to_string();
 
         let btc = BTC::new_legacy_btc_based(0x1e, "DOGE", "Dogecoin");
-        let seed = btc.mnemonic_to_seed(menmonic, "".to_string()).unwrap();
+        let seed = btc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let pvk = btc.derive(seed, path).unwrap();
         let pbk = btc.get_pbk(pvk).unwrap();
         let addr = btc.get_address(pbk).unwrap();

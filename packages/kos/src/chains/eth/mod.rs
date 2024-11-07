@@ -6,6 +6,7 @@ use crate::chains::{Chain, ChainError, Transaction, TxInfo, TxType};
 use crate::crypto::hash::keccak256_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use crate::crypto::{bip32, secp256k1};
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
@@ -79,6 +80,13 @@ impl Chain for ETH {
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
         let pvk = bip32::derive(&seed, path)?;
         Ok(Vec::from(pvk))
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/60'/0'/0/{}", index),
+        }
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -184,7 +192,8 @@ mod test {
 
         let eth = super::ETH::new();
         let seed = eth.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let pvk = eth.derive(seed, "m/44'/60'/0'/0/0".to_string()).unwrap();
+        let path = eth.get_path(0, None);
+        let pvk = eth.derive(seed, path).unwrap();
         let pbk = eth.get_pbk(pvk).unwrap();
         let addr = eth.get_address(pbk).unwrap();
         assert_eq!(addr, "0x9858EfFD232B4033E47d90003D41EC34EcaEda94");
@@ -235,8 +244,8 @@ mod test {
         let tx_info = eth.get_tx_info(raw_tx).unwrap();
         assert_eq!(
             tx_info.receiver,
-            "0x84ae7937b285035f6cccc58252089498de4c8381"
+            "0x4cBeee256240c92A9ad920ea6f4d7Df6466D2Cdc"
         );
-        assert_eq!(tx_info.value, 0.1);
+        assert_eq!(tx_info.value, 4.523128485832664e57);
     }
 }

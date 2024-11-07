@@ -4,6 +4,7 @@ use crate::chains::{Chain, ChainError, Transaction};
 use crate::crypto::hash::keccak256_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use crate::crypto::{bip32, secp256k1};
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
@@ -114,5 +115,12 @@ impl Chain for MOVR {
         _raw_tx: Vec<u8>,
     ) -> Result<crate::chains::TxInfo, crate::chains::ChainError> {
         Err(ChainError::NotSupported)
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/60'/0'/0/{}", index), // Verify this path
+        }
     }
 }

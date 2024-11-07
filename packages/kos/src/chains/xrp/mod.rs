@@ -5,8 +5,8 @@ use crate::crypto::bip32;
 use crate::crypto::hash::{ripemd160_digest, sha256_digest};
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use alloc::string::String;
-use alloc::vec;
 use alloc::vec::Vec;
+use alloc::{format, vec};
 
 const XRP_ALPHA: &[u8; 58] = b"rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
 
@@ -38,6 +38,13 @@ impl Chain for XRP {
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
         let pvk = bip32::derive(&seed, path)?;
         Ok(pvk.to_vec())
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/144'/0'/0/{}", index),
+        }
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -107,7 +114,7 @@ mod test {
         let xrp = super::XRP::new();
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = String::from("m/44'/144'/0'/0/0");
+        let path = xrp.get_path(0, None);
 
         let seed = xrp.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = xrp.derive(seed, path).unwrap();

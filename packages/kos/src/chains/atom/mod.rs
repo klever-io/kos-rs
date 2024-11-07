@@ -3,6 +3,7 @@ use crate::chains::{Chain, ChainError, Transaction, TxInfo};
 use crate::crypto::hash::ripemd160_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use crate::crypto::{bip32, secp256k1};
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use bech32::{u5, Variant};
@@ -60,6 +61,13 @@ impl Chain for ATOM {
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
         let pvk = bip32::derive(&seed, path)?;
         Ok(Vec::from(pvk))
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/118'/0'/0/{}", index),
+        }
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -122,10 +130,10 @@ mod test {
     #[test]
     fn test_get_addr() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = "m/44'/118'/0'/0/0".to_string();
 
         let atom = ATOM::new();
         let seed = atom.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = atom.get_path(0, None);
         let pvk = atom.derive(seed, path).unwrap();
         let pbk = atom.get_pbk(pvk).unwrap();
         let addr = atom.get_address(pbk).unwrap();

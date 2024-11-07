@@ -6,6 +6,7 @@ use crate::chains::{util, Chain, ChainError, Transaction, TxInfo};
 use crate::crypto::bip32::{derive_ed25519_bip32, mnemonic_to_seed_ed25519_bip32};
 use crate::crypto::ed25519;
 use crate::crypto::ed25519::Ed25519Trait;
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
@@ -37,6 +38,13 @@ impl Chain for ADA {
         seed_arr.copy_from_slice(&seed[..]);
 
         Ok(derive_ed25519_bip32(seed_arr, path)?.to_vec())
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/1852'/1815'/0'/0/{}", index),
+        }
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -134,19 +142,19 @@ mod test {
     #[test]
     fn test_address() {
         let mnemonic =
-            "permit best kiwi blast purchase cook grab present have hurdle quarter steak"
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
                 .to_string();
         let ada = super::ADA {};
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let pvk = ada
-            .derive(seed, "m/1852'/1815'/0'/0/0".to_string())
-            .unwrap();
+        let path = ada.get_path(0, None);
+
+        let pvk = ada.derive(seed, path).unwrap();
         let pbk = ada.get_pbk(pvk).unwrap();
         let addr = ada.get_address(pbk).unwrap();
         assert_eq!(
             addr,
-            "addr1vywpa9tjxu68p0tll20gdcc2mlg2xwncn4jrzps4eup7jks08gtf2"
+            "addr1vy8ac7qqy0vtulyl7wntmsxc6wex80gvcyjy33qffrhm7ss7lxrqp"
         );
     }
 }

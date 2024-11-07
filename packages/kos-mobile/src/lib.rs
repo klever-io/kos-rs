@@ -58,23 +58,24 @@ fn generate_wallet_from_mnemonic(
     mnemonic: String,
     chain_id: i32,
     index: i32,
-    use_legacy_path: bool,
+    custom_path: Option<String>,
 ) -> Result<KOSAccount, KOSError> {
     if !validate_mnemonic(mnemonic.clone()) {
         return Err(KOSError::KOSDelegate("Invalid mnemonic".to_string()));
     }
     let chain = get_chain_by(chain_id)?;
-    let seed = chain.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
-    let private_key = chain.derive(seed, String::new()).unwrap();
+    let seed = chain.mnemonic_to_seed(mnemonic, String::from(""))?;
+    let path = chain.get_path(index as u32, custom_path);
+    let private_key = chain.derive(seed, path.clone())?;
 
-    let public_key = chain.get_pbk(private_key.clone()).unwrap();
+    let public_key = chain.get_pbk(private_key.clone())?;
 
     Ok(KOSAccount {
         chain_id,
         private_key: hex::encode(private_key),
         public_key: hex::encode(public_key.clone()),
         address: chain.get_address(public_key)?,
-        path: String::new(), // TODO: implement path
+        path,
     })
 }
 
@@ -92,7 +93,7 @@ fn generate_wallet_from_private_key(
         private_key: private_key.clone(),
         public_key: hex::encode(public_key.clone()),
         address,
-        path: String::new(), // TODO: implement path
+        path: String::new(),
     })
 }
 
@@ -187,7 +188,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 999;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
             Ok(_) => panic!("A error was expected but found a mnemonic"),
             Err(e) => {
                 if let KOSError::UnsupportedChain { id } = e {
@@ -204,7 +205,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 38;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
             Ok(account) => {
                 assert_eq!(
                     account.address,
@@ -227,7 +228,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon klv abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 38;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
             Ok(_) => panic!("A error was expected but found a account"),
             Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), " Invalid error"),
         }
@@ -346,14 +347,16 @@ mod tests {
     fn should_sign_raw_transaction() {
         let chain_id = 38;
 
-        let raw = "{\"RawData\":{\"BandwidthFee\":1000000,\"ChainID\":\"MTAwNDIw\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Version\":1}}";
+        let raw = hex::encode("{\"RawData\":{\"BandwidthFee\":1000000,\"ChainID\":\"MTAwNDIw\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Version\":1}}".as_bytes());
 
         let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            "permit best kiwi blast purchase cook grab present have hurdle quarter steak"
+                .to_string(),
             chain_id,
             0,
-            false
-        ).unwrap();
+            None,
+        )
+        .unwrap();
 
         let transaction = sign_transaction(account, raw.to_string()).unwrap();
 

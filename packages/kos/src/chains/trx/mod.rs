@@ -8,8 +8,8 @@ use crate::crypto::{bip32, secp256k1};
 use crate::protos::generated::trx::protocol;
 use crate::protos::generated::trx::protocol::transaction::contract::ContractType;
 use alloc::string::{String, ToString};
-use alloc::vec;
 use alloc::vec::Vec;
+use alloc::{format, vec};
 use prost::Message;
 
 const TRX_ADDR_PREFIX: u8 = 0x41;
@@ -79,6 +79,13 @@ impl Chain for TRX {
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
         let pvk = bip32::derive(&seed, path)?;
         Ok(Vec::from(pvk))
+    }
+
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/195'/0'/0/{}", index),
+        }
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -273,11 +280,11 @@ mod test {
     #[test]
     fn test_trx_derive() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = String::from("m/44'/195'/0'/0/0");
 
         let seed = crate::chains::trx::TRX {}
             .mnemonic_to_seed(mnemonic, String::from(""))
             .unwrap();
+        let path = crate::chains::trx::TRX {}.get_path(0, None);
         let pvk = crate::chains::trx::TRX {}.derive(seed, path).unwrap();
         assert_eq!(pvk.len(), 32);
         let pbk = crate::chains::trx::TRX {}.get_pbk(pvk).unwrap();

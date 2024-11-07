@@ -3,6 +3,7 @@ use crate::chains::{Chain, ChainError, Transaction, TxInfo};
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use crate::crypto::hash::sha3_digest;
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
@@ -30,6 +31,13 @@ impl Chain for APT {
         Ok(Vec::from(result))
     }
 
+    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
+        match custom_path {
+            Some(path) => path,
+            None => format!("m/44'/637'/0'/0'/{}'", index),
+        }
+    }
+
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         let mut pvk_bytes = private_key_from_vec(&private_key)?;
         let pbk = Ed25519::public_from_private(&pvk_bytes)?;
@@ -55,7 +63,11 @@ impl Chain for APT {
         Err(ChainError::NotSupported)
     }
 
-    fn sign_message(&self, _private_key: Vec<u8>, _message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        _private_key: Vec<u8>,
+        _message: Vec<u8>,
+    ) -> Result<Vec<u8>, ChainError> {
         Err(ChainError::NotSupported)
     }
 
