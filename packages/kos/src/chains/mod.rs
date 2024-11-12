@@ -242,7 +242,7 @@ pub trait Chain {
     fn get_decimals(&self) -> u32;
     fn mnemonic_to_seed(&self, mnemonic: String, password: String) -> Result<Vec<u8>, ChainError>;
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError>;
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String;
+    fn get_path(&self, index: u32, is_legacy: bool) -> String;
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError>;
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError>;
     fn sign_tx(&self, private_key: Vec<u8>, tx: Transaction) -> Result<Transaction, ChainError>;

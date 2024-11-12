@@ -36,11 +36,8 @@ impl Chain for EGLD {
         Ok(Vec::from(result))
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => format!("m/44'/508'/0'/0'/{}'", index),
-        }
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        format!("m/44'/508'/0'/0'/{}'", index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -96,7 +93,7 @@ mod test {
 
         let egld = super::EGLD {};
         let seed = egld.mnemonic_to_seed(mnemonic, String::new()).unwrap();
-        let path = egld.get_path(0, None);
+        let path = egld.get_path(0, false);
         let pvk = egld.derive(seed.clone(), path).unwrap();
         let pbk = egld.get_pbk(pvk.clone()).unwrap();
         let addr = egld.get_address(pbk.clone()).unwrap();

@@ -44,11 +44,8 @@ impl Chain for XRP {
         Ok(pvk.to_vec())
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => format!("m/44'/144'/0'/0/{}", index),
-        }
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        format!("m/44'/144'/0'/0/{}", index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -118,7 +115,7 @@ mod test {
         let xrp = super::XRP::new();
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = xrp.get_path(0, None);
+        let path = xrp.get_path(0, false);
 
         let seed = xrp.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = xrp.derive(seed, path).unwrap();

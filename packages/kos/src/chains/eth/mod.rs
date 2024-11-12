@@ -88,11 +88,8 @@ impl Chain for ETH {
         Ok(Vec::from(pvk))
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => format!("m/44'/60'/0'/0/{}", index),
-        }
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        format!("m/44'/60'/0'/0/{}", index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -198,7 +195,7 @@ mod test {
 
         let eth = super::ETH::new();
         let seed = eth.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let path = eth.get_path(0, None);
+        let path = eth.get_path(0, false);
         let pvk = eth.derive(seed, path).unwrap();
         let pbk = eth.get_pbk(pvk).unwrap();
         let addr = eth.get_address(pbk).unwrap();

@@ -38,11 +38,8 @@ impl Chain for BNB {
         Ok(pvk.to_vec())
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => format!("m/44'/714'/0'/0/{}", index),
-        }
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        format!("m/44'/714'/0'/0/{}", index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -109,7 +106,7 @@ mod test {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
 
         let seed = bnb.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let path = bnb.get_path(0, None);
+        let path = bnb.get_path(0, false);
         let pvk = bnb.derive(seed, path).unwrap();
         let pbk = bnb.get_pbk(pvk.clone()).unwrap();
 

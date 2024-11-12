@@ -62,16 +62,11 @@ impl Chain for Substrate {
         Ok(pvk.to_vec())
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => {
-                if index == 0 {
-                    return "".to_string();
-                }
-                format!("//{}", index)
-            }
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        if index == 0 {
+            return "".to_string();
         }
+        format!("//{}", index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -153,10 +148,10 @@ mod test {
 
     #[test]
     fn test_get_addr() {
-        let dot = super::Substrate::new(0, "Polkadot", "DOT");
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = dot.get_path(0, None);
+        let path = dot.get_path(0, false);
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = dot.derive(seed, path).unwrap();
@@ -167,7 +162,7 @@ mod test {
 
     #[test]
     fn test_sign_raw() {
-        let dot = super::Substrate::new(0, "Polkadot", "DOT");
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let path = String::from("");
@@ -180,7 +175,7 @@ mod test {
 
     #[test]
     fn sign_tx() {
-        let dot = super::Substrate::new(0, "Polkadot", "DOT");
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let path = String::from("");
@@ -191,7 +186,7 @@ mod test {
 
     #[test]
     fn test_get_tx_info() {
-        let dot = super::Substrate::new(0, "Polkadot", "DOT");
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
         let raw_data = "05030092fb4dc4e0790663aa4be18e6c49d62e8db091a6e1c4d0727c14906cf79f0f7a280000002b460f001900000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c391b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3".to_string();
 
         let raw_data_hex = hex::decode(raw_data).unwrap();

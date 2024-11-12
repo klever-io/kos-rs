@@ -59,12 +59,8 @@ impl Chain for KLV {
         Ok(Vec::from(result))
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        let mut path = format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, index);
-        if let Some(custom_path) = &custom_path {
-            path = custom_path.clone();
-        }
-        path
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -173,7 +169,7 @@ mod test {
     #[test]
     fn test_derive() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = crate::chains::klv::KLV {}.get_path(0, None);
+        let path = crate::chains::klv::KLV {}.get_path(0, false);
 
         let seed = crate::chains::klv::KLV {}
             .mnemonic_to_seed(mnemonic, String::new())

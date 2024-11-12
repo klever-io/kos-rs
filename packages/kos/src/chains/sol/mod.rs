@@ -35,11 +35,8 @@ impl Chain for SOL {
         Ok(Vec::from(result))
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => format!("m/44'/501'/0'/0'/{}'", index),
-        }
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        format!("m/44'/501'/0'/0'/{}'", index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -89,7 +86,7 @@ mod test {
 
         let sol = SOL {};
         let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let path = sol.get_path(0, None);
+        let path = sol.get_path(0, false);
         let pvk = sol.derive(seed, path).unwrap();
         let pbk = sol.get_pbk(pvk).unwrap();
         let addr = sol.get_address(pbk).unwrap();

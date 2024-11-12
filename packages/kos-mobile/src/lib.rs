@@ -67,14 +67,14 @@ fn generate_wallet_from_mnemonic(
     mnemonic: String,
     chain_id: u32,
     index: u32,
-    custom_path: Option<String>,
+    use_legacy_path: bool,
 ) -> Result<KOSAccount, KOSError> {
     if !validate_mnemonic(mnemonic.clone()) {
         return Err(KOSError::KOSDelegate("Invalid mnemonic".to_string()));
     }
     let chain = get_chain_by(chain_id)?;
     let seed = chain.mnemonic_to_seed(mnemonic, String::from(""))?;
-    let path = chain.get_path(index as u32, custom_path);
+    let path = chain.get_path(index, use_legacy_path);
     let private_key = chain.derive(seed, path.clone())?;
 
     let public_key = chain.get_pbk(private_key.clone())?;
@@ -212,7 +212,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 999;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
             Ok(_) => panic!("A error was expected but found a mnemonic"),
             Err(e) => {
                 if let KOSError::UnsupportedChain { id } = e {
@@ -229,7 +229,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 38;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
             Ok(account) => {
                 assert_eq!(
                     account.address,
@@ -252,7 +252,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon klv abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 38;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
             Ok(_) => panic!("A error was expected but found a account"),
             Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), " Invalid error"),
         }
@@ -264,7 +264,7 @@ mod tests {
         let index = 0;
 
         for chain_code in get_chains() {
-            match generate_wallet_from_mnemonic(mnemonic.clone(), chain_code, index, None) {
+            match generate_wallet_from_mnemonic(mnemonic.clone(), chain_code, index, false) {
                 Ok(account) => {
                     assert!(
                         !account.address.is_empty(),
@@ -366,7 +366,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            None,
+            false,
         )
         .unwrap();
 
@@ -396,7 +396,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            None
+            false
         ).unwrap();
 
         let signature = sign_message(account, message).unwrap();

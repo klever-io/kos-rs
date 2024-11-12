@@ -16,6 +16,8 @@ const TRX_ADDR_PREFIX: u8 = 0x41;
 const TRX_ADD_RAW_LEN: usize = 21;
 const TRX_ADD_SIZE: usize = 25;
 
+pub const BIP44_PATH: u32 = 195;
+
 const TRON_MESSAGE_PREFIX: &str = "\x19TRON Signed Message:\n";
 pub struct TRX {}
 
@@ -85,10 +87,11 @@ impl Chain for TRX {
         Ok(Vec::from(pvk))
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => format!("m/44'/195'/0'/0/{}", index),
+    fn get_path(&self, index: u32, is_legacy: bool) -> String {
+        if is_legacy {
+            format!("m/44'/{}'/{}'", BIP44_PATH, index)
+        } else {
+            format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index)
         }
     }
 
@@ -288,7 +291,7 @@ mod test {
         let seed = crate::chains::trx::TRX {}
             .mnemonic_to_seed(mnemonic, String::from(""))
             .unwrap();
-        let path = crate::chains::trx::TRX {}.get_path(0, None);
+        let path = crate::chains::trx::TRX {}.get_path(0, false);
         let pvk = crate::chains::trx::TRX {}.derive(seed, path).unwrap();
         assert_eq!(pvk.len(), 32);
         let pbk = crate::chains::trx::TRX {}.get_pbk(pvk).unwrap();

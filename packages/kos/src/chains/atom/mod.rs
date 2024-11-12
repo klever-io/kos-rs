@@ -67,11 +67,8 @@ impl Chain for ATOM {
         Ok(Vec::from(pvk))
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => format!("m/44'/118'/0'/0/{}", index),
-        }
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        format!("m/44'/118'/0'/0/{}", index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -137,7 +134,7 @@ mod test {
 
         let atom = ATOM::new();
         let seed = atom.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let path = atom.get_path(0, None);
+        let path = atom.get_path(0, false);
         let pvk = atom.derive(seed, path).unwrap();
         let pbk = atom.get_pbk(pvk).unwrap();
         let addr = atom.get_address(pbk).unwrap();

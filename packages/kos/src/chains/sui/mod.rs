@@ -35,11 +35,8 @@ impl Chain for SUI {
         Ok(Vec::from(result))
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => format!("m/44'/784'/0'/0'/{}'", index),
-        }
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        format!("m/44'/784'/0'/0'/{}'", index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -120,7 +117,7 @@ mod test {
 
         let sui = super::SUI {};
         let seed = sui.mnemonic_to_seed(mnemonic, String::new()).unwrap();
-        let path = sui.get_path(0, None);
+        let path = sui.get_path(0, false);
         let pvk = sui.derive(seed.clone(), path).unwrap();
         let pbk = sui.get_pbk(pvk.clone()).unwrap();
         let addr = sui.get_address(pbk.clone()).unwrap();

@@ -117,11 +117,8 @@ impl Chain for MOVR {
         Err(ChainError::NotSupported)
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => format!("m/44'/60'/0'/0/{}", index), // Verify this path
-        }
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        format!("m/44'/60'/0'/0/{}", index)
     }
 
     fn get_id(&self) -> u32 {

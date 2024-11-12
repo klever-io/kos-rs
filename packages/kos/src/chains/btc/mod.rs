@@ -110,11 +110,8 @@ impl Chain for BTC {
         Ok(pvk.to_vec())
     }
 
-    fn get_path(&self, index: u32, custom_path: Option<String>) -> String {
-        match custom_path {
-            Some(path) => path,
-            None => format!("m/84'/0'/0'/0/{}", index),
-        }
+    fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        format!("m/84'/0'/0'/0/{}", index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -175,7 +172,7 @@ mod test {
             hex::decode("4604b4b710fe91f584fff084e1a9159fe4f8408fff380596a604948474ce4fa3")
                 .unwrap();
         let btc = BTC::new();
-        let path = btc.get_path(0, None);
+        let path = btc.get_path(0, false);
         let seed = btc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let res = btc.derive(seed, path).unwrap();
         assert_eq!(res, expected);
