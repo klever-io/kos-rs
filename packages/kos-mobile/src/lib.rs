@@ -161,6 +161,15 @@ fn sign_transaction(account: KOSAccount, raw: String) -> Result<KOSTransaction, 
     })
 }
 
+#[uniffi::export]
+fn sign_message(account: KOSAccount, message: String) -> Result<Vec<u8>, KOSError> {
+    let chain = get_chain_by(account.chain_id)?;
+    let message = message.as_bytes();
+    let signature =
+        chain.sign_message(hex::decode(account.private_key).unwrap(), message.to_vec())?;
+    Ok(signature)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::*;
@@ -364,8 +373,7 @@ mod tests {
         let raw = hex::encode("{\"RawData\":{\"BandwidthFee\":1000000,\"ChainID\":\"MTAwNDIw\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Version\":1}}".as_bytes());
 
         let account = generate_wallet_from_mnemonic(
-            "permit best kiwi blast purchase cook grab present have hurdle quarter steak"
-                .to_string(),
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
             None,
@@ -380,12 +388,28 @@ mod tests {
             "The sender doesn't match"
         );
         assert_eq!(
-            transaction.raw, "{\"RawData\":{\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Contract\":[{\"Parameter\":{\"typeUrl\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"BandwidthFee\":1000000,\"Version\":1,\"ChainID\":\"MTAwNDIw\"},\"Signature\":[\"gUZDIPSxSq40QjTBM38/DAAuWTm7D1THo2KWVqhiTYCum5O+OSWwTYlgIU0RgJ6ungg1cuCJPcmYWNgjDKA/DA==\"]}",
+            transaction.raw, "7b22426c6f636b223a6e756c6c2c2252617744617461223a7b2242616e647769647468466565223a313030303030302c22436861696e4944223a224d5441774e444977222c22436f6e7472616374223a5b7b22506172616d65746572223a7b22747970655f75726c223a22747970652e676f6f676c65617069732e636f6d2f70726f746f2e5472616e73666572436f6e7472616374222c2276616c7565223a224369417973796730416a38786a2f72723558475536694a2b41544932396d6e52485330573042724331767a304342674b227d7d5d2c2244617461223a6e756c6c2c224b417070466565223a3530303030302c224b6461466565223a6e756c6c2c224e6f6e6365223a33392c225065726d697373696f6e4944223a6e756c6c2c2253656e646572223a22354273794f6c6366325658676e4e5157595039455a6350305270504966792b75704b44385149636e794f6f3d222c2256657273696f6e223a317d2c225265636569707473223a6e756c6c2c22526573756c74223a6e756c6c2c22526573756c74436f6465223a6e756c6c2c225369676e6174757265223a5b2267555a444950537853713430516a54424d33382f4441417557546d37443154486f324b5756716869545943756d354f2b4f53577754596c6749553052674a36756e6767316375434a50636d59574e676a444b412f44413d3d225d7d",
             "The raw doesn't match"
         );
         assert_eq!(
-            transaction.signature, "gUZDIPSxSq40QjTBM38/DAAuWTm7D1THo2KWVqhiTYCum5O+OSWwTYlgIU0RgJ6ungg1cuCJPcmYWNgjDKA/DA==",
+            transaction.signature, "81464320f4b14aae344234c1337f3f0c002e5939bb0f54c7a3629656a8624d80ae9b93be3925b04d8960214d11809eae9e083572e0893dc99858d8230ca03f0c",
             "The signature doesn't match"
         );
+    }
+
+    #[test]
+    fn should_sign_message() {
+        let chain_id = 38;
+        let message = "Hello World".to_string();
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            None
+        ).unwrap();
+
+        let signature = sign_message(account, message).unwrap();
+        assert_eq!(signature.len(), 64, "The signature length doesn't match");
     }
 }
