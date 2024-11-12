@@ -236,6 +236,7 @@ impl Transaction {
 }
 
 pub trait Chain {
+    fn get_id(&self) -> u32;
     fn get_name(&self) -> &str;
     fn get_symbol(&self) -> &str;
     fn get_decimals(&self) -> u32;
@@ -250,82 +251,158 @@ pub trait Chain {
     fn get_tx_info(&self, raw_tx: Vec<u8>) -> Result<TxInfo, ChainError>;
 }
 
-pub fn get_chain_by_id(id: u32) -> Option<Box<dyn Chain>> {
-    match id {
-        constants::ETH => Some(Box::new(eth::ETH::new())),
-        constants::BSC => Some(Box::new(eth::ETH::new_eth_based(
-            56,
-            "BSC",
-            "BnbSmartChain",
-        ))),
-        constants::POLYGON => Some(Box::new(eth::ETH::new_eth_based(137, "MATIC", "Polygon"))),
-        constants::HT => Some(Box::new(eth::ETH::new_eth_based(128, "HT", "Huobi"))),
-        constants::SYS_NEVM => Some(Box::new(eth::ETH::new_eth_based(
-            57,
-            "SYS_NEVM",
-            "Syscoin Nevm",
-        ))),
-        constants::TRX => Some(Box::new(trx::TRX {})),
-        constants::KLV => Some(Box::new(klv::KLV {})),
-        constants::BTC => Some(Box::new(btc::BTC::new())),
-        constants::DOT => Some(Box::new(substrate::Substrate::new(0, "DOT", "Polkadot"))),
-        constants::KSM => Some(Box::new(substrate::Substrate::new(2, "KSM", "Kusama"))),
-        constants::LTC => Some(Box::new(btc::BTC::new_btc_based("ltc", "LTC", "Litecoin"))),
-        constants::REEF => Some(Box::new(substrate::Substrate::new(42, "REEF", "Reef"))),
-        constants::SDN => Some(Box::new(substrate::Substrate::new(5, "SDN", "Shiden"))),
-        constants::ASTR => Some(Box::new(substrate::Substrate::new(5, "ASTR", "Astar"))),
-        constants::CFG => Some(Box::new(substrate::Substrate::new(36, "CFG", "Centrifuge"))),
-        constants::SYS => Some(Box::new(btc::BTC::new_btc_based("sys", "SYS", "Syscoin"))),
-        constants::KILT => Some(Box::new(substrate::Substrate::new(38, "KILT", "KILT"))),
-        constants::ALTAIR => Some(Box::new(substrate::Substrate::new(136, "ALTAIR", "Altair"))),
-        constants::DOGE => Some(Box::new(btc::BTC::new_legacy_btc_based(
-            0x1E, "DOGE", "Dogecoin",
-        ))),
-        constants::DASH => Some(Box::new(btc::BTC::new_legacy_btc_based(
-            0x4C, "DASH", "Dash",
-        ))),
-        constants::XRP => Some(Box::new(xrp::XRP::new())),
-        constants::DGB => Some(Box::new(btc::BTC::new_btc_based("dgb", "DGB", "Digibyte"))),
-        constants::COSMOS => Some(Box::new(atom::ATOM::new())),
-        constants::CELESTIA => Some(Box::new(atom::ATOM::new_cosmos_based(
-            "celestia", "celestia", "Celestia", "TIA",
-        ))),
-        constants::CUDOS => Some(Box::new(atom::ATOM::new_cosmos_based(
-            "cudos", "cudos-1", "Cudos", "CUDOS",
-        ))),
-        constants::AURA => Some(Box::new(atom::ATOM::new_cosmos_based(
-            "aura", "xstaxy-1", "Aura", "AURA",
-        ))),
-        constants::ICP => Some(Box::new(icp::ICP {})),
-        constants::SOL => Some(Box::new(sol::SOL {})),
-        constants::MOVR => Some(Box::new(movr::MOVR::new())),
-        constants::GLMR => Some(Box::new(movr::MOVR::new_glmr())),
-        constants::BNB => Some(Box::new(bnb::BNB {})),
-        constants::BCH => Some(Box::new(bch::BCH {})),
-        constants::ADA => Some(Box::new(ada::ADA {})),
-        constants::SUI => Some(Box::new(sui::SUI {})),
-        constants::APT => Some(Box::new(apt::APT {})),
-        constants::AVAIL => Some(Box::new(substrate::Substrate::new(42, "AVAIL", "Avail"))),
-        constants::ROLLUX => Some(Box::new(eth::ETH::new_eth_based(570, "ROLLUX", "Rollux"))),
-        constants::AVAX => Some(Box::new(eth::ETH::new_eth_based(
-            43114,
-            "AVAX",
-            "Avalanche",
-        ))),
-        constants::ARB => Some(Box::new(eth::ETH::new_eth_based(42161, "ARB", "Arbitrum"))),
-        constants::BASE => Some(Box::new(eth::ETH::new_eth_based(8453, "BASE", "Base"))),
-        constants::NEAR => Some(Box::new(eth::ETH::new_eth_based(397, "NEAR", "Near"))),
-        constants::FTM => Some(Box::new(eth::ETH::new_eth_based(250, "FTM", "Fantom"))),
-        constants::CHZ => Some(Box::new(eth::ETH::new_eth_based(88888, "CHZ", "Chiliz"))),
-        constants::OP => Some(Box::new(eth::ETH::new_eth_based(10, "OP", "Optimism"))),
-        constants::POLYGON_ZKEVM => Some(Box::new(eth::ETH::new_eth_based(
-            1101,
-            "ZKEVM",
-            "Polygon zkEVM",
-        ))),
-        constants::STOLZ => Some(Box::new(eth::ETH::new_eth_based(2344, "STOLZ", "Stolz"))),
-        _ => None,
+type ChainFactory = fn() -> Box<dyn Chain>;
+
+struct ChainRegistry {
+    registry: &'static [(u32, ChainFactory)],
+}
+
+impl ChainRegistry {
+    fn new() -> Self {
+        static REGISTRY: [(u32, ChainFactory); 46] = [
+            (constants::ETH, || Box::new(eth::ETH::new())),
+            (constants::BSC, || {
+                Box::new(eth::ETH::new_eth_based(26, 56, "BSC", "BnbSmartChain"))
+            }),
+            (constants::POLYGON, || {
+                Box::new(eth::ETH::new_eth_based(28, 137, "MATIC", "Polygon"))
+            }),
+            (constants::HT, || {
+                Box::new(eth::ETH::new_eth_based(30, 128, "HT", "Huobi"))
+            }),
+            (constants::SYS_NEVM, || {
+                Box::new(eth::ETH::new_eth_based(37, 57, "SYS_NEVM", "Syscoin Nevm"))
+            }),
+            (constants::TRX, || Box::new(trx::TRX {})),
+            (constants::KLV, || Box::new(klv::KLV {})),
+            (constants::BTC, || Box::new(btc::BTC::new())),
+            (constants::DOT, || {
+                Box::new(substrate::Substrate::new(21, 0, "DOT", "Polkadot"))
+            }),
+            (constants::KSM, || {
+                Box::new(substrate::Substrate::new(27, 2, "KSM", "Kusama"))
+            }),
+            (constants::LTC, || {
+                Box::new(btc::BTC::new_btc_based("ltc", "LTC", "Litecoin"))
+            }),
+            (constants::REEF, || {
+                Box::new(substrate::Substrate::new(29, 42, "REEF", "Reef"))
+            }),
+            (constants::SDN, || {
+                Box::new(substrate::Substrate::new(35, 5, "SDN", "Shiden"))
+            }),
+            (constants::ASTR, || {
+                Box::new(substrate::Substrate::new(36, 5, "ASTR", "Astar"))
+            }),
+            (constants::CFG, || {
+                Box::new(substrate::Substrate::new(47, 36, "CFG", "Centrifuge"))
+            }),
+            (constants::SYS, || {
+                Box::new(btc::BTC::new_btc_based("sys", "SYS", "Syscoin"))
+            }),
+            (constants::KILT, || {
+                Box::new(substrate::Substrate::new(44, 38, "KILT", "KILT"))
+            }),
+            (constants::ALTAIR, || {
+                Box::new(substrate::Substrate::new(42, 136, "ALTAIR", "Altair"))
+            }),
+            (constants::DOGE, || {
+                Box::new(btc::BTC::new_legacy_btc_based(0x1E, "DOGE", "Dogecoin"))
+            }),
+            (constants::DASH, || {
+                Box::new(btc::BTC::new_legacy_btc_based(0x4C, "DASH", "Dash"))
+            }),
+            (constants::XRP, || Box::new(xrp::XRP::new())),
+            (constants::DGB, || {
+                Box::new(btc::BTC::new_btc_based("dgb", "DGB", "Digibyte"))
+            }),
+            (constants::COSMOS, || Box::new(atom::ATOM::new())),
+            (constants::CELESTIA, || {
+                Box::new(atom::ATOM::new_cosmos_based(
+                    "celestia", "celestia", "Celestia", "TIA",
+                ))
+            }),
+            (constants::CUDOS, || {
+                Box::new(atom::ATOM::new_cosmos_based(
+                    "cudos", "cudos-1", "Cudos", "CUDOS",
+                ))
+            }),
+            (constants::AURA, || {
+                Box::new(atom::ATOM::new_cosmos_based(
+                    "aura", "xstaxy-1", "Aura", "AURA",
+                ))
+            }),
+            (constants::ICP, || Box::new(icp::ICP {})),
+            (constants::SOL, || Box::new(sol::SOL {})),
+            (constants::MOVR, || Box::new(movr::MOVR::new())),
+            (constants::GLMR, || Box::new(movr::MOVR::new_glmr())),
+            (constants::BNB, || Box::new(bnb::BNB {})),
+            (constants::BCH, || Box::new(bch::BCH {})),
+            (constants::ADA, || Box::new(ada::ADA {})),
+            (constants::SUI, || Box::new(sui::SUI {})),
+            (constants::APT, || Box::new(apt::APT {})),
+            (constants::AVAIL, || {
+                Box::new(substrate::Substrate::new(62, 42, "AVAIL", "Avail"))
+            }),
+            (constants::ROLLUX, || {
+                Box::new(eth::ETH::new_eth_based(63, 570, "ROLLUX", "Rollux"))
+            }),
+            (constants::AVAX, || {
+                Box::new(eth::ETH::new_eth_based(39, 43114, "AVAX", "Avalanche"))
+            }),
+            (constants::ARB, || {
+                Box::new(eth::ETH::new_eth_based(57, 42161, "ARB", "Arbitrum"))
+            }),
+            (constants::BASE, || {
+                Box::new(eth::ETH::new_eth_based(60, 8453, "BASE", "Base"))
+            }),
+            (constants::NEAR, || {
+                Box::new(eth::ETH::new_eth_based(64, 397, "NEAR", "Near"))
+            }),
+            (constants::FTM, || {
+                Box::new(eth::ETH::new_eth_based(54, 250, "FTM", "Fantom"))
+            }),
+            (constants::CHZ, || {
+                Box::new(eth::ETH::new_eth_based(61, 88888, "CHZ", "Chiliz"))
+            }),
+            (constants::OP, || {
+                Box::new(eth::ETH::new_eth_based(53, 10, "OP", "Optimism"))
+            }),
+            (constants::POLYGON_ZKEVM, || {
+                Box::new(eth::ETH::new_eth_based(52, 1101, "ZKEVM", "Polygon zkEVM"))
+            }),
+            (constants::STOLZ, || {
+                Box::new(eth::ETH::new_eth_based(67, 2344, "STOLZ", "Stolz"))
+            }),
+        ];
+
+        Self {
+            registry: &REGISTRY,
+        }
     }
+
+    fn get_chain_by_id(&self, id: u32) -> Option<Box<dyn Chain>> {
+        for &(chain_id, factory) in self.registry {
+            if chain_id == id {
+                return Some(factory());
+            }
+        }
+        None
+    }
+
+    fn get_chain_by_base_id(&self, base_id: u32) -> Option<Box<dyn Chain>> {
+        for &(_, factory) in self.registry {
+            let chain = factory();
+            if chain.get_id() == base_id {
+                return Some(chain);
+            }
+        }
+        None
+    }
+}
+
+pub fn get_chain_by_id(id: u32) -> Option<Box<dyn Chain>> {
+    ChainRegistry::new().get_chain_by_id(id)
 }
 
 pub enum CustomChainType {
@@ -339,6 +416,7 @@ pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
     return match params {
         CustomChainType::NotCustom(c) => get_chain_by_id(c),
         CustomChainType::CustomEth(chaincode) => Some(Box::new(eth::ETH::new_eth_based(
+            0,
             chaincode,
             format!("ETH {}", chaincode).as_str(),
             format!("Eth Based {}", chaincode).as_str(),
@@ -346,4 +424,8 @@ pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
         CustomChainType::CustomSubstrate(_) => None,
         CustomChainType::CustomCosmos(_) => None,
     };
+}
+
+pub fn get_chain_by_base_id(base_id: u32) -> Option<Box<dyn Chain>> {
+    ChainRegistry::new().get_chain_by_base_id(base_id)
 }

@@ -11,6 +11,10 @@ use bech32::{u5, Variant};
 pub struct EGLD {}
 
 impl Chain for EGLD {
+    fn get_id(&self) -> u32 {
+        5
+    }
+
     fn get_name(&self) -> &str {
         "Elrond"
     }

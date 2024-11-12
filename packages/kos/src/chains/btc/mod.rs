@@ -86,6 +86,9 @@ impl BTC {
 }
 
 impl Chain for BTC {
+    fn get_id(&self) -> u32 {
+        2
+    }
     fn get_name(&self) -> &str {
         self.name.as_str()
     }

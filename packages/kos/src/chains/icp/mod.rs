@@ -14,6 +14,10 @@ const ACCOUNT_ID_BYTE: u8 = 0x0A;
 pub struct ICP {}
 
 impl Chain for ICP {
+    fn get_id(&self) -> u32 {
+        31
+    }
+
     fn get_name(&self) -> &str {
         "Internet Computer"
     }

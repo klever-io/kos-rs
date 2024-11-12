@@ -34,6 +34,10 @@ impl KLV {
 }
 
 impl Chain for KLV {
+    fn get_id(&self) -> u32 {
+        38
+    }
+
     fn get_name(&self) -> &str {
         "Klever"
     }

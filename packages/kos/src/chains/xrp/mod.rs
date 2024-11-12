@@ -19,6 +19,10 @@ impl XRP {
 }
 
 impl Chain for XRP {
+    fn get_id(&self) -> u32 {
+        4
+    }
+
     fn get_name(&self) -> &str {
         "Ripple"
     }

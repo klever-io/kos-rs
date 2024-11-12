@@ -123,4 +123,8 @@ impl Chain for MOVR {
             None => format!("m/44'/60'/0'/0/{}", index), // Verify this path
         }
     }
+
+    fn get_id(&self) -> u32 {
+        32
+    }
 }

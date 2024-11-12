@@ -10,6 +10,10 @@ use alloc::vec::Vec;
 pub struct SOL {}
 
 impl Chain for SOL {
+    fn get_id(&self) -> u32 {
+        40
+    }
+
     fn get_name(&self) -> &str {
         "Solana"
     }

@@ -42,6 +42,10 @@ impl ATOM {
 }
 
 impl Chain for ATOM {
+    fn get_id(&self) -> u32 {
+        7
+    }
+
     fn get_name(&self) -> &str {
         self.name.as_str()
     }

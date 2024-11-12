@@ -10,6 +10,10 @@ use alloc::vec::Vec;
 pub struct SUI {}
 
 impl Chain for SUI {
+    fn get_id(&self) -> u32 {
+        51
+    }
+
     fn get_name(&self) -> &str {
         "Sui"
     }

@@ -1,6 +1,6 @@
 use hex::FromHexError;
 use hex::ToHex;
-use kos::chains::{get_chain_by_id, Chain, ChainError, Transaction};
+use kos::chains::{get_chain_by_base_id, get_chain_by_id, Chain, ChainError, Transaction};
 
 uniffi::setup_scaffolding!();
 
@@ -119,8 +119,8 @@ fn decrypt(data: String, password: String) -> Result<String, KOSError> {
 
 fn get_chain_by(id: i32) -> Result<Box<dyn Chain>, KOSError> {
     let id_u8 = u32::try_from(id).map_err(|_| KOSError::UnsupportedChain { id: id.to_string() })?;
-    let chain =
-        get_chain_by_id(id_u8).ok_or_else(|| KOSError::UnsupportedChain { id: id.to_string() })?;
+    let chain = get_chain_by_base_id(id_u8)
+        .ok_or_else(|| KOSError::UnsupportedChain { id: id.to_string() })?;
 
     Ok(chain)
 }

@@ -13,6 +13,7 @@ use alloc::vec::Vec;
 pub(crate) const ETH_ADDR_SIZE: usize = 20;
 const ETH_MESSAGE_PREFIX: &[u8; 26] = b"\x19Ethereum Signed Message:\n";
 pub struct ETH {
+    pub id: u32,
     pub chaincode: u32,
     pub symbol: String,
     pub name: String,
@@ -20,11 +21,12 @@ pub struct ETH {
 
 impl ETH {
     pub fn new() -> Self {
-        ETH::new_eth_based(1, "ETH", "Ethereum")
+        ETH::new_eth_based(3, 1, "ETH", "Ethereum")
     }
 
-    pub fn new_eth_based(chaincode: u32, symbol: &str, name: &str) -> Self {
+    pub fn new_eth_based(id: u32, chaincode: u32, symbol: &str, name: &str) -> Self {
         ETH {
+            id,
             chaincode,
             symbol: symbol.to_string(),
             name: name.to_string(),
@@ -61,6 +63,10 @@ impl ETH {
 }
 
 impl Chain for ETH {
+    fn get_id(&self) -> u32 {
+        self.id
+    }
+
     fn get_name(&self) -> &str {
         return self.name.as_str();
     }
@@ -223,7 +229,7 @@ mod test {
         let raw_tx = hex::decode("b87602f8730182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac0808080").unwrap();
         let pvk = hex::decode("1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727")
             .unwrap();
-        let eth = super::ETH::new_eth_based(56, "ETH", "Ethereum");
+        let eth = super::ETH::new_eth_based(3, 56, "ETH", "Ethereum");
 
         let tx = crate::chains::Transaction {
             raw_data: raw_tx,

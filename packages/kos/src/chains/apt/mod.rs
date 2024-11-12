@@ -10,6 +10,10 @@ use alloc::vec::Vec;
 pub struct APT {}
 
 impl Chain for APT {
+    fn get_id(&self) -> u32 {
+        50
+    }
+
     fn get_name(&self) -> &str {
         "Aptos"
     }

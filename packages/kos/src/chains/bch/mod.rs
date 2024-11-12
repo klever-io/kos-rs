@@ -73,6 +73,9 @@ impl BCH {
 }
 
 impl Chain for BCH {
+    fn get_id(&self) -> u32 {
+        18
+    }
     fn get_name(&self) -> &str {
         "Bitcoin Cash"
     }

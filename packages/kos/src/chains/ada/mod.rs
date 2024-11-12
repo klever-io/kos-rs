@@ -13,6 +13,10 @@ use alloc::vec::Vec;
 pub struct ADA {}
 
 impl Chain for ADA {
+    fn get_id(&self) -> u32 {
+        20
+    }
+
     fn get_name(&self) -> &str {
         "Cardano"
     }

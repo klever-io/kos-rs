@@ -19,14 +19,16 @@ const IDENTIFIER_LOWER_PREFIX: u8 = 0x40;
 const SUBSTRATE_NETWORK_PREFIX: &str = "SS58PRE";
 
 pub struct Substrate {
+    id: u32,
     network_id: u16,
     name: String,
     symbol: String,
 }
 
 impl Substrate {
-    pub fn new(network_id: u16, name: &str, symbol: &str) -> Self {
+    pub fn new(id: u32, network_id: u16, name: &str, symbol: &str) -> Self {
         Self {
+            id,
             network_id,
             name: name.to_string(),
             symbol: symbol.to_string(),
@@ -35,6 +37,10 @@ impl Substrate {
 }
 
 impl Chain for Substrate {
+    fn get_id(&self) -> u32 {
+        self.id
+    }
+
     fn get_name(&self) -> &str {
         self.name.as_str()
     }

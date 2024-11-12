@@ -60,6 +60,10 @@ impl TRX {
 }
 
 impl Chain for TRX {
+    fn get_id(&self) -> u32 {
+        1
+    }
+
     fn get_name(&self) -> &str {
         return "TRON";
     }

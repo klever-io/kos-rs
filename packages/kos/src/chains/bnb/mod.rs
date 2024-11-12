@@ -13,6 +13,10 @@ const BNB_PREFIX: &str = "bnb";
 pub struct BNB {}
 
 impl Chain for BNB {
+    fn get_id(&self) -> u32 {
+        17
+    }
+
     fn get_name(&self) -> &str {
         "Binance"
     }
