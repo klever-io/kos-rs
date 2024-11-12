@@ -1,6 +1,9 @@
 use hex::FromHexError;
 use hex::ToHex;
 use kos::chains::{get_chain_by_base_id, get_chain_by_id, Chain, ChainError, Transaction};
+use kos_crypto::cipher;
+use kos_crypto::cipher::CipherAlgo;
+use kos_types::error::Error as KosError;
 
 uniffi::setup_scaffolding!();
 
@@ -23,6 +26,12 @@ impl From<ChainError> for KOSError {
 impl From<FromHexError> for KOSError {
     fn from(err: FromHexError) -> Self {
         KOSError::HexDecode(err.to_string())
+    }
+}
+
+impl From<KosError> for KOSError {
+    fn from(err: KosError) -> Self {
+        KOSError::KOSDelegate(err.to_string())
     }
 }
 
@@ -99,22 +108,27 @@ fn generate_wallet_from_private_key(
 
 #[uniffi::export]
 fn encrypt_with_gmc(data: String, password: String) -> Result<String, KOSError> {
-    todo!()
+    let encrypted_data = CipherAlgo::GMC.encrypt(data.as_bytes(), password.as_str())?;
+    Ok(encrypted_data.encode_hex())
 }
 
 #[uniffi::export]
 fn encrypt_with_cbc(data: String, password: String) -> Result<String, KOSError> {
-    todo!()
+    let encrypted_data = CipherAlgo::CBC.encrypt(data.as_bytes(), password.as_str())?;
+    Ok(encrypted_data.encode_hex())
 }
 
 #[uniffi::export]
 fn encrypt_with_cfb(data: String, password: String) -> Result<String, KOSError> {
-    todo!()
+    let encrypted_data = CipherAlgo::CFB.encrypt(data.as_bytes(), password.as_str())?;
+    Ok(encrypted_data.encode_hex())
 }
 
 #[uniffi::export]
 fn decrypt(data: String, password: String) -> Result<String, KOSError> {
-    todo!()
+    let data_in_byte = hex::decode(data)?;
+    let decrypted_data = cipher::decrypt(&data_in_byte, password.as_str())?;
+    Ok(String::from_utf8_lossy(&decrypted_data).to_string())
 }
 
 fn get_chain_by(id: i32) -> Result<Box<dyn Chain>, KOSError> {

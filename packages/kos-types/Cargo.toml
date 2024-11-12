@@ -1,0 +1,30 @@
+[package]
+name = "kos-types"
+version = { workspace = true }
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+
+[features]
+alloc = ["hex/alloc"]
+serde = ["dep:serde", "alloc"]
+std = ["alloc", "serde?/std"]
+random = ["rand"]
+
+[dependencies]
+rand = { workspace = true, optional = true }
+coins-bip32 = { workspace = true }
+coins-bip39 = { workspace = true }
+secp256k1 = { workspace = true, features = ["recovery", "rand"] }
+ed25519-dalek = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true, features = ["derive", "alloc"], optional = true }
+serde_json = { workspace = true }
+hex = { workspace = true }
+reqwest = { workspace = true, default-features = false }
+wasm-bindgen = { workspace = true }
+num-bigint = "0.4"
+num-traits = "0.2"
