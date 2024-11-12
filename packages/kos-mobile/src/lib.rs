@@ -1,6 +1,6 @@
 use hex::FromHexError;
 use hex::ToHex;
-use kos::chains::{get_chain_by_base_id, get_chain_by_id, Chain, ChainError, Transaction};
+use kos::chains::{get_chain_by_base_id, Chain, ChainError, Transaction};
 use kos_crypto::cipher;
 use kos_crypto::cipher::CipherAlgo;
 use kos_types::error::Error as KosError;
@@ -37,7 +37,7 @@ impl From<KosError> for KOSError {
 
 #[derive(uniffi::Record)]
 struct KOSAccount {
-    pub chain_id: i32,
+    pub chain_id: u32,
     pub private_key: String,
     pub public_key: String,
     pub address: String,
@@ -46,7 +46,7 @@ struct KOSAccount {
 
 #[derive(uniffi::Record)]
 struct KOSTransaction {
-    pub chain_id: i32,
+    pub chain_id: u32,
     pub raw: String,
     pub sender: String,
     pub signature: String,
@@ -65,8 +65,8 @@ fn validate_mnemonic(mnemonic: String) -> bool {
 #[uniffi::export]
 fn generate_wallet_from_mnemonic(
     mnemonic: String,
-    chain_id: i32,
-    index: i32,
+    chain_id: u32,
+    index: u32,
     custom_path: Option<String>,
 ) -> Result<KOSAccount, KOSError> {
     if !validate_mnemonic(mnemonic.clone()) {
@@ -90,7 +90,7 @@ fn generate_wallet_from_mnemonic(
 
 #[uniffi::export]
 fn generate_wallet_from_private_key(
-    chain_id: i32,
+    chain_id: u32,
     private_key: String,
 ) -> Result<KOSAccount, KOSError> {
     let chain = get_chain_by(chain_id)?;
@@ -131,7 +131,7 @@ fn decrypt(data: String, password: String) -> Result<String, KOSError> {
     Ok(String::from_utf8_lossy(&decrypted_data).to_string())
 }
 
-fn get_chain_by(id: i32) -> Result<Box<dyn Chain>, KOSError> {
+fn get_chain_by(id: u32) -> Result<Box<dyn Chain>, KOSError> {
     let id_u8 = u32::try_from(id).map_err(|_| KOSError::UnsupportedChain { id: id.to_string() })?;
     let chain = get_chain_by_base_id(id_u8)
         .ok_or_else(|| KOSError::UnsupportedChain { id: id.to_string() })?;
@@ -173,6 +173,7 @@ fn sign_message(account: KOSAccount, message: String) -> Result<Vec<u8>, KOSErro
 #[cfg(test)]
 mod tests {
     use crate::*;
+    use kos::chains::get_chains;
 
     #[test]
     fn should_generate_mnemonic() {
@@ -258,40 +259,29 @@ mod tests {
     }
 
     #[test]
-    // fn should_get_all_supported_chains_account_from_mnemonic() {
-    //     let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-    //     let index = 0;
-    //     for (&chain_code, _) in Chain::get_chains().iter() {
-    //         println!("code = {}", chain_code)
-    //     }
-    //     for (&chain_code, _) in Chain::get_chains().iter() {
-    //         match generate_wallet_from_mnemonic(
-    //             mnemonic.clone(),
-    //             i32::from(chain_code),
-    //             index,
-    //             false,
-    //         ) {
-    //             Ok(account) => {
-    //                 assert!(
-    //                     !account.address.is_empty(),
-    //                     "The address for chain {} is empty",
-    //                     chain_code
-    //                 );
-    //                 assert!(
-    //                     !account.private_key.is_empty(),
-    //                     "The private_key for chain {} is empty",
-    //                     chain_code
-    //                 );
-    //                 assert_eq!(
-    //                     account.chain_id,
-    //                     i32::from(chain_code),
-    //                     "The chain_id doesn't match"
-    //                 );
-    //             }
-    //             Err(e) => panic!("unexpected error! {}", e.to_string()),
-    //         }
-    //     }
-    // }
+    fn should_get_all_supported_chains_account_from_mnemonic() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let index = 0;
+
+        for chain_code in get_chains() {
+            match generate_wallet_from_mnemonic(mnemonic.clone(), chain_code, index, None) {
+                Ok(account) => {
+                    assert!(
+                        !account.address.is_empty(),
+                        "The address for chain {} is empty",
+                        chain_code
+                    );
+                    assert!(
+                        !account.private_key.is_empty(),
+                        "The private_key for chain {} is empty",
+                        chain_code
+                    );
+                    assert_eq!(account.chain_id, chain_code, "The chain_id doesn't match");
+                }
+                Err(e) => panic!("unexpected error! {}", e.to_string()),
+            }
+        }
+    }
     #[test]
     fn should_get_account_from_private_key() {
         let private_key =

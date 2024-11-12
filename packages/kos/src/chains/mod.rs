@@ -399,6 +399,15 @@ impl ChainRegistry {
         }
         None
     }
+
+    fn get_chains(&self) -> Vec<u32> {
+        let mut ids = Vec::new();
+        for &(_, factory) in self.registry {
+            let chain = factory();
+            ids.push(chain.get_id());
+        }
+        ids
+    }
 }
 
 pub fn get_chain_by_id(id: u32) -> Option<Box<dyn Chain>> {
@@ -428,4 +437,8 @@ pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
 
 pub fn get_chain_by_base_id(base_id: u32) -> Option<Box<dyn Chain>> {
     ChainRegistry::new().get_chain_by_base_id(base_id)
+}
+
+pub fn get_chains() -> Vec<u32> {
+    ChainRegistry::new().get_chains()
 }
