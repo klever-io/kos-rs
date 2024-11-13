@@ -10,6 +10,7 @@ use alloc::{format, vec};
 use bech32::{u5, Variant};
 
 pub struct BTC {
+    pub id: u32,
     pub addr_prefix: String,
     pub symbol: String,
     pub name: String,
@@ -19,11 +20,12 @@ pub struct BTC {
 
 impl BTC {
     pub fn new() -> Self {
-        BTC::new_btc_based("bc", "BTC", "Bitcoin")
+        BTC::new_btc_based(2, "bc", "BTC", "Bitcoin")
     }
 
-    pub fn new_btc_based(addr_prefix: &str, symbol: &str, name: &str) -> Self {
+    pub fn new_btc_based(id: u32, addr_prefix: &str, symbol: &str, name: &str) -> Self {
         BTC {
+            id,
             addr_prefix: addr_prefix.to_string(),
             symbol: symbol.to_string(),
             name: name.to_string(),
@@ -32,8 +34,9 @@ impl BTC {
         }
     }
 
-    pub fn new_legacy_btc_based(legacy_version: u8, symbol: &str, name: &str) -> Self {
+    pub fn new_legacy_btc_based(id: u32, legacy_version: u8, symbol: &str, name: &str) -> Self {
         BTC {
+            id,
             addr_prefix: "".to_string(),
             symbol: symbol.to_string(),
             name: name.to_string(),
@@ -87,7 +90,7 @@ impl BTC {
 
 impl Chain for BTC {
     fn get_id(&self) -> u32 {
-        2
+        self.id
     }
     fn get_name(&self) -> &str {
         self.name.as_str()
@@ -194,7 +197,7 @@ mod test {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let path = "m/44'/3'/0'/0/0".to_string();
 
-        let btc = BTC::new_legacy_btc_based(0x1e, "DOGE", "Dogecoin");
+        let btc = BTC::new_legacy_btc_based(12, 0x1e, "DOGE", "Dogecoin");
         let seed = btc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let pvk = btc.derive(seed, path).unwrap();
         let pbk = btc.get_pbk(pvk).unwrap();

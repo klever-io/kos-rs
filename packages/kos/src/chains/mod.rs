@@ -283,7 +283,7 @@ impl ChainRegistry {
                 Box::new(substrate::Substrate::new(27, 2, "KSM", "Kusama"))
             }),
             (constants::LTC, || {
-                Box::new(btc::BTC::new_btc_based("ltc", "LTC", "Litecoin"))
+                Box::new(btc::BTC::new_btc_based(5, "ltc", "LTC", "Litecoin"))
             }),
             (constants::REEF, || {
                 Box::new(substrate::Substrate::new(29, 42, "REEF", "Reef"))
@@ -298,7 +298,7 @@ impl ChainRegistry {
                 Box::new(substrate::Substrate::new(47, 36, "CFG", "Centrifuge"))
             }),
             (constants::SYS, || {
-                Box::new(btc::BTC::new_btc_based("sys", "SYS", "Syscoin"))
+                Box::new(btc::BTC::new_btc_based(15, "sys", "SYS", "Syscoin"))
             }),
             (constants::KILT, || {
                 Box::new(substrate::Substrate::new(44, 38, "KILT", "KILT"))
@@ -307,14 +307,14 @@ impl ChainRegistry {
                 Box::new(substrate::Substrate::new(42, 136, "ALTAIR", "Altair"))
             }),
             (constants::DOGE, || {
-                Box::new(btc::BTC::new_legacy_btc_based(0x1E, "DOGE", "Dogecoin"))
+                Box::new(btc::BTC::new_legacy_btc_based(12, 0x1E, "DOGE", "Dogecoin"))
             }),
             (constants::DASH, || {
-                Box::new(btc::BTC::new_legacy_btc_based(0x4C, "DASH", "Dash"))
+                Box::new(btc::BTC::new_legacy_btc_based(11, 0x4C, "DASH", "Dash"))
             }),
             (constants::XRP, || Box::new(xrp::XRP::new())),
             (constants::DGB, || {
-                Box::new(btc::BTC::new_btc_based("dgb", "DGB", "Digibyte"))
+                Box::new(btc::BTC::new_btc_based(16, "dgb", "DGB", "Digibyte"))
             }),
             (constants::COSMOS, || Box::new(atom::ATOM::new())),
             (constants::CELESTIA, || {
