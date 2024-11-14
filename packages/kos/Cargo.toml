@@ -45,6 +45,9 @@ bip39-dict = { version = "0.1.0", features = ["english"], default-features = fal
 libsecp256k1 = { version = "0.7.1", features = ["hmac", "static-context"], default-features = false }
 rand_core = { version = "0.6.4", default-features = false }
 parity-scale-codec = { version = "3.6.9", default-features = false, features = ["derive"] }
+rand = { workspace = true }
+coins-bip32 = { workspace = true }
+coins-bip39 = { workspace = true }
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 rand_core = { version = "0.6.4", features = ["getrandom"], default-features = false }
