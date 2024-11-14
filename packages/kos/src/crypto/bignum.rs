@@ -1,5 +1,7 @@
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::f64;
+use core::fmt::Write;
 use rlp::{DecoderError, Rlp, RlpStream};
 
 pub struct U256(pub [u8; 32]);
@@ -32,6 +34,21 @@ impl rlp::Encodable for U256 {
 }
 
 impl U256 {
+    #[allow(dead_code)]
+    pub fn from_f64(value: f64, precision: u32) -> Result<U256, &'static str> {
+        if value.is_nan() || value.is_infinite() || value < 0.0 {
+            return Err("Invalid input: NaN, infinity, or negative value.");
+        }
+
+        let scaled_value = value * powi(10.0, precision as i32);
+        if scaled_value > (u64::MAX as f64) {
+            return Err("Input too large to fit in U256.");
+        }
+
+        let integer_value = scaled_value as u64;
+        Ok(U256::from_u64(integer_value))
+    }
+
     pub fn to_f64(&self, precision: u32) -> f64 {
         let bytes = self.0;
         let mut value: f64 = 0.0;
@@ -54,6 +71,40 @@ impl U256 {
         let mut bytes: [u8; 32] = [0; 32];
         bytes[24..32].copy_from_slice(&value.to_be_bytes());
         U256(bytes)
+    }
+
+    #[allow(dead_code)]
+    pub fn from_string(value: &str) -> Result<U256, &'static str> {
+        if value.len() > 64 {
+            return Err("String length exceeds U256 size.");
+        }
+
+        let mut padded = String::new();
+        for _ in 0..(64 - value.len()) {
+            // Zero-padding to ensure 64 characters.
+            padded.push('0');
+        }
+        padded.push_str(value);
+
+        let bytes = hex::decode(&padded).map_err(|_| "Invalid hex string")?;
+        let mut data = [0u8; 32];
+        data.copy_from_slice(&bytes);
+        Ok(U256(data))
+    }
+
+    #[allow(dead_code)]
+    pub fn to_string(&self) -> String {
+        let mut hex_string = String::new();
+        for byte in self.0.iter() {
+            write!(&mut hex_string, "{:02x}", byte).unwrap(); // Safely format bytes as hex.
+        }
+
+        let trimmed = hex_string.trim_start_matches('0');
+        if trimmed.is_empty() {
+            "0".to_string()
+        } else {
+            trimmed.to_string()
+        }
     }
 
     #[allow(dead_code)]
@@ -148,5 +199,24 @@ mod test {
         let precision = 6;
         let float_value = value.to_f64(precision);
         assert_eq!(float_value, 1e-6);
+
+        let reconstructed = U256::from_f64(float_value, precision).unwrap();
+        assert_eq!(reconstructed.0, value.0);
+
+        let large_value = 12345.6789;
+        let large_precision = 4;
+        let u256_value = U256::from_f64(large_value, large_precision).unwrap();
+        let back_to_f64 = u256_value.to_f64(large_precision);
+        assert_eq!(back_to_f64, large_value);
+    }
+
+    #[test]
+    fn test_string_conversion() {
+        let value = U256::from_u64(123456789);
+        let hex_string = value.to_string();
+        assert_eq!(hex_string, "75bcd15");
+
+        let parsed = U256::from_string(&hex_string).unwrap();
+        assert_eq!(parsed.0, value.0);
     }
 }

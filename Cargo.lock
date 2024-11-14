@@ -1310,6 +1310,7 @@ dependencies = [
  "bech32",
  "bip39-dict",
  "blake2b-ref",
+ "coins-bip32",
  "coins-bip39",
  "ed25519-dalek",
  "heck 0.4.1",
