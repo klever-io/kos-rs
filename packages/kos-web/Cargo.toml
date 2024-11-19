@@ -8,5 +8,24 @@ repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["serde"]
+
 [dependencies]
+strum = { version = "0.25", features = ["derive"] }
+serde = { workspace = true, features = ["derive"], optional = true }
+serde_json = { workspace = true }
+serde-wasm-bindgen = "0.5"
+enum_delegate = { workspace = true }
+hex = { workspace = true }
+enum_dispatch = "0.3"
+pem = "3"
+postcard = { version = "1.0.6", features = ["use-std"] }
+lazy_static = { workspace = true }
 kos = { workspace = true }
+kos-crypto = { workspace = true }
+kos-types = { workspace = true }
+wasm-bindgen = { workspace = true }

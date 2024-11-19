@@ -5,7 +5,6 @@ pub mod bip32;
 pub mod ed25519;
 mod ed25519_bip32;
 pub mod hash;
-pub mod mnemonic;
 mod pbkdf2;
 mod rng;
 pub mod secp256k1;

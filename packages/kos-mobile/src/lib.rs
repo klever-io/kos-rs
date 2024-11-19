@@ -54,12 +54,12 @@ struct KOSTransaction {
 
 #[uniffi::export]
 fn generate_mnemonic(size: i32) -> Result<String, KOSError> {
-    Ok(kos::crypto::mnemonic::generate_mnemonic(size as usize)?.to_phrase())
+    Ok(kos_crypto::mnemonic::generate_mnemonic(size as usize)?.to_phrase())
 }
 
 #[uniffi::export]
 fn validate_mnemonic(mnemonic: String) -> bool {
-    kos::crypto::mnemonic::validate_mnemonic(mnemonic.as_str()).is_ok()
+    kos_crypto::mnemonic::validate_mnemonic(mnemonic.as_str()).is_ok()
 }
 
 #[uniffi::export]
