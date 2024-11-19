@@ -14,7 +14,7 @@ impl Display for Secp256Err {
     }
 }
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(not(feature = "ksafe"))]
 impl From<libsecp256k1::Error> for Secp256Err {
     fn from(_: libsecp256k1::Error) -> Self {
         Secp256Err::ErrDerive
@@ -23,7 +23,7 @@ impl From<libsecp256k1::Error> for Secp256Err {
 
 pub struct Secp256K1 {}
 
-#[cfg(not(target_arch = "x86_64"))]
+#[cfg(feature = "ksafe")]
 extern "C" {
     fn c_ecdsa_secp256k1_sign(msg: *const u8, msg_len: u32, pvk: *const u8, sig: *mut u8);
 
@@ -41,7 +41,7 @@ pub trait Secp256k1Trait {
     fn sign(msg: &[u8; 32], pvk: &[u8; 32]) -> Result<[u8; 65], Secp256Err>;
 }
 
-#[cfg(not(target_arch = "x86_64"))]
+#[cfg(feature = "ksafe")]
 impl Secp256k1Trait for Secp256K1 {
     fn add_scalars(a: &[u8; 32], b: &[u8; 32]) -> Result<[u8; 32], Secp256Err> {
         let mut c = [0; 32];
@@ -85,7 +85,7 @@ impl Secp256k1Trait for Secp256K1 {
     }
 }
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(not(feature = "ksafe"))]
 impl Secp256k1Trait for Secp256K1 {
     fn add_scalars(a: &[u8; 32], b: &[u8; 32]) -> Result<[u8; 32], Secp256Err> {
         let mut a = libsecp256k1::SecretKey::parse(a)?;

@@ -162,11 +162,10 @@ fn sign_transaction(account: KOSAccount, raw: String) -> Result<KOSTransaction, 
 }
 
 #[uniffi::export]
-fn sign_message(account: KOSAccount, message: String) -> Result<Vec<u8>, KOSError> {
+fn sign_message(account: KOSAccount, hex: String) -> Result<Vec<u8>, KOSError> {
     let chain = get_chain_by(account.chain_id)?;
-    let message = message.as_bytes();
-    let signature =
-        chain.sign_message(hex::decode(account.private_key).unwrap(), message.to_vec())?;
+    let message = hex::decode(hex)?;
+    let signature = chain.sign_message(hex::decode(account.private_key).unwrap(), message)?;
     Ok(signature)
 }
 
@@ -390,7 +389,7 @@ mod tests {
     #[test]
     fn should_sign_message() {
         let chain_id = 38;
-        let message = "Hello World".to_string();
+        let message = hex::encode("Hello World".as_bytes());
 
         let account = generate_wallet_from_mnemonic(
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),

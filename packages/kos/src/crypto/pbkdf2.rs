@@ -1,4 +1,4 @@
-#[cfg(not(target_arch = "x86_64"))]
+#[cfg(feature = "ksafe")]
 extern "C" {
     fn c_pbkdf2_hmac_sha512(
         pass: *const u8,
@@ -17,7 +17,7 @@ pub trait Pbkdf2Trait {
 
 pub struct Pbkdf2 {}
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(not(feature = "ksafe"))]
 impl Pbkdf2Trait for Pbkdf2 {
     fn pbkdf2_hmac_512<const N: usize>(password: &[u8], salt: &[u8], rounds: u32) -> [u8; N] {
         let icarus_key = pbkdf2::pbkdf2_hmac_array::<sha2::Sha512, N>(password, &salt, rounds);
@@ -25,7 +25,7 @@ impl Pbkdf2Trait for Pbkdf2 {
     }
 }
 
-#[cfg(not(target_arch = "x86_64"))]
+#[cfg(feature = "ksafe")]
 impl Pbkdf2Trait for Pbkdf2 {
     fn pbkdf2_hmac_512<const N: usize>(password: &[u8], salt: &[u8], rounds: u32) -> [u8; N] {
         let mut out = [0u8; N];
