@@ -19,6 +19,7 @@ strum = { version = "0.25", features = ["derive"] }
 serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true }
 serde-wasm-bindgen = "0.5"
+qrcode-generator = "4.1"
 enum_delegate = { workspace = true }
 hex = { workspace = true }
 enum_dispatch = "0.3"

@@ -46,15 +46,12 @@ libsecp256k1 = { version = "0.7.1", features = ["hmac", "static-context"], defau
 rand_core = { version = "0.6.4", default-features = false }
 parity-scale-codec = { version = "3.6.9", default-features = false, features = ["derive"] }
 
-[target.'cfg(feature = "android")'.dependencies]
+[target.'cfg(not(feature = "ksafe"))'.dependencies]
 rand = { workspace = true }
 coins-bip32 = { workspace = true }
 coins-bip39 = { workspace = true }
-
-[target.'cfg(target_arch = "x86_64")'.dependencies]
 rand_core = { version = "0.6.4", features = ["getrandom"], default-features = false }
-rand = "0.8"
-coins-bip39 = { version = "0.8", default-features = false, features = ["english"] }
+getrandom = { version = "0.2", features = ["js"] }
 
 [build-dependencies]
 prost-build = "0.12.1"
