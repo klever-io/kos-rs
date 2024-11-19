@@ -9,6 +9,7 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
 pub struct MOVR {
+    id: u32,
     name: String,
     symbol: String,
     decimals: u32,
@@ -17,6 +18,7 @@ pub struct MOVR {
 impl MOVR {
     pub fn new() -> Self {
         MOVR {
+            id: 32,
             name: "Moonriver".to_string(),
             symbol: "MOVR".to_string(),
             decimals: 18,
@@ -25,6 +27,7 @@ impl MOVR {
 
     pub fn new_glmr() -> Self {
         MOVR {
+            id: 34,
             name: "Moonbeam".to_string(),
             symbol: "GLMR".to_string(),
             decimals: 18,
@@ -122,6 +125,6 @@ impl Chain for MOVR {
     }
 
     fn get_id(&self) -> u32 {
-        32
+        self.id
     }
 }
