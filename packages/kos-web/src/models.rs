@@ -43,3 +43,21 @@ pub struct Transaction {
     #[wasm_bindgen(skip)]
     pub signature: Vec<u8>,
 }
+
+#[wasm_bindgen]
+impl Transaction {
+    #[wasm_bindgen(js_name = getRawData)]
+    pub fn get_raw_data(&self) -> Vec<u8> {
+        self.raw_data.clone()
+    }
+
+    #[wasm_bindgen(js_name = getTxHash)]
+    pub fn get_tx_hash(&self) -> Vec<u8> {
+        self.tx_hash.clone()
+    }
+
+    #[wasm_bindgen(js_name = getSignature)]
+    pub fn get_signature(&self) -> Vec<u8> {
+        self.signature.clone()
+    }
+}
