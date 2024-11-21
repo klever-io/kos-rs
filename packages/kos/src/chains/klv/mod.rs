@@ -28,8 +28,7 @@ impl KLV {
         msg.extend_from_slice(message.len().to_string().as_bytes());
         msg.extend_from_slice(&message);
 
-        let hash_result = keccak256_digest(&msg[..]);
-        hash_result
+        keccak256_digest(&msg[..])
     }
 }
 

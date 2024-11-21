@@ -13,6 +13,8 @@ use alloy_dyn_abi::TypedData;
 
 pub(crate) const ETH_ADDR_SIZE: usize = 20;
 const ETH_MESSAGE_PREFIX: &[u8; 26] = b"\x19Ethereum Signed Message:\n";
+
+#[allow(clippy::upper_case_acronyms)]
 pub struct ETH {
     pub id: u32,
     pub chaincode: u32,
@@ -69,15 +71,15 @@ impl Chain for ETH {
     }
 
     fn get_name(&self) -> &str {
-        return self.name.as_str();
+        self.name.as_str()
     }
 
     fn get_symbol(&self) -> &str {
-        return self.symbol.as_str();
+        self.symbol.as_str()
     }
 
     fn get_decimals(&self) -> u32 {
-        return 18;
+        18
     }
 
     fn mnemonic_to_seed(&self, mnemonic: String, password: String) -> Result<Vec<u8>, ChainError> {
@@ -105,7 +107,7 @@ impl Chain for ETH {
         let mut address_bytes: [u8; ETH_ADDR_SIZE] = [0; ETH_ADDR_SIZE];
         address_bytes.copy_from_slice(&pbk_hash[12..]);
 
-        return ETH::addr_bytes_to_string(address_bytes);
+        ETH::addr_bytes_to_string(address_bytes)
     }
 
     fn sign_tx(

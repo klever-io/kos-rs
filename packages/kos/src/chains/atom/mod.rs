@@ -8,6 +8,7 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use bech32::{u5, Variant};
 
+#[allow(clippy::upper_case_acronyms)]
 pub(crate) struct ATOM {
     pub addr_prefix: String,
     #[allow(dead_code)]

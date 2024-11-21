@@ -28,8 +28,7 @@ impl TRX {
         msg.extend_from_slice(message.len().to_string().as_bytes());
         msg.extend_from_slice(&message);
 
-        let hash_result = keccak256_digest(&msg[..]);
-        hash_result
+        keccak256_digest(&msg[..])
     }
 
     pub fn expand_address_with_checksum(address: &[u8; 21]) -> String {
@@ -39,10 +38,10 @@ impl TRX {
         let hash = sha256_digest(&hash[..]);
         address_with_checksum[21..].copy_from_slice(&hash[0..4]);
         let bytes_addr = b58enc(&address_with_checksum[..]);
-        let addr = String::from_utf8(bytes_addr).unwrap();
-        addr
+        String::from_utf8(bytes_addr).unwrap()
     }
 
+    #[allow(clippy::single_match)]
     pub fn decode_transaction(raw_tx: Vec<u8>) -> Result<protocol::Transaction, ChainError> {
         let tx = protocol::Transaction::decode(raw_tx.as_slice());
         match tx {
@@ -67,15 +66,15 @@ impl Chain for TRX {
     }
 
     fn get_name(&self) -> &str {
-        return "TRON";
+        "TRON"
     }
 
     fn get_symbol(&self) -> &str {
-        return "TRX";
+        "TRX"
     }
 
     fn get_decimals(&self) -> u32 {
-        return 6;
+        6
     }
 
     fn mnemonic_to_seed(&self, mnemonic: String, password: String) -> Result<Vec<u8>, ChainError> {
@@ -173,7 +172,7 @@ impl Chain for TRX {
     fn get_tx_info(&self, raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
         let tx = TRX::decode_transaction(raw_tx)?;
         let raw = tx.raw_data.ok_or(ChainError::ProtoDecodeError)?;
-        if raw.contract.len() == 0 {
+        if raw.contract.is_empty() {
             return Err(ChainError::ProtoDecodeError);
         }
 

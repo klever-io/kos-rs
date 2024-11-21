@@ -8,6 +8,7 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct MOVR {
     id: u32,
     name: String,
@@ -70,7 +71,7 @@ impl Chain for MOVR {
             [0; crate::chains::eth::ETH_ADDR_SIZE];
         address_bytes.copy_from_slice(&pbk_hash[12..]);
 
-        return ETH::addr_bytes_to_string(address_bytes);
+        ETH::addr_bytes_to_string(address_bytes)
     }
 
     fn sign_tx(

@@ -9,6 +9,7 @@ use alloc::vec::Vec;
 use alloc::{format, vec};
 use bech32::{u5, Variant};
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct BTC {
     pub id: u32,
     pub addr_prefix: String,
@@ -129,6 +130,7 @@ impl Chain for BTC {
         Ok(pbk.to_vec())
     }
 
+    #[allow(clippy::needless_question_mark)]
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
         if self.use_legacy_address {
             return Ok(self.get_addr_legacy(public_key)?);

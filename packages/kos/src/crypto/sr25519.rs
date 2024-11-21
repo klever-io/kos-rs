@@ -48,13 +48,13 @@ impl Sr25519Trait for Sr25519 {
         Ok(sig.to_bytes().as_slice().to_vec())
     }
 
+    #[allow(clippy::clone_on_copy)]
     fn hard_derive_mini_sk(
         seed: &[u8; 32],
         chaincode: &[u8; 32],
     ) -> Result<[u8; 32], Sr25519Error> {
         let seed =
             schnorrkel::MiniSecretKey::from_bytes(seed).map_err(|_| Sr25519Error::ErrDerive)?;
-
         let chaincode = ChainCode(chaincode.clone());
         let (new_seed, _) = seed.hard_derive_mini_secret_key(
             Some(chaincode),

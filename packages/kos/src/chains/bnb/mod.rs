@@ -10,6 +10,7 @@ use bech32::{u5, Variant};
 
 const BNB_PREFIX: &str = "bnb";
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct BNB {}
 
 impl Chain for BNB {

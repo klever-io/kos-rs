@@ -45,7 +45,7 @@ pub struct StakeCredential {
 
 impl StakeCredential {
     pub fn new(pbk: &[u8]) -> Self {
-        let key_hash = blake244_digest(&pbk);
+        let key_hash = blake244_digest(pbk);
         StakeCredential::from_key_hash(key_hash)
     }
 
@@ -105,7 +105,7 @@ impl Address {
                 addr_bytes.append(&mut payment_cred.get_hash()?.to_vec());
                 Ok(addr_bytes)
             }
-            AddressType::Pointer => return Err(ChainError::NotSupported),
+            AddressType::Pointer => Err(ChainError::NotSupported),
         }
     }
 

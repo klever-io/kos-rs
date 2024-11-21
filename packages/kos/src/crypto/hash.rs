@@ -42,7 +42,7 @@ pub fn keccak256_digest(data: &[u8]) -> [u8; 32] {
 
 pub fn blake2b_digest(data: &[u8]) -> [u8; 32] {
     let mut hasher = Blake2bBuilder::new(32).build();
-    hasher.update(&data);
+    hasher.update(data);
 
     let mut result_buffer: [u8; 32] = [0; 32];
     hasher.finalize(result_buffer.as_mut_slice());
@@ -51,7 +51,7 @@ pub fn blake2b_digest(data: &[u8]) -> [u8; 32] {
 
 pub fn blake244_digest(data: &[u8]) -> [u8; 28] {
     let mut hasher = Blake2bBuilder::new(28).build();
-    hasher.update(&data);
+    hasher.update(data);
 
     let mut result_buffer: [u8; 28] = [0; 28];
     hasher.finalize(result_buffer.as_mut_slice());
@@ -60,7 +60,7 @@ pub fn blake244_digest(data: &[u8]) -> [u8; 28] {
 
 pub fn blake2b_64_digest(data: &[u8]) -> [u8; 64] {
     let mut hasher = Blake2bBuilder::new(64).build();
-    hasher.update(&data);
+    hasher.update(data);
 
     let mut result_buffer: [u8; 64] = [0; 64];
     hasher.finalize(result_buffer.as_mut_slice());

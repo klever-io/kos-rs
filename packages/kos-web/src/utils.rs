@@ -1,6 +1,7 @@
 use kos_types::error::Error;
 use serde::{Deserialize, Serialize};
 
+#[allow(dead_code)]
 pub fn pack<T>(t: &T) -> Result<Vec<u8>, Error>
 where
     T: Serialize + ?Sized,

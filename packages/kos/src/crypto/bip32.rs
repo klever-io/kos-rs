@@ -117,7 +117,7 @@ pub fn handle_path(path: String) -> Result<Vec<PathComponent>, Bip32Err> {
         path_components.push(PathComponent { is_hardened, index });
     }
 
-    return Ok(path_components);
+    Ok(path_components)
 }
 
 pub fn derive_private_key(
@@ -144,7 +144,7 @@ pub fn derive_private_key(
 
     let x = Secp256K1::add_scalars(pvk, &new_data)?;
 
-    return Ok((x, new_ch));
+    Ok((x, new_ch))
 }
 
 pub fn derive_pk_from_path(
@@ -200,7 +200,7 @@ pub fn derive_ed25519(input_key: &[u8], path: String) -> Result<[u8; 32], Bip32E
 pub fn derive_sr25519(input_key: &[u8], mut path: String) -> Result<[u8; 64], Bip32Err> {
     let mut chaincode = [0u8; 32];
     let mut is_hardned = false;
-    if path != "" {
+    if !path.is_empty() {
         path = path
             .strip_prefix("//")
             .ok_or(Bip32Err::PathError)?
@@ -299,7 +299,7 @@ pub fn mnemonic_to_seed_ed25519_bip32(mnemonic: String) -> Result<Vec<u8>, Bip32
     pvk[31] &= 0x1f;
     pvk[31] |= 0x40;
 
-    return Ok(pvk);
+    Ok(pvk)
 }
 
 pub fn derive_ed25519_bip32(input_key: [u8; 96], path: String) -> Result<[u8; 96], Bip32Err> {

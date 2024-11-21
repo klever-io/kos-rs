@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 fn main() {
     let mut config = prost_build::Config::new();
-    config.btree_map(&["."]);
+    config.btree_map(["."]);
 
     let protos = vec![
         "src/protos/tron/core/Discover.proto",

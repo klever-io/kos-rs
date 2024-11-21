@@ -1,5 +1,4 @@
 pub const BLOCK_BYTES: usize = 128;
-pub const KEY_BYTES: usize = 64;
 pub const OUT_BYTES: usize = 64;
 
 #[rustfmt::skip]
@@ -59,33 +58,6 @@ impl Blake2b {
             buf_len: 0,
             output_len: size,
         }
-    }
-
-    pub fn new_with_key(size: usize, key: &[u8]) -> Blake2b {
-        assert!(size > 0 && size <= OUT_BYTES);
-        assert!(!key.is_empty() && key.len() <= KEY_BYTES);
-
-        let param = encode_params(size as u8, key.len() as u8);
-        let mut state = IV;
-
-        for i in 0..state.len() {
-            println!("i2: {} ", i);
-            state[i] ^= load64(&param[i * 8..]);
-        }
-
-        let mut b = Blake2b {
-            h: state,
-            t: [0, 0],
-            f: [0, 0],
-            buf: [0u8; 2 * BLOCK_BYTES],
-            buf_len: 0,
-            output_len: size,
-        };
-
-        let mut block = [0u8; BLOCK_BYTES];
-        block[..key.len()].copy_from_slice(key);
-        b.update(block.as_ref());
-        b
     }
 
     pub fn update(&mut self, m: &[u8]) {

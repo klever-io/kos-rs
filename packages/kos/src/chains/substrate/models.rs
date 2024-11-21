@@ -49,7 +49,7 @@ impl MultiAddress {
         if self.is_address32 {
             return self.as_address32.to_vec();
         }
-        return self.as_address20.to_vec();
+        self.as_address20.to_vec()
     }
 }
 
@@ -75,27 +75,27 @@ impl Decode for MultiAddress {
                 let mut as_index = [0u8; 4];
                 let _ = input.read(&mut as_index);
                 address.as_index = u32::from_le_bytes(as_index);
-                return Ok(address);
+                Ok(address)
             }
             2 => {
                 address.is_raw = true;
                 let _ = input.read(&mut address.as_raw);
-                return Ok(address);
+                Ok(address)
             }
             3 => {
                 address.is_address32 = true;
                 let _ = input.read(&mut address.as_address32);
-                return Ok(address);
+                Ok(address)
             }
             4 => {
                 address.is_address20 = true;
                 let _ = input.read(&mut address.as_address20);
-                return Ok(address);
+                Ok(address)
             }
             _ => {
                 address.is_id = true;
                 let _ = input.read(&mut address.as_id);
-                return Ok(address);
+                Ok(address)
             }
         }
     }
@@ -114,14 +114,14 @@ impl Decode for UIntCompact {
                 let mut r = bb as u64;
                 r <<= 6;
                 r += (b >> 2) as u64;
-                return Ok(U256::from_u64((r) as u64));
+                Ok(U256::from_u64(r))
             }
             2 => {
                 let mut buf = [0u8; 4];
                 let _ = input.read(&mut buf);
                 let mut r = u32::from_le_bytes(buf);
                 r >>= 2;
-                return Ok(U256::from_u64((r) as u64));
+                Ok(U256::from_u64((r) as u64))
             }
             3 => {
                 let l = b >> 2;
@@ -130,11 +130,9 @@ impl Decode for UIntCompact {
                 }
                 let mut buf = vec![0u8; (l + 4) as usize];
                 input.read(&mut buf)?;
-                return Ok(U256::read_data_as_le(buf));
+                Ok(U256::read_data_as_le(buf))
             }
-            _ => {
-                return Ok(U256::from_u64((b >> 2) as u64));
-            }
+            _ => Ok(U256::from_u64((b >> 2) as u64)),
         }
     }
 }

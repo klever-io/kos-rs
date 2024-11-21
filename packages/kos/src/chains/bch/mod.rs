@@ -11,18 +11,23 @@ const BCH_CHARSET: &str = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 const BCH_PREFIX: &str = "bitcoincash";
 const BCH_MASK: u8 = 0x1f;
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct BCH {}
 
 impl BCH {
+    #[allow(clippy::needless_range_loop)]
+
     fn expand_prefix(prefix: &str) -> Result<Vec<u8>, ChainError> {
         let mut prefix_bytes = prefix.as_bytes().to_vec();
         for i in 0..prefix_bytes.len() {
-            prefix_bytes[i] = prefix_bytes[i] & BCH_MASK;
+            prefix_bytes[i] &= BCH_MASK;
         }
 
         prefix_bytes.push(0u8);
         Ok(prefix_bytes)
     }
+
+    #[allow(clippy::needless_range_loop)]
 
     fn create_checksum(prefix: &str, payload: &[u8]) -> Result<Vec<u8>, ChainError> {
         let expanded_prefix = BCH::expand_prefix(prefix)?;
@@ -107,6 +112,8 @@ impl Chain for BCH {
         pvk_bytes.fill(0);
         Ok(pbk.to_vec())
     }
+
+    #[allow(clippy::needless_range_loop)]
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
         if public_key.len() != 33 {

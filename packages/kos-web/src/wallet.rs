@@ -1,11 +1,11 @@
 use crate::models::{PathOptions, Transaction};
 
-use pem::{encode as encode_pem, parse as parse_pem, Pem};
+use pem::{parse as parse_pem, Pem};
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, IntoStaticStr};
 
-use crate::utils::{pack, unpack};
-use kos::chains::{get_chain_by_base_id, Chain, Transaction as KosTransaction};
+use crate::utils::unpack;
+use kos::chains::{get_chain_by_base_id, Transaction as KosTransaction};
 use kos_types::error::Error;
 use wasm_bindgen::prelude::*;
 
@@ -49,20 +49,18 @@ impl Wallet {
             .ok_or_else(|| Error::WalletManagerError("Invalid chain".to_string()))?;
 
         let seed = chain
-            .mnemonic_to_seed(mnemonic.clone(), String::from(""))
-            .map_err(|e| {
-                Error::WalletManagerError(format!("mnemonic to seed: {}", e.to_string()))
-            })?;
+            .mnemonic_to_seed(mnemonic.clone(), password.unwrap_or_default())
+            .map_err(|e| Error::WalletManagerError(format!("mnemonic to seed: {}", e)))?;
         let private_key = chain
             .derive(seed, path.clone())
-            .map_err(|e| Error::WalletManagerError(format!("derive keypair: {}", e.to_string())))?;
+            .map_err(|e| Error::WalletManagerError(format!("derive keypair: {}", e)))?;
 
         let public_key = chain
             .get_pbk(private_key.clone())
-            .map_err(|e| Error::WalletManagerError(format!("get public key: {}", e.to_string())))?;
+            .map_err(|e| Error::WalletManagerError(format!("get public key: {}", e)))?;
         let address = chain
             .get_address(public_key)
-            .map_err(|e| Error::WalletManagerError(format!("get address: {}", e.to_string())))?;
+            .map_err(|e| Error::WalletManagerError(format!("get address: {}", e)))?;
 
         Ok(Wallet {
             chain: chain_id,
@@ -110,10 +108,10 @@ impl Wallet {
 
         let public_key = chain
             .get_pbk(hex::decode(private_key_bytes.clone())?)
-            .map_err(|e| Error::WalletManagerError(format!("get public key: {}", e.to_string())))?;
+            .map_err(|e| Error::WalletManagerError(format!("get public key: {}", e)))?;
         let address = chain
             .get_address(public_key.clone())
-            .map_err(|e| Error::WalletManagerError(format!("get address: {}", e.to_string())))?;
+            .map_err(|e| Error::WalletManagerError(format!("get address: {}", e)))?;
 
         // create wallet from keypair
         Ok(Wallet {
@@ -236,7 +234,7 @@ impl Wallet {
 
                 chain
                     .sign_message(pk_bytes, message.to_vec())
-                    .or_else(|e| Err(Error::WalletManagerError(format!("sign message: {}", e))))
+                    .map_err(|e| Error::WalletManagerError(format!("sign message: {}", e)))
             }
             None => Err(Error::WalletManagerError("no keypair".to_string())),
         }
@@ -257,12 +255,9 @@ impl Wallet {
                 let chain = get_chain_by_base_id(self.chain)
                     .ok_or_else(|| Error::WalletManagerError("Invalid chain".to_string()))?;
 
-                let signed_tx = chain.sign_tx(pk_bytes, tx).or_else(|e| {
-                    Err(Error::WalletManagerError(format!(
-                        "sign transaction: {}",
-                        e
-                    )))
-                })?;
+                let signed_tx = chain
+                    .sign_tx(pk_bytes, tx)
+                    .map_err(|e| Error::WalletManagerError(format!("sign transaction: {}", e)))?;
 
                 Ok(Transaction {
                     raw_data: signed_tx.raw_data,

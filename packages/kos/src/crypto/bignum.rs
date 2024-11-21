@@ -49,6 +49,8 @@ impl U256 {
         Ok(U256::from_u64(integer_value))
     }
 
+    #[allow(clippy::needless_range_loop)]
+
     pub fn to_f64(&self, precision: u32) -> f64 {
         let bytes = self.0;
         let mut value: f64 = 0.0;
@@ -58,7 +60,7 @@ impl U256 {
             value += bytes[i] as f64;
         }
 
-        value = value / (powi(10.0, precision as i32) as f64);
+        value /= powi(10.0, precision as i32);
         value
     }
 
@@ -92,6 +94,7 @@ impl U256 {
         Ok(U256(data))
     }
 
+    #[allow(clippy::inherent_to_string)]
     #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         let mut hex_string = String::new();
@@ -115,6 +118,7 @@ impl U256 {
         u64::from_be_bytes(significant_part)
     }
 
+    #[allow(clippy::manual_memcpy)]
     #[allow(dead_code)]
     pub fn read_data_as_be(data: Vec<u8>) -> Self {
         let mut bytes: [u8; 32] = [0; 32];
@@ -146,6 +150,7 @@ impl U256 {
         data
     }
 
+    #[allow(clippy::needless_range_loop)]
     pub fn put_data_as_le(&self) -> Vec<u8> {
         let mut data: Vec<u8> = Vec::new();
         //find the end of the data

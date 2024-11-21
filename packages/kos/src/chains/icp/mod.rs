@@ -11,6 +11,8 @@ const ASN1_ED25519_HEADER: [u8; 12] = [48u8, 42, 48, 5, 6, 3, 43, 101, 112, 3, 3
 const ICP_TAIL: u8 = 2;
 const ACCOUNT_ID_STR: &str = "account-id";
 const ACCOUNT_ID_BYTE: u8 = 0x0A;
+
+#[allow(clippy::upper_case_acronyms)]
 pub struct ICP {}
 
 impl Chain for ICP {

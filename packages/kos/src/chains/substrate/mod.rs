@@ -97,7 +97,7 @@ impl Chain for Substrate {
         .concat();
         let digest = blake2b_64_digest(&data_to_hash);
 
-        let to_base_58 = [&prefix[..], &public_key[..], &digest[..2].to_vec()].concat();
+        let to_base_58 = [&prefix[..], &public_key[..], &digest[..2]].concat();
         let encoded = b58::b58enc(&to_base_58);
         let addr = String::from_utf8(encoded).unwrap();
         Ok(addr)

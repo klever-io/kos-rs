@@ -10,6 +10,7 @@ use alloc::{format, vec};
 
 const XRP_ALPHA: &[u8; 58] = b"rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
 
+#[allow(clippy::upper_case_acronyms)]
 pub(crate) struct XRP {}
 
 impl XRP {

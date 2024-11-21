@@ -92,6 +92,7 @@ pub enum ConversionError {
 impl TryFrom<chains::klv::models::Transaction> for proto::Transaction {
     type Error = ConversionError;
 
+    #[allow(clippy::needless_update)]
     fn try_from(value: chains::klv::models::Transaction) -> Result<Self, Self::Error> {
         let raw_data = match value.raw_data {
             Some(raw) => Some(proto::transaction::Raw::try_from(raw)?),
@@ -100,14 +101,14 @@ impl TryFrom<chains::klv::models::Transaction> for proto::Transaction {
 
         let receipts = value
             .receipts
-            .unwrap_or(Vec::new())
+            .unwrap_or_default()
             .into_iter()
             .map(proto::transaction::Receipt::try_from)
             .collect::<Result<_, _>>()?;
 
         let signatures = value
             .signature
-            .unwrap_or(Vec::new())
+            .unwrap_or_default()
             .into_iter()
             .map(|s| simple_base64_decode(&s).map_err(|_| ConversionError::Base64Error))
             .collect::<Result<Vec<_>, _>>()?;
@@ -129,6 +130,8 @@ impl TryFrom<chains::klv::models::Transaction> for proto::Transaction {
 impl TryFrom<chains::klv::models::Raw> for proto::transaction::Raw {
     type Error = ConversionError;
 
+    #[allow(clippy::needless_update)]
+
     fn try_from(value: chains::klv::models::Raw) -> Result<Self, Self::Error> {
         let contracts = value
             .contract
@@ -141,7 +144,7 @@ impl TryFrom<chains::klv::models::Raw> for proto::transaction::Raw {
 
         let datas = value
             .data
-            .unwrap_or(Vec::new())
+            .unwrap_or_default()
             .into_iter()
             .map(|d| simple_base64_decode(&d).map_err(|_| ConversionError::Base64Error))
             .collect::<Result<Vec<_>, _>>()?;
@@ -193,6 +196,8 @@ impl TryFrom<chains::klv::models::TxContract> for proto::TxContract {
 impl TryFrom<chains::klv::models::Parameter> for protos::Any {
     type Error = ConversionError;
 
+    #[allow(clippy::needless_update)]
+
     fn try_from(value: chains::klv::models::Parameter) -> Result<Self, Self::Error> {
         let proto_parameter = protos::Any {
             type_url: value.type_url,
@@ -206,6 +211,8 @@ impl TryFrom<chains::klv::models::Parameter> for protos::Any {
 
 impl TryFrom<chains::klv::models::KdaFee> for proto::transaction::KdaFee {
     type Error = ConversionError;
+
+    #[allow(clippy::needless_update)]
 
     fn try_from(value: chains::klv::models::KdaFee) -> Result<Self, Self::Error> {
         let kda_bytes =
@@ -224,6 +231,7 @@ impl TryFrom<chains::klv::models::KdaFee> for proto::transaction::KdaFee {
 impl TryFrom<chains::klv::models::Receipt> for proto::transaction::Receipt {
     type Error = ConversionError;
 
+    #[allow(clippy::needless_update)]
     fn try_from(value: chains::klv::models::Receipt) -> Result<Self, Self::Error> {
         let data = value
             .data

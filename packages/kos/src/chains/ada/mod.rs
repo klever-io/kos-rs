@@ -85,8 +85,8 @@ impl Chain for ADA {
                 let pbk = &public_key[..32];
                 let pbk_stake = &public_key[32..64];
 
-                let payment = StakeCredential::new(&pbk);
-                let stake = StakeCredential::new(&pbk_stake);
+                let payment = StakeCredential::new(pbk);
+                let stake = StakeCredential::new(pbk_stake);
                 let address = Address {
                     network: 1,
                     _type: AddressType::Base.to_u8(),

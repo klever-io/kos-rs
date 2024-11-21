@@ -7,6 +7,7 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct SUI {}
 
 impl Chain for SUI {

@@ -226,6 +226,7 @@ pub struct Transaction {
 
 #[allow(dead_code)]
 impl Transaction {
+    #[allow(clippy::should_implement_trait)]
     pub fn default() -> Self {
         Self {
             raw_data: Vec::new(),

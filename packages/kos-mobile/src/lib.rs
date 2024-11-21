@@ -132,8 +132,7 @@ fn decrypt(data: String, password: String) -> Result<String, KOSError> {
 }
 
 fn get_chain_by(id: u32) -> Result<Box<dyn Chain>, KOSError> {
-    let id_u8 = u32::try_from(id).map_err(|_| KOSError::UnsupportedChain { id: id.to_string() })?;
-    let chain = get_chain_by_base_id(id_u8)
+    let chain = get_chain_by_base_id(id)
         .ok_or_else(|| KOSError::UnsupportedChain { id: id.to_string() })?;
 
     Ok(chain)

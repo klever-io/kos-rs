@@ -26,6 +26,7 @@ pub struct EthereumTransaction {
 }
 
 impl EthereumTransaction {
+    #[allow(clippy::unnecessary_unwrap)]
     pub fn decode(rlp_data: &[u8]) -> Result<Self, DecoderError> {
         let rlp = Rlp::new(rlp_data);
 
@@ -177,6 +178,6 @@ impl EthereumTransaction {
         }
 
         let rlp = Rlp::new(&byte_tx);
-        return EthereumTransaction::decode_eip155(rlp);
+        EthereumTransaction::decode_eip155(rlp)
     }
 }
