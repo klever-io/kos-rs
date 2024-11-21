@@ -52,6 +52,8 @@ coins-bip32 = { workspace = true }
 coins-bip39 = { workspace = true }
 rand_core = { version = "0.6.4", features = ["getrandom"], default-features = false }
 getrandom = { version = "0.2", features = ["js"] }
+alloy-dyn-abi = { version = "0.8.5", features = ["eip712"] }
+serde_json = { workspace = true }
 
 [build-dependencies]
 prost-build = "0.12.1"

@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(feature = "ksafe", no_std)]
 pub mod chains;
 pub mod crypto;
 pub mod protos;

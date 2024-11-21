@@ -9,6 +9,7 @@ use crate::crypto::{bip32, secp256k1};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use alloy_dyn_abi::TypedData;
 
 pub(crate) const ETH_ADDR_SIZE: usize = 20;
 const ETH_MESSAGE_PREFIX: &[u8; 26] = b"\x19Ethereum Signed Message:\n";
@@ -140,6 +141,16 @@ impl Chain for ETH {
     }
 
     fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+        #[cfg(not(feature = "ksafe"))]
+        {
+            if let Ok(data) = std::str::from_utf8(&message) {
+                if let Ok(typed_data) = serde_json::from_str::<TypedData>(data) {
+                    let digest = typed_data.eip712_signing_hash().unwrap();
+                    return self.sign_raw(private_key, digest.to_vec());
+                }
+            }
+        }
+
         let to_sign = [
             ETH_MESSAGE_PREFIX,
             message.len().to_string().as_bytes(),
@@ -250,5 +261,54 @@ mod test {
             "0x4cBeee256240c92A9ad920ea6f4d7Df6466D2Cdc"
         );
         assert_eq!(tx_info.value, 4.523128485832664e57);
+    }
+
+    #[test]
+    fn test_sign_typed_data() {
+        let data = r#"{
+            "types": {
+                "EIP712Domain": [
+                    { "name": "name", "type": "string" },
+                    { "name": "version", "type": "string" },
+                    { "name": "chainId", "type": "uint256" },
+                    { "name": "verifyingContract", "type": "address" }
+                ],
+                "Person": [
+                    { "name": "name", "type": "string" },
+                    { "name": "wallet", "type": "address" }
+                ],
+                "Mail": [
+                    { "name": "from", "type": "Person" },
+                    { "name": "to", "type": "Person" },
+                    { "name": "contents", "type": "string" }
+                ]
+            },
+            "primaryType": "Mail",
+            "domain": {
+                "name": "Ether Mail",
+                "version": "1",
+                "chainId": 1,
+                "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+            },
+            "message": {
+                "from": {
+                    "name": "Cow",
+                    "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+                },
+                "to": {
+                    "name": "Bob",
+                    "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+                },
+                "contents": "Hello, Bob!"
+            }
+        }"#;
+
+        let eth = super::ETH::new();
+        let pvk = hex::decode("1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727")
+            .unwrap();
+        let message = data.as_bytes();
+
+        let signature = eth.sign_message(pvk, message.to_vec()).unwrap();
+        assert_eq!(signature.len(), 65);
     }
 }
