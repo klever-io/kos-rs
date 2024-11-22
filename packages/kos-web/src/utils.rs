@@ -1,4 +1,4 @@
-use kos_types::error::Error;
+use crate::error::Error;
 use serde::{Deserialize, Serialize};
 
 #[allow(dead_code)]

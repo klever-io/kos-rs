@@ -2,8 +2,7 @@
 # https://doc.rust-lang.org/edition-guide/rust-2021/default-cargo-resolver.html#details
 resolver = "2"
 members = [
-    "packages/kos", "packages/kos-crypto",
-    "packages/kos-mobile", "packages/kos-types", "packages/kos-web",
+    "packages/kos", "packages/kos-mobile", "packages/kos-web",
 ]
 # This makes the compiled code faster and smaller, but it makes compiling slower,
 # so it's only enabled in release mode.
@@ -52,6 +51,4 @@ lazy_static = "1.4.0"
 thiserror = "1.0"
 
 kos = { version = "0.1.0", path = "./packages/kos", default-features = false }
-kos-crypto = { version = "0.1.0", path = "./packages/kos-crypto", default-features = false }
 kos-mobile = { version = "0.1.0", path = "./packages/kos-mobile", default-features = false }
-kos-types = { version = "0.1.0", path = "./packages/kos-types", default-features = false }

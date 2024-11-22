@@ -53,6 +53,9 @@ pub enum ChainError {
     InvalidPublicKey,
     InvalidSeed,
     InvalidCredential,
+    InvalidMnemonic,
+    CipherError(String),
+    InvalidString(String),
 }
 
 impl Display for ChainError {
@@ -99,6 +102,15 @@ impl Display for ChainError {
             }
             ChainError::InvalidCredential => {
                 write!(f, "invalid credential")
+            }
+            ChainError::InvalidMnemonic => {
+                write!(f, "invalid mnemonic")
+            }
+            ChainError::CipherError(e) => {
+                write!(f, "cipher error: {}", e)
+            }
+            ChainError::InvalidString(e) => {
+                write!(f, "invalid string: {}", e)
             }
         }
     }
@@ -184,6 +196,9 @@ impl ChainError {
             ChainError::CurveErrorSr(_) => 14,
             ChainError::InvalidSeed => 15,
             ChainError::InvalidCredential => 16,
+            ChainError::InvalidMnemonic => 17,
+            ChainError::CipherError(_) => 18,
+            ChainError::InvalidString(_) => 19,
         }
     }
 }

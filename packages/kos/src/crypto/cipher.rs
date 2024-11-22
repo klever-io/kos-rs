@@ -1,6 +1,3 @@
-use base64::{engine::general_purpose as b64_engine, Engine};
-use kos_types::error::Error;
-
 use aes::cipher::{
     block_padding::Pkcs7, generic_array::GenericArray, AsyncStreamCipher, BlockDecryptMut,
     BlockEncryptMut, KeyIvInit,
@@ -12,6 +9,7 @@ use aes_gcm::{
     Nonce,
 };
 
+use crate::chains::ChainError;
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
 use pbkdf2::{
@@ -22,8 +20,6 @@ use pem::{parse as parse_pem, Pem};
 use rand::Rng;
 use sha2::Sha256;
 
-use wasm_bindgen::prelude::*;
-
 const KEY_SIZE: usize = 32; // SALTSIZE
 const NONCE_SIZE: usize = 12; // NONCESIZE
 const IV_SIZE: usize = 16; // IVSIZE
@@ -32,13 +28,12 @@ const BLOCK_SIZE: usize = 16; // BLOCKSIZE
 const ITERATIONS: u32 = 10000;
 
 #[derive(Debug, Clone)]
-#[wasm_bindgen]
 pub enum CipherAlgo {
     GMC = 0,
     CBC = 1,
     CFB = 2,
 }
-// todo!("build with macro")
+
 impl CipherAlgo {
     pub fn to_vec(&self) -> Vec<u8> {
         match self {
@@ -48,16 +43,18 @@ impl CipherAlgo {
         }
     }
 
-    pub fn from_u8(value: u8) -> Result<Self, Error> {
+    pub fn from_u8(value: u8) -> Result<Self, ChainError> {
         match value {
             0 => Ok(CipherAlgo::GMC),
             1 => Ok(CipherAlgo::CBC),
             2 => Ok(CipherAlgo::CFB),
-            _ => Err(Error::CipherError("Invalid cipher algorithm".to_owned())),
+            _ => Err(ChainError::CipherError(
+                "Invalid cipher algorithm".to_owned(),
+            )),
         }
     }
 
-    pub fn encrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    pub fn encrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
         match self {
             CipherAlgo::GMC => gcm_encrypt(data, password),
             CipherAlgo::CBC => cbc_encrypt(data, password),
@@ -65,7 +62,7 @@ impl CipherAlgo {
         }
     }
 
-    pub fn decrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    pub fn decrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
         match self {
             CipherAlgo::GMC => gcm_decrypt(data, password),
             CipherAlgo::CBC => cbc_decrypt(data, password),
@@ -74,7 +71,7 @@ impl CipherAlgo {
     }
 }
 
-pub fn to_pem(tag: String, data: &[u8]) -> Result<Pem, Error> {
+pub fn to_pem(tag: String, data: &[u8]) -> Result<Pem, ChainError> {
     Ok(Pem::new(tag, data))
 }
 
@@ -82,8 +79,8 @@ pub fn from_pem(pem: Pem) -> Vec<u8> {
     pem.contents().to_vec()
 }
 
-pub fn string_to_pem(data: &str) -> Result<Pem, Error> {
-    parse_pem(data.as_bytes()).map_err(|e| Error::CipherError(format!("{}", e)))
+pub fn string_to_pem(data: &str) -> Result<Pem, ChainError> {
+    parse_pem(data.as_bytes()).map_err(|e| ChainError::CipherError(format!("{}", e)))
 }
 
 pub fn create_checksum(password: &str) -> String {
@@ -106,17 +103,17 @@ pub fn check_checksum(password: &str, checksum: String) -> bool {
 pub fn derive_key(salt: &[u8], password: &str) -> Vec<u8> {
     let mut key = vec![0u8; KEY_SIZE];
     pbkdf2::<Hmac<Sha256>>(password.as_bytes(), salt, ITERATIONS, &mut key)
-        .expect("Error deriving key");
+        .expect("ChainError deriving key");
     key
 }
 
-pub fn encrypt(algo: CipherAlgo, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+pub fn encrypt(algo: CipherAlgo, data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     algo.encrypt(data, password)
 }
 
-pub fn decrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+pub fn decrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     if data.is_empty() {
-        return Err(Error::CipherError("Invalid PEM data".to_owned()));
+        return Err(ChainError::CipherError("Invalid PEM data".to_owned()));
     }
 
     // get algo
@@ -124,7 +121,7 @@ pub fn decrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     algo.decrypt(&data[1..], password)
 }
 
-pub fn gcm_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+pub fn gcm_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     // Derive key from password
     let salt: [u8; 32] = rand::thread_rng().gen();
     let derived_key = derive_key(&salt, password);
@@ -137,7 +134,7 @@ pub fn gcm_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     // Encrypt data
     let ciphertext = cipher
         .encrypt(&nonce, data)
-        .map_err(|e| Error::CipherError(format!("encryption failed: {}", e)))?;
+        .map_err(|e| ChainError::CipherError(format!("encryption failed: {}", e)))?;
 
     // Create PEM
     let mut result = CipherAlgo::GMC.to_vec();
@@ -148,9 +145,9 @@ pub fn gcm_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     Ok(result)
 }
 
-pub fn gcm_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+pub fn gcm_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     if encrypted.len() < KEY_SIZE + NONCE_SIZE {
-        return Err(Error::CipherError("Invalid PEM data".to_owned()));
+        return Err(ChainError::CipherError("Invalid PEM data".to_owned()));
     }
     let salt = &encrypted[..KEY_SIZE];
     let nonce = &encrypted[KEY_SIZE..KEY_SIZE + NONCE_SIZE];
@@ -160,12 +157,12 @@ pub fn gcm_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     let cipher = Aes256Gcm::new(key);
     cipher
         .decrypt(Nonce::from_slice(nonce), encrypted_data)
-        .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))
+        .map_err(|e| ChainError::CipherError(format!("decryption failed: {}", e)))
 }
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
-pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     let iv: [u8; IV_SIZE] = rand::thread_rng().gen();
     let derived_key = derive_key(&iv, password); //  KeySize [u8; 32]
     let key = GenericArray::from_slice(&derived_key);
@@ -179,7 +176,7 @@ pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
 
     let ct = Aes256CbcEnc::new(key, &iv.into())
         .encrypt_padded_mut::<Pkcs7>(&mut buf, data.len())
-        .map_err(|e| Error::CipherError(format!("encryption failed: {}", e)))?;
+        .map_err(|e| ChainError::CipherError(format!("encryption failed: {}", e)))?;
 
     // Create PEM
     let mut result = CipherAlgo::CBC.to_vec();
@@ -189,9 +186,9 @@ pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     Ok(result)
 }
 
-pub fn cbc_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+pub fn cbc_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     if encrypted.len() < IV_SIZE {
-        return Err(Error::CipherError("Invalid PEM data".to_owned()));
+        return Err(ChainError::CipherError("Invalid PEM data".to_owned()));
     }
 
     let iv = GenericArray::from_slice(&encrypted[..IV_SIZE]);
@@ -202,14 +199,14 @@ pub fn cbc_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     let mut buf = encrypted_data.to_vec();
     let pt: &[u8] = Aes256CbcDec::new(key, iv)
         .decrypt_padded_mut::<Pkcs7>(&mut buf)
-        .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))?;
+        .map_err(|e| ChainError::CipherError(format!("decryption failed: {}", e)))?;
 
     Ok(pt.to_vec())
 }
 
 type Aes256CfbEnc = cfb_mode::Encryptor<aes::Aes256>;
 type Aes256CfbDec = cfb_mode::Decryptor<aes::Aes256>;
-pub fn cfb_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+pub fn cfb_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     let iv: [u8; IV_SIZE] = rand::thread_rng().gen();
     let derived_key = derive_key(&iv, password); //  KeySize [u8; 32]
     let key = GenericArray::from_slice(&derived_key);
@@ -225,9 +222,9 @@ pub fn cfb_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     Ok(result)
 }
 
-pub fn cfb_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+pub fn cfb_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     if encrypted.len() < IV_SIZE {
-        return Err(Error::CipherError("Invalid PEM data".to_owned()));
+        return Err(ChainError::CipherError("Invalid PEM data".to_owned()));
     }
 
     let iv = GenericArray::from_slice(&encrypted[..IV_SIZE]);
@@ -315,41 +312,4 @@ mod tests {
         let checksum = create_checksum(password);
         assert!(check_checksum(password, checksum));
     }
-}
-
-/*
-    LEGACY GCM DECRYPT SHA1 KEY no SALT
-*/
-use sha1::Sha1;
-#[wasm_bindgen(js_name = gcmDecryptByKey)]
-pub fn gcm_decrypt_by_key(encrypted: &str, key: &str) -> Result<Vec<u8>, Error> {
-    if encrypted.len() < NONCE_SIZE {
-        return Err(Error::CipherError("invalid data len".to_owned()));
-    }
-
-    // convert hex to bytes
-    let encrypted = hex::decode(encrypted)
-        .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))?;
-
-    let b64 = b64_engine::STANDARD;
-    // convert base64 to bytes
-    let key = b64
-        .decode(key)
-        .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))?;
-
-    // compute encrypt key
-    let salt = crate::hash::sha256("".as_bytes());
-    let key_hash = crate::hash::sha256(&key[..]);
-    let mut key = vec![0u8; KEY_SIZE];
-    pbkdf2::<Hmac<Sha1>>(&key_hash, &salt, 4096, &mut key).expect("Error deriving key");
-
-    // retrieve nonce and encrypted data
-    let nonce = &encrypted[..NONCE_SIZE];
-    let encrypted_data = &encrypted[NONCE_SIZE..];
-
-    let key = Key::<Aes256Gcm>::from_slice(&key);
-    let cipher = Aes256Gcm::new(key);
-    cipher
-        .decrypt(Nonce::from_slice(nonce), encrypted_data)
-        .map_err(|e| Error::CipherError(format!("decryption failed: {}", e)))
 }

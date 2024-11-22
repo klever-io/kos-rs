@@ -4,9 +4,9 @@ use pem::{parse as parse_pem, Pem};
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, IntoStaticStr};
 
+use crate::error::Error;
 use crate::utils::unpack;
 use kos::chains::{get_chain_by_base_id, Transaction as KosTransaction};
-use kos_types::error::Error;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -43,24 +43,24 @@ impl Wallet {
         password: Option<String>,
     ) -> Result<Wallet, Error> {
         // validate mnemonic entropy
-        kos_crypto::mnemonic::validate_mnemonic(&mnemonic)?;
+        kos::crypto::mnemonic::validate_mnemonic(&mnemonic)?;
 
         let chain = get_chain_by_base_id(chain_id)
-            .ok_or_else(|| Error::WalletManagerError("Invalid chain".to_string()))?;
+            .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
         let seed = chain
             .mnemonic_to_seed(mnemonic.clone(), password.unwrap_or_default())
-            .map_err(|e| Error::WalletManagerError(format!("mnemonic to seed: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("mnemonic to seed: {}", e)))?;
         let private_key = chain
             .derive(seed, path.clone())
-            .map_err(|e| Error::WalletManagerError(format!("derive keypair: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("derive keypair: {}", e)))?;
 
         let public_key = chain
             .get_pbk(private_key.clone())
-            .map_err(|e| Error::WalletManagerError(format!("get public key: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("get public key: {}", e)))?;
         let address = chain
             .get_address(public_key)
-            .map_err(|e| Error::WalletManagerError(format!("get address: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("get address: {}", e)))?;
 
         Ok(Wallet {
             chain: chain_id,
@@ -83,7 +83,7 @@ impl Wallet {
         password: Option<String>,
     ) -> Result<Wallet, Error> {
         let chain = get_chain_by_base_id(chain_id)
-            .ok_or_else(|| Error::WalletManagerError("Invalid chain".to_string()))?;
+            .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
         let path = chain.get_path(path_options.index, path_options.is_legacy.unwrap());
 
         let mut wallet = Wallet::from_mnemonic(chain_id, mnemonic, path, password)?;
@@ -100,18 +100,18 @@ impl Wallet {
 
         // check size of private key
         if private_key_bytes.len() != 32 {
-            return Err(Error::WalletManagerError("Invalid private key".to_string()));
+            return Err(Error::WalletManager("Invalid private key".to_string()));
         }
 
         let chain = get_chain_by_base_id(chain_id)
-            .ok_or_else(|| Error::WalletManagerError("Invalid chain".to_string()))?;
+            .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
         let public_key = chain
             .get_pbk(hex::decode(private_key_bytes.clone())?)
-            .map_err(|e| Error::WalletManagerError(format!("get public key: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("get public key: {}", e)))?;
         let address = chain
             .get_address(public_key.clone())
-            .map_err(|e| Error::WalletManagerError(format!("get address: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("get address: {}", e)))?;
 
         // create wallet from keypair
         Ok(Wallet {
@@ -130,11 +130,11 @@ impl Wallet {
     /// restore wallet from mnemonic
     pub fn from_kc_pem(chain: u32, data: &[u8]) -> Result<Wallet, Error> {
         // decode pem file
-        let pem = parse_pem(data)
-            .map_err(|_| Error::WalletManagerError("Invalid PEM data".to_string()))?;
+        let pem =
+            parse_pem(data).map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
 
         let content = String::from_utf8(pem.contents().to_vec())
-            .map_err(|_| Error::WalletManagerError("Invalid PEM data".to_string()))?;
+            .map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
 
         let pk_hex = content.chars().take(64).collect::<String>();
 
@@ -145,8 +145,8 @@ impl Wallet {
     #[wasm_bindgen(js_name = "fromPem")]
     pub fn from_pem(data: &[u8]) -> Result<Wallet, Error> {
         // parse pem
-        let pem = parse_pem(data)
-            .map_err(|_| Error::WalletManagerError("Invalid PEM data".to_string()))?;
+        let pem =
+            parse_pem(data).map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
 
         Wallet::import(pem)
     }
@@ -157,7 +157,7 @@ impl Wallet {
     pub fn import(pem: Pem) -> Result<Wallet, Error> {
         // Deserialize decrypted bytes to WalletManager
         let wallet: Wallet = unpack(pem.contents())
-            .map_err(|e| Error::CipherError(format!("deserialize data: {}", e)))?;
+            .map_err(|e| Error::Cipher(format!("deserialize data: {}", e)))?;
 
         Ok(wallet)
     }
@@ -166,11 +166,11 @@ impl Wallet {
 #[wasm_bindgen]
 // wallet properties
 impl Wallet {
-    // #[wasm_bindgen(js_name = "getChain")]
+    #[wasm_bindgen(js_name = "getChain")]
     // /// get wallet chain type
-    // pub fn get_chain(&self) -> Chain {
-    //     self.chain
-    // }
+    pub fn get_chain(&self) -> u32 {
+        self.chain
+    }
 
     #[wasm_bindgen(js_name = "getAccountType")]
     /// get wallet account type
@@ -196,7 +196,7 @@ impl Wallet {
     #[wasm_bindgen(js_name = "getIndex")]
     /// get wallet index if wallet is created from mnemonic index
     pub fn get_index(&self) -> Result<u32, Error> {
-        self.index.ok_or(Error::WalletManagerError(
+        self.index.ok_or(Error::WalletManager(
             "Wallet is not created from mnemonic index".to_string(),
         ))
     }
@@ -230,13 +230,13 @@ impl Wallet {
             Some(ref pk_hex) => {
                 let pk_bytes = hex::decode(pk_hex)?;
                 let chain = get_chain_by_base_id(self.chain)
-                    .ok_or_else(|| Error::WalletManagerError("Invalid chain".to_string()))?;
+                    .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
                 chain
                     .sign_message(pk_bytes, message.to_vec())
-                    .map_err(|e| Error::WalletManagerError(format!("sign message: {}", e)))
+                    .map_err(|e| Error::WalletManager(format!("sign message: {}", e)))
             }
-            None => Err(Error::WalletManagerError("no keypair".to_string())),
+            None => Err(Error::WalletManager("no keypair".to_string())),
         }
     }
 
@@ -253,11 +253,11 @@ impl Wallet {
                 };
 
                 let chain = get_chain_by_base_id(self.chain)
-                    .ok_or_else(|| Error::WalletManagerError("Invalid chain".to_string()))?;
+                    .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
                 let signed_tx = chain
                     .sign_tx(pk_bytes, tx)
-                    .map_err(|e| Error::WalletManagerError(format!("sign transaction: {}", e)))?;
+                    .map_err(|e| Error::WalletManager(format!("sign transaction: {}", e)))?;
 
                 Ok(Transaction {
                     raw_data: signed_tx.raw_data,
@@ -265,7 +265,7 @@ impl Wallet {
                     signature: signed_tx.signature,
                 })
             }
-            None => Err(Error::WalletManagerError("no keypair".to_string())),
+            None => Err(Error::WalletManager("no private key".to_string())),
         }
     }
 }

@@ -16,8 +16,6 @@ name = "uniffi-bindgen"
 path = "src/bin/uniffi-bindgen.rs"
 
 [dependencies]
-kos-crypto = { workspace = true }
-kos-types = { workspace = true, features = ["serde"] }
 kos = { workspace = true }
 
 hex = { workspace = true }

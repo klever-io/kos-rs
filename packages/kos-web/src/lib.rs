@@ -1,13 +1,13 @@
-use kos_crypto::cipher;
-use kos_crypto::cipher::CipherAlgo;
-use kos_crypto::mnemonic::generate_mnemonic;
-use kos_types::error::Error;
+use crate::error::Error;
+use kos::crypto::cipher;
+use kos::crypto::mnemonic::generate_mnemonic;
 use qrcode_generator::QrCodeEcc;
 use wasm_bindgen::prelude::*;
 
 mod models;
 mod utils;
 
+mod error;
 pub mod wallet;
 
 /// Generates a random mnemonic phrase given the number of words to generate, `count`.
@@ -29,17 +29,11 @@ pub fn to_string(data: &[u8]) -> Result<String, Error> {
         .map_err(|e| Error::InvalidString(format!("Invalid UTF-8 string: {}", e)))
 }
 
-/// Encrypts the given data with the given password.
-#[wasm_bindgen(js_name = "encrypt")]
-pub fn encrypt(algo: CipherAlgo, data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
-    algo.encrypt(data, password)
-}
-
 /// Decrypts the given data with the given password.
 /// Data will have the algorithm tag prepended to it (1 byte).
 #[wasm_bindgen(js_name = "decrypt")]
 pub fn decrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
-    cipher::decrypt(data, password)
+    cipher::decrypt(data, password).map_err(|e| Error::Cipher(format!("{}", e)))
 }
 
 /// Create pem file from tag and data

@@ -27,6 +27,4 @@ pem = "3"
 postcard = { version = "1.0.6", features = ["use-std"] }
 lazy_static = { workspace = true }
 kos = { workspace = true }
-kos-crypto = { workspace = true }
-kos-types = { workspace = true }
 wasm-bindgen = { workspace = true }

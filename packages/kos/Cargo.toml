@@ -54,6 +54,12 @@ rand_core = { version = "0.6.4", features = ["getrandom"], default-features = fa
 getrandom = { version = "0.2", features = ["js"] }
 alloy-dyn-abi = { version = "0.8.5", features = ["eip712"] }
 serde_json = { workspace = true }
+aes-gcm = "0.10"
+aes = { version = "0.8" }
+pem = "3"
+cfb-mode = "0.8"
+cbc = { version = "0.1", features = ["block-padding", "std"] }
+pbkdf2 = { version = "0.12", features = ["simple"] }
 
 [build-dependencies]
 prost-build = "0.12.1"

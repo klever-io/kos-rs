@@ -1,9 +1,8 @@
 use hex::FromHexError;
 use hex::ToHex;
 use kos::chains::{get_chain_by_base_id, Chain, ChainError, Transaction};
-use kos_crypto::cipher;
-use kos_crypto::cipher::CipherAlgo;
-use kos_types::error::Error as KosError;
+use kos::crypto::cipher;
+use kos::crypto::cipher::CipherAlgo;
 
 uniffi::setup_scaffolding!();
 
@@ -29,12 +28,6 @@ impl From<FromHexError> for KOSError {
     }
 }
 
-impl From<KosError> for KOSError {
-    fn from(err: KosError) -> Self {
-        KOSError::KOSDelegate(err.to_string())
-    }
-}
-
 #[derive(uniffi::Record)]
 struct KOSAccount {
     pub chain_id: u32,
@@ -54,12 +47,12 @@ struct KOSTransaction {
 
 #[uniffi::export]
 fn generate_mnemonic(size: i32) -> Result<String, KOSError> {
-    Ok(kos_crypto::mnemonic::generate_mnemonic(size as usize)?.to_phrase())
+    Ok(kos::crypto::mnemonic::generate_mnemonic(size as usize)?.to_phrase())
 }
 
 #[uniffi::export]
 fn validate_mnemonic(mnemonic: String) -> bool {
-    kos_crypto::mnemonic::validate_mnemonic(mnemonic.as_str()).is_ok()
+    kos::crypto::mnemonic::validate_mnemonic(mnemonic.as_str()).is_ok()
 }
 
 #[uniffi::export]
