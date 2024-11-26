@@ -129,17 +129,7 @@ pub struct Proposal {
 }
 /// Nested message and enum types in `Proposal`.
 pub mod proposal {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum State {
         Pending = 0,
@@ -225,17 +215,7 @@ pub struct MarketOrder {
 }
 /// Nested message and enum types in `MarketOrder`.
 pub mod market_order {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum State {
         Active = 0,
@@ -362,16 +342,10 @@ pub struct Account {
     pub votes: ::prost::alloc::vec::Vec<Vote>,
     /// the other asset owned by this account
     #[prost(btree_map = "string, int64", tag = "6")]
-    pub asset: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        i64,
-    >,
+    pub asset: ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, i64>,
     /// the other asset owned by this account，key is assetId
     #[prost(btree_map = "string, int64", tag = "56")]
-    pub asset_v2: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        i64,
-    >,
+    pub asset_v2: ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, i64>,
     /// the frozen balance for bandwidth
     #[prost(message, repeated, tag = "7")]
     pub frozen: ::prost::alloc::vec::Vec<account::Frozen>,
@@ -418,27 +392,19 @@ pub struct Account {
     #[prost(bytes = "vec", tag = "57")]
     pub asset_issued_id: ::prost::alloc::vec::Vec<u8>,
     #[prost(btree_map = "string, int64", tag = "18")]
-    pub latest_asset_operation_time: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        i64,
-    >,
+    pub latest_asset_operation_time:
+        ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, i64>,
     #[prost(btree_map = "string, int64", tag = "58")]
-    pub latest_asset_operation_time_v2: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        i64,
-    >,
+    pub latest_asset_operation_time_v2:
+        ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, i64>,
     #[prost(int64, tag = "19")]
     pub free_net_usage: i64,
     #[prost(btree_map = "string, int64", tag = "20")]
-    pub free_asset_net_usage: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        i64,
-    >,
+    pub free_asset_net_usage:
+        ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, i64>,
     #[prost(btree_map = "string, int64", tag = "59")]
-    pub free_asset_net_usage_v2: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        i64,
-    >,
+    pub free_asset_net_usage_v2:
+        ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, i64>,
     #[prost(int64, tag = "21")]
     pub latest_consume_time: i64,
     #[prost(int64, tag = "22")]
@@ -588,17 +554,7 @@ pub struct Permission {
 }
 /// Nested message and enum types in `Permission`.
 pub mod permission {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum PermissionType {
         Owner = 0,
@@ -759,15 +715,7 @@ pub mod transaction {
     /// Nested message and enum types in `Contract`.
     pub mod contract {
         #[derive(
-            Clone,
-            Copy,
-            Debug,
-            PartialEq,
-            Eq,
-            Hash,
-            PartialOrd,
-            Ord,
-            ::prost::Enumeration
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
         )]
         #[repr(i32)]
         pub enum ContractType {
@@ -828,9 +776,7 @@ pub mod transaction {
                     ContractType::WitnessCreateContract => "WitnessCreateContract",
                     ContractType::AssetIssueContract => "AssetIssueContract",
                     ContractType::WitnessUpdateContract => "WitnessUpdateContract",
-                    ContractType::ParticipateAssetIssueContract => {
-                        "ParticipateAssetIssueContract"
-                    }
+                    ContractType::ParticipateAssetIssueContract => "ParticipateAssetIssueContract",
                     ContractType::AccountUpdateContract => "AccountUpdateContract",
                     ContractType::FreezeBalanceContract => "FreezeBalanceContract",
                     ContractType::UnfreezeBalanceContract => "UnfreezeBalanceContract",
@@ -849,12 +795,8 @@ pub mod transaction {
                     ContractType::ExchangeCreateContract => "ExchangeCreateContract",
                     ContractType::ExchangeInjectContract => "ExchangeInjectContract",
                     ContractType::ExchangeWithdrawContract => "ExchangeWithdrawContract",
-                    ContractType::ExchangeTransactionContract => {
-                        "ExchangeTransactionContract"
-                    }
-                    ContractType::UpdateEnergyLimitContract => {
-                        "UpdateEnergyLimitContract"
-                    }
+                    ContractType::ExchangeTransactionContract => "ExchangeTransactionContract",
+                    ContractType::UpdateEnergyLimitContract => "UpdateEnergyLimitContract",
                     ContractType::AccountPermissionUpdateContract => {
                         "AccountPermissionUpdateContract"
                     }
@@ -862,23 +804,15 @@ pub mod transaction {
                     ContractType::UpdateBrokerageContract => "UpdateBrokerageContract",
                     ContractType::ShieldedTransferContract => "ShieldedTransferContract",
                     ContractType::MarketSellAssetContract => "MarketSellAssetContract",
-                    ContractType::MarketCancelOrderContract => {
-                        "MarketCancelOrderContract"
-                    }
+                    ContractType::MarketCancelOrderContract => "MarketCancelOrderContract",
                     ContractType::FreezeBalanceV2Contract => "FreezeBalanceV2Contract",
-                    ContractType::UnfreezeBalanceV2Contract => {
-                        "UnfreezeBalanceV2Contract"
-                    }
+                    ContractType::UnfreezeBalanceV2Contract => "UnfreezeBalanceV2Contract",
                     ContractType::WithdrawExpireUnfreezeContract => {
                         "WithdrawExpireUnfreezeContract"
                     }
                     ContractType::DelegateResourceContract => "DelegateResourceContract",
-                    ContractType::UnDelegateResourceContract => {
-                        "UnDelegateResourceContract"
-                    }
-                    ContractType::CancelAllUnfreezeV2Contract => {
-                        "CancelAllUnfreezeV2Contract"
-                    }
+                    ContractType::UnDelegateResourceContract => "UnDelegateResourceContract",
+                    ContractType::CancelAllUnfreezeV2Contract => "CancelAllUnfreezeV2Contract",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -892,9 +826,7 @@ pub mod transaction {
                     "WitnessCreateContract" => Some(Self::WitnessCreateContract),
                     "AssetIssueContract" => Some(Self::AssetIssueContract),
                     "WitnessUpdateContract" => Some(Self::WitnessUpdateContract),
-                    "ParticipateAssetIssueContract" => {
-                        Some(Self::ParticipateAssetIssueContract)
-                    }
+                    "ParticipateAssetIssueContract" => Some(Self::ParticipateAssetIssueContract),
                     "AccountUpdateContract" => Some(Self::AccountUpdateContract),
                     "FreezeBalanceContract" => Some(Self::FreezeBalanceContract),
                     "UnfreezeBalanceContract" => Some(Self::UnfreezeBalanceContract),
@@ -913,9 +845,7 @@ pub mod transaction {
                     "ExchangeCreateContract" => Some(Self::ExchangeCreateContract),
                     "ExchangeInjectContract" => Some(Self::ExchangeInjectContract),
                     "ExchangeWithdrawContract" => Some(Self::ExchangeWithdrawContract),
-                    "ExchangeTransactionContract" => {
-                        Some(Self::ExchangeTransactionContract)
-                    }
+                    "ExchangeTransactionContract" => Some(Self::ExchangeTransactionContract),
                     "UpdateEnergyLimitContract" => Some(Self::UpdateEnergyLimitContract),
                     "AccountPermissionUpdateContract" => {
                         Some(Self::AccountPermissionUpdateContract)
@@ -927,16 +857,10 @@ pub mod transaction {
                     "MarketCancelOrderContract" => Some(Self::MarketCancelOrderContract),
                     "FreezeBalanceV2Contract" => Some(Self::FreezeBalanceV2Contract),
                     "UnfreezeBalanceV2Contract" => Some(Self::UnfreezeBalanceV2Contract),
-                    "WithdrawExpireUnfreezeContract" => {
-                        Some(Self::WithdrawExpireUnfreezeContract)
-                    }
+                    "WithdrawExpireUnfreezeContract" => Some(Self::WithdrawExpireUnfreezeContract),
                     "DelegateResourceContract" => Some(Self::DelegateResourceContract),
-                    "UnDelegateResourceContract" => {
-                        Some(Self::UnDelegateResourceContract)
-                    }
-                    "CancelAllUnfreezeV2Contract" => {
-                        Some(Self::CancelAllUnfreezeV2Contract)
-                    }
+                    "UnDelegateResourceContract" => Some(Self::UnDelegateResourceContract),
+                    "CancelAllUnfreezeV2Contract" => Some(Self::CancelAllUnfreezeV2Contract),
                     _ => None,
                 }
             }
@@ -974,23 +898,13 @@ pub mod transaction {
         #[prost(int64, tag = "27")]
         pub withdraw_expire_amount: i64,
         #[prost(btree_map = "string, int64", tag = "28")]
-        pub cancel_unfreeze_v2_amount: ::prost::alloc::collections::BTreeMap<
-            ::prost::alloc::string::String,
-            i64,
-        >,
+        pub cancel_unfreeze_v2_amount:
+            ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, i64>,
     }
     /// Nested message and enum types in `Result`.
     pub mod result {
         #[derive(
-            Clone,
-            Copy,
-            Debug,
-            PartialEq,
-            Eq,
-            Hash,
-            PartialOrd,
-            Ord,
-            ::prost::Enumeration
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
         )]
         #[repr(i32)]
         pub enum Code {
@@ -1018,15 +932,7 @@ pub mod transaction {
             }
         }
         #[derive(
-            Clone,
-            Copy,
-            Debug,
-            PartialEq,
-            Eq,
-            Hash,
-            PartialOrd,
-            Ord,
-            ::prost::Enumeration
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
         )]
         #[repr(i32)]
         pub enum ContractResult {
@@ -1174,10 +1080,8 @@ pub struct TransactionInfo {
     #[prost(int64, tag = "28")]
     pub withdraw_expire_amount: i64,
     #[prost(btree_map = "string, int64", tag = "29")]
-    pub cancel_unfreeze_v2_amount: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        i64,
-    >,
+    pub cancel_unfreeze_v2_amount:
+        ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, i64>,
 }
 /// Nested message and enum types in `TransactionInfo`.
 pub mod transaction_info {
@@ -1191,17 +1095,7 @@ pub mod transaction_info {
         #[prost(bytes = "vec", tag = "3")]
         pub data: ::prost::alloc::vec::Vec<u8>,
     }
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum Code {
         Sucess = 0,
@@ -1324,17 +1218,7 @@ pub mod block_inventory {
         #[prost(int64, tag = "2")]
         pub number: i64,
     }
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum Type {
         Sync = 0,
@@ -1374,17 +1258,7 @@ pub struct Inventory {
 }
 /// Nested message and enum types in `Inventory`.
 pub mod inventory {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum InventoryType {
         Trx = 0,
@@ -1425,17 +1299,7 @@ pub struct Items {
 }
 /// Nested message and enum types in `Items`.
 pub mod items {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum ItemType {
         Err = 0,
@@ -1719,13 +1583,9 @@ pub mod node_info {
         #[prost(double, tag = "11")]
         pub process_cpu_rate: f64,
         #[prost(message, repeated, tag = "12")]
-        pub memory_desc_info_list: ::prost::alloc::vec::Vec<
-            machine_info::MemoryDescInfo,
-        >,
+        pub memory_desc_info_list: ::prost::alloc::vec::Vec<machine_info::MemoryDescInfo>,
         #[prost(message, repeated, tag = "13")]
-        pub dead_lock_thread_info_list: ::prost::alloc::vec::Vec<
-            machine_info::DeadLockThreadInfo,
-        >,
+        pub dead_lock_thread_info_list: ::prost::alloc::vec::Vec<machine_info::DeadLockThreadInfo>,
     }
     /// Nested message and enum types in `MachineInfo`.
     pub mod machine_info {
@@ -1872,9 +1732,7 @@ pub mod metrics_info {
         #[prost(int32, tag = "7")]
         pub disconnection_count: i32,
         #[prost(message, repeated, tag = "8")]
-        pub disconnection_detail: ::prost::alloc::vec::Vec<
-            net_info::DisconnectionDetailInfo,
-        >,
+        pub disconnection_detail: ::prost::alloc::vec::Vec<net_info::DisconnectionDetailInfo>,
         #[prost(message, optional, tag = "9")]
         pub udp_in_traffic: ::core::option::Option<RateInfo>,
         #[prost(message, optional, tag = "10")]
@@ -1988,17 +1846,7 @@ pub mod pbft_message {
         #[prost(bytes = "vec", tag = "5")]
         pub data: ::prost::alloc::vec::Vec<u8>,
     }
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum MsgType {
         ViewChange = 0,
@@ -2033,17 +1881,7 @@ pub mod pbft_message {
             }
         }
     }
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum DataType {
         Block = 0,
@@ -2849,15 +2687,7 @@ pub mod smart_contract {
                 pub r#type: ::prost::alloc::string::String,
             }
             #[derive(
-                Clone,
-                Copy,
-                Debug,
-                PartialEq,
-                Eq,
-                Hash,
-                PartialOrd,
-                Ord,
-                ::prost::Enumeration
+                Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
             )]
             #[repr(i32)]
             pub enum EntryType {
@@ -2900,15 +2730,7 @@ pub mod smart_contract {
                 }
             }
             #[derive(
-                Clone,
-                Copy,
-                Debug,
-                PartialEq,
-                Eq,
-                Hash,
-                PartialOrd,
-                Ord,
-                ::prost::Enumeration
+                Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
             )]
             #[repr(i32)]
             pub enum StateMutabilityType {
@@ -2925,9 +2747,7 @@ pub mod smart_contract {
                 /// (if the ProtoBuf definition does not change) and safe for programmatic use.
                 pub fn as_str_name(&self) -> &'static str {
                     match self {
-                        StateMutabilityType::UnknownMutabilityType => {
-                            "UnknownMutabilityType"
-                        }
+                        StateMutabilityType::UnknownMutabilityType => "UnknownMutabilityType",
                         StateMutabilityType::Pure => "Pure",
                         StateMutabilityType::View => "View",
                         StateMutabilityType::Nonpayable => "Nonpayable",

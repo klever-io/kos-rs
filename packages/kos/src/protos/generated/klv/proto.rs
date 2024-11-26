@@ -50,17 +50,7 @@ pub struct CreateAssetContract {
 }
 /// Nested message and enum types in `CreateAssetContract`.
 pub mod create_asset_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumAssetType {
         Fungible = 0,
@@ -136,17 +126,7 @@ pub struct StakingInfo {
 }
 /// Nested message and enum types in `StakingInfo`.
 pub mod staking_info {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum InterestType {
         Apri = 0,
@@ -201,10 +181,8 @@ pub struct RoyaltiesInfo {
     #[prost(int64, tag = "5")]
     pub market_fixed: i64,
     #[prost(btree_map = "string, message", tag = "6")]
-    pub split_royalties: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        RoyaltySplitInfo,
-    >,
+    pub split_royalties:
+        ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, RoyaltySplitInfo>,
     #[prost(int64, tag = "7")]
     pub ito_fixed: i64,
     #[prost(uint32, tag = "8")]
@@ -281,17 +259,7 @@ pub struct AssetTriggerContract {
 }
 /// Nested message and enum types in `AssetTriggerContract`.
 pub mod asset_trigger_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumTriggerType {
         Mint = 0,
@@ -455,17 +423,7 @@ pub struct WithdrawContract {
 }
 /// Nested message and enum types in `WithdrawContract`.
 pub mod withdraw_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumWithdrawType {
         Staking = 0,
@@ -503,17 +461,7 @@ pub struct ClaimContract {
 }
 /// Nested message and enum types in `ClaimContract`.
 pub mod claim_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumClaimType {
         StakingClaim = 0,
@@ -559,10 +507,7 @@ pub struct SetAccountNameContract {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProposalContract {
     #[prost(btree_map = "int32, bytes", tag = "1")]
-    pub parameters: ::prost::alloc::collections::BTreeMap<
-        i32,
-        ::prost::alloc::vec::Vec<u8>,
-    >,
+    pub parameters: ::prost::alloc::collections::BTreeMap<i32, ::prost::alloc::vec::Vec<u8>>,
     #[prost(bytes = "vec", tag = "2")]
     pub description: ::prost::alloc::vec::Vec<u8>,
     #[prost(uint32, tag = "3")]
@@ -581,17 +526,7 @@ pub struct VoteContract {
 }
 /// Nested message and enum types in `VoteContract`.
 pub mod vote_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumVoteType {
         Yes = 0,
@@ -631,19 +566,14 @@ pub struct ConfigItoContract {
     #[prost(int64, tag = "4")]
     pub max_amount: i64,
     #[prost(btree_map = "string, message", tag = "5")]
-    pub pack_info: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        PackInfo,
-    >,
+    pub pack_info: ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, PackInfo>,
     #[prost(int64, tag = "6")]
     pub default_limit_per_address: i64,
     #[prost(enumeration = "config_ito_contract::EnumItoStatus", tag = "7")]
     pub whitelist_status: i32,
     #[prost(btree_map = "string, message", tag = "8")]
-    pub whitelist_info: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        WhitelistInfo,
-    >,
+    pub whitelist_info:
+        ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, WhitelistInfo>,
     #[prost(int64, tag = "9")]
     pub whitelist_start_time: i64,
     #[prost(int64, tag = "10")]
@@ -655,17 +585,7 @@ pub struct ConfigItoContract {
 }
 /// Nested message and enum types in `ConfigITOContract`.
 pub mod config_ito_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumItoStatus {
         DefaultIto = 0,
@@ -708,10 +628,7 @@ pub struct SetItoPricesContract {
     #[prost(bytes = "vec", tag = "1")]
     pub asset_id: ::prost::alloc::vec::Vec<u8>,
     #[prost(btree_map = "string, message", tag = "2")]
-    pub pack_info: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        PackInfo,
-    >,
+    pub pack_info: ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, PackInfo>,
 }
 /// ITOTriggerContract triggers assets functions
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -728,19 +645,14 @@ pub struct ItoTriggerContract {
     #[prost(int64, tag = "5")]
     pub max_amount: i64,
     #[prost(btree_map = "string, message", tag = "6")]
-    pub pack_info: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        PackInfo,
-    >,
+    pub pack_info: ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, PackInfo>,
     #[prost(int64, tag = "7")]
     pub default_limit_per_address: i64,
     #[prost(enumeration = "ito_trigger_contract::EnumItoStatus", tag = "8")]
     pub whitelist_status: i32,
     #[prost(btree_map = "string, message", tag = "9")]
-    pub whitelist_info: ::prost::alloc::collections::BTreeMap<
-        ::prost::alloc::string::String,
-        WhitelistInfo,
-    >,
+    pub whitelist_info:
+        ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, WhitelistInfo>,
     #[prost(int64, tag = "10")]
     pub whitelist_start_time: i64,
     #[prost(int64, tag = "11")]
@@ -752,17 +664,7 @@ pub struct ItoTriggerContract {
 }
 /// Nested message and enum types in `ITOTriggerContract`.
 pub mod ito_trigger_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumItoTriggerType {
         SetItoPrices = 0,
@@ -787,9 +689,7 @@ pub mod ito_trigger_contract {
                 EnumItoTriggerType::UpdateStatus => "UpdateStatus",
                 EnumItoTriggerType::UpdateReceiverAddress => "UpdateReceiverAddress",
                 EnumItoTriggerType::UpdateMaxAmount => "UpdateMaxAmount",
-                EnumItoTriggerType::UpdateDefaultLimitPerAddress => {
-                    "UpdateDefaultLimitPerAddress"
-                }
+                EnumItoTriggerType::UpdateDefaultLimitPerAddress => "UpdateDefaultLimitPerAddress",
                 EnumItoTriggerType::UpdateTimes => "UpdateTimes",
                 EnumItoTriggerType::UpdateWhitelistStatus => "UpdateWhitelistStatus",
                 EnumItoTriggerType::AddToWhitelist => "AddToWhitelist",
@@ -804,9 +704,7 @@ pub mod ito_trigger_contract {
                 "UpdateStatus" => Some(Self::UpdateStatus),
                 "UpdateReceiverAddress" => Some(Self::UpdateReceiverAddress),
                 "UpdateMaxAmount" => Some(Self::UpdateMaxAmount),
-                "UpdateDefaultLimitPerAddress" => {
-                    Some(Self::UpdateDefaultLimitPerAddress)
-                }
+                "UpdateDefaultLimitPerAddress" => Some(Self::UpdateDefaultLimitPerAddress),
                 "UpdateTimes" => Some(Self::UpdateTimes),
                 "UpdateWhitelistStatus" => Some(Self::UpdateWhitelistStatus),
                 "AddToWhitelist" => Some(Self::AddToWhitelist),
@@ -816,17 +714,7 @@ pub mod ito_trigger_contract {
             }
         }
     }
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumItoStatus {
         DefaultIto = 0,
@@ -887,17 +775,7 @@ pub struct BuyContract {
 }
 /// Nested message and enum types in `BuyContract`.
 pub mod buy_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumBuyType {
         ItoBuy = 0,
@@ -945,17 +823,7 @@ pub struct SellContract {
 }
 /// Nested message and enum types in `SellContract`.
 pub mod sell_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumMarketType {
         BuyItNowMarket = 0,
@@ -1039,17 +907,7 @@ pub struct AccPermission {
 }
 /// Nested message and enum types in `AccPermission`.
 pub mod acc_permission {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum AccPermissionType {
         Owner = 0,
@@ -1098,17 +956,7 @@ pub struct DepositContract {
 }
 /// Nested message and enum types in `DepositContract`.
 pub mod deposit_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum EnumDepositType {
         FprDeposit = 0,
@@ -1146,17 +994,7 @@ pub struct TxContract {
 }
 /// Nested message and enum types in `TXContract`.
 pub mod tx_contract {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum ContractType {
         TransferContractType = 0,
@@ -1194,12 +1032,8 @@ pub mod tx_contract {
             match self {
                 ContractType::TransferContractType => "TransferContractType",
                 ContractType::CreateAssetContractType => "CreateAssetContractType",
-                ContractType::CreateValidatorContractType => {
-                    "CreateValidatorContractType"
-                }
-                ContractType::ValidatorConfigContractType => {
-                    "ValidatorConfigContractType"
-                }
+                ContractType::CreateValidatorContractType => "CreateValidatorContractType",
+                ContractType::ValidatorConfigContractType => "ValidatorConfigContractType",
                 ContractType::FreezeContractType => "FreezeContractType",
                 ContractType::UnfreezeContractType => "UnfreezeContractType",
                 ContractType::DelegateContractType => "DelegateContractType",
@@ -1215,15 +1049,9 @@ pub mod tx_contract {
                 ContractType::SetItoPricesContractType => "SetITOPricesContractType",
                 ContractType::BuyContractType => "BuyContractType",
                 ContractType::SellContractType => "SellContractType",
-                ContractType::CancelMarketOrderContractType => {
-                    "CancelMarketOrderContractType"
-                }
-                ContractType::CreateMarketplaceContractType => {
-                    "CreateMarketplaceContractType"
-                }
-                ContractType::ConfigMarketplaceContractType => {
-                    "ConfigMarketplaceContractType"
-                }
+                ContractType::CancelMarketOrderContractType => "CancelMarketOrderContractType",
+                ContractType::CreateMarketplaceContractType => "CreateMarketplaceContractType",
+                ContractType::ConfigMarketplaceContractType => "ConfigMarketplaceContractType",
                 ContractType::UpdateAccountPermissionContractType => {
                     "UpdateAccountPermissionContractType"
                 }
@@ -1253,15 +1081,9 @@ pub mod tx_contract {
                 "SetITOPricesContractType" => Some(Self::SetItoPricesContractType),
                 "BuyContractType" => Some(Self::BuyContractType),
                 "SellContractType" => Some(Self::SellContractType),
-                "CancelMarketOrderContractType" => {
-                    Some(Self::CancelMarketOrderContractType)
-                }
-                "CreateMarketplaceContractType" => {
-                    Some(Self::CreateMarketplaceContractType)
-                }
-                "ConfigMarketplaceContractType" => {
-                    Some(Self::ConfigMarketplaceContractType)
-                }
+                "CancelMarketOrderContractType" => Some(Self::CancelMarketOrderContractType),
+                "CreateMarketplaceContractType" => Some(Self::CreateMarketplaceContractType),
+                "ConfigMarketplaceContractType" => Some(Self::ConfigMarketplaceContractType),
                 "UpdateAccountPermissionContractType" => {
                     Some(Self::UpdateAccountPermissionContractType)
                 }
@@ -1330,17 +1152,7 @@ pub mod transaction {
         #[prost(bytes = "vec", repeated, tag = "1")]
         pub data: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
     }
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum TxResult {
         Success = 0,
@@ -1366,17 +1178,7 @@ pub mod transaction {
             }
         }
     }
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum TxResultCode {
         Ok = 0,
@@ -1588,17 +1390,7 @@ pub struct Permission {
 }
 /// Nested message and enum types in `Permission`.
 pub mod permission {
-    #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-        PartialOrd,
-        Ord,
-        ::prost::Enumeration
-    )]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum PermissionType {
         Owner = 0,
