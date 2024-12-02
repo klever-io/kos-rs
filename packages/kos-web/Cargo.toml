@@ -28,3 +28,5 @@ postcard = { version = "1.0.6", features = ["use-std"] }
 lazy_static = { workspace = true }
 kos = { workspace = true }
 wasm-bindgen = { workspace = true }
+num-bigint = "0.4"
+num-traits = "0.2"

@@ -277,12 +277,10 @@ mod tests {
 
     #[test]
     fn test_export_import() {
-        let default_password = "password";
-
         let chain = get_chain_by_base_id(38).unwrap();
 
         // create wallet
-        let mut w1 = Wallet::from_mnemonic(
+        let w1 = Wallet::from_mnemonic(
             38,
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain.get_path(0, false),

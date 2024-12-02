@@ -8,6 +8,7 @@ mod models;
 mod utils;
 
 mod error;
+mod number;
 pub mod wallet;
 
 /// Generates a random mnemonic phrase given the number of words to generate, `count`.

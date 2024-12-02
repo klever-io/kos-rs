@@ -1608,6 +1608,8 @@ dependencies = [
  "hex",
  "kos",
  "lazy_static",
+ "num-bigint",
+ "num-traits",
  "pem",
  "postcard",
  "qrcode-generator",
