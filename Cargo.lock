@@ -1595,6 +1595,9 @@ dependencies = [
  "hex",
  "kos",
  "lazy_static",
+ "num-bigint",
+ "num-traits",
+ "serde",
  "thiserror",
  "uniffi",
 ]

@@ -1,3 +1,5 @@
+pub mod number;
+
 use hex::FromHexError;
 use hex::ToHex;
 use kos::chains::{get_chain_by_base_id, Chain, ChainError, Transaction};

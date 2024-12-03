@@ -11,6 +11,9 @@ version.workspace = true
 [lib]
 crate-type = ["cdylib", "staticlib", "rlib"]
 
+[features]
+default = ["serde"]
+
 [[bin]]
 name = "uniffi-bindgen"
 path = "src/bin/uniffi-bindgen.rs"
@@ -23,6 +26,9 @@ lazy_static = { workspace = true }
 thiserror = { workspace = true }
 
 uniffi = { workspace = true, features = ["cli"] }
+serde = { workspace = true, features = ["derive"], optional = true }
+num-bigint = "0.4"
+num-traits = "0.2"
 
 [build-dependencies]
 uniffi = { workspace = true, features = ["build"] }
