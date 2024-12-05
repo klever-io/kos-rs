@@ -9,6 +9,8 @@ use alloc::vec::Vec;
 use alloc::{format, vec};
 use bech32::{u5, Variant};
 
+const BITCOIN_MESSAGE_PREFIX: &str = "\x18Bitcoin Signed Message:\n";
+
 #[allow(clippy::upper_case_acronyms)]
 pub struct BTC {
     pub id: u32,
@@ -87,6 +89,15 @@ impl BTC {
         let addr = String::from_utf8(res)?;
         Ok(addr)
     }
+
+    pub fn prepare_message(message: Vec<u8>) -> [u8; 32] {
+        let mut msg = Vec::new();
+        msg.extend_from_slice(BITCOIN_MESSAGE_PREFIX.as_bytes());
+        msg.extend_from_slice(message.len().to_string().as_bytes());
+        msg.extend_from_slice(&message);
+
+        sha256_digest(&msg[..])
+    }
 }
 
 impl Chain for BTC {
@@ -143,12 +154,10 @@ impl Chain for BTC {
         Err(ChainError::NotSupported)
     }
 
-    fn sign_message(
-        &self,
-        _private_key: Vec<u8>,
-        _message: Vec<u8>,
-    ) -> Result<Vec<u8>, ChainError> {
-        Err(ChainError::NotSupported)
+    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+        let prepared_message = BTC::prepare_message(message);
+        let signature = self.sign_raw(private_key, prepared_message.to_vec())?;
+        Ok(signature)
     }
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -205,5 +214,19 @@ mod test {
         let pbk = btc.get_pbk(pvk).unwrap();
         let addr = btc.get_address(pbk).unwrap();
         assert_eq!(addr, "DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC");
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let path = "m/44'/0'/0'/0/0".to_string();
+
+        let btc = BTC::new();
+        let seed = btc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = btc.derive(seed, path).unwrap();
+        let message = "Hello, World!".as_bytes().to_vec();
+        let signature = btc.sign_message(pvk, message).unwrap();
+        assert_eq!(hex::encode(signature.clone()), "9d561a0ba6ea562e61606e7f3b6a92c889246eec2c05e86e3f465f43469ae9436d7e46accdcfaea848460e42c83c52238b6956c4bfb192e67023b6024e95bdcf01");
+        assert_eq!(signature.len(), 65);
     }
 }
