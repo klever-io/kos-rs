@@ -9,13 +9,15 @@ use kos::crypto::cipher::CipherAlgo;
 uniffi::setup_scaffolding!();
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
-enum KOSError {
+pub enum KOSError {
     #[error("UnsupportedChainError: Unsupported chain {id}")]
     UnsupportedChain { id: String },
     #[error("KOSDelegateError: {0}")]
     KOSDelegate(String),
     #[error("HexDecodeError: {0}")]
     HexDecode(String),
+    #[error("KOSNumberError: {0}")]
+    KOSNumber(String),
 }
 
 impl From<ChainError> for KOSError {
