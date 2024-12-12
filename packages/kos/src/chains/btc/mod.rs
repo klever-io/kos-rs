@@ -1,3 +1,5 @@
+mod models;
+
 use crate::chains::util::{private_key_from_vec, slice_from_vec};
 use crate::chains::{Chain, ChainError, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
@@ -150,8 +152,15 @@ impl Chain for BTC {
         Ok(self.get_addr_new(public_key)?)
     }
 
-    fn sign_tx(&self, _private_key: Vec<u8>, _tx: Transaction) -> Result<Transaction, ChainError> {
-        Err(ChainError::NotSupported)
+    fn sign_tx(&self, private_key: Vec<u8>, tx: Transaction) -> Result<Transaction, ChainError> {
+        let mut tx = tx;
+
+        let mut btc_tx = models::BTCTransaction::from_raw(tx.raw_data.clone())?;
+        btc_tx.sign(private_key)?;
+
+        tx.raw_data = btc_tx.serialize();
+
+        Ok(tx)
     }
 
     fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -228,5 +237,22 @@ mod test {
         let signature = btc.sign_message(pvk, message).unwrap();
         assert_eq!(hex::encode(signature.clone()), "9d561a0ba6ea562e61606e7f3b6a92c889246eec2c05e86e3f465f43469ae9436d7e46accdcfaea848460e42c83c52238b6956c4bfb192e67023b6024e95bdcf01");
         assert_eq!(signature.len(), 65);
+    }
+
+    #[test]
+    fn decoded_and_sign_transaction() {
+        let raw = hex::decode("0100000001a3727243402a869948ccf6d1b61e9b7eabacaa1c1301fcef743bc59ba14664340100000000ffffffff021027000000000000225120236c88c2ba0bdaa1506c42168453629e33a7dbb203e310b069bb22bf67350d2c91c7470000000000160014dc6bf86354105de2fcd9868a2b0376d6731cb92f000000000100000001a3727243402a869948ccf6d1b61e9b7eabacaa1c1301fcef743bc59ba14664340100000000ffffffff021027000000000000225120236c88c2ba0bdaa1506c42168453629e33a7dbb203e310b069bb22bf67350d2c91c7470000000000160014dc6bf86354105de2fcd9868a2b0376d6731cb92f00000000").unwrap();
+
+        let pvk = hex::decode("4604b4b710fe91f584fff084e1a9159fe4f8408fff380596a604948474ce4fa3")
+            .unwrap();
+        let btc = BTC::new();
+        let transaction = Transaction {
+            raw_data: raw,
+            signature: vec![],
+            tx_hash: vec![],
+        };
+
+        let signed_tx = btc.sign_tx(pvk, transaction).unwrap();
+        assert_eq!(signed_tx.raw_data.len(), 192);
     }
 }
