@@ -56,6 +56,7 @@ pub enum ChainError {
     InvalidMnemonic,
     CipherError(String),
     InvalidString(String),
+    InvalidData(String),
 }
 
 impl Display for ChainError {
@@ -111,6 +112,9 @@ impl Display for ChainError {
             }
             ChainError::InvalidString(e) => {
                 write!(f, "invalid string: {}", e)
+            }
+            ChainError::InvalidData(e) => {
+                write!(f, "invalid data: {}", e)
             }
         }
     }
@@ -199,6 +203,7 @@ impl ChainError {
             ChainError::InvalidMnemonic => 17,
             ChainError::CipherError(_) => 18,
             ChainError::InvalidString(_) => 19,
+            ChainError::InvalidData(_) => 20,
         }
     }
 }

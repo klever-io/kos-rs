@@ -155,8 +155,8 @@ impl Chain for BTC {
     fn sign_tx(&self, private_key: Vec<u8>, tx: Transaction) -> Result<Transaction, ChainError> {
         let mut tx = tx;
 
-        let mut btc_tx = models::BTCTransaction::from_raw(tx.raw_data.clone())?;
-        btc_tx.sign(private_key)?;
+        let mut btc_tx = models::BTCTransaction::from_raw(&tx.raw_data.clone())?;
+        btc_tx.sign(&private_key)?;
 
         tx.raw_data = btc_tx.serialize();
 
