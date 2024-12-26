@@ -2,7 +2,6 @@ use crate::chains::util::{private_key_from_vec, slice_from_vec};
 use crate::chains::ChainError;
 use crate::crypto::hash::sha256_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
-use std::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct BTCTransaction {
@@ -47,14 +46,13 @@ impl BTCTransaction {
             let pvk_bytes = private_key_from_vec(private_key)?;
             let payload_bytes = slice_from_vec(&hash)?;
 
-            let sig = Secp256K1::sign(&payload_bytes, &pvk_bytes)?;
-            let mut der = Secp256K1::convert_to_der(&sig)?;
+            let mut sig = Secp256K1::sign(&payload_bytes, &pvk_bytes)?.to_vec();
 
-            der.push(hash_type as u8);
+            sig.push(hash_type as u8);
 
             let pbk = Secp256K1::private_to_public_compressed(&pvk_bytes)?;
 
-            input.witness = vec![der, pbk.to_vec()];
+            input.witness = vec![sig, pbk.to_vec()];
             input.script_sig.clear();
         }
 
@@ -66,8 +64,6 @@ impl BTCTransaction {
         input_index: usize,
         script_pubkey: &[u8],
     ) -> Result<[u8; 32], ChainError> {
-        use crate::crypto::hash::sha256_digest;
-
         let mut hash_prevouts = Vec::new();
         let mut hash_sequence = Vec::new();
 
@@ -86,7 +82,7 @@ impl BTCTransaction {
         let mut input_data: Vec<u8> = Vec::new();
         input_data.extend(&input.txid);
         input_data.extend(&input.vout.to_le_bytes());
-        input_data.extend(&(script_pubkey.len() as u64).to_le_bytes()); // Tamanho do script_pubkey
+        input_data.extend(&(script_pubkey.len() as u64).to_le_bytes());
         input_data.extend(script_pubkey);
         input_data.extend(&input.sequence.to_le_bytes());
 

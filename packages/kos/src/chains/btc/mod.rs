@@ -253,6 +253,6 @@ mod test {
         };
 
         let signed_tx = btc.sign_tx(pvk, transaction).unwrap();
-        assert_eq!(signed_tx.raw_data.len(), 192);
+        assert_eq!(signed_tx.raw_data.len(), 229);
     }
 }
