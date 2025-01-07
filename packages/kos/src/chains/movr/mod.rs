@@ -17,6 +17,7 @@ pub struct MOVR {
 }
 
 impl MOVR {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         MOVR {
             id: 32,
@@ -26,6 +27,7 @@ impl MOVR {
         }
     }
 
+    #[allow(dead_code)]
     pub fn new_glmr() -> Self {
         MOVR {
             id: 34,
