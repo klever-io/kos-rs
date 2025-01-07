@@ -642,7 +642,7 @@ impl ChainRegistry {
     }
 
     fn get_chain_by_base_id(&self, base_id: u32) -> Option<Box<dyn Chain>> {
-        for &(_, ref chain_info) in self.registry {
+        for (_, chain_info) in self.registry {
             let chain = (chain_info.factory)();
             if chain.get_id() == base_id {
                 return Some(chain);
@@ -653,7 +653,7 @@ impl ChainRegistry {
 
     fn get_chains(&self) -> Vec<u32> {
         let mut ids = Vec::new();
-        for &(_, ref chain_info) in self.registry {
+        for (_, chain_info) in self.registry {
             let chain = (chain_info.factory)();
             ids.push(chain.get_id());
         }
@@ -661,7 +661,7 @@ impl ChainRegistry {
     }
 
     fn is_chain_supported(&self, id: u32) -> bool {
-        for &(_, ref chain_info) in self.registry {
+        for (_, chain_info) in self.registry {
             let chain = (chain_info.factory)();
             if chain.get_id() == id {
                 return chain_info.supported;
@@ -672,7 +672,7 @@ impl ChainRegistry {
 
     fn get_supported_chains(&self) -> Vec<u32> {
         let mut ids = Vec::new();
-        for &(_, ref chain_info) in self.registry {
+        for (_, chain_info) in self.registry {
             let chain = (chain_info.factory)();
             if chain_info.supported {
                 ids.push(chain.get_id());
@@ -694,7 +694,7 @@ pub enum CustomChainType {
 }
 
 pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
-    return match params {
+    match params {
         CustomChainType::NotCustom(c) => get_chain_by_id(c),
         CustomChainType::CustomEth(chaincode) => Some(Box::new(eth::ETH::new_eth_based(
             0,
@@ -704,7 +704,7 @@ pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
         ))),
         CustomChainType::CustomSubstrate(_) => None,
         CustomChainType::CustomCosmos(_) => None,
-    };
+    }
 }
 
 pub fn get_chain_by_base_id(base_id: u32) -> Option<Box<dyn Chain>> {

@@ -16,7 +16,6 @@ pub struct BCH {}
 
 impl BCH {
     #[allow(clippy::needless_range_loop)]
-
     fn expand_prefix(prefix: &str) -> Result<Vec<u8>, ChainError> {
         let mut prefix_bytes = prefix.as_bytes().to_vec();
         for i in 0..prefix_bytes.len() {
@@ -28,7 +27,6 @@ impl BCH {
     }
 
     #[allow(clippy::needless_range_loop)]
-
     fn create_checksum(prefix: &str, payload: &[u8]) -> Result<Vec<u8>, ChainError> {
         let expanded_prefix = BCH::expand_prefix(prefix)?;
         let to_encode = [expanded_prefix, payload.to_vec(), vec![0u8; 8]].concat();
@@ -114,7 +112,6 @@ impl Chain for BCH {
     }
 
     #[allow(clippy::needless_range_loop)]
-
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
         if public_key.len() != 33 {
             return Err(ChainError::InvalidPublicKey);

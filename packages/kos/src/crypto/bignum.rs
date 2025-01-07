@@ -50,7 +50,6 @@ impl U256 {
     }
 
     #[allow(clippy::needless_range_loop)]
-
     pub fn to_f64(&self, precision: u32) -> f64 {
         let bytes = self.0;
         let mut value: f64 = 0.0;
