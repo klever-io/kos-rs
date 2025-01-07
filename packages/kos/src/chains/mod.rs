@@ -500,14 +500,14 @@ impl ChainRegistry {
             (
                 constants::MOVR,
                 ChainInfo {
-                    factory: || Box::new(movr::MOVR::new()),
+                    factory: || Box::new(eth::ETH::new_eth_based(32, 1285, "MOVR", "Moonriver")),
                     supported: true,
                 },
             ),
             (
                 constants::GLMR,
                 ChainInfo {
-                    factory: || Box::new(movr::MOVR::new_glmr()),
+                    factory: || Box::new(eth::ETH::new_eth_based(34, 1284, "GLMR", "Moonbeam")),
                     supported: true,
                 },
             ),
