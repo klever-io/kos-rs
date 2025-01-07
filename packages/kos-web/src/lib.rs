@@ -57,3 +57,13 @@ pub fn generate_qr(data: &str) -> Result<Vec<u8>, Error> {
     qrcode_generator::to_png_to_vec(data, QrCodeEcc::Low, 1024)
         .map_err(|e| Error::InvalidString(format!("Invalid QRCode data: {}", e)))
 }
+
+#[wasm_bindgen(js_name = "isChainSupported")]
+pub fn is_chain_supported(chain: u32) -> bool {
+    kos::chains::is_chain_supported(chain)
+}
+
+#[wasm_bindgen(js_name = "getSupportedChains")]
+pub fn get_supported_chains() -> Vec<u32> {
+    kos::chains::get_supported_chains()
+}

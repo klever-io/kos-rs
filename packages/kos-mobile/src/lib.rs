@@ -165,6 +165,16 @@ fn sign_message(account: KOSAccount, hex: String) -> Result<Vec<u8>, KOSError> {
     Ok(signature)
 }
 
+#[uniffi::export]
+fn is_chain_supported(chain_id: u32) -> bool {
+    kos::chains::is_chain_supported(chain_id)
+}
+
+#[uniffi::export]
+fn get_supported_chains() -> Vec<u32> {
+    kos::chains::get_supported_chains()
+}
+
 #[cfg(test)]
 mod tests {
     use crate::*;
@@ -396,5 +406,28 @@ mod tests {
 
         let signature = sign_message(account, message).unwrap();
         assert_eq!(signature.len(), 64, "The signature length doesn't match");
+    }
+
+    #[test]
+    fn should_return_true_for_supported_chain() {
+        let chain_id = 38;
+        let result = is_chain_supported(chain_id);
+        assert!(result, "The chain should be supported");
+    }
+
+    #[test]
+    fn should_return_false_for_unsupported_chain() {
+        let chain_id = 999;
+        let result = is_chain_supported(chain_id);
+        assert!(!result, "The chain should not be supported");
+    }
+
+    #[test]
+    fn should_get_supported_chains() {
+        let supported_chains = get_supported_chains();
+        assert!(
+            !supported_chains.is_empty(),
+            "The supported chains should not be empty"
+        );
     }
 }
