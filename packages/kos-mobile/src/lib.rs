@@ -143,6 +143,7 @@ fn sign_transaction(account: KOSAccount, raw: String) -> Result<KOSTransaction, 
         raw_data: raw_tx_bytes,
         signature: Vec::new(),
         tx_hash: Vec::new(),
+        options: None,
     };
     let pk = hex::decode(account.private_key.clone())?;
 

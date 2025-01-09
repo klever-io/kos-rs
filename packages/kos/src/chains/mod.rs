@@ -27,7 +27,6 @@ pub mod egld;
 mod eth;
 mod icp;
 pub mod klv;
-mod movr;
 mod sol;
 mod substrate;
 mod sui;
@@ -57,6 +56,8 @@ pub enum ChainError {
     CipherError(String),
     InvalidString(String),
     InvalidData(String),
+    MissingOptions,
+    InvalidOptions,
 }
 
 impl Display for ChainError {
@@ -116,6 +117,12 @@ impl Display for ChainError {
             ChainError::InvalidData(e) => {
                 write!(f, "invalid data: {}", e)
             }
+            ChainError::MissingOptions => {
+                write!(f, "missing option")
+            }
+            ChainError::InvalidOptions => {
+                write!(f, "invalid option")
+            }
         }
     }
 }
@@ -168,8 +175,8 @@ impl From<DecoderError> for ChainError {
     }
 }
 
-impl From<tiny_json_rs::serializer::DecodeError> for ChainError {
-    fn from(_: tiny_json_rs::serializer::DecodeError) -> Self {
+impl From<serializer::DecodeError> for ChainError {
+    fn from(_: serializer::DecodeError) -> Self {
         ChainError::ProtoDecodeError
     }
 }
@@ -204,6 +211,8 @@ impl ChainError {
             ChainError::CipherError(_) => 18,
             ChainError::InvalidString(_) => 19,
             ChainError::InvalidData(_) => 20,
+            ChainError::MissingOptions => 21,
+            ChainError::InvalidOptions => 22,
         }
     }
 }
@@ -214,8 +223,8 @@ pub enum TxType {
     TriggerContract,
 }
 
-impl tiny_json_rs::serializer::Serialize for TxType {
-    fn serialize(&self) -> tiny_json_rs::mapper::Value {
+impl serializer::Serialize for TxType {
+    fn serialize(&self) -> mapper::Value {
         let str = match self {
             TxType::Unknown => "Unknown",
             TxType::Transfer => "Transfer",
@@ -226,7 +235,7 @@ impl tiny_json_rs::serializer::Serialize for TxType {
             literal: str.to_string(),
         };
 
-        tiny_json_rs::mapper::Value::Token(token)
+        mapper::Value::Token(token)
     }
 }
 
@@ -242,6 +251,19 @@ pub struct Transaction {
     pub raw_data: Vec<u8>,
     pub tx_hash: Vec<u8>,
     pub signature: Vec<u8>,
+    pub options: Option<ChainOptions>,
+}
+
+#[derive(Clone)]
+pub enum ChainOptions {
+    EVM {
+        chain_id: u32,
+        network_type: u32,
+    },
+    BTC {
+        prev_scripts: Vec<Vec<u8>>,
+        input_amounts: Vec<u64>,
+    },
 }
 
 #[allow(dead_code)]
@@ -252,6 +274,7 @@ impl Transaction {
             raw_data: Vec::new(),
             tx_hash: Vec::new(),
             signature: Vec::new(),
+            options: None,
         }
     }
 }

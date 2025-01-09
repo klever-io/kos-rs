@@ -323,6 +323,7 @@ mod test {
             raw_data: hex_tx,
             tx_hash: vec![],
             signature: vec![],
+            options: None,
         };
         let _tx = crate::chains::trx::TRX {}.sign_tx(pvk, tx).unwrap();
     }

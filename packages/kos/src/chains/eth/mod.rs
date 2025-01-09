@@ -9,6 +9,7 @@ use crate::crypto::{bip32, secp256k1};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+#[cfg(not(feature = "ksafe"))]
 use alloy_dyn_abi::TypedData;
 
 pub(crate) const ETH_ADDR_SIZE: usize = 20;
@@ -229,6 +230,7 @@ mod test {
             raw_data: raw_tx,
             tx_hash: Vec::new(),
             signature: Vec::new(),
+            options: None,
         };
 
         let _ = eth.sign_tx(pvk, tx).unwrap();
@@ -245,6 +247,7 @@ mod test {
             raw_data: raw_tx,
             tx_hash: Vec::new(),
             signature: Vec::new(),
+            options: None,
         };
 
         let _ = eth.sign_tx(pvk, tx).unwrap();

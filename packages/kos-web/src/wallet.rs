@@ -250,6 +250,7 @@ impl Wallet {
                     raw_data: tx_raw.to_vec(),
                     signature: vec![],
                     tx_hash: vec![],
+                    options: None,
                 };
 
                 let chain = get_chain_by_base_id(self.chain)

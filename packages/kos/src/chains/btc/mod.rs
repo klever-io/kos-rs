@@ -1,7 +1,5 @@
-mod models;
-
 use crate::chains::util::{private_key_from_vec, slice_from_vec};
-use crate::chains::{Chain, ChainError, Transaction, TxInfo};
+use crate::chains::{Chain, ChainError, ChainOptions, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
 use crate::crypto::bip32;
 use crate::crypto::hash::{ripemd160_digest, sha256_digest};
@@ -10,6 +8,7 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use alloc::{format, vec};
 use bech32::{u5, Variant};
+use bitcoin::{ecdsa, secp256k1, sighash, Amount, Denomination, Psbt};
 
 const BITCOIN_MESSAGE_PREFIX: &str = "\x18Bitcoin Signed Message:\n";
 
@@ -155,10 +154,85 @@ impl Chain for BTC {
     fn sign_tx(&self, private_key: Vec<u8>, tx: Transaction) -> Result<Transaction, ChainError> {
         let mut tx = tx;
 
-        let mut btc_tx = models::BTCTransaction::from_raw(&tx.raw_data.clone())?;
-        btc_tx.sign(&private_key)?;
+        let options = tx.options.clone().ok_or(ChainError::MissingOptions)?;
 
-        tx.raw_data = btc_tx.serialize();
+        let (prev_scripts, input_amounts) = match options {
+            ChainOptions::BTC {
+                prev_scripts,
+                input_amounts,
+            } => (prev_scripts, input_amounts),
+            _ => {
+                return Err(ChainError::InvalidOptions);
+            }
+        };
+
+        let transaction: bitcoin::Transaction =
+            bitcoin::consensus::deserialize(tx.raw_data.as_ref()).unwrap();
+
+        let mut psbt = Psbt::from_unsigned_tx(transaction.clone()).unwrap();
+
+        let mut cache = sighash::SighashCache::new(transaction);
+
+        let sk = secp256k1::SecretKey::from_slice(private_key.clone().as_slice()).unwrap();
+
+        let btc = BTC::new();
+        let pk = btc.get_pbk(private_key)?;
+
+        let public_key = bitcoin::PublicKey::from_slice(pk.as_slice()).unwrap();
+
+        let secp = bitcoin::secp256k1::Secp256k1::new();
+
+        let values = input_amounts
+            .iter()
+            .map(|x| Amount::from_str_in(&x.to_string(), Denomination::Satoshi).unwrap())
+            .collect::<Vec<Amount>>();
+
+        for inp_idx in 0..psbt.inputs.len() {
+            let utxo = bitcoin::TxOut {
+                value: values[inp_idx],
+                script_pubkey: prev_scripts[inp_idx].clone().into(),
+            };
+            psbt.inputs[inp_idx].witness_utxo = Some(utxo);
+        }
+
+        // sign inputs
+        for inp_idx in 0..psbt.inputs.len() {
+            // compute sighash
+            let (msg, sighash_ty) = psbt.sighash_ecdsa(inp_idx, &mut cache).unwrap();
+
+            // sign
+            let sig = ecdsa::Signature {
+                signature: secp.sign_ecdsa(&msg, &sk),
+                sighash_type: sighash_ty,
+            };
+
+            // insert signature
+            psbt.inputs[inp_idx].partial_sigs.insert(public_key, sig);
+        }
+
+        // finalize
+        for inp_idx in 0..psbt.inputs.len() {
+            let script_witness = {
+                match psbt.inputs[inp_idx].partial_sigs.first_key_value() {
+                    Some((pubkey, sig)) => {
+                        let mut script_witness = bitcoin::Witness::new();
+                        script_witness.push(sig.to_vec());
+                        script_witness.push(pubkey.to_bytes());
+                        script_witness
+                    }
+                    _ => bitcoin::Witness::default(),
+                }
+            };
+            psbt.inputs[inp_idx].final_script_witness = Some(script_witness);
+        }
+
+        let signed_tx = psbt.extract_tx().unwrap();
+
+        tx.raw_data = bitcoin::consensus::encode::serialize(&signed_tx);
+
+        tx.signature = bitcoin::consensus::encode::serialize(&signed_tx.compute_wtxid());
+
+        tx.tx_hash = bitcoin::consensus::encode::serialize(&signed_tx.compute_txid());
 
         Ok(tx)
     }
@@ -240,8 +314,8 @@ mod test {
     }
 
     #[test]
-    fn decoded_and_sign_transaction() {
-        let raw = hex::decode("0100000001a3727243402a869948ccf6d1b61e9b7eabacaa1c1301fcef743bc59ba14664340100000000ffffffff021027000000000000225120236c88c2ba0bdaa1506c42168453629e33a7dbb203e310b069bb22bf67350d2c91c7470000000000160014dc6bf86354105de2fcd9868a2b0376d6731cb92f000000000100000001a3727243402a869948ccf6d1b61e9b7eabacaa1c1301fcef743bc59ba14664340100000000ffffffff021027000000000000225120236c88c2ba0bdaa1506c42168453629e33a7dbb203e310b069bb22bf67350d2c91c7470000000000160014dc6bf86354105de2fcd9868a2b0376d6731cb92f00000000").unwrap();
+    fn sign_transaction() {
+        let raw = hex::decode("0100000002badfa0606bc6a1738d8ddf951b1ebf9e87779934a5774b836668efb5a6d643970000000000fffffffffe60fbeb66791b10c765a207c900a08b2a9bd7ef21e1dd6e5b2ef1e9d686e5230000000000ffffffff028813000000000000160014e4132ab9175345e24b344f50e6d6764a651a89e6c21f000000000000160014546d5f8e86641e4d1eec5b9155a540d953245e4a00000000").unwrap();
 
         let pvk = hex::decode("4604b4b710fe91f584fff084e1a9159fe4f8408fff380596a604948474ce4fa3")
             .unwrap();
@@ -250,9 +324,19 @@ mod test {
             raw_data: raw,
             signature: vec![],
             tx_hash: vec![],
+            options: Option::from(ChainOptions::BTC {
+                prev_scripts: vec![
+                    hex::decode("0014546d5f8e86641e4d1eec5b9155a540d953245e4a").unwrap(),
+                    hex::decode("0014546d5f8e86641e4d1eec5b9155a540d953245e4a").unwrap(),
+                ],
+                input_amounts: vec![5000, 10000],
+            }),
         };
 
         let signed_tx = btc.sign_tx(pvk, transaction).unwrap();
-        assert_eq!(signed_tx.raw_data.len(), 229);
+
+        assert_eq!(signed_tx.signature.len(), 32);
+        assert_eq!(signed_tx.tx_hash.len(), 32);
+        assert_eq!(signed_tx.raw_data.len(), 372);
     }
 }

@@ -218,6 +218,7 @@ mod test {
             raw_data: raw_tx,
             tx_hash: Vec::new(),
             signature: Vec::new(),
+            options: None,
         };
 
         let result_tx = crate::chains::klv::KLV {}.sign_tx(pvk, tx).unwrap();

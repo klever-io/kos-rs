@@ -6,34 +6,20 @@ deny = [
 skip = [
     { name = "bitflags", version = "=1.3.2" }, # openssl
     { name = "base64", version = "<=0.22" }, # openssl
-    { name = "idna", version = "=0.4.0" }, #
-    { name = "winreg", version = "<=0.52" },
-    { name = "http", version = "<=1.1" },
-    { name = "http-body", version = "<=1.0.0" },
-    { name = "hyper", version = "<=1.3.1" },
-    { name = "reqwest", version = "<=0.12.4" },
-    { name = "rustls-pemfile", version = "1.0.4" },
     { name = "block-buffer", version = "0.9.0" },
     { name = "digest", version = "0.9.0" },
     { name = "heck", version = "0.4.1" },
     { name = "hmac", version = "0.8.1" },
     { name = "sha2", version = "0.9.9" },
     { name = "syn", version = "1.0.109" },
-    { name = "windows-sys", version = "0.52.0" }
-
-
-]
-skip-tree = [
-    { name = "prost-wkt-types", version = "=0.5.0", depth = 20 }, # prost-wkt-build
-    { name = "prost-wkt-build", version = "=0.5.0", depth = 20 }, # prost-wkt-build
+    { name = "windows-sys", version = "0.52.0" },
+    { name = "bech32", version = "0.9.1" }
 ]
 
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"
 
-[sources.allow-org]
-github = ["klever-io"]
 
 [licenses]
 confidence-threshold = 0.8
@@ -45,9 +31,7 @@ allow = [
     "BSD-3-Clause",
     "BSD-2-Clause",
     "CC0-1.0",
-    "ISC",
     "MPL-2.0",
-    "OpenSSL",
 ]
 exceptions = [
     { name = "unicode-ident", allow = ["Unicode-DFS-2016"] },
