@@ -6,7 +6,8 @@ use strum::{EnumCount, IntoStaticStr};
 
 use crate::error::Error;
 use crate::utils::unpack;
-use kos::chains::{get_chain_by_base_id, Transaction as KosTransaction};
+use kos::chains::{get_chain_by_base_id, ChainOptions, Transaction as KosTransaction};
+use kos::crypto::base64;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -30,6 +31,34 @@ pub struct Wallet {
     mnemonic: Option<String>,
     private_key: Option<String>,
     path: Option<String>,
+}
+
+#[wasm_bindgen]
+#[derive(Clone)]
+pub struct TransactionChainOptions {
+    #[wasm_bindgen(skip)]
+    pub data: ChainOptions,
+}
+
+#[wasm_bindgen]
+impl TransactionChainOptions {
+    #[wasm_bindgen(js_name = "newBitcoinSignOptions")]
+    pub fn new_bitcoin_sign_options(
+        input_amounts: Vec<u64>,
+        prev_scripts: Vec<String>,
+    ) -> TransactionChainOptions {
+        let prev_scripts = prev_scripts
+            .iter()
+            .map(|s| base64::simple_base64_decode(s).unwrap_or_default())
+            .collect();
+
+        TransactionChainOptions {
+            data: ChainOptions::BTC {
+                prev_scripts,
+                input_amounts,
+            },
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -241,16 +270,23 @@ impl Wallet {
     }
 
     #[wasm_bindgen(js_name = "sign")]
-    pub fn sign(&self, tx_raw: &[u8]) -> Result<Transaction, Error> {
+    /// sign transaction with keypair
+    pub fn sign(
+        &self,
+        tx_raw: &[u8],
+        options: Option<TransactionChainOptions>,
+    ) -> Result<Transaction, Error> {
         match self.private_key {
             Some(ref pk_hex) => {
                 let pk_bytes = hex::decode(pk_hex)?;
+
+                let options = options.map(|o| o.data);
 
                 let tx = KosTransaction {
                     raw_data: tx_raw.to_vec(),
                     signature: vec![],
                     tx_hash: vec![],
-                    options: None,
+                    options,
                 };
 
                 let chain = get_chain_by_base_id(self.chain)
@@ -295,5 +331,35 @@ mod tests {
         );
         assert_eq!(w1.get_mnemonic(), "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about");
         assert_eq!(w1.get_path(), "m/44'/690'/0'/0'/0'");
+    }
+
+    #[test]
+    fn test_sign_transaction() {
+        let chain = get_chain_by_base_id(2).unwrap();
+
+        let w1 = Wallet::from_mnemonic(
+            2,
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain.get_path(0, false),
+            None,
+        ).unwrap();
+
+        let sign_options = TransactionChainOptions::new_bitcoin_sign_options(
+            vec![5000, 10000],
+            vec![
+                "ABRUbV+OhmQeTR7sW5FVpUDZUyReSg==".to_string(),
+                "ABRUbV+OhmQeTR7sW5FVpUDZUyReSg==".to_string(),
+            ],
+        );
+
+        let raw_tx = hex::decode("0100000002badfa0606bc6a1738d8ddf951b1ebf9e87779934a5774b836668efb5a6d643970000000000fffffffffe60fbeb66791b10c765a207c900a08b2a9bd7ef21e1dd6e5b2ef1e9d686e5230000000000ffffffff028813000000000000160014e4132ab9175345e24b344f50e6d6764a651a89e6c21f000000000000160014546d5f8e86641e4d1eec5b9155a540d953245e4a00000000").unwrap();
+
+        let signed_tx = w1.sign(&raw_tx, Some(sign_options)).unwrap();
+
+        assert_eq!(signed_tx.raw_data.len(), 372);
+
+        assert_eq!(signed_tx.tx_hash.len(), 32);
+
+        assert_eq!(signed_tx.signature.len(), 32);
     }
 }
