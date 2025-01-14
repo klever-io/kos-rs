@@ -22,3 +22,7 @@ dist
 demo/.DS_Store
 packages/.DS_Store
 .idea/*
+
+packages/kos/target
+packages/kos/Cargo.lock
+packages/kos/.idea
