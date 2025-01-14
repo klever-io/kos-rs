@@ -2,9 +2,11 @@ pub mod number;
 
 use hex::FromHexError;
 use hex::ToHex;
-use kos::chains::{get_chain_by_base_id, Chain, ChainError, Transaction};
-use kos::crypto::cipher;
+use kos::chains::{
+    create_custom_evm, get_chain_by_base_id, Chain, ChainError, ChainOptions, Transaction,
+};
 use kos::crypto::cipher::CipherAlgo;
+use kos::crypto::{base64, cipher};
 
 uniffi::setup_scaffolding!();
 
@@ -47,6 +49,42 @@ struct KOSTransaction {
     pub raw: String,
     pub sender: String,
     pub signature: String,
+}
+
+#[derive(uniffi::Enum)]
+enum TransactionChainOptions {
+    Evm {
+        chain_id: u32,
+        network_type: u32,
+    },
+    Btc {
+        prev_scripts: Vec<Vec<u8>>,
+        input_amounts: Vec<u64>,
+    },
+}
+
+#[uniffi::export]
+fn new_bitcoin_transaction_options(
+    input_amounts: Vec<u64>,
+    prev_scripts: Vec<String>,
+) -> TransactionChainOptions {
+    let prev_scripts = prev_scripts
+        .iter()
+        .map(|s| base64::simple_base64_decode(s).unwrap_or_default())
+        .collect();
+
+    TransactionChainOptions::Btc {
+        prev_scripts,
+        input_amounts,
+    }
+}
+
+#[uniffi::export]
+fn new_evm_transaction_options(chain_id: u32, network_type: u32) -> TransactionChainOptions {
+    TransactionChainOptions::Evm {
+        chain_id,
+        network_type,
+    }
 }
 
 #[uniffi::export]
@@ -136,14 +174,48 @@ fn get_chain_by(id: u32) -> Result<Box<dyn Chain>, KOSError> {
 }
 
 #[uniffi::export]
-fn sign_transaction(account: KOSAccount, raw: String) -> Result<KOSTransaction, KOSError> {
-    let chain = get_chain_by(account.chain_id)?;
+fn sign_transaction(
+    account: KOSAccount,
+    raw: String,
+    options: Option<TransactionChainOptions>,
+) -> Result<KOSTransaction, KOSError> {
+    let options = match options {
+        Some(TransactionChainOptions::Evm {
+            chain_id,
+            network_type,
+        }) => Some(ChainOptions::EVM {
+            chain_id,
+            network_type,
+        }),
+        Some(TransactionChainOptions::Btc {
+            prev_scripts,
+            input_amounts,
+        }) => Some(ChainOptions::BTC {
+            prev_scripts,
+            input_amounts,
+        }),
+        None => None,
+    };
+
+    let mut chain = get_chain_by(account.chain_id)?;
+
+    if let Some(ChainOptions::EVM {
+        chain_id,
+        network_type,
+    }) = options
+    {
+        chain = create_custom_evm(chain_id, network_type).ok_or(KOSError::KOSDelegate(
+            "Failed to create custom evm chain".to_string(),
+        ))?;
+    }
+
     let raw_tx_bytes = hex::decode(raw.clone())?;
+
     let transaction = Transaction {
         raw_data: raw_tx_bytes,
         signature: Vec::new(),
         tx_hash: Vec::new(),
-        options: None,
+        options,
     };
     let pk = hex::decode(account.private_key.clone())?;
 
@@ -376,7 +448,7 @@ mod tests {
         )
         .unwrap();
 
-        let transaction = sign_transaction(account, raw.to_string()).unwrap();
+        let transaction = sign_transaction(account, raw.to_string(), None).unwrap();
 
         assert_eq!(transaction.chain_id, chain_id, "The chain_id doesn't match");
         assert_eq!(
