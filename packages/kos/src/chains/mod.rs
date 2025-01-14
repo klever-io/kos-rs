@@ -363,7 +363,7 @@ impl ChainRegistry {
                 constants::BTC,
                 ChainInfo {
                     factory: || Box::new(btc::BTC::new()),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
@@ -384,7 +384,7 @@ impl ChainRegistry {
                 constants::LTC,
                 ChainInfo {
                     factory: || Box::new(btc::BTC::new_btc_based(5, "ltc", "LTC", "Litecoin")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
@@ -419,7 +419,7 @@ impl ChainRegistry {
                 constants::SYS,
                 ChainInfo {
                     factory: || Box::new(btc::BTC::new_btc_based(15, "sys", "SYS", "Syscoin")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
@@ -463,7 +463,7 @@ impl ChainRegistry {
                 constants::DGB,
                 ChainInfo {
                     factory: || Box::new(btc::BTC::new_btc_based(16, "dgb", "DGB", "Digibyte")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
@@ -703,6 +703,15 @@ impl ChainRegistry {
         }
         ids
     }
+
+    fn create_custom_evm(&self, chain_id: u32, _network_type: u32) -> Option<Box<dyn Chain>> {
+        Some(Box::new(eth::ETH::new_eth_based(
+            0,
+            chain_id,
+            format!("ETH {}", chain_id).as_str(),
+            format!("Eth Based {}", chain_id).as_str(),
+        )))
+    }
 }
 
 pub fn get_chain_by_id(id: u32) -> Option<Box<dyn Chain>> {
@@ -744,4 +753,8 @@ pub fn is_chain_supported(id: u32) -> bool {
 
 pub fn get_supported_chains() -> Vec<u32> {
     ChainRegistry::new().get_supported_chains()
+}
+
+pub fn create_custom_evm(chain_id: u32, network_type: u32) -> Option<Box<dyn Chain>> {
+    ChainRegistry::new().create_custom_evm(chain_id, network_type)
 }
