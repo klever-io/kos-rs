@@ -1,0 +1,57 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unused)]
+
+pub const RESERVED: u32 = 0;
+pub const TRX: u32 = 1;
+pub const BTC: u32 = 2;
+pub const ETH: u32 = 3;
+pub const BSC: u32 = 4;
+pub const EGLD: u32 = 5;
+pub const DOT: u32 = 6;
+pub const KSM: u32 = 7;
+pub const KLV: u32 = 8;
+pub const LTC: u32 = 9;
+pub const DOGE: u32 = 10;
+pub const DASH: u32 = 11;
+pub const POLYGON: u32 = 12;
+pub const BNB: u32 = 13;
+pub const REEF: u32 = 14;
+pub const ICP: u32 = 15;
+pub const DGB: u32 = 16;
+pub const XRP: u32 = 17;
+pub const MOVR: u32 = 18;
+pub const GLMR: u32 = 19;
+pub const SYS: u32 = 20;
+pub const HT: u32 = 21;
+pub const BCH: u32 = 22;
+pub const SDN: u32 = 23;
+pub const ASTR: u32 = 24;
+pub const ONE: u32 = 25;
+pub const SYS_NEVM: u32 = 26;
+pub const KILT: u32 = 27;
+pub const ALTAIR: u32 = 28;
+pub const SOL: u32 = 29;
+pub const XLM: u32 = 30;
+pub const SUBSTRATE: u32 = 31;
+pub const COSMOS: u32 = 32;
+pub const CELESTIA: u32 = 33;
+pub const SUI: u32 = 34;
+pub const CUDOS: u32 = 35;
+pub const AURA: u32 = 36;
+pub const APT: u32 = 37;
+pub const ADA: u32 = 38;
+pub const AVAIL: u32 = 39;
+pub const ROLLUX: u32 = 40;
+pub const AVAX: u32 = 41;
+pub const CFG: u32 = 42;
+pub const ARB: u32 = 43;
+pub const BASE: u32 = 44;
+pub const NEAR: u32 = 45;
+pub const FTM: u32 = 46;
+pub const CHZ: u32 = 47;
+pub const OP: u32 = 48;
+pub const HBAR: u32 = 49;
+pub const FLOW: u32 = 50;
+pub const POLYGON_ZKEVM: u32 = 51;
+pub const STOLZ: u32 = 52;

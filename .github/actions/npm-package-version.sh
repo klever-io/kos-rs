@@ -5,5 +5,5 @@ CURRENT_VERSION="${CURRENT_VERSION}"
 
 echo "Release dev ${CURRENT_VERSION}"
 
-# change version in Cargo.toml
-eval "sed -i '6s/.*/  \"version\": \"${CURRENT_VERSION}\",/' demo/kos/package.json"
+# change version in package.json using jq
+jq --arg version "$CURRENT_VERSION" '.version = $version' demo/kos/package.json > tmp.$$.json && mv tmp.$$.json demo/kos/package.json

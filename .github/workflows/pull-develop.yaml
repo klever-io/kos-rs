@@ -17,7 +17,7 @@ on:
       - '**/*.md'
       - '.gitignore'
       - '.github/**'
-    
+
 jobs:
   format:
     runs-on: ubuntu-latest
@@ -46,16 +46,12 @@ jobs:
           cargo deny check
           cargo pants
 
-      - name: Restore .env file
-        run: echo "$NODES_ENV" | base64 -d > packages/kos-sdk/.env.nodes
-        env:
-          NODES_ENV: ${{ secrets.NODES_ENV }}
 
       - name: Run Tests
         run: cargo test
 
   build:
-    needs: [format]
+    needs: [ format ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -67,11 +63,6 @@ jobs:
         uses: klever-io/kos-rs/.github/actions/rustup@develop
         with:
           with_cache: true
-
-      - name: Restore .env file
-        run: echo $NODES_ENV | base64 -d > packages/kos-sdk/.env.nodes
-        env:
-          NODES_ENV: ${{ secrets.NODES_ENV }}
 
       - name: Build
         run: make webpack-npm
