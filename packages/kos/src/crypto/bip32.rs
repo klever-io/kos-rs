@@ -205,10 +205,10 @@ pub fn derive_sr25519(input_key: &[u8], mut path: String) -> Result<[u8; 64], Bi
             .strip_prefix("//")
             .ok_or(Bip32Err::PathError)?
             .to_string();
-        path = path
-            .strip_suffix("///")
-            .ok_or(Bip32Err::PathError)?
-            .to_string();
+
+        if let Some(stripped) = path.strip_suffix("///") {
+            path = stripped.to_string();
+        }
 
         let chaincode_value = u8::from_str(path.as_str()).map_err(|_| Bip32Err::PathError)?;
 

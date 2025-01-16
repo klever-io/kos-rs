@@ -159,6 +159,19 @@ mod test {
         let addr = dot.get_address(pbk).unwrap();
         assert_eq!(addr, "13KVd4f2a4S5pLp4gTTFezyXdPWx27vQ9vS6xBXJ9yWVd7xo");
     }
+    #[test]
+    fn test_get_addr1() {
+        let dot = super::Substrate::new(62, 42, "AVAIL", "Avail");
+
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let path = dot.get_path(1, false);
+
+        let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
+        let pvk = dot.derive(seed, path).unwrap();
+        let pbk = dot.get_pbk(pvk).unwrap();
+        let addr = dot.get_address(pbk).unwrap();
+        assert_eq!(addr, "5DJ8y4CAHnmjt4rdoZpR1wgXnQDnKDksskx7JTphZhMxthiG");
+    }
 
     #[test]
     fn test_sign_raw() {
