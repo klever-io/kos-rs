@@ -6,13 +6,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class KOSTest {
-
     @Test
     fun testKOS() {
-
         val dataToEncrypt = "Hello"
         val password = "password"
-        val klvChainId = 38
+        val klvChainId = 38u
         val mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
         val klvPk0 = "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d"
@@ -27,10 +25,10 @@ class KOSTest {
             validateMnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon klv")
         assertFalse(isInvalidMnemonicValid)
 
-        val mnemonic12 = generateMnemonic(12)
+        val mnemonic12 = generateMnemonic(12u)
         assertTrue(mnemonic12.split(" ").size == 12)
 
-        val mnemonic24 = generateMnemonic(24)
+        val mnemonic24 = generateMnemonic(24u)
         assertTrue(mnemonic24.split(" ").size == 24)
 
         val gmcEncryptedData = encryptWithGmc(dataToEncrypt, password)
@@ -51,7 +49,7 @@ class KOSTest {
         val cfbDecryptedData = decrypt(cfbEncryptedData, password)
         assertEquals(dataToEncrypt, cfbDecryptedData)
 
-        val walletFromMnemonic = generateWalletFromMnemonic(mnemonic, klvChainId, 0, false)
+        val walletFromMnemonic = generateWalletFromMnemonic(mnemonic, klvChainId, 0u, false)
         assertEquals(klvChainId, walletFromMnemonic.chainId)
         assertEquals(klvPk0, walletFromMnemonic.privateKey)
         assertEquals(klvAddr0, walletFromMnemonic.address)

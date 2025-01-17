@@ -258,7 +258,6 @@ pub struct Transaction {
 pub enum ChainOptions {
     EVM {
         chain_id: u32,
-        network_type: u32,
     },
     BTC {
         prev_scripts: Vec<Vec<u8>>,
@@ -704,7 +703,7 @@ impl ChainRegistry {
         ids
     }
 
-    fn create_custom_evm(&self, chain_id: u32, _network_type: u32) -> Option<Box<dyn Chain>> {
+    fn create_custom_evm(&self, chain_id: u32) -> Option<Box<dyn Chain>> {
         Some(Box::new(eth::ETH::new_eth_based(
             0,
             chain_id,
@@ -755,6 +754,6 @@ pub fn get_supported_chains() -> Vec<u32> {
     ChainRegistry::new().get_supported_chains()
 }
 
-pub fn create_custom_evm(chain_id: u32, network_type: u32) -> Option<Box<dyn Chain>> {
-    ChainRegistry::new().create_custom_evm(chain_id, network_type)
+pub fn create_custom_evm(chain_id: u32) -> Option<Box<dyn Chain>> {
+    ChainRegistry::new().create_custom_evm(chain_id)
 }

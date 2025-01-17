@@ -55,7 +55,6 @@ struct KOSTransaction {
 enum TransactionChainOptions {
     Evm {
         chain_id: u32,
-        network_type: u32,
     },
     Btc {
         prev_scripts: Vec<Vec<u8>>,
@@ -80,11 +79,8 @@ fn new_bitcoin_transaction_options(
 }
 
 #[uniffi::export]
-fn new_evm_transaction_options(chain_id: u32, network_type: u32) -> TransactionChainOptions {
-    TransactionChainOptions::Evm {
-        chain_id,
-        network_type,
-    }
+fn new_evm_transaction_options(chain_id: u32) -> TransactionChainOptions {
+    TransactionChainOptions::Evm { chain_id }
 }
 
 #[uniffi::export]
@@ -180,13 +176,7 @@ fn sign_transaction(
     options: Option<TransactionChainOptions>,
 ) -> Result<KOSTransaction, KOSError> {
     let options = match options {
-        Some(TransactionChainOptions::Evm {
-            chain_id,
-            network_type,
-        }) => Some(ChainOptions::EVM {
-            chain_id,
-            network_type,
-        }),
+        Some(TransactionChainOptions::Evm { chain_id }) => Some(ChainOptions::EVM { chain_id }),
         Some(TransactionChainOptions::Btc {
             prev_scripts,
             input_amounts,
@@ -199,12 +189,8 @@ fn sign_transaction(
 
     let mut chain = get_chain_by(account.chain_id)?;
 
-    if let Some(ChainOptions::EVM {
-        chain_id,
-        network_type,
-    }) = options
-    {
-        chain = create_custom_evm(chain_id, network_type).ok_or(KOSError::KOSDelegate(
+    if let Some(ChainOptions::EVM { chain_id }) = options {
+        chain = create_custom_evm(chain_id).ok_or(KOSError::KOSDelegate(
             "Failed to create custom evm chain".to_string(),
         ))?;
     }
@@ -463,6 +449,26 @@ mod tests {
             transaction.signature, "81464320f4b14aae344234c1337f3f0c002e5939bb0f54c7a3629656a8624d80ae9b93be3925b04d8960214d11809eae9e083572e0893dc99858d8230ca03f0c",
             "The signature doesn't match"
         );
+    }
+
+    #[test]
+    fn should_sign_transaction_with_options() {
+        let chain_id = 61;
+        let raw =
+            "b302f101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c0808080";
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false,
+        )
+            .unwrap();
+
+        let options = new_evm_transaction_options(88888);
+        let transaction = sign_transaction(account, raw.to_string(), Some(options)).unwrap();
+
+        assert_eq!(transaction.raw, "02f87101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c001a044c69f41bf47ad50dc98c74af68811384c9172055b01fcaa39e70f53df69b632a05e071cf1f9e12500b525f03a29f567520e1ea49a97e6a29d1fd432dc6303353e", "The raw doesn't match");
     }
 
     #[test]
