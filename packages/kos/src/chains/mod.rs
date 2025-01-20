@@ -383,7 +383,7 @@ impl ChainRegistry {
                 constants::LTC,
                 ChainInfo {
                     factory: || Box::new(btc::BTC::new_btc_based(5, "ltc", "LTC", "Litecoin")),
-                    supported: true,
+                    supported: false,
                 },
             ),
             (
@@ -418,7 +418,7 @@ impl ChainRegistry {
                 constants::SYS,
                 ChainInfo {
                     factory: || Box::new(btc::BTC::new_btc_based(15, "sys", "SYS", "Syscoin")),
-                    supported: true,
+                    supported: false,
                 },
             ),
             (
@@ -462,7 +462,7 @@ impl ChainRegistry {
                 constants::DGB,
                 ChainInfo {
                     factory: || Box::new(btc::BTC::new_btc_based(16, "dgb", "DGB", "Digibyte")),
-                    supported: true,
+                    supported: false,
                 },
             ),
             (
