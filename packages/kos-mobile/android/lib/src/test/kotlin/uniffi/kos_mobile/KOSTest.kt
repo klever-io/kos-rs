@@ -10,7 +10,7 @@ class KOSTest {
     fun testKOS() {
         val dataToEncrypt = "Hello"
         val password = "password"
-        val klvChainId = 38u
+        val klvChainId: UInt = 38u
         val mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
         val klvPk0 = "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d"
@@ -25,10 +25,10 @@ class KOSTest {
             validateMnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon klv")
         assertFalse(isInvalidMnemonicValid)
 
-        val mnemonic12 = generateMnemonic(12u)
+        val mnemonic12 = generateMnemonic(12)
         assertTrue(mnemonic12.split(" ").size == 12)
 
-        val mnemonic24 = generateMnemonic(24u)
+        val mnemonic24 = generateMnemonic(24)
         assertTrue(mnemonic24.split(" ").size == 24)
 
         val gmcEncryptedData = encryptWithGmc(dataToEncrypt, password)
