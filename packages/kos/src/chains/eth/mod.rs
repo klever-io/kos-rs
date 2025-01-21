@@ -149,7 +149,12 @@ impl Chain for ETH {
             if let Ok(data) = std::str::from_utf8(&message) {
                 if let Ok(typed_data) = serde_json::from_str::<TypedData>(data) {
                     let digest = typed_data.eip712_signing_hash().unwrap();
-                    return self.sign_raw(private_key, digest.to_vec());
+                    let mut sig = self.sign_raw(private_key, digest.to_vec())?;
+
+                    let last_index = sig.len() - 1;
+                    sig[last_index] += 27;
+
+                    return Ok(sig);
                 }
             }
         }
@@ -161,7 +166,11 @@ impl Chain for ETH {
         ]
         .concat();
         let hashed = keccak256_digest(&to_sign[..]);
-        let signature = self.sign_raw(private_key, hashed.to_vec())?;
+        let mut signature = self.sign_raw(private_key, hashed.to_vec())?;
+
+        let last_index = signature.len() - 1;
+        signature[last_index] += 27;
+
         Ok(signature)
     }
 
