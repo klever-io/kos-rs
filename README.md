@@ -1,6 +1,8 @@
 # Klever Wallet Library for Rust (kos-rs)
 
-kos-rs is an open-source library crafted to deliver fundamental low-level crypto-wallet capabilities for blockchain actions and transactions. Built with Rust, it ensures top-tier security and versatile platform adaptability, positioning it as a premier choice for constructing secure and high-performing blockchain solutions.
+kos-rs is an open-source library crafted to deliver fundamental low-level crypto-wallet capabilities for blockchain
+actions and transactions. Built with Rust, it ensures top-tier security and versatile platform adaptability, positioning
+it as a premier choice for constructing secure and high-performing blockchain solutions.
 
 #### KleverOS, which stands for Klever Wallet Ops Security, is a robust library meticulously crafted in Rust to guarantee the utmost security in private key generation while ensuring unparalleled auditability.
 
@@ -19,6 +21,50 @@ kos-rs is an open-source library crafted to deliver fundamental low-level crypto
 - [x] Tron (TRX)
 - [x] Klever (KLV)
 - [x] Polygon (Matic)
+- [x] Binance Smart Chain (BSC)
+- [x] Huobi Token (HT)
+- [x] Syscoin NEVM (SYS_NEVM)
+- [x] Polkadot (DOT)
+- [x] Kusama (KSM)
+- [x] Reef (REEF)
+- [x] Shiden (SDN)
+- [x] Astar (ASTR)
+- [x] Centrifuge (CFG)
+- [x] KILT
+- [x] Altair
+- [x] Moonriver (MOVR)
+- [x] Moonbeam (GLMR)
+- [x] Sui (SUI)
+- [x] Avail (AVAIL)
+- [x] Rollux
+- [x] Avalanche (AVAX)
+- [x] Arbitrum (ARB)
+- [x] Base
+- [x] Near (NEAR)
+- [x] Fantom (FTM)
+- [x] Chiliz (CHZ)
+- [x] Optimism (OP)
+- [x] Polygon zkEVM
+- [x] Stolz
+
+#### Coming soon | Under development:
+
+- Litecoin (LTC)
+- Syscoin (SYS)
+- Dogecoin (DOGE)
+- Dash
+- XRP
+- Digibyte (DGB)
+- Cosmos (ATOM)
+- Celestia (TIA)
+- Cudos
+- Aura
+- Internet Computer (ICP)
+- Solana (SOL)
+- BNB Chain
+- Bitcoin Cash (BCH)
+- Cardano (ADA)
+- Aptos (APT)
 
 ## Getting Started with Javascript and Node.js
 
@@ -43,24 +89,23 @@ To add kos-rs to your Rust project, simply include it as a dependency in your `C
 kos-rs = "0.1"
 ```
 
-
 ## Project Directory Structure
 
 - `Makefile`: Main project build and automation configuration.
-- `demo/`: JavaScript demo page with instructions on how to use the `kos-rs` library in web applications.
 
 ### Packages (Monorepo)
 
-- `packages/kos/`: Contains tools and utilities for exporting WebAssembly, designed for use in WebAssembly operations.
-- `packages/kos-crypto/`: Cryptographic package with support for crypto curves for transaction signing, including asymmetric and symmetric cryptography.
-- `packages/kos-proto/`: Library for building protocol messages.
-- `packages/kos-sdk/`: Package for blockchain integration, wallet management, transaction construction, and signing implementations.
-- `packages/kos-types/`: Package containing complex data types and helpful utilities.
-- `packages/kos-utils/`: Package with utility libraries for various purposes.
+- `packages/kos/`: Core package implementing all cryptocurrency wallet operations, including cryptographic functions,
+  curves, and basic offline wallet operations for each blockchain.
+- `packages/kos-web/`:  Package responsible for exporting kos functionality to JavaScript bindings, providing methods
+  for web-based implementations.
+- `packages/kos-mobile/`: Package responsible for exporting kos functionality to mobile platforms, providing bindings
+  for both iOS (Swift) and Android (Kotlin).
 
 ---
 
 ## Apps powered by kos-rs
+
 The kos-rs library powers several key applications within the Klever ecosystem:
 
 - [Klever Wallet for iOS](https://apps.apple.com/uy/app/klever-wallet-bitcoin-crypto/id1615064243)

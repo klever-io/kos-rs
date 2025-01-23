@@ -34,12 +34,7 @@ android {
 }
 
 dependencies {
-    implementation(libs.java.jna) {
-        artifact {
-            extension ="aar"
-            type = "aar"
-        }
-    }
+    implementation(libs.java.jna)
     testImplementation(libs.junit)
 }
 
