@@ -201,7 +201,7 @@ impl TryFrom<chains::klv::models::Parameter> for protos::Any {
     fn try_from(value: chains::klv::models::Parameter) -> Result<Self, Self::Error> {
         let proto_parameter = protos::Any {
             type_url: value.type_url,
-            value: simple_base64_decode(&value.value.unwrap_or(String::default()))
+            value: simple_base64_decode(&value.value.unwrap_or_default())
                 .map_err(|_| ConversionError::Base64Error)?,
             ..Default::default()
         };
