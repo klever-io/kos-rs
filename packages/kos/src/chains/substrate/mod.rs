@@ -1,15 +1,16 @@
 mod models;
 
+use crate::chains::substrate::models::ExtrinsicPayload;
 use crate::chains::util::private_key_from_vec;
 use crate::chains::{Chain, ChainError, Transaction, TxInfo};
-use crate::crypto::hash::blake2b_64_digest;
+use crate::crypto::hash::{blake2b_64_digest, blake2b_digest};
 use crate::crypto::sr25519::Sr25519Trait;
 use crate::crypto::{b58, bip32, sr25519};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use models::{Call, CallArgs};
-use parity_scale_codec::Decode;
+use parity_scale_codec::{Decode, Encode};
 
 const LOWER_MASK: u16 = 0x3FFF;
 const TYPE1_ACCOUNT_ID: u16 = 63;
@@ -108,8 +109,25 @@ impl Chain for Substrate {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        let sig = self.sign_raw(private_key, tx.raw_data.clone())?;
-        tx.signature = [[1u8].to_vec(), sig].concat();
+        let extrinsic = ExtrinsicPayload::from_raw(tx.raw_data.clone())?;
+
+        let signature = {
+            let full_unsigned_payload_scale_bytes = extrinsic.to_bytes();
+
+            // If payload is longer than 256 bytes, we hash it and sign the hash instead:
+            if full_unsigned_payload_scale_bytes.len() > 256 {
+                self.sign_raw(
+                    private_key,
+                    blake2b_digest(&full_unsigned_payload_scale_bytes)?,
+                )?
+            } else {
+                self.sign_raw(private_key, full_unsigned_payload_scale_bytes)?
+            }
+        };
+
+        // tx.raw_data = extrinsic.encode_signed(tx.raw_data, sig.clone());
+
+        tx.signature = [[1u8].to_vec(), signature].concat();
         Ok(tx)
     }
 
@@ -142,8 +160,8 @@ impl Chain for Substrate {
 
 #[cfg(test)]
 mod test {
-
-    use crate::chains::Chain;
+    use crate::chains::{Chain, Transaction};
+    use crate::crypto::base64::simple_base64_decode;
     use alloc::string::{String, ToString};
 
     #[test]
@@ -191,10 +209,21 @@ mod test {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = String::from("");
+        let path = dot.get_path(0, false);
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
-        let _pvk = dot.derive(seed, path).unwrap();
+        let pvk = dot.derive(seed, path).unwrap();
+
+        let raw_data = simple_base64_decode("BQMADCRBuM7b/Hou3AlouaU1gZlp0+ngmYaAurtYJyh/wHCRAXUCSAAA/E0PABoAAACRsXG7FY4tOEj6I6nxwlGC+44gMTssHrSSGdp6cM6Qw9QXMtYkIUOthrBb+DGJV708aGKwcFqtBLEzg3sSYncgAA==").unwrap();
+
+        let tx = Transaction {
+            raw_data,
+            signature: Vec::new(),
+            tx_hash: Vec::new(),
+            options: None,
+        };
+
+        let signed_tx = dot.sign_tx(pvk, tx).unwrap();
     }
 
     #[test]
