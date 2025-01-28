@@ -150,7 +150,7 @@ pub struct ExtrinsicPayload {
     pub transaction_version: u32,
     pub genesis_hash: [u8; 32],
     pub block_hash: [u8; 32],
-    pub _metadata_hash: u8,
+    pub metadata_hash: u8,
 }
 
 impl ExtrinsicPayload {
@@ -198,7 +198,7 @@ impl ExtrinsicPayload {
         block_hash.copy_from_slice(&input[0..32]);
         input = &input[32..];
 
-        let _metadata_hash = if !input.is_empty() { input[0] } else { 0 };
+        let metadata_hash = if !input.is_empty() { input[0] } else { 0 };
 
         Ok(ExtrinsicPayload {
             call_index,
@@ -212,14 +212,15 @@ impl ExtrinsicPayload {
             transaction_version,
             genesis_hash,
             block_hash,
-            _metadata_hash,
+            metadata_hash,
         })
     }
 
+    #[allow(dead_code)]
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut encoded = Vec::new();
-
         encoded.extend_from_slice(&self.call_index);
+        encoded.push(0x00);
         encoded.extend_from_slice(&self.destination);
         encoded.extend_from_slice(&self.value);
         encoded.extend_from_slice(&self.era);
@@ -230,8 +231,10 @@ impl ExtrinsicPayload {
         encoded.extend_from_slice(&self.transaction_version.encode());
         encoded.extend_from_slice(&self.genesis_hash);
         encoded.extend_from_slice(&self.block_hash);
-        // encoded.push(self.metadata_hash);
 
+        if self.metadata_hash != 0 {
+            encoded.push(self.metadata_hash);
+        }
         encoded
     }
 

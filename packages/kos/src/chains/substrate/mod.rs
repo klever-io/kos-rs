@@ -112,7 +112,7 @@ impl Chain for Substrate {
         let extrinsic = ExtrinsicPayload::from_raw(tx.raw_data.clone())?;
 
         let signature = {
-            let full_unsigned_payload_scale_bytes = extrinsic.to_bytes();
+            let full_unsigned_payload_scale_bytes = tx.raw_data.clone();
 
             // If payload is longer than 256 bytes, we hash it and sign the hash instead:
             if full_unsigned_payload_scale_bytes.len() > 256 {
@@ -216,7 +216,7 @@ mod test {
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = dot.derive(seed, path).unwrap();
 
-        let raw_data = simple_base64_decode("BQMADCRBuM7b/Hou3AlouaU1gZlp0+ngmYaAurtYJyh/wHCRAXUCSAAA/E0PABoAAACRsXG7FY4tOEj6I6nxwlGC+44gMTssHrSSGdp6cM6Qw9QXMtYkIUOthrBb+DGJV708aGKwcFqtBLEzg3sSYncgAA==").unwrap();
+        let raw_data = simple_base64_decode("BQMADCRBuM7b/Hou3AlouaU1gZlp0+ngmYaAurtYJyh/wHCRAXUDYAAA/E0PABoAAACRsXG7FY4tOEj6I6nxwlGC+44gMTssHrSSGdp6cM6Qw36KXLq5dgOoEvZRpzirvfO3HDN6fM3bEwtF1XTUSlrGAA==").unwrap();
 
         let tx = Transaction {
             raw_data,
@@ -226,6 +226,9 @@ mod test {
         };
 
         let signed_tx = dot.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(signed_tx.signature.len(), 65);
+        assert_eq!(signed_tx.raw_data.len(), 143);
     }
 
     #[test]
