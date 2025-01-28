@@ -4,6 +4,11 @@ use alloc::vec;
 use alloc::vec::Vec;
 use parity_scale_codec::{Compact, Decode, Encode, Input};
 
+const SIGNED_FLAG: u8 = 0b1000_0000;
+const TRANSACTION_VERSION: u8 = 4;
+const PUBLIC_KEY_TYPE: u8 = 0x00;
+const SIGNATURE_TYPE: u8 = 0x01;
+
 #[derive(Decode)]
 pub struct Call {
     pub _call_index: CallIndex,
@@ -137,9 +142,13 @@ impl Decode for UIntCompact {
     }
 }
 
-#[derive(Debug)]
+/// Represents the payload of a Substrate extrinsic (transaction) that will be signed.
+/// This structure contains all the necessary fields required for transaction signing.
+#[allow(dead_code)]
 pub struct ExtrinsicPayload {
+    /// The call index identifying the function being called (module index + function index)
     pub call_index: [u8; 2],
+    /// The destination account's public key or address
     pub destination: [u8; 32],
     pub value: [u8; 2],
     pub era: [u8; 2],
@@ -216,39 +225,17 @@ impl ExtrinsicPayload {
         })
     }
 
-    #[allow(dead_code)]
-    pub fn to_bytes(&self) -> Vec<u8> {
-        let mut encoded = Vec::new();
-        encoded.extend_from_slice(&self.call_index);
-        encoded.push(0x00);
-        encoded.extend_from_slice(&self.destination);
-        encoded.extend_from_slice(&self.value);
-        encoded.extend_from_slice(&self.era);
-        encoded.extend_from_slice(self.nonce.encode().as_slice());
-        encoded.extend_from_slice(self.tip.encode().as_slice());
-        encoded.push(self.mode);
-        encoded.extend_from_slice(&self.spec_version.encode());
-        encoded.extend_from_slice(&self.transaction_version.encode());
-        encoded.extend_from_slice(&self.genesis_hash);
-        encoded.extend_from_slice(&self.block_hash);
-
-        if self.metadata_hash != 0 {
-            encoded.push(self.metadata_hash);
-        }
-        encoded
-    }
-
+    /// Encodes the payload with a signature using the Substrate transaction format.
+    /// The format is: length + (version + signature + era + nonce + tip + call + params)
     pub fn encode_with_signature(&self, public_key: &[u8; 32], signature: &[u8]) -> Vec<u8> {
         let mut encoded = Vec::new();
 
-        let signed_flag: u8 = 0b1000_0000;
-        let transaction_version = 4;
-        encoded.push(signed_flag | transaction_version);
+        encoded.push(SIGNED_FLAG | TRANSACTION_VERSION);
 
-        encoded.push(0x00);
+        encoded.push(PUBLIC_KEY_TYPE);
         encoded.extend_from_slice(public_key);
 
-        encoded.push(0x01);
+        encoded.push(SIGNATURE_TYPE);
 
         encoded.extend_from_slice(signature);
 
@@ -259,7 +246,7 @@ impl ExtrinsicPayload {
 
         encoded.extend_from_slice(&self.call_index);
 
-        encoded.push(0x00);
+        encoded.push(PUBLIC_KEY_TYPE);
 
         encoded.extend_from_slice(&self.destination);
         encoded.extend_from_slice(&self.value);
