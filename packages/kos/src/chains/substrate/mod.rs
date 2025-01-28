@@ -125,7 +125,10 @@ impl Chain for Substrate {
             }
         };
 
-        let public_key: [u8; 32] = self.get_pbk(private_key)?.try_into().unwrap();
+        let pbk_vec = self.get_pbk(private_key)?;
+        let public_key: [u8; 32] = pbk_vec
+            .try_into()
+            .map_err(|_| ChainError::InvalidPublicKey)?;
 
         tx.raw_data = extrinsic.encode_with_signature(&public_key, &signature);
 
