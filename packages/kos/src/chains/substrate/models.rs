@@ -1,6 +1,5 @@
 use crate::chains::ChainError;
 use crate::crypto::bignum::U256;
-use aes_gcm::aead::Buffer;
 use alloc::vec;
 use alloc::vec::Vec;
 use parity_scale_codec::{Compact, Decode, Encode, Input};
@@ -143,15 +142,15 @@ pub struct ExtrinsicPayload {
     pub call_index: [u8; 2],
     pub destination: [u8; 32],
     pub value: [u8; 2],
-    pub era: [u8; 1],
-    pub nonce: u32,
+    pub era: [u8; 2],
+    pub nonce: [u8; 1],
     pub tip: u8,
     pub mode: u8,
     pub spec_version: u32,
     pub transaction_version: u32,
     pub genesis_hash: [u8; 32],
     pub block_hash: [u8; 32],
-    pub metadata_hash: u8,
+    pub _metadata_hash: u8,
 }
 
 impl ExtrinsicPayload {
@@ -163,19 +162,20 @@ impl ExtrinsicPayload {
         input = &input[2..];
 
         let mut destination = [0u8; 32];
-        destination.copy_from_slice(&input[0..32]);
-        input = &input[32..];
+        destination.copy_from_slice(&input[1..33]);
+        input = &input[33..];
 
         let mut value = [0u8; 2];
         value.copy_from_slice(&input[0..2]);
         input = &input[2..];
 
-        let mut era = [0u8; 1];
-        era.copy_from_slice(&input[0..1]);
-        input = &input[1..];
+        let mut era = [0u8; 2];
+        era.copy_from_slice(&input[0..2]);
+        input = &input[2..];
 
-        let nonce = u32::from_le_bytes([input[0], input[1], input[2], input[3]]);
-        input = &input[4..];
+        let mut nonce = [0u8; 1];
+        nonce.copy_from_slice(&input[0..1]);
+        input = &input[1..];
 
         let tip = input[0];
         input = &input[1..];
@@ -198,7 +198,7 @@ impl ExtrinsicPayload {
         block_hash.copy_from_slice(&input[0..32]);
         input = &input[32..];
 
-        let metadata_hash = if input.len() > 0 { input[0] } else { 0 };
+        let _metadata_hash = if !input.is_empty() { input[0] } else { 0 };
 
         Ok(ExtrinsicPayload {
             call_index,
@@ -212,7 +212,7 @@ impl ExtrinsicPayload {
             transaction_version,
             genesis_hash,
             block_hash,
-            metadata_hash,
+            _metadata_hash,
         })
     }
 
@@ -220,19 +220,52 @@ impl ExtrinsicPayload {
         let mut encoded = Vec::new();
 
         encoded.extend_from_slice(&self.call_index);
-        encoded.push(0x00);
         encoded.extend_from_slice(&self.destination);
         encoded.extend_from_slice(&self.value);
         encoded.extend_from_slice(&self.era);
-        encoded.extend_from_slice(Compact(self.nonce).encode().as_slice());
-        encoded.extend_from_slice(Compact(self.tip).encode().as_slice());
+        encoded.extend_from_slice(self.nonce.encode().as_slice());
+        encoded.extend_from_slice(self.tip.encode().as_slice());
         encoded.push(self.mode);
         encoded.extend_from_slice(&self.spec_version.encode());
         encoded.extend_from_slice(&self.transaction_version.encode());
         encoded.extend_from_slice(&self.genesis_hash);
         encoded.extend_from_slice(&self.block_hash);
-        encoded.push(self.metadata_hash);
+        // encoded.push(self.metadata_hash);
 
         encoded
+    }
+
+    pub fn encode_with_signature(&self, public_key: &[u8; 32], signature: &[u8]) -> Vec<u8> {
+        let mut encoded = Vec::new();
+
+        let signed_flag: u8 = 0b1000_0000;
+        let transaction_version = 4;
+        encoded.push(signed_flag | transaction_version);
+
+        encoded.push(0x00);
+        encoded.extend_from_slice(public_key);
+
+        encoded.push(0x01);
+
+        encoded.extend_from_slice(signature);
+
+        encoded.extend_from_slice(&self.era);
+        encoded.extend_from_slice(self.nonce.as_slice());
+        encoded.push(self.tip);
+        encoded.push(self.mode);
+
+        encoded.extend_from_slice(&self.call_index);
+
+        encoded.push(0x00);
+
+        encoded.extend_from_slice(&self.destination);
+        encoded.extend_from_slice(&self.value);
+
+        let length = Compact(encoded.len() as u32).encode();
+        let mut complete_encoded = Vec::with_capacity(length.len() + encoded.len());
+        complete_encoded.extend_from_slice(&length);
+        complete_encoded.extend_from_slice(&encoded);
+
+        complete_encoded
     }
 }

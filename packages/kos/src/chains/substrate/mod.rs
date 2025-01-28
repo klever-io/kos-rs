@@ -10,7 +10,7 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use models::{Call, CallArgs};
-use parity_scale_codec::{Decode, Encode};
+use parity_scale_codec::Decode;
 
 const LOWER_MASK: u16 = 0x3FFF;
 const TYPE1_ACCOUNT_ID: u16 = 63;
@@ -117,15 +117,17 @@ impl Chain for Substrate {
             // If payload is longer than 256 bytes, we hash it and sign the hash instead:
             if full_unsigned_payload_scale_bytes.len() > 256 {
                 self.sign_raw(
-                    private_key,
-                    blake2b_digest(&full_unsigned_payload_scale_bytes)?,
+                    private_key.clone(),
+                    blake2b_digest(&full_unsigned_payload_scale_bytes).to_vec(),
                 )?
             } else {
-                self.sign_raw(private_key, full_unsigned_payload_scale_bytes)?
+                self.sign_raw(private_key.clone(), full_unsigned_payload_scale_bytes)?
             }
         };
 
-        // tx.raw_data = extrinsic.encode_signed(tx.raw_data, sig.clone());
+        let public_key: [u8; 32] = self.get_pbk(private_key)?.try_into().unwrap();
+
+        tx.raw_data = extrinsic.encode_with_signature(&public_key, &signature);
 
         tx.signature = [[1u8].to_vec(), signature].concat();
         Ok(tx)
