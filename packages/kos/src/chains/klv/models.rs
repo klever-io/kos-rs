@@ -58,13 +58,15 @@ pub struct Raw {
 pub struct TxContract {
     #[Rename = "Parameter"]
     pub parameter: Parameter,
+    #[Rename = "Type"]
+    pub r#type: Option<i32>,
     // ... other fields
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct Parameter {
     pub type_url: String,
-    pub value: String,
+    pub value: Option<String>,
     // ... other fields
 }
 
@@ -199,7 +201,8 @@ impl TryFrom<chains::klv::models::Parameter> for protos::Any {
     fn try_from(value: chains::klv::models::Parameter) -> Result<Self, Self::Error> {
         let proto_parameter = protos::Any {
             type_url: value.type_url,
-            value: simple_base64_decode(&value.value).map_err(|_| ConversionError::Base64Error)?,
+            value: simple_base64_decode(&value.value.unwrap_or_default())
+                .map_err(|_| ConversionError::Base64Error)?,
             ..Default::default()
         };
 

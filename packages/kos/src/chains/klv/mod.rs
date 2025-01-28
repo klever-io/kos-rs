@@ -230,6 +230,32 @@ mod test {
     }
 
     #[test]
+    fn test_sign_tx_2() {
+        let pvk = hex::decode("1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727")
+            .unwrap();
+
+        let raw_tx = hex::decode(
+            "7b2252617744617461223a7b224e6f6e6365223a3536392c2253656e646572223a2253715146557a4c44745a4e7a58657865592b2b424d56483547544b4c444d53786f3732476f52716a5a7a303d222c22436f6e7472616374223a5b7b2254797065223a392c22506172616d65746572223a7b22747970655f75726c223a22747970652e676f6f676c65617069732e636f6d2f70726f746f2e436c61696d436f6e7472616374227d7d5d2c224b417070466565223a313030303030302c2242616e647769647468466565223a323030303030302c2256657273696f6e223a312c22436861696e4944223a224d544134227d7d",
+        )
+        .unwrap();
+
+        let tx = crate::chains::Transaction {
+            raw_data: raw_tx,
+            tx_hash: Vec::new(),
+            signature: Vec::new(),
+            options: None,
+        };
+
+        let result_tx = crate::chains::klv::KLV {}.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(
+            result_tx.tx_hash,
+            hex::decode("a4f4768ef619999241cb6c81fed8affc8dbaaa32dd4ded674273c8b6f06ddf93")
+                .unwrap()
+        );
+    }
+
+    #[test]
     fn test_decode_klv_tx() {
         let raw_tx = hex::decode(
             "7b225261774\
