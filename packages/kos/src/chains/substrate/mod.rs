@@ -202,41 +202,9 @@ impl Chain for Substrate {
     }
 }
 
-fn new_substrate_transaction_options(
-    call: String,
-    era: String,
-    nonce: String,
-    tip: String,
-    block_hash: String,
-    genesis_hash: String,
-    spec_version: String,
-    transaction_version: String,
-) -> ChainOptions {
-    let call = hex::decode(call).unwrap();
-    let era = hex::decode(era).unwrap();
-    let nonce: u32 = nonce.parse().unwrap();
-    let tip: u8 = tip.parse().unwrap();
-    let block_hash = hex::decode(block_hash).unwrap();
-    let genesis_hash = hex::decode(genesis_hash).unwrap();
-    let spec_version: u32 = spec_version.parse().unwrap();
-    let transaction_version: u32 = transaction_version.parse().unwrap();
-
-    ChainOptions::SUBSTRATE {
-        call,
-        era,
-        nonce,
-        tip,
-        block_hash,
-        genesis_hash,
-        spec_version,
-        transaction_version,
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use crate::chains::substrate::new_substrate_transaction_options;
-    use crate::chains::{Chain, Transaction};
+    use crate::chains::{Chain, ChainOptions, Transaction};
     use crate::crypto::base64::simple_base64_decode;
     use alloc::string::{String, ToString};
 
@@ -293,16 +261,25 @@ mod test {
 
         let raw_data = simple_base64_decode("BgMATg7dBMR7Gtw7IdzYZxpdkKHC63X7YNKTqQhvJibbzVkEJQEcAAAoAAAAAQAAALkXRrReA0bML4FaUgucbLTVwJAq+EjbCoD4WTLS6CdqrE2opg7XFpDCJ63rn+zxU3cs7DhW6Sm5cCF02Gg1wDY=").unwrap();
 
-        let options = new_substrate_transaction_options(
-            "0403004e0edd04c47b1adc3b21dcd8671a5d90a1c2eb75fb60d293a9086f2626dbcd5904".to_string(),
-            "4502".to_string(),
-            "87".to_string(),
-            "0".to_string(),
-            "b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe".to_string(),
-            "b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe".to_string(),
-            "1003003".to_string(),
-            "26".to_string(),
-        );
+        let options = ChainOptions::SUBSTRATE {
+            call: hex::decode(
+                "0403004e0edd04c47b1adc3b21dcd8671a5d90a1c2eb75fb60d293a9086f2626dbcd5904",
+            )
+            .unwrap(),
+            era: hex::decode("4502").unwrap(),
+            nonce: 87,
+            tip: 0,
+            block_hash: hex::decode(
+                "b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe",
+            )
+            .unwrap(),
+            genesis_hash: hex::decode(
+                "b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe",
+            )
+            .unwrap(),
+            spec_version: 1003003,
+            transaction_version: 26,
+        };
 
         let tx = Transaction {
             raw_data,

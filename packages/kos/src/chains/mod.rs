@@ -31,7 +31,7 @@ mod sol;
 mod substrate;
 mod sui;
 pub mod trx;
-mod util;
+pub mod util;
 mod xrp;
 
 #[derive(Debug)]
@@ -58,6 +58,7 @@ pub enum ChainError {
     InvalidData(String),
     MissingOptions,
     InvalidOptions,
+    InvalidHex,
 }
 
 impl Display for ChainError {
@@ -122,6 +123,9 @@ impl Display for ChainError {
             }
             ChainError::InvalidOptions => {
                 write!(f, "invalid option")
+            }
+            ChainError::InvalidHex => {
+                write!(f, "invalid hex")
             }
         }
     }
@@ -213,6 +217,7 @@ impl ChainError {
             ChainError::InvalidData(_) => 20,
             ChainError::MissingOptions => 21,
             ChainError::InvalidOptions => 22,
+            ChainError::InvalidHex => 23,
         }
     }
 }
