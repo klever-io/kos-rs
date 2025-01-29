@@ -263,6 +263,16 @@ pub enum ChainOptions {
         prev_scripts: Vec<Vec<u8>>,
         input_amounts: Vec<u64>,
     },
+    SUBSTRATE {
+        call: Vec<u8>,
+        era: Vec<u8>,
+        nonce: u32,
+        tip: u8,
+        block_hash: Vec<u8>,
+        genesis_hash: Vec<u8>,
+        spec_version: u32,
+        transaction_version: u32,
+    },
 }
 
 #[allow(dead_code)]

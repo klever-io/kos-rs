@@ -1,4 +1,3 @@
-use crate::chains::ChainError;
 use crate::crypto::bignum::U256;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -146,13 +145,9 @@ impl Decode for UIntCompact {
 /// This structure contains all the necessary fields required for transaction signing.
 #[allow(dead_code)]
 pub struct ExtrinsicPayload {
-    /// The call index identifying the function being called (module index + function index)
-    pub call_index: [u8; 2],
-    /// The destination account's public key or address
-    pub destination: [u8; 32],
-    pub value: [u8; 2],
-    pub era: [u8; 2],
-    pub nonce: [u8; 1],
+    pub call: Vec<u8>,
+    pub era: Vec<u8>,
+    pub nonce: u32,
     pub tip: u8,
     pub mode: u8,
     pub spec_version: u32,
@@ -163,68 +158,6 @@ pub struct ExtrinsicPayload {
 }
 
 impl ExtrinsicPayload {
-    pub fn from_raw(bytes: Vec<u8>) -> Result<Self, ChainError> {
-        let mut input = bytes.as_slice();
-
-        let mut call_index = [0u8; 2];
-        call_index.copy_from_slice(&input[0..2]);
-        input = &input[2..];
-
-        let mut destination = [0u8; 32];
-        destination.copy_from_slice(&input[1..33]);
-        input = &input[33..];
-
-        let mut value = [0u8; 2];
-        value.copy_from_slice(&input[0..2]);
-        input = &input[2..];
-
-        let mut era = [0u8; 2];
-        era.copy_from_slice(&input[0..2]);
-        input = &input[2..];
-
-        let mut nonce = [0u8; 1];
-        nonce.copy_from_slice(&input[0..1]);
-        input = &input[1..];
-
-        let tip = input[0];
-        input = &input[1..];
-
-        let mode = input[0];
-        input = &input[1..];
-
-        let spec_version = u32::from_le_bytes([input[0], input[1], input[2], input[3]]);
-        input = &input[4..];
-
-        let transaction_version = u32::from_le_bytes([input[0], input[1], input[2], input[3]]);
-        input = &input[4..];
-
-        let mut genesis_hash = [0u8; 32];
-        genesis_hash.copy_from_slice(&input[0..32]);
-        input = &input[32..];
-
-        let mut block_hash = [0u8; 32];
-
-        block_hash.copy_from_slice(&input[0..32]);
-        input = &input[32..];
-
-        let metadata_hash = if !input.is_empty() { input[0] } else { 0 };
-
-        Ok(ExtrinsicPayload {
-            call_index,
-            destination,
-            value,
-            era,
-            nonce,
-            tip,
-            mode,
-            spec_version,
-            transaction_version,
-            genesis_hash,
-            block_hash,
-            metadata_hash,
-        })
-    }
-
     /// Encodes the payload with a signature using the Substrate transaction format.
     /// The format is: length + (version + signature + era + nonce + tip + call + params)
     pub fn encode_with_signature(&self, public_key: &[u8; 32], signature: &[u8]) -> Vec<u8> {
@@ -240,16 +173,11 @@ impl ExtrinsicPayload {
         encoded.extend_from_slice(signature);
 
         encoded.extend_from_slice(&self.era);
-        encoded.extend_from_slice(self.nonce.as_slice());
-        encoded.push(self.tip);
+        encoded.extend_from_slice(&Compact(self.nonce).encode());
+        encoded.extend_from_slice(&Compact(self.tip).encode());
         encoded.push(self.mode);
 
-        encoded.extend_from_slice(&self.call_index);
-
-        encoded.push(PUBLIC_KEY_TYPE);
-
-        encoded.extend_from_slice(&self.destination);
-        encoded.extend_from_slice(&self.value);
+        encoded.extend_from_slice(&self.call);
 
         let length = Compact(encoded.len() as u32).encode();
         let mut complete_encoded = Vec::with_capacity(length.len() + encoded.len());
