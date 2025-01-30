@@ -79,13 +79,17 @@ impl TransactionChainOptions {
         genesis_hash: String,
         spec_version: u32,
         transaction_version: u32,
-    ) -> TransactionChainOptions {
-        let call = hex_string_to_vec(call.as_str()).unwrap_or_default();
-        let era = hex_string_to_vec(era.as_str()).unwrap_or_default();
-        let block_hash = hex_string_to_vec(block_hash.as_str()).unwrap_or_default();
-        let genesis_hash = hex_string_to_vec(genesis_hash.as_str()).unwrap_or_default();
+    ) -> Result<TransactionChainOptions, Error> {
+        let call = hex_string_to_vec(call.as_str())
+            .map_err(|e| Error::WalletManager(format!("Invalid call hex: {}", e)))?;
+        let era = hex_string_to_vec(era.as_str())
+            .map_err(|e| Error::WalletManager(format!("Invalid era hex: {}", e)))?;
+        let block_hash = hex_string_to_vec(block_hash.as_str())
+            .map_err(|e| Error::WalletManager(format!("Invalid block hash hex: {}", e)))?;
+        let genesis_hash = hex_string_to_vec(genesis_hash.as_str())
+            .map_err(|e| Error::WalletManager(format!("Invalid genesis hash hex: {}", e)))?;
 
-        TransactionChainOptions {
+        Ok(TransactionChainOptions {
             data: ChainOptions::SUBSTRATE {
                 call,
                 era,
@@ -96,7 +100,7 @@ impl TransactionChainOptions {
                 spec_version,
                 transaction_version,
             },
-        }
+        })
     }
 }
 
