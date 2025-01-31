@@ -70,6 +70,7 @@ enum TransactionChainOptions {
         genesis_hash: Vec<u8>,
         spec_version: u32,
         transaction_version: u32,
+        app_id: Option<u32>,
     },
 }
 
@@ -84,6 +85,7 @@ fn new_substrate_transaction_options(
     genesis_hash: String,
     spec_version: u32,
     transaction_version: u32,
+    app_id: Option<u32>,
 ) -> TransactionChainOptions {
     let call = hex_string_to_vec(call.as_str()).unwrap_or_default();
     let era = hex_string_to_vec(era.as_str()).unwrap_or_default();
@@ -99,6 +101,7 @@ fn new_substrate_transaction_options(
         genesis_hash,
         spec_version,
         transaction_version,
+        app_id,
     }
 }
 
@@ -233,6 +236,7 @@ fn sign_transaction(
             genesis_hash,
             spec_version,
             transaction_version,
+            app_id,
         }) => Some(ChainOptions::SUBSTRATE {
             call,
             era,
@@ -242,6 +246,7 @@ fn sign_transaction(
             genesis_hash,
             spec_version,
             transaction_version,
+            app_id,
         }),
         None => None,
     };

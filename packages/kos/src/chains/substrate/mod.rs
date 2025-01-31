@@ -121,6 +121,7 @@ impl Chain for Substrate {
                 genesis_hash,
                 spec_version,
                 transaction_version,
+                app_id,
             } => {
                 let genesis_hash: [u8; 32] = genesis_hash
                     .as_slice()
@@ -143,6 +144,7 @@ impl Chain for Substrate {
                     genesis_hash,
                     block_hash,
                     metadata_hash: 0,
+                    app_id,
                 }
             }
             _ => {
@@ -249,7 +251,54 @@ mod test {
     }
 
     #[test]
-    fn sign_tx() {
+    fn sign_tx_1() {
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
+
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let path = dot.get_path(0, false);
+
+        let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
+        let pvk = dot.derive(seed, path).unwrap();
+
+        let raw_data = simple_base64_decode("BQMADCRBuM7b/Hou3AlouaU1gZlp0+ngmYaAurtYJyh/wHAE1QFsAAD8TQ8AGgAAAJGxcbsVji04SPojqfHCUYL7jiAxOywetJIZ2npwzpDDR+4cSO05ZyHnTfHIHpWyqrPhN2Poot7H7VqLlK9MgI0A").unwrap();
+
+        let options = ChainOptions::SUBSTRATE {
+            call: hex::decode(
+                "0503000c2441b8cedbfc7a2edc0968b9a535819969d3e9e0998680babb5827287fc07004",
+            )
+            .unwrap(),
+            era: hex::decode("d501").unwrap(),
+            nonce: 27,
+            tip: 0,
+            block_hash: hex::decode(
+                "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+            )
+            .unwrap(),
+            genesis_hash: hex::decode(
+                "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+            )
+            .unwrap(),
+            spec_version: 1003004,
+            transaction_version: 26,
+            app_id: None,
+        };
+
+        let tx = Transaction {
+            raw_data,
+            signature: Vec::new(),
+            tx_hash: Vec::new(),
+            options: Some(options),
+        };
+
+        let signed_tx = dot.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(signed_tx.signature.len(), 65);
+        assert_eq!(signed_tx.raw_data.len(), 142);
+    }
+
+    #[test]
+    fn sign_tx_2() {
         let dot = super::Substrate::new(27, 2, "Kusama", "KSM");
 
         let mnemonic =
@@ -279,6 +328,7 @@ mod test {
             .unwrap(),
             spec_version: 1003003,
             transaction_version: 26,
+            app_id: None,
         };
 
         let tx = Transaction {
@@ -292,6 +342,58 @@ mod test {
 
         assert_eq!(signed_tx.signature.len(), 65);
         assert_eq!(signed_tx.raw_data.len(), 143);
+    }
+
+    #[test]
+    fn sign_tx_3() {
+        let dot = super::Substrate::new(62, 42, "Avail", "AVAIL");
+
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let path = dot.get_path(0, false);
+
+        let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
+        let pvk = dot.derive(seed, path).unwrap();
+
+        let raw_data = simple_base64_decode("BgMATg7dBMR7Gtw7IdzYZxpdkKHC63X7YNKTqQhvJibbzVkEtQEgAAAoAAAAAQAAALkXRrReA0bML4FaUgucbLTVwJAq+EjbCoD4WTLS6CdqDhX+2GUB2kR8rjtzYfwUoIfzCa63UQhdcamIqku0qBE=").unwrap();
+
+        let nonce = u32::from_str_radix("0x00000008".trim_start_matches("0x"), 16).unwrap();
+        let spec_version = u32::from_str_radix("0x00000028".trim_start_matches("0x"), 16).unwrap();
+        let transaction_version =
+            u32::from_str_radix("0x00000001".trim_start_matches("0x"), 16).unwrap();
+
+        let options = ChainOptions::SUBSTRATE {
+            call: hex::decode(
+                "0603004e0edd04c47b1adc3b21dcd8671a5d90a1c2eb75fb60d293a9086f2626dbcd5904",
+            )
+            .unwrap(),
+            era: hex::decode("b501").unwrap(),
+            nonce,
+            tip: 0,
+            block_hash: hex::decode(
+                "0e15fed86501da447cae3b7361fc14a087f309aeb751085d71a988aa4bb4a811",
+            )
+            .unwrap(),
+            genesis_hash: hex::decode(
+                "b91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a",
+            )
+            .unwrap(),
+            spec_version,
+            transaction_version,
+            app_id: Some(0),
+        };
+
+        let tx = Transaction {
+            raw_data,
+            signature: Vec::new(),
+            tx_hash: Vec::new(),
+            options: Some(options),
+        };
+
+        let signed_tx = dot.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(signed_tx.signature.len(), 65);
+        assert_eq!(signed_tx.raw_data.len(), 142);
     }
 
     #[test]

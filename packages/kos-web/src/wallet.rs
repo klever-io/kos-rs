@@ -79,6 +79,7 @@ impl TransactionChainOptions {
         genesis_hash: String,
         spec_version: u32,
         transaction_version: u32,
+        app_id: Option<u32>,
     ) -> Result<TransactionChainOptions, Error> {
         let call = hex_string_to_vec(call.as_str())
             .map_err(|e| Error::WalletManager(format!("Invalid call hex: {}", e)))?;
@@ -99,6 +100,7 @@ impl TransactionChainOptions {
                 genesis_hash,
                 spec_version,
                 transaction_version,
+                app_id,
             },
         })
     }

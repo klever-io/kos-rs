@@ -277,6 +277,7 @@ pub enum ChainOptions {
         genesis_hash: Vec<u8>,
         spec_version: u32,
         transaction_version: u32,
+        app_id: Option<u32>,
     },
 }
 
@@ -586,7 +587,7 @@ impl ChainRegistry {
             (
                 constants::AVAIL,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(62, 42, "AVAIL", "Avail")),
+                    factory: || Box::new(substrate::Substrate::new(62, 42, "Avail", "AVAIL")),
                     supported: true,
                 },
             ),

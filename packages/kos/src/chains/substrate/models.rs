@@ -155,6 +155,7 @@ pub struct ExtrinsicPayload {
     pub genesis_hash: [u8; 32],
     pub block_hash: [u8; 32],
     pub metadata_hash: u8,
+    pub app_id: Option<u32>,
 }
 
 impl ExtrinsicPayload {
@@ -175,7 +176,13 @@ impl ExtrinsicPayload {
         encoded.extend_from_slice(&self.era);
         encoded.extend_from_slice(&Compact(self.nonce).encode());
         encoded.extend_from_slice(&Compact(self.tip).encode());
-        encoded.push(self.mode);
+
+        // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
+        if let Some(app_id) = self.app_id {
+            encoded.extend_from_slice(Compact(app_id).encode().as_slice());
+        } else {
+            encoded.push(self.mode);
+        }
 
         encoded.extend_from_slice(&self.call);
 
