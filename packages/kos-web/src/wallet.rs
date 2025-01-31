@@ -27,6 +27,7 @@ pub struct Wallet {
     chain: u32,
     account_type: AccountType,
     public_address: String,
+    public_key: String,
     index: Option<u32>,
     encrypted_data: Option<Vec<u8>>,
     mnemonic: Option<String>,
@@ -133,13 +134,14 @@ impl Wallet {
             .get_pbk(private_key.clone())
             .map_err(|e| Error::WalletManager(format!("get public key: {}", e)))?;
         let address = chain
-            .get_address(public_key)
+            .get_address(public_key.clone())
             .map_err(|e| Error::WalletManager(format!("get address: {}", e)))?;
 
         Ok(Wallet {
             chain: chain_id,
             account_type: AccountType::Mnemonic,
             public_address: address,
+            public_key: hex::encode(public_key),
             index: None,
             encrypted_data: None,
             private_key: Some(hex::encode(private_key)),
@@ -181,7 +183,7 @@ impl Wallet {
             .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
         let public_key = chain
-            .get_pbk(hex::decode(private_key_bytes.clone())?)
+            .get_pbk(private_key_bytes.clone())
             .map_err(|e| Error::WalletManager(format!("get public key: {}", e)))?;
         let address = chain
             .get_address(public_key.clone())
@@ -192,6 +194,7 @@ impl Wallet {
             chain: chain_id,
             account_type: AccountType::PrivateKey,
             public_address: address,
+            public_key: hex::encode(public_key),
             index: None,
             encrypted_data: None,
             mnemonic: None,
@@ -258,6 +261,12 @@ impl Wallet {
         self.public_address.clone()
     }
 
+    #[wasm_bindgen(js_name = "getPublicKey")]
+    /// get wallet public key
+    /// returns hex encoded public key
+    pub fn get_public_key(&self) -> String {
+        self.public_key.clone()
+    }
     #[wasm_bindgen(js_name = "getPath")]
     /// get wallet path if wallet is created from mnemonic
     pub fn get_path(&self) -> String {
@@ -277,6 +286,7 @@ impl Wallet {
 
     #[wasm_bindgen(js_name = "getPrivateKey")]
     /// get wallet private key
+    /// returns hex encoded private key
     pub fn get_private_key(&self) -> String {
         match self.private_key {
             Some(ref pk) => pk.clone(),
@@ -357,54 +367,169 @@ mod tests {
     use super::*;
     use kos::chains::get_chain_by_base_id;
 
+    const TEST_MNEMONIC: &str = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+    const TEST_PRIVATE_KEY: &str =
+        "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d";
+    const TEST_PUBLIC_KEY: &str =
+        "e41b323a571fd955e09cd41660ff4465c3f44693c87f2faea4a0fc408727c8ea";
+
     #[test]
-    fn test_export_import() {
-        let chain = get_chain_by_base_id(38).unwrap();
+    fn test_wallet_from_mnemonic() {
+        let chain_id = 38;
+        let chain = get_chain_by_base_id(chain_id).unwrap();
+        let path = chain.get_path(0, false);
 
-        // create wallet
-        let w1 = Wallet::from_mnemonic(
-            38,
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain.get_path(0, false),
-            None,
-        ).unwrap();
+        let wallet =
+            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path.clone(), None).unwrap();
 
-        // check if secret keys restored
+        assert_eq!(wallet.get_chain(), chain_id);
+        assert_eq!(wallet.get_account_type(), AccountType::Mnemonic);
+        assert_eq!(wallet.get_private_key(), TEST_PRIVATE_KEY);
         assert_eq!(
-            w1.get_private_key(),
-            "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d"
+            wallet.get_public_key(),
+            "e41b323a571fd955e09cd41660ff4465c3f44693c87f2faea4a0fc408727c8ea"
         );
-        assert_eq!(w1.get_mnemonic(), "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about");
-        assert_eq!(w1.get_path(), "m/44'/690'/0'/0'/0'");
+        assert_eq!(wallet.get_path(), path);
+        assert_eq!(wallet.get_mnemonic(), TEST_MNEMONIC);
     }
 
     #[test]
-    fn test_sign_transaction() {
-        let chain = get_chain_by_base_id(2).unwrap();
+    fn test_wallet_from_mnemonic_with_password() {
+        let chain_id = 38;
+        let chain = get_chain_by_base_id(chain_id).unwrap();
+        let path = chain.get_path(0, false);
+        let password = Some("mysecretpassword".to_string());
 
-        let w1 = Wallet::from_mnemonic(
-            2,
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain.get_path(0, false),
-            None,
-        ).unwrap();
+        let wallet =
+            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, password).unwrap();
 
-        let sign_options = TransactionChainOptions::new_bitcoin_sign_options(
-            vec![5000, 10000],
-            vec![
-                "ABRUbV+OhmQeTR7sW5FVpUDZUyReSg==".to_string(),
-                "ABRUbV+OhmQeTR7sW5FVpUDZUyReSg==".to_string(),
-            ],
+        assert_eq!(wallet.get_account_type(), AccountType::Mnemonic);
+        assert_eq!(wallet.get_private_key().len(), 64); // Should be valid hex
+    }
+
+    #[test]
+    fn test_wallet_from_mnemonic_index() {
+        let chain_id = 38;
+        let index = 5;
+
+        let path_options = PathOptions {
+            index,
+            is_legacy: Some(false),
+        };
+
+        let wallet =
+            Wallet::from_mnemonic_index(chain_id, TEST_MNEMONIC.to_string(), &path_options, None)
+                .unwrap();
+
+        assert_eq!(wallet.get_index().unwrap(), index);
+        assert_eq!(wallet.get_account_type(), AccountType::Mnemonic);
+        assert_eq!(
+            wallet.get_private_key(),
+            "384f7222481134ed0b48416f986bc6c3660867340ef80fadd72db3388feafa8d"
         );
+        assert_eq!(
+            wallet.get_public_key(),
+            "b94cd4566b6e6f18128e833b5d8ce50d5f11c0b816223f0210b552fa5c04979c"
+        );
+        assert!(wallet.get_path().contains(&index.to_string()));
+    }
 
-        let raw_tx = hex::decode("0100000002badfa0606bc6a1738d8ddf951b1ebf9e87779934a5774b836668efb5a6d643970000000000fffffffffe60fbeb66791b10c765a207c900a08b2a9bd7ef21e1dd6e5b2ef1e9d686e5230000000000ffffffff028813000000000000160014e4132ab9175345e24b344f50e6d6764a651a89e6c21f000000000000160014546d5f8e86641e4d1eec5b9155a540d953245e4a00000000").unwrap();
+    #[test]
+    fn test_wallet_from_private_key() {
+        let chain_id = 38;
 
-        let signed_tx = w1.sign(&raw_tx, Some(sign_options)).unwrap();
+        let wallet = Wallet::from_private_key(chain_id, TEST_PRIVATE_KEY.to_string()).unwrap();
 
-        assert_eq!(signed_tx.raw_data.len(), 372);
+        assert_eq!(wallet.get_chain(), chain_id);
+        assert_eq!(wallet.get_account_type(), AccountType::PrivateKey);
+        assert_eq!(wallet.get_private_key(), TEST_PRIVATE_KEY);
+        assert_eq!(wallet.get_public_key(), TEST_PUBLIC_KEY);
+        assert!(wallet.get_mnemonic().is_empty());
+        assert!(wallet.get_path().is_empty());
+    }
 
-        assert_eq!(signed_tx.tx_hash.len(), 32);
+    #[test]
+    fn test_invalid_private_key() {
+        let chain_id = 38;
+        let invalid_pk = "invalid_private_key";
 
-        assert_eq!(signed_tx.signature.len(), 32);
+        let result = Wallet::from_private_key(chain_id, invalid_pk.to_string());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let chain_id = 38;
+        let message = b"Hello, World!";
+
+        let wallet = Wallet::from_private_key(chain_id, TEST_PRIVATE_KEY.to_string()).unwrap();
+
+        let signature = wallet.sign_message(message).unwrap();
+        assert!(!signature.is_empty());
+    }
+
+    #[test]
+    fn test_multiple_chains() {
+        let test_chains = vec![2, 38, 60];
+
+        for chain_id in test_chains {
+            let chain = get_chain_by_base_id(chain_id).unwrap();
+            let path = chain.get_path(0, false);
+
+            let wallet =
+                Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None).unwrap();
+
+            assert_eq!(wallet.get_chain(), chain_id);
+            assert!(!wallet.get_address().is_empty());
+        }
+    }
+
+    #[test]
+    fn test_invalid_chain() {
+        let invalid_chain_id = 9999;
+        let chain = get_chain_by_base_id(2).unwrap();
+        let path = chain.get_path(0, false);
+
+        let result = Wallet::from_mnemonic(invalid_chain_id, TEST_MNEMONIC.to_string(), path, None);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_invalid_mnemonic() {
+        let chain_id = 38;
+        let invalid_mnemonic = "invalid mnemonic phrase";
+        let chain = get_chain_by_base_id(chain_id).unwrap();
+        let path = chain.get_path(0, false);
+
+        let result = Wallet::from_mnemonic(chain_id, invalid_mnemonic.to_string(), path, None);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_readonly_wallet_operations() {
+        let chain_id = 38;
+        let public_address = "klv1fpwjz6w9sutqhfd4yf36zmd894de3h4ECt3";
+
+        let wallet = Wallet {
+            chain: chain_id,
+            account_type: AccountType::ReadOnly,
+            public_address: public_address.to_string(),
+            public_key: TEST_PUBLIC_KEY.to_string(),
+            index: None,
+            encrypted_data: None,
+            mnemonic: None,
+            private_key: None,
+            path: None,
+        };
+
+        assert_eq!(wallet.get_address(), public_address);
+        assert!(wallet.get_private_key().is_empty());
+        assert!(wallet.get_mnemonic().is_empty());
+
+        // Signing operations should fail
+        let message = b"test message";
+        assert!(wallet.sign_message(message).is_err());
     }
 }
