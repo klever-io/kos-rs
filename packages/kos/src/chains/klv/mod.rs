@@ -85,8 +85,13 @@ impl Chain for KLV {
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
         let raw_tx = tx.raw_data;
-        let mut js_tx: models::Transaction =
-            tiny_json_rs::decode(String::from_utf8(raw_tx.clone())?)?;
+
+        // Parse [] empty arrays to [""] to avoid decoding errors
+        let json = String::from_utf8(raw_tx.clone())?;
+        let parsed = json.replace("[]", "[\"\"]").as_bytes().to_vec();
+
+        let mut js_tx: models::Transaction = tiny_json_rs::decode(String::from_utf8(parsed)?)?;
+
         let klv_tx = proto::Transaction::try_from(js_tx.clone())
             .map_err(|_| ChainError::ProtoDecodeError)?;
 
@@ -251,6 +256,31 @@ mod test {
         assert_eq!(
             result_tx.tx_hash,
             hex::decode("a4f4768ef619999241cb6c81fed8affc8dbaaa32dd4ded674273c8b6f06ddf93")
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn test_sign_tx_3() {
+        let pvk = hex::decode("1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727")
+            .unwrap();
+
+        let json = r#"{"Signature":[],"RawData":{"Contract":[{"Parameter":{"value":"CiAErjVpczGsXwth+8y37LCGSr5O6tPlR9nduy2Np+8wyBIDS0xWGMCEPQ==","type_url":"type.googleapis.com\/proto.TransferContract"}}],"Nonce":580,"BandwidthFee":2000000,"Data":[""],"ChainID":"MTA4","Version":1,"Sender":"SqQFUzLDtZNzXexeY++BMVH5GTKLDMSxo72GoRqjZz0=","KAppFee":1000000}}"#;
+
+        let raw_tx = json.as_bytes().to_vec();
+
+        let tx = crate::chains::Transaction {
+            raw_data: raw_tx,
+            tx_hash: Vec::new(),
+            signature: Vec::new(),
+            options: None,
+        };
+
+        let result_tx = crate::chains::klv::KLV {}.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(
+            result_tx.tx_hash,
+            hex::decode("cb2741a67bb2e84f21ac892c9b6577446955debe9c9ef40c1799d212e617a55f")
                 .unwrap()
         );
     }

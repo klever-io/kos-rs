@@ -176,7 +176,9 @@ impl TryFrom<chains::klv::models::TxContract> for proto::TxContract {
     type Error = ConversionError;
 
     fn try_from(value: chains::klv::models::TxContract) -> Result<Self, Self::Error> {
-        let contract_name = value.parameter.type_url.clone();
+        // Remove escapes
+        let contract_name = value.parameter.type_url.replace("\\", "");
+
         //Remove the "type.googleapis.com/" prefix
         let contract_name = contract_name
             .strip_prefix("type.googleapis.com/proto.")
