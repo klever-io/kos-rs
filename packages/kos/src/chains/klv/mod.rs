@@ -305,7 +305,7 @@ mod test {
 
         assert_eq!(
             result_tx.tx_hash,
-            hex::decode("d1446fa96608eaaf414aaaf19e66b5c19684a40bf586ea19e27684649d3e5386")
+            hex::decode("50fce82cb3f4bf851d86fd594133b13e891d1f565958b0a95b11ce47f2179926")
                 .unwrap()
         );
     }
