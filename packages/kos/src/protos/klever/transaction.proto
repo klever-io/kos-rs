@@ -34,6 +34,7 @@ message TXContract {
     UpdateAccountPermissionContractType   = 22;
     DepositContractType                   = 23;
     ITOTriggerContractType                = 24;
+    SmartContractType                     = 63;
   }
   ContractType Type 				= 1 [json_name = "Type"];
   google.protobuf.Any Parameter 	= 2 [json_name = "Parameter"];

@@ -487,4 +487,21 @@ mod tests {
         let message = b"test message";
         assert!(wallet.sign_message(message).is_err());
     }
+
+    #[test]
+    fn test_sign_transaction() {
+        let chain_id = 38;
+        let chain = get_chain_by_base_id(chain_id).unwrap();
+        let path = chain.get_path(0, false);
+
+        let wallet =
+            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None).unwrap();
+
+        let tx_raw = r#"{"RawData":{"Sender":"UMjR49Dkn+HleedQY88TSjXXJhtbDpX7f7QVF/Dcqos=","Contract":[{"Type":63,"Parameter":{"type_url":"type.googleapis.com/proto.SmartContract","value":"EiAAAAAAAAAAAAUAIPnuq04LIuz1ew83LbqEVgLiyNyybBoRCghGUkctMlZCVRIFCIDh6xc="}}],"Data":["c3Rha2VGYXJt"],"KAppFee":2000000,"BandwidthFee":4622449,"Version":1,"ChainID":"MTAwMDAx"}}"#;
+
+        let signed_tx = wallet.sign(tx_raw.as_bytes(), None).unwrap();
+
+        assert!(!signed_tx.signature.is_empty());
+        assert!(!signed_tx.tx_hash.is_empty());
+    }
 }

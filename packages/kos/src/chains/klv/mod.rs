@@ -286,6 +286,31 @@ mod test {
     }
 
     #[test]
+    fn test_sign_tx_4() {
+        let pvk = hex::decode("1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727")
+            .unwrap();
+
+        let json = r#"{"RawData":{"Sender":"UMjR49Dkn+HleedQY88TSjXXJhtbDpX7f7QVF/Dcqos=","Contract":[{"Type":63,"Parameter":{"type_url":"type.googleapis.com/proto.SmartContract","value":"EiAAAAAAAAAAAAUAIPnuq04LIuz1ew83LbqEVgLiyNyybBoRCghGUkctMlZCVRIFCIDh6xc="}}],"Data":["c3Rha2VGYXJt"],"KAppFee":2000000,"BandwidthFee":4622449,"Version":1,"ChainID":"MTAwMDAx"}}"#;
+
+        let raw_tx = json.as_bytes().to_vec();
+
+        let tx = crate::chains::Transaction {
+            raw_data: raw_tx,
+            tx_hash: Vec::new(),
+            signature: Vec::new(),
+            options: None,
+        };
+
+        let result_tx = crate::chains::klv::KLV {}.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(
+            result_tx.tx_hash,
+            hex::decode("50fce82cb3f4bf851d86fd594133b13e891d1f565958b0a95b11ce47f2179926")
+                .unwrap()
+        );
+    }
+
+    #[test]
     fn test_decode_klv_tx() {
         let raw_tx = hex::decode(
             "7b225261774\

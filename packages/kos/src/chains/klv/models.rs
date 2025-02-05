@@ -33,7 +33,7 @@ pub struct Transaction {
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Raw {
     #[Rename = "Nonce"]
-    pub nonce: u64,
+    pub nonce: Option<u64>,
     #[Rename = "Sender"]
     pub sender: String,
     #[Rename = "Contract"]
@@ -151,7 +151,7 @@ impl TryFrom<chains::klv::models::Raw> for proto::transaction::Raw {
             .collect::<Result<Vec<_>, _>>()?;
 
         let proto_raw = proto::transaction::Raw {
-            nonce: value.nonce,
+            nonce: value.nonce.unwrap_or(0),
             sender: simple_base64_decode(&value.sender)
                 .map_err(|_| ConversionError::Base64Error)?,
             contract: contracts,
