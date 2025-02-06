@@ -11,5 +11,8 @@ pub fn slice_from_vec<const N: usize>(vec: &[u8]) -> Result<[u8; N], ChainError>
 }
 
 pub fn private_key_from_vec<const N: usize>(vec: &[u8]) -> Result<[u8; N], ChainError> {
-    slice_from_vec::<N>(vec).map_err(|_| ChainError::InvalidPrivateKey)
+    // If input is longer than N, take first N bytes
+    let slice = if vec.len() > N { &vec[..N] } else { vec };
+
+    slice_from_vec::<N>(slice).map_err(|_| ChainError::InvalidPrivateKey)
 }

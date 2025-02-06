@@ -190,6 +190,36 @@ mod test {
     }
 
     #[test]
+    fn test_pvk_32() {
+        let pvk = hex::decode("8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d")
+            .unwrap();
+
+        let pbk = crate::chains::klv::KLV {}.get_pbk(pvk).unwrap();
+
+        let address = crate::chains::klv::KLV {}.get_address(pbk.clone()).unwrap();
+        assert_eq!(
+            address,
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
+        );
+        assert_eq!(pbk.len(), 32);
+    }
+
+    #[test]
+    fn test_pvk_64() {
+        let pvk = hex::decode("8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9de41b323a571fd955e09cd41660ff4465c3f44693c87f2faea4a0fc408727c8ea")
+            .unwrap();
+
+        let pbk = crate::chains::klv::KLV {}.get_pbk(pvk).unwrap();
+
+        let address = crate::chains::klv::KLV {}.get_address(pbk.clone()).unwrap();
+        assert_eq!(
+            address,
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
+        );
+        assert_eq!(pbk.len(), 32);
+    }
+
+    #[test]
     fn test_sign_raw() {
         let mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
