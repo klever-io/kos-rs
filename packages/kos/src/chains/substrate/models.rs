@@ -159,6 +159,35 @@ pub struct ExtrinsicPayload {
 }
 
 impl ExtrinsicPayload {
+    /// Encodes the payload using the Substrate transaction format.
+    /// The format is: version + era + nonce + tip + call + params
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut encoded = Vec::new();
+        encoded.extend(self.call.clone());
+        encoded.extend(&self.era.clone());
+        encoded.extend(Compact(self.nonce).encode());
+        encoded.extend(Compact(self.tip).encode());
+
+        // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
+        if let Some(app_id) = self.app_id {
+            encoded.extend(Compact(app_id).encode());
+        } else {
+            encoded.extend(&self.mode.encode());
+        }
+
+        encoded.extend(&self.spec_version.encode());
+        encoded.extend(&self.transaction_version.encode());
+        encoded.extend(&self.genesis_hash);
+        encoded.extend(&self.block_hash);
+
+        // Use the metadata_hash if it is not set for AVAIL transactions
+        if self.app_id.is_none() {
+            encoded.push(self.metadata_hash);
+        }
+
+        encoded
+    }
+
     /// Encodes the payload with a signature using the Substrate transaction format.
     /// The format is: length + (version + signature + era + nonce + tip + call + params)
     pub fn encode_with_signature(&self, public_key: &[u8; 32], signature: &[u8]) -> Vec<u8> {

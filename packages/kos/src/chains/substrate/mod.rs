@@ -153,7 +153,7 @@ impl Chain for Substrate {
         };
 
         let signature = {
-            let full_unsigned_payload_scale_bytes = tx.raw_data.clone();
+            let full_unsigned_payload_scale_bytes = extrinsic.to_bytes();
 
             // If payload is longer than 256 bytes, we hash it and sign the hash instead:
             if full_unsigned_payload_scale_bytes.len() > 256 {
@@ -209,6 +209,67 @@ mod test {
     use crate::chains::{Chain, ChainOptions, Transaction};
     use crate::crypto::base64::simple_base64_decode;
     use alloc::string::{String, ToString};
+    use serde::Deserialize;
+
+    #[derive(Deserialize)]
+    struct TxBrowser {
+        #[serde(rename = "specVersion")]
+        pub spec_version: String,
+        #[serde(rename = "transactionVersion")]
+        pub transaction_version: String,
+        #[serde(rename = "address")]
+        pub _address: String,
+        #[serde(rename = "assetId")]
+        pub _asset_id: Option<String>,
+        #[serde(rename = "blockHash")]
+        pub block_hash: String,
+        #[serde(rename = "blockNumber")]
+        pub _block_number: String,
+        pub era: String,
+        #[serde(rename = "genesisHash")]
+        pub genesis_hash: String,
+        #[serde(rename = "metadataHash")]
+        pub _metadata_hash: Option<String>,
+        pub method: String,
+        #[serde(rename = "mode")]
+        pub _mode: i64,
+        pub nonce: String,
+        #[serde(rename = "signedExtensions")]
+        pub _signed_extensions: Vec<String>,
+        pub tip: String,
+        #[serde(rename = "version")]
+        pub _version: i64,
+        #[serde(rename = "withSignedTransaction")]
+        pub _with_signed_transaction: bool,
+    }
+
+    fn options_from_browser_json(tx: String) -> ChainOptions {
+        let tx_browser: TxBrowser = serde_json::from_str(&tx).unwrap();
+        let call = hex::decode(tx_browser.method.trim_start_matches("0x")).unwrap();
+        let era = hex::decode(tx_browser.era.trim_start_matches("0x")).unwrap();
+        let nonce = u32::from_str_radix(&tx_browser.nonce.trim_start_matches("0x"), 16).unwrap();
+        let tip = u8::from_str_radix(&tx_browser.tip.trim_start_matches("0x"), 16).unwrap();
+        let block_hash = hex::decode(tx_browser.block_hash.trim_start_matches("0x")).unwrap();
+        let genesis_hash = hex::decode(tx_browser.genesis_hash.trim_start_matches("0x")).unwrap();
+        let spec_version =
+            u32::from_str_radix(&tx_browser.spec_version.trim_start_matches("0x"), 16).unwrap();
+        let transaction_version =
+            u32::from_str_radix(&tx_browser.transaction_version.trim_start_matches("0x"), 16)
+                .unwrap();
+        let app_id = None;
+
+        ChainOptions::SUBSTRATE {
+            call,
+            era,
+            nonce,
+            tip,
+            block_hash,
+            genesis_hash,
+            spec_version,
+            transaction_version,
+            app_id,
+        }
+    }
 
     #[test]
     fn test_get_addr() {
@@ -247,7 +308,9 @@ mod test {
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = dot.derive(seed, path).unwrap();
         let payload = [0; 32].to_vec();
-        let _tx = dot.sign_raw(pvk, payload).unwrap();
+        let sig = dot.sign_raw(pvk, payload).unwrap();
+
+        assert_eq!(sig.len(), 64);
     }
 
     #[test]
@@ -382,6 +445,65 @@ mod test {
             transaction_version,
             app_id: Some(0),
         };
+
+        let tx = Transaction {
+            raw_data,
+            signature: Vec::new(),
+            tx_hash: Vec::new(),
+            options: Some(options),
+        };
+
+        let signed_tx = dot.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(signed_tx.signature.len(), 65);
+        assert_eq!(signed_tx.raw_data.len(), 142);
+    }
+
+    #[test]
+    fn sign_tx_browser() {
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
+
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let path = dot.get_path(1, false);
+
+        let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
+        let pvk = dot.derive(seed, path).unwrap();
+
+        let raw_data = simple_base64_decode("BQMADCRBuM7b/Hou3AlouaU1gZlp0+ngmYaAurtYJyh/wHAE1QFsAAD8TQ8AGgAAAJGxcbsVji04SPojqfHCUYL7jiAxOywetJIZ2npwzpDDR+4cSO05ZyHnTfHIHpWyqrPhN2Poot7H7VqLlK9MgI0A").unwrap();
+
+        let options = options_from_browser_json(
+            r#"{
+                "specVersion": "0x000f4dfc",
+                "transactionVersion": "0x0000001a",
+                "address": "12mM9imBfhL4DfK2Sv9SPi79kKT296YJ6LTT7b7pZuRufXmx",
+                "assetId": null,
+                "blockHash": "0x74e061f402b8709b793aede7509ac32ca2bf60ab772035e8de2c3b597a99c3cd",
+                "blockNumber": "0x017870fe",
+                "era": "0xe503",
+                "genesisHash": "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+                "metadataHash": null,
+                "method": "0x0503004e0edd04c47b1adc3b21dcd8671a5d90a1c2eb75fb60d293a9086f2626dbcd5900",
+                "mode": 0,
+                "nonce": "0x00000000",
+                "signedExtensions": [
+                    "CheckNonZeroSender",
+                    "CheckSpecVersion",
+                    "CheckTxVersion",
+                    "CheckGenesis",
+                    "CheckMortality",
+                    "CheckNonce",
+                    "CheckWeight",
+                    "ChargeTransactionPayment",
+                    "PrevalidateAttests",
+                    "CheckMetadataHash"
+                ],
+                "tip": "0x00000000000000000000000000000000",
+                "version": 4,
+                "withSignedTransaction": true
+            }"#
+                .to_string(),
+        );
 
         let tx = Transaction {
             raw_data,
