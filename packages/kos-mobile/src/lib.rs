@@ -2,6 +2,7 @@ pub mod number;
 
 use hex::FromHexError;
 use hex::ToHex;
+use kos::chains::util::hex_string_to_vec;
 use kos::chains::{
     create_custom_evm, get_chain_by_base_id, Chain, ChainError, ChainOptions, Transaction,
 };
@@ -60,6 +61,48 @@ enum TransactionChainOptions {
         prev_scripts: Vec<Vec<u8>>,
         input_amounts: Vec<u64>,
     },
+    Substrate {
+        call: Vec<u8>,
+        era: Vec<u8>,
+        nonce: u32,
+        tip: u8,
+        block_hash: Vec<u8>,
+        genesis_hash: Vec<u8>,
+        spec_version: u32,
+        transaction_version: u32,
+        app_id: Option<u32>,
+    },
+}
+
+#[allow(clippy::too_many_arguments)]
+#[uniffi::export]
+fn new_substrate_transaction_options(
+    call: String,
+    era: String,
+    nonce: u32,
+    tip: u8,
+    block_hash: String,
+    genesis_hash: String,
+    spec_version: u32,
+    transaction_version: u32,
+    app_id: Option<u32>,
+) -> TransactionChainOptions {
+    let call = hex_string_to_vec(call.as_str()).unwrap_or_default();
+    let era = hex_string_to_vec(era.as_str()).unwrap_or_default();
+    let block_hash = hex_string_to_vec(block_hash.as_str()).unwrap_or_default();
+    let genesis_hash = hex_string_to_vec(genesis_hash.as_str()).unwrap_or_default();
+
+    TransactionChainOptions::Substrate {
+        call,
+        era,
+        nonce,
+        tip,
+        block_hash,
+        genesis_hash,
+        spec_version,
+        transaction_version,
+        app_id,
+    }
 }
 
 #[uniffi::export]
@@ -183,6 +226,27 @@ fn sign_transaction(
         }) => Some(ChainOptions::BTC {
             prev_scripts,
             input_amounts,
+        }),
+        Some(TransactionChainOptions::Substrate {
+            call,
+            era,
+            nonce,
+            tip,
+            block_hash,
+            genesis_hash,
+            spec_version,
+            transaction_version,
+            app_id,
+        }) => Some(ChainOptions::SUBSTRATE {
+            call,
+            era,
+            nonce,
+            tip,
+            block_hash,
+            genesis_hash,
+            spec_version,
+            transaction_version,
+            app_id,
         }),
         None => None,
     };

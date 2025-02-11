@@ -6,6 +6,7 @@ use strum::{EnumCount, IntoStaticStr};
 
 use crate::error::Error;
 use crate::utils::unpack;
+use kos::chains::util::hex_string_to_vec;
 use kos::chains::{get_chain_by_base_id, ChainOptions, Transaction as KosTransaction};
 use kos::crypto::base64;
 use wasm_bindgen::prelude::*;
@@ -59,6 +60,50 @@ impl TransactionChainOptions {
                 input_amounts,
             },
         }
+    }
+
+    #[wasm_bindgen(js_name = "newEthereumSignOptions")]
+    pub fn new_ethereum_sign_options(chain_id: u32) -> TransactionChainOptions {
+        TransactionChainOptions {
+            data: ChainOptions::EVM { chain_id },
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    #[wasm_bindgen(js_name = "newSubstrateSignOptions")]
+    pub fn new_substrate_sign_options(
+        call: String,
+        era: String,
+        nonce: u32,
+        tip: u8,
+        block_hash: String,
+        genesis_hash: String,
+        spec_version: u32,
+        transaction_version: u32,
+        app_id: Option<u32>,
+    ) -> Result<TransactionChainOptions, Error> {
+        let call = hex_string_to_vec(call.as_str())
+            .map_err(|e| Error::WalletManager(format!("Invalid call hex: {}", e)))?;
+        let era = hex_string_to_vec(era.as_str())
+            .map_err(|e| Error::WalletManager(format!("Invalid era hex: {}", e)))?;
+        let block_hash = hex_string_to_vec(block_hash.as_str())
+            .map_err(|e| Error::WalletManager(format!("Invalid block hash hex: {}", e)))?;
+        let genesis_hash = hex_string_to_vec(genesis_hash.as_str())
+            .map_err(|e| Error::WalletManager(format!("Invalid genesis hash hex: {}", e)))?;
+
+        Ok(TransactionChainOptions {
+            data: ChainOptions::SUBSTRATE {
+                call,
+                era,
+                nonce,
+                tip,
+                block_hash,
+                genesis_hash,
+                spec_version,
+                transaction_version,
+                app_id,
+            },
+        })
     }
 }
 
