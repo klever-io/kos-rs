@@ -15,7 +15,7 @@ homepage = "https://klever.org/"
 license = "Apache-2.0"
 repository = "https://github.com/kleverio/kos-rs"
 rust-version = "1.69.0"
-version = "0.2.4"
+version = "0.2.5"
 
 [workspace.dependencies]
 bech32 = "0.9.1"
@@ -50,5 +50,5 @@ log = "0.4"
 lazy_static = "1.4.0"
 thiserror = "1.0"
 
-kos = { version = "0.2.4", path = "./packages/kos", default-features = false }
+kos = { version = "0.2.5", path = "./packages/kos", default-features = false }
 kos-mobile = { version = "0.1.0", path = "./packages/kos-mobile", default-features = false }
