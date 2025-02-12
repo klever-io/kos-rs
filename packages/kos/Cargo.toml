@@ -61,6 +61,7 @@ pem = "3"
 cfb-mode = "0.8"
 cbc = { version = "0.1", features = ["block-padding", "std"] }
 pbkdf2 = { version = "0.12", features = ["simple"] }
+serde = { version = "1.0.215", features = ["derive"] }
 
 [build-dependencies]
 prost-build = "0.12.1"

@@ -31,7 +31,7 @@ mod sol;
 mod substrate;
 mod sui;
 pub mod trx;
-mod util;
+pub mod util;
 mod xrp;
 
 #[derive(Debug)]
@@ -58,6 +58,7 @@ pub enum ChainError {
     InvalidData(String),
     MissingOptions,
     InvalidOptions,
+    InvalidHex,
 }
 
 impl Display for ChainError {
@@ -122,6 +123,9 @@ impl Display for ChainError {
             }
             ChainError::InvalidOptions => {
                 write!(f, "invalid option")
+            }
+            ChainError::InvalidHex => {
+                write!(f, "invalid hex")
             }
         }
     }
@@ -213,6 +217,7 @@ impl ChainError {
             ChainError::InvalidData(_) => 20,
             ChainError::MissingOptions => 21,
             ChainError::InvalidOptions => 22,
+            ChainError::InvalidHex => 23,
         }
     }
 }
@@ -262,6 +267,17 @@ pub enum ChainOptions {
     BTC {
         prev_scripts: Vec<Vec<u8>>,
         input_amounts: Vec<u64>,
+    },
+    SUBSTRATE {
+        call: Vec<u8>,
+        era: Vec<u8>,
+        nonce: u32,
+        tip: u8,
+        block_hash: Vec<u8>,
+        genesis_hash: Vec<u8>,
+        spec_version: u32,
+        transaction_version: u32,
+        app_id: Option<u32>,
     },
 }
 
@@ -369,14 +385,14 @@ impl ChainRegistry {
                 constants::DOT,
                 ChainInfo {
                     factory: || Box::new(substrate::Substrate::new(21, 0, "DOT", "Polkadot")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
                 constants::KSM,
                 ChainInfo {
                     factory: || Box::new(substrate::Substrate::new(27, 2, "KSM", "Kusama")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
@@ -390,28 +406,28 @@ impl ChainRegistry {
                 constants::REEF,
                 ChainInfo {
                     factory: || Box::new(substrate::Substrate::new(29, 42, "REEF", "Reef")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
                 constants::SDN,
                 ChainInfo {
                     factory: || Box::new(substrate::Substrate::new(35, 5, "SDN", "Shiden")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
                 constants::ASTR,
                 ChainInfo {
                     factory: || Box::new(substrate::Substrate::new(36, 5, "ASTR", "Astar")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
                 constants::CFG,
                 ChainInfo {
                     factory: || Box::new(substrate::Substrate::new(47, 36, "CFG", "Centrifuge")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
@@ -425,14 +441,14 @@ impl ChainRegistry {
                 constants::KILT,
                 ChainInfo {
                     factory: || Box::new(substrate::Substrate::new(44, 38, "KILT", "KILT")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
                 constants::ALTAIR,
                 ChainInfo {
                     factory: || Box::new(substrate::Substrate::new(42, 136, "ALTAIR", "Altair")),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
@@ -571,8 +587,8 @@ impl ChainRegistry {
             (
                 constants::AVAIL,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(62, 42, "AVAIL", "Avail")),
-                    supported: false,
+                    factory: || Box::new(substrate::Substrate::new(62, 42, "Avail", "AVAIL")),
+                    supported: true,
                 },
             ),
             (

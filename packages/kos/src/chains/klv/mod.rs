@@ -190,6 +190,36 @@ mod test {
     }
 
     #[test]
+    fn test_pvk_32() {
+        let pvk = hex::decode("8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d")
+            .unwrap();
+
+        let pbk = crate::chains::klv::KLV {}.get_pbk(pvk).unwrap();
+
+        let address = crate::chains::klv::KLV {}.get_address(pbk.clone()).unwrap();
+        assert_eq!(
+            address,
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
+        );
+        assert_eq!(pbk.len(), 32);
+    }
+
+    #[test]
+    fn test_pvk_64() {
+        let pvk = hex::decode("8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9de41b323a571fd955e09cd41660ff4465c3f44693c87f2faea4a0fc408727c8ea")
+            .unwrap();
+
+        let pbk = crate::chains::klv::KLV {}.get_pbk(pvk).unwrap();
+
+        let address = crate::chains::klv::KLV {}.get_address(pbk.clone()).unwrap();
+        assert_eq!(
+            address,
+            "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
+        );
+        assert_eq!(pbk.len(), 32);
+    }
+
+    #[test]
     fn test_sign_raw() {
         let mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
@@ -281,6 +311,31 @@ mod test {
         assert_eq!(
             result_tx.tx_hash,
             hex::decode("cb2741a67bb2e84f21ac892c9b6577446955debe9c9ef40c1799d212e617a55f")
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn test_sign_tx_4() {
+        let pvk = hex::decode("1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727")
+            .unwrap();
+
+        let json = r#"{"RawData":{"Sender":"UMjR49Dkn+HleedQY88TSjXXJhtbDpX7f7QVF/Dcqos=","Contract":[{"Type":63,"Parameter":{"type_url":"type.googleapis.com/proto.SmartContract","value":"EiAAAAAAAAAAAAUAIPnuq04LIuz1ew83LbqEVgLiyNyybBoRCghGUkctMlZCVRIFCIDh6xc="}}],"Data":["c3Rha2VGYXJt"],"KAppFee":2000000,"BandwidthFee":4622449,"Version":1,"ChainID":"MTAwMDAx"}}"#;
+
+        let raw_tx = json.as_bytes().to_vec();
+
+        let tx = crate::chains::Transaction {
+            raw_data: raw_tx,
+            tx_hash: Vec::new(),
+            signature: Vec::new(),
+            options: None,
+        };
+
+        let result_tx = crate::chains::klv::KLV {}.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(
+            result_tx.tx_hash,
+            hex::decode("50fce82cb3f4bf851d86fd594133b13e891d1f565958b0a95b11ce47f2179926")
                 .unwrap()
         );
     }

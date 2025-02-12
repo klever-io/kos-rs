@@ -1184,6 +1184,7 @@ pub mod tx_contract {
         UpdateAccountPermissionContractType = 22,
         DepositContractType = 23,
         ItoTriggerContractType = 24,
+        SmartContractType = 63,
     }
     impl ContractType {
         /// String value of the enum field names used in the ProtoBuf definition.
@@ -1229,6 +1230,7 @@ pub mod tx_contract {
                 }
                 ContractType::DepositContractType => "DepositContractType",
                 ContractType::ItoTriggerContractType => "ITOTriggerContractType",
+                ContractType::SmartContractType => "SmartContractType",
             }
         }
         /// Creates an enum from field names used in the ProtoBuf definition.
@@ -1267,6 +1269,7 @@ pub mod tx_contract {
                 }
                 "DepositContractType" => Some(Self::DepositContractType),
                 "ITOTriggerContractType" => Some(Self::ItoTriggerContractType),
+                "SmartContractType" => Some(Self::SmartContractType),
                 _ => None,
             }
         }
