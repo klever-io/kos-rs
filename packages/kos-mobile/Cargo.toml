@@ -22,7 +22,6 @@ path = "src/bin/uniffi-bindgen.rs"
 kos = { workspace = true }
 
 hex = { workspace = true }
-lazy_static = { workspace = true }
 thiserror = { workspace = true }
 
 uniffi = { workspace = true, features = ["cli"] }

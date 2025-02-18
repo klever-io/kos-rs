@@ -1675,7 +1675,6 @@ version = "0.2.5"
 dependencies = [
  "hex",
  "kos",
- "lazy_static",
  "num-bigint",
  "num-traits",
  "serde",
