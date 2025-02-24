@@ -61,14 +61,14 @@ impl BigNumber {
             return Err(KOSError::KOSNumber("Invalid number".to_string()));
         }
 
-        // Validate number format using regex for integer or decimal
-        let re = regex::Regex::new(r"^-?\d+(\.\d+)?$").unwrap();
-        if !re.is_match(value) {
-            return Err(KOSError::KOSNumber("Invalid number format".to_string()));
-        }
+        // Parse the value to check if it's a valid number
+        let parsed_value = match value.parse::<f64>() {
+            Ok(num) => num.to_string(), // Convert to string to avoid precision loss
+            Err(_) => return Err(KOSError::KOSNumber("Invalid number format".to_string())),
+        };
 
         Ok(BigNumber {
-            value: value.to_string(),
+            value: parsed_value,
         })
     }
 
@@ -426,6 +426,11 @@ mod tests {
 
         let result = big_number_add(a.clone(), d.clone()).unwrap();
         assert_eq!(result.value, "246.5");
+
+        let f = big_number_new("123.456".to_string()).unwrap();
+        let g = big_number_new("1e5".to_string()).unwrap();
+        let result = big_number_add(f.clone(), g.clone()).unwrap();
+        assert_eq!(result.value, "100123.456");
     }
 
     #[test]
