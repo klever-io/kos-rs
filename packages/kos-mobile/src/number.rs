@@ -1,8 +1,8 @@
 use crate::KOSError;
 use num_bigint::BigInt;
-use num_rational::BigRational;
-use num_traits::{One, Signed, Zero, Pow, ToPrimitive};
 use num_integer::Integer;
+use num_rational::BigRational;
+use num_traits::{One, Pow, Signed, ToPrimitive, Zero};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -79,7 +79,7 @@ impl BigNumber {
 
         match BigRational::from_str(&self.value) {
             Ok(rat) => Ok(rat.to_integer()),
-            Err(_) => Err(KOSError::KOSNumber("Invalid number".to_string()))
+            Err(_) => Err(KOSError::KOSNumber("Invalid number".to_string())),
         }
     }
 
@@ -103,18 +103,29 @@ impl BigNumber {
             let decimal_part = parts[1];
 
             let is_negative = integer_part.starts_with('-');
-            let int_abs = if is_negative { &integer_part[1..] } else { integer_part };
+            let int_abs = if is_negative {
+                &integer_part[1..]
+            } else {
+                integer_part
+            };
 
             // Construct numerator and denominator
-            let numerator_str = format!("{}{}{}",
-                                        if is_negative { "-" } else { "" },
-                                        int_abs,
-                                        decimal_part);
+            let numerator_str = format!(
+                "{}{}{}",
+                if is_negative { "-" } else { "" },
+                int_abs,
+                decimal_part
+            );
             let denominator_str = format!("1{}", "0".repeat(decimal_part.len()));
 
-            match (BigInt::from_str(&numerator_str), BigInt::from_str(&denominator_str)) {
+            match (
+                BigInt::from_str(&numerator_str),
+                BigInt::from_str(&denominator_str),
+            ) {
                 (Ok(num), Ok(den)) => Ok(BigRational::new(num, den)),
-                _ => Err(KOSError::KOSNumber("Failed to convert to rational number".to_string()))
+                _ => Err(KOSError::KOSNumber(
+                    "Failed to convert to rational number".to_string(),
+                )),
             }
         } else {
             Err(KOSError::KOSNumber("Invalid number format".to_string()))
@@ -215,7 +226,9 @@ fn big_number_pow(base: BigNumber, exponent: BigNumber) -> Result<BigNumber, KOS
     // Exponent must be a non-negative integer
     let exp = exponent.to_bigint()?;
     if exp.is_negative() {
-        return Err(KOSError::KOSNumber("Exponent must be non-negative".to_string()));
+        return Err(KOSError::KOSNumber(
+            "Exponent must be non-negative".to_string(),
+        ));
     }
 
     // Convert to u32 for use with the Pow trait
@@ -245,7 +258,9 @@ fn big_number_is_equal(lhs: BigNumber, rhs: BigNumber) -> bool {
     if let (Ok(left), Ok(right)) = (BigInt::from_str(&lhs.value), BigInt::from_str(&rhs.value)) {
         return left == right;
     }
-    lhs.to_bigrational().map_or(false, |left| rhs.to_bigrational().map_or(false, |right| left == right))
+    lhs.to_bigrational().map_or(false, |left| {
+        rhs.to_bigrational().map_or(false, |right| left == right)
+    })
 }
 
 #[uniffi::export]
@@ -253,7 +268,9 @@ fn big_number_is_gt(lhs: BigNumber, rhs: BigNumber) -> bool {
     if let (Ok(left), Ok(right)) = (BigInt::from_str(&lhs.value), BigInt::from_str(&rhs.value)) {
         return left > right;
     }
-    lhs.to_bigrational().map_or(false, |left| rhs.to_bigrational().map_or(false, |right| left > right))
+    lhs.to_bigrational().map_or(false, |left| {
+        rhs.to_bigrational().map_or(false, |right| left > right)
+    })
 }
 
 #[uniffi::export]
@@ -261,7 +278,9 @@ fn big_number_is_gte(lhs: BigNumber, rhs: BigNumber) -> bool {
     if let (Ok(left), Ok(right)) = (BigInt::from_str(&lhs.value), BigInt::from_str(&rhs.value)) {
         return left >= right;
     }
-    lhs.to_bigrational().map_or(false, |left| rhs.to_bigrational().map_or(false, |right| left >= right))
+    lhs.to_bigrational().map_or(false, |left| {
+        rhs.to_bigrational().map_or(false, |right| left >= right)
+    })
 }
 
 #[uniffi::export]
@@ -269,7 +288,9 @@ fn big_number_is_lt(lhs: BigNumber, rhs: BigNumber) -> bool {
     if let (Ok(left), Ok(right)) = (BigInt::from_str(&lhs.value), BigInt::from_str(&rhs.value)) {
         return left < right;
     }
-    lhs.to_bigrational().map_or(false, |left| rhs.to_bigrational().map_or(false, |right| left < right))
+    lhs.to_bigrational().map_or(false, |left| {
+        rhs.to_bigrational().map_or(false, |right| left < right)
+    })
 }
 
 #[uniffi::export]
@@ -277,9 +298,10 @@ fn big_number_is_lte(lhs: BigNumber, rhs: BigNumber) -> bool {
     if let (Ok(left), Ok(right)) = (BigInt::from_str(&lhs.value), BigInt::from_str(&rhs.value)) {
         return left <= right;
     }
-    lhs.to_bigrational().map_or(false, |left| rhs.to_bigrational().map_or(false, |right| left <= right))
+    lhs.to_bigrational().map_or(false, |left| {
+        rhs.to_bigrational().map_or(false, |right| left <= right)
+    })
 }
-
 
 #[uniffi::export]
 fn big_number_absolute(value: BigNumber) -> Result<BigNumber, KOSError> {
@@ -512,7 +534,6 @@ mod tests {
         assert!(!big_number_is_negative(c.clone()).unwrap());
     }
 
-
     #[test]
     fn test_big_number_is_equal() {
         let a = big_number_new("123".to_string()).unwrap();
@@ -579,6 +600,7 @@ mod tests {
         assert_eq!(result.value, "6.25");
 
         let neg_exp = big_number_new("-1".to_string()).unwrap();
+
         assert!(big_number_pow(base.clone(), neg_exp.clone()).is_err());
     }
 
