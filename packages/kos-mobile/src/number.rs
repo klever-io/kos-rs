@@ -1,4 +1,5 @@
 use crate::KOSError;
+use bigdecimal::BigDecimal;
 use num_bigint::BigInt;
 use num_integer::Integer;
 use num_rational::BigRational;
@@ -62,7 +63,7 @@ impl BigNumber {
         }
 
         // Parse the value to check if it's a valid number
-        let parsed_value = match value.parse::<f64>() {
+        let parsed_value = match BigDecimal::from_str(value) {
             Ok(num) => num.to_string(), // Convert to string to avoid precision loss
             Err(_) => return Err(KOSError::KOSNumber("Invalid number format".to_string())),
         };
