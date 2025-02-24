@@ -187,7 +187,7 @@ fn big_number_multiply(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSE
 #[uniffi::export]
 fn big_number_divide(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
     // Check for division by zero
-    if big_number_is_zero(rhs.clone())? {
+    if big_number_is_zero(rhs.clone()) {
         return Err(KOSError::KOSNumber("Division by zero".to_string()));
     }
 
@@ -241,69 +241,45 @@ fn big_number_pow(base: BigNumber, exponent: BigNumber) -> Result<BigNumber, KOS
 }
 
 #[uniffi::export]
-fn big_number_is_equal(lhs: BigNumber, rhs: BigNumber) -> Result<bool, KOSError> {
-    // Optimize for integer-only comparisons
+fn big_number_is_equal(lhs: BigNumber, rhs: BigNumber) -> bool {
     if let (Ok(left), Ok(right)) = (BigInt::from_str(&lhs.value), BigInt::from_str(&rhs.value)) {
-        return Ok(left == right);
+        return left == right;
     }
-
-    // Fall back to rational comparisons
-    let left = lhs.to_bigrational()?;
-    let right = rhs.to_bigrational()?;
-    Ok(left == right)
+    lhs.to_bigrational().map_or(false, |left| rhs.to_bigrational().map_or(false, |right| left == right))
 }
 
 #[uniffi::export]
-fn big_number_is_gt(lhs: BigNumber, rhs: BigNumber) -> Result<bool, KOSError> {
-    // Optimize for integer-only comparisons
+fn big_number_is_gt(lhs: BigNumber, rhs: BigNumber) -> bool {
     if let (Ok(left), Ok(right)) = (BigInt::from_str(&lhs.value), BigInt::from_str(&rhs.value)) {
-        return Ok(left > right);
+        return left > right;
     }
-
-    // Fall back to rational comparisons
-    let left = lhs.to_bigrational()?;
-    let right = rhs.to_bigrational()?;
-    Ok(left > right)
+    lhs.to_bigrational().map_or(false, |left| rhs.to_bigrational().map_or(false, |right| left > right))
 }
 
 #[uniffi::export]
-fn big_number_is_gte(lhs: BigNumber, rhs: BigNumber) -> Result<bool, KOSError> {
-    // Optimize for integer-only comparisons
+fn big_number_is_gte(lhs: BigNumber, rhs: BigNumber) -> bool {
     if let (Ok(left), Ok(right)) = (BigInt::from_str(&lhs.value), BigInt::from_str(&rhs.value)) {
-        return Ok(left >= right);
+        return left >= right;
     }
-
-    // Fall back to rational comparisons
-    let left = lhs.to_bigrational()?;
-    let right = rhs.to_bigrational()?;
-    Ok(left >= right)
+    lhs.to_bigrational().map_or(false, |left| rhs.to_bigrational().map_or(false, |right| left >= right))
 }
 
 #[uniffi::export]
-fn big_number_is_lt(lhs: BigNumber, rhs: BigNumber) -> Result<bool, KOSError> {
-    // Optimize for integer-only comparisons
+fn big_number_is_lt(lhs: BigNumber, rhs: BigNumber) -> bool {
     if let (Ok(left), Ok(right)) = (BigInt::from_str(&lhs.value), BigInt::from_str(&rhs.value)) {
-        return Ok(left < right);
+        return left < right;
     }
-
-    // Fall back to rational comparisons
-    let left = lhs.to_bigrational()?;
-    let right = rhs.to_bigrational()?;
-    Ok(left < right)
+    lhs.to_bigrational().map_or(false, |left| rhs.to_bigrational().map_or(false, |right| left < right))
 }
 
 #[uniffi::export]
-fn big_number_is_lte(lhs: BigNumber, rhs: BigNumber) -> Result<bool, KOSError> {
-    // Optimize for integer-only comparisons
+fn big_number_is_lte(lhs: BigNumber, rhs: BigNumber) -> bool {
     if let (Ok(left), Ok(right)) = (BigInt::from_str(&lhs.value), BigInt::from_str(&rhs.value)) {
-        return Ok(left <= right);
+        return left <= right;
     }
-
-    // Fall back to rational comparisons
-    let left = lhs.to_bigrational()?;
-    let right = rhs.to_bigrational()?;
-    Ok(left <= right)
+    lhs.to_bigrational().map_or(false, |left| rhs.to_bigrational().map_or(false, |right| left <= right))
 }
+
 
 #[uniffi::export]
 fn big_number_absolute(value: BigNumber) -> Result<BigNumber, KOSError> {
@@ -322,15 +298,11 @@ fn big_number_absolute(value: BigNumber) -> Result<BigNumber, KOSError> {
 }
 
 #[uniffi::export]
-fn big_number_is_zero(value: BigNumber) -> Result<bool, KOSError> {
-    // Optimize for integer case
+fn big_number_is_zero(value: BigNumber) -> bool {
     if let Ok(val) = BigInt::from_str(&value.value) {
-        return Ok(val.is_zero());
+        return val.is_zero();
     }
-
-    // Fall back to rational case
-    let val = value.to_bigrational()?;
-    Ok(val.is_zero())
+    value.to_bigrational().map_or(false, |val| val.is_zero())
 }
 
 #[uniffi::export]
@@ -501,9 +473,9 @@ mod tests {
         let zero_decimal = big_number_new("0.0".to_string()).unwrap();
         let non_zero = big_number_new("123".to_string()).unwrap();
 
-        assert!(big_number_is_zero(zero).unwrap());
-        assert!(big_number_is_zero(zero_decimal).unwrap());
-        assert!(!big_number_is_zero(non_zero).unwrap());
+        assert!(big_number_is_zero(zero));
+        assert!(big_number_is_zero(zero_decimal));
+        assert!(!big_number_is_zero(non_zero));
     }
 
     #[test]
@@ -545,16 +517,16 @@ mod tests {
     fn test_big_number_is_equal() {
         let a = big_number_new("123".to_string()).unwrap();
         let b = big_number_new("123".to_string()).unwrap();
-        assert!(big_number_is_equal(a.clone(), b.clone()).unwrap());
+        assert!(big_number_is_equal(a.clone(), b.clone()));
 
         let c = big_number_new("456".to_string()).unwrap();
-        assert!(!big_number_is_equal(a.clone(), c.clone()).unwrap());
+        assert!(!big_number_is_equal(a.clone(), c.clone()));
 
         let d = big_number_new("123.0".to_string()).unwrap();
-        assert!(big_number_is_equal(a.clone(), d.clone()).unwrap());
+        assert!(big_number_is_equal(a.clone(), d.clone()));
 
         let e = big_number_new("123.000".to_string()).unwrap();
-        assert!(big_number_is_equal(a.clone(), e.clone()).unwrap());
+        assert!(big_number_is_equal(a.clone(), e.clone()));
     }
 
     #[test]
@@ -564,25 +536,25 @@ mod tests {
         let c = big_number_new("100.0".to_string()).unwrap();
         let d = big_number_new("100.5".to_string()).unwrap();
 
-        assert!(big_number_is_gt(b.clone(), a.clone()).unwrap());
-        assert!(!big_number_is_gt(a.clone(), b.clone()).unwrap());
-        assert!(!big_number_is_gt(a.clone(), c.clone()).unwrap());
-        assert!(big_number_is_gt(d.clone(), a.clone()).unwrap());
+        assert!(big_number_is_gt(b.clone(), a.clone()));
+        assert!(!big_number_is_gt(a.clone(), b.clone()));
+        assert!(!big_number_is_gt(a.clone(), c.clone()));
+        assert!(big_number_is_gt(d.clone(), a.clone()));
 
-        assert!(big_number_is_gte(b.clone(), a.clone()).unwrap());
-        assert!(big_number_is_gte(a.clone(), c.clone()).unwrap());
-        assert!(!big_number_is_gte(a.clone(), b.clone()).unwrap());
-        assert!(big_number_is_gte(d.clone(), c.clone()).unwrap());
+        assert!(big_number_is_gte(b.clone(), a.clone()));
+        assert!(big_number_is_gte(a.clone(), c.clone()));
+        assert!(!big_number_is_gte(a.clone(), b.clone()));
+        assert!(big_number_is_gte(d.clone(), c.clone()));
 
-        assert!(big_number_is_lt(a.clone(), b.clone()).unwrap());
-        assert!(!big_number_is_lt(b.clone(), a.clone()).unwrap());
-        assert!(!big_number_is_lt(c.clone(), a.clone()).unwrap());
-        assert!(big_number_is_lt(c.clone(), d.clone()).unwrap());
+        assert!(big_number_is_lt(a.clone(), b.clone()));
+        assert!(!big_number_is_lt(b.clone(), a.clone()));
+        assert!(!big_number_is_lt(c.clone(), a.clone()));
+        assert!(big_number_is_lt(c.clone(), d.clone()));
 
-        assert!(big_number_is_lte(a.clone(), b.clone()).unwrap());
-        assert!(big_number_is_lte(c.clone(), a.clone()).unwrap());
-        assert!(!big_number_is_lte(b.clone(), a.clone()).unwrap());
-        assert!(big_number_is_lte(a.clone(), c.clone()).unwrap());
+        assert!(big_number_is_lte(a.clone(), b.clone()));
+        assert!(big_number_is_lte(c.clone(), a.clone()));
+        assert!(!big_number_is_lte(b.clone(), a.clone()));
+        assert!(big_number_is_lte(a.clone(), c.clone()));
     }
 
     #[test]
