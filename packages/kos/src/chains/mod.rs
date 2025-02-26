@@ -59,6 +59,8 @@ pub enum ChainError {
     MissingOptions,
     InvalidOptions,
     InvalidHex,
+    DecodeRawTx,
+    DecodeHash,
 }
 
 impl Display for ChainError {
@@ -126,6 +128,12 @@ impl Display for ChainError {
             }
             ChainError::InvalidHex => {
                 write!(f, "invalid hex")
+            }
+            ChainError::DecodeRawTx => {
+                write!(f, "decode raw tx")
+            }
+            ChainError::DecodeHash => {
+                write!(f, "decode hash")
             }
         }
     }
@@ -218,6 +226,8 @@ impl ChainError {
             ChainError::MissingOptions => 21,
             ChainError::InvalidOptions => 22,
             ChainError::InvalidHex => 23,
+            ChainError::DecodeRawTx => 24,
+            ChainError::DecodeHash => 25,
         }
     }
 }
