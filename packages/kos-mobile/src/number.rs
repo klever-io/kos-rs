@@ -6,7 +6,6 @@ use std::str::FromStr;
 
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct BigNumber {
-    pub value: String,
     pub digits: Vec<u32>,
     pub scale: i64,
     pub sign: Sign,
@@ -26,22 +25,23 @@ impl BigNumber {
         }
 
         // Parse the value to check if it's a valid number
-        let parsed_value = match BigDecimal::from_str(value) {
+        let parsed_value: BigDecimal = match BigDecimal::from_str(value) {
             Ok(v) => v,
             Err(_) => return Err(KOSError::KOSNumber("Invalid number format".to_string())),
         };
 
-        Ok(BigNumber::from_bigdecimal(parsed_value))
+        let big_number: BigNumber = BigNumber::from_bigdecimal(parsed_value);
+
+        Ok(big_number)
     }
 
     pub fn from_bigdecimal(value: BigDecimal) -> Self {
-        let (bigint, scale) = value.clone().into_bigint_and_scale();
+        let (decimal_as_bigint, scale) = value.clone().into_bigint_and_scale();
 
         BigNumber {
-            value: value.normalized().to_plain_string(),
             scale,
             sign: sign_from_bigint(value.sign()),
-            digits: bigint.to_u32_digits().1,
+            digits: decimal_as_bigint.to_u32_digits().1,
         }
     }
 
@@ -75,9 +75,18 @@ fn big_number_new(value: String) -> Result<BigNumber, KOSError> {
 }
 
 #[uniffi::export]
+fn big_number_string(value: BigNumber) -> String {
+    value
+        .to_bigdecimal()
+        .with_scale(32)
+        .normalized()
+        .to_plain_string()
+}
+
+#[uniffi::export]
 fn big_number_add(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
-    let left = lhs.to_bigdecimal();
-    let right = rhs.to_bigdecimal();
+    let left: BigDecimal = lhs.to_bigdecimal();
+    let right: BigDecimal = rhs.to_bigdecimal();
 
     let result: BigDecimal = left + right;
 
@@ -86,8 +95,8 @@ fn big_number_add(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError>
 
 #[uniffi::export]
 fn big_number_subtract(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
-    let left = lhs.to_bigdecimal();
-    let right = rhs.to_bigdecimal();
+    let left: BigDecimal = lhs.to_bigdecimal();
+    let right: BigDecimal = rhs.to_bigdecimal();
 
     let result: BigDecimal = left - right;
 
@@ -96,8 +105,8 @@ fn big_number_subtract(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSE
 
 #[uniffi::export]
 fn big_number_multiply(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
-    let left = lhs.to_bigdecimal();
-    let right = rhs.to_bigdecimal();
+    let left: BigDecimal = lhs.to_bigdecimal();
+    let right: BigDecimal = rhs.to_bigdecimal();
 
     let result: BigDecimal = left * right;
 
@@ -106,8 +115,8 @@ fn big_number_multiply(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSE
 
 #[uniffi::export]
 fn big_number_divide(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
-    let left = lhs.to_bigdecimal();
-    let right = rhs.to_bigdecimal();
+    let left: BigDecimal = lhs.to_bigdecimal();
+    let right: BigDecimal = rhs.to_bigdecimal();
 
     let result: BigDecimal = left / right;
 
@@ -116,7 +125,7 @@ fn big_number_divide(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSErr
 
 #[uniffi::export]
 fn big_number_pow(base: BigNumber, exponent: BigNumber) -> Result<BigNumber, KOSError> {
-    let exp = exponent.to_bigdecimal();
+    let exp: BigDecimal = exponent.to_bigdecimal();
     if exp.is_negative() {
         return Err(KOSError::KOSNumber(
             "Exponent must be non-negative".to_string(),
@@ -124,72 +133,59 @@ fn big_number_pow(base: BigNumber, exponent: BigNumber) -> Result<BigNumber, KOS
     }
 
     // Convert to u32 for use with the Pow trait
-    let exp_u32 = match exp.to_u32() {
+    let exp_u32: u32 = match exp.to_u32() {
         Some(e) => e,
         None => return Err(KOSError::KOSNumber("Exponent too large".to_string())),
     };
 
-    let base_rat = base.to_bigdecimal();
+    let base_rat: BigDecimal = base.to_bigdecimal();
 
     if base_rat.is_zero() || base_rat.is_one() {
-        Ok(BigNumber::from_bigdecimal(base_rat))
+        Ok(base)
     } else {
-        let mut result = BigDecimal::one();
+        let mut result: BigInt = BigInt::one();
+        let (decimal_as_bigint, scale) = base.clone().to_bigdecimal().into_bigint_and_scale();
         for _ in 0..exp_u32 {
-            result *= &base_rat;
+            result *= &decimal_as_bigint;
         }
 
-        Ok(BigNumber::from_bigdecimal(result))
+        Ok(BigNumber::from_bigdecimal(BigDecimal::new(
+            result,
+            scale * exp_u32 as i64,
+        )))
     }
 }
 
 #[uniffi::export]
 fn big_number_is_equal(lhs: BigNumber, rhs: BigNumber) -> bool {
-    let left = lhs.to_bigdecimal();
-    let right = rhs.to_bigdecimal();
-
-    left == right
+    lhs.to_bigdecimal() == rhs.to_bigdecimal()
 }
 
 #[uniffi::export]
 fn big_number_is_gt(lhs: BigNumber, rhs: BigNumber) -> bool {
-    let left = lhs.to_bigdecimal();
-    let right = rhs.to_bigdecimal();
-
-    left > right
+    lhs.to_bigdecimal() > rhs.to_bigdecimal()
 }
 
 #[uniffi::export]
 fn big_number_is_gte(lhs: BigNumber, rhs: BigNumber) -> bool {
-    let left = lhs.to_bigdecimal();
-    let right = rhs.to_bigdecimal();
-
-    left >= right
+    lhs.to_bigdecimal() >= rhs.to_bigdecimal()
 }
 
 #[uniffi::export]
 fn big_number_is_lt(lhs: BigNumber, rhs: BigNumber) -> bool {
-    let left = lhs.to_bigdecimal();
-    let right = rhs.to_bigdecimal();
-
-    left < right
+    lhs.to_bigdecimal() < rhs.to_bigdecimal()
 }
 
 #[uniffi::export]
 fn big_number_is_lte(lhs: BigNumber, rhs: BigNumber) -> bool {
-    let left = lhs.to_bigdecimal();
-    let right = rhs.to_bigdecimal();
-
-    left <= right
+    lhs.to_bigdecimal() <= rhs.to_bigdecimal()
 }
 
 #[uniffi::export]
 fn big_number_absolute(value: BigNumber) -> Result<BigNumber, KOSError> {
-    let val = value.to_bigdecimal();
+    let val: BigDecimal = value.to_bigdecimal();
 
-    let abs = val.abs();
-
-    Ok(BigNumber::from_bigdecimal(abs))
+    Ok(BigNumber::from_bigdecimal(val.abs()))
 }
 
 #[uniffi::export]
@@ -199,29 +195,29 @@ fn big_number_is_zero(value: BigNumber) -> bool {
 
 #[uniffi::export]
 fn big_number_increment(value: BigNumber) -> Result<BigNumber, KOSError> {
-    let val = value.to_bigdecimal();
-    let result = val + BigDecimal::one();
+    let val: BigDecimal = value.to_bigdecimal();
+    let result: BigDecimal = val + BigDecimal::one();
 
     Ok(BigNumber::from_bigdecimal(result))
 }
 
 #[uniffi::export]
 fn big_number_decrement(value: BigNumber) -> Result<BigNumber, KOSError> {
-    let val = value.to_bigdecimal();
-    let result = val - BigDecimal::one();
+    let val: BigDecimal = value.to_bigdecimal();
+    let result: BigDecimal = val - BigDecimal::one();
 
     Ok(BigNumber::from_bigdecimal(result))
 }
 
 #[uniffi::export]
 fn big_number_is_positive(value: BigNumber) -> bool {
-    let val = value.to_bigdecimal();
+    let val: BigDecimal = value.to_bigdecimal();
     val.is_positive()
 }
 
 #[uniffi::export]
 fn big_number_is_negative(value: BigNumber) -> bool {
-    let val = value.to_bigdecimal();
+    let val: BigDecimal = value.to_bigdecimal();
     val.is_negative()
 }
 
@@ -249,25 +245,25 @@ mod tests {
         let a = big_number_new("123".to_string()).unwrap();
         let b = big_number_new("456".to_string()).unwrap();
         let result = big_number_add(a.clone(), b.clone()).unwrap();
-        assert_eq!(result.value, "579");
+        assert_eq!(big_number_string(result), "579");
 
         let c = big_number_new("-123".to_string()).unwrap();
         let result = big_number_add(b.clone(), c.clone()).unwrap();
-        assert_eq!(result.value, "333");
+        assert_eq!(big_number_string(result), "333");
 
         let d = big_number_new("123.5".to_string()).unwrap();
         let e = big_number_new("456.7".to_string()).unwrap();
 
         let result = big_number_add(d.clone(), e.clone()).unwrap();
-        assert_eq!(result.value, "580.2");
+        assert_eq!(big_number_string(result), "580.2");
 
         let result = big_number_add(a.clone(), d.clone()).unwrap();
-        assert_eq!(result.value, "246.5");
+        assert_eq!(big_number_string(result), "246.5");
 
         let f = big_number_new("123.456".to_string()).unwrap();
         let g = big_number_new("1e5".to_string()).unwrap();
         let result = big_number_add(f.clone(), g.clone()).unwrap();
-        assert_eq!(result.value, "100123.456");
+        assert_eq!(big_number_string(result), "100123.456");
     }
 
     #[test]
@@ -275,28 +271,28 @@ mod tests {
         let a = big_number_new("456".to_string()).unwrap();
         let b = big_number_new("123".to_string()).unwrap();
         let result = big_number_subtract(a.clone(), b.clone()).unwrap();
-        assert_eq!(result.value, "333");
+        assert_eq!(big_number_string(result), "333");
 
         let result = big_number_subtract(b.clone(), a.clone()).unwrap();
-        assert_eq!(result.value, "-333");
+        assert_eq!(big_number_string(result), "-333");
 
         let c = big_number_new("456.7".to_string()).unwrap();
         let d = big_number_new("123.5".to_string()).unwrap();
         let result = big_number_subtract(c.clone(), d.clone()).unwrap();
-        assert_eq!(result.value, "333.2");
+        assert_eq!(big_number_string(result), "333.2");
 
         let result = big_number_subtract(c.clone(), b.clone()).unwrap();
-        assert_eq!(result.value, "333.7");
+        assert_eq!(big_number_string(result), "333.7");
 
         let a = big_number_new("1000000000.0000000000000000001".to_string()).unwrap();
         let b = big_number_new("1000000000.0000000000000000001".to_string()).unwrap();
         let result = big_number_subtract(a.clone(), b.clone()).unwrap();
-        assert_eq!(result.value, "0");
+        assert_eq!(big_number_string(result), "0");
 
         let a = big_number_new("1000000000000000.000000000000000000011".to_string()).unwrap();
         let b = big_number_new("1000000000000000.000000000000000000001".to_string()).unwrap();
         let result = big_number_subtract(a.clone(), b.clone()).unwrap();
-        assert_eq!(result.value, "0.00000000000000000001");
+        assert_eq!(big_number_string(result), "0.00000000000000000001");
     }
 
     #[test]
@@ -304,28 +300,40 @@ mod tests {
         let a = big_number_new("123".to_string()).unwrap();
         let b = big_number_new("456".to_string()).unwrap();
         let result = big_number_multiply(a.clone(), b.clone()).unwrap();
-        assert_eq!(result.value, "56088");
+        assert_eq!(big_number_string(result), "56088");
 
         let c = big_number_new("-123".to_string()).unwrap();
         let result = big_number_multiply(c.clone(), b.clone()).unwrap();
-        assert_eq!(result.value, "-56088");
+        assert_eq!(big_number_string(result), "-56088");
 
         let d = big_number_new("12.3".to_string()).unwrap();
         let e = big_number_new("4.56".to_string()).unwrap();
         let result = big_number_multiply(d.clone(), e.clone()).unwrap();
-        assert_eq!(result.value, "56.088");
+        assert_eq!(big_number_string(result), "56.088");
 
         let zero = big_number_new("0".to_string()).unwrap();
         let result = big_number_multiply(a.clone(), zero.clone()).unwrap();
-        assert_eq!(result.value, "0");
+        assert_eq!(big_number_string(result), "0");
 
         let v1 = big_number_new("1000000000.0000000000000000001".to_string()).unwrap();
         let v2 = big_number_new("1000000000.0000000000000000001".to_string()).unwrap();
         let result2 = big_number_multiply(v1.clone(), v2.clone()).unwrap();
+        assert_eq!(big_number_string(result2), "1000000000000000000.0000000002");
+
+        let v1 = big_number_new("1000000000000000.000000000000000000001".to_string()).unwrap();
+        let v2 = big_number_new("1000000000000000.000000000000000000001".to_string()).unwrap();
+        let result2 = big_number_multiply(v1.clone(), v2.clone()).unwrap();
         assert_eq!(
-            result2.value,
-            "1000000000000000000.00000000020000000000000000000000000001"
+            big_number_string(result2),
+            "1000000000000000000000000000000.000002"
         );
+
+        let v1 = big_number_new("68562856798576893673962586728956729056872".to_string()).unwrap();
+        let v2 =
+            big_number_new("4534534534534534534.4456456454772389472398573467326893".to_string())
+                .unwrap();
+        let result2 = big_number_multiply(v1.clone(), v2.clone()).unwrap();
+        assert_eq!(big_number_string(result2), "310900641939492821158120256443368825392404212910534543770521.84848435835467083499652468120586");
     }
 
     #[test]
@@ -333,20 +341,20 @@ mod tests {
         let a = big_number_new("100".to_string()).unwrap();
         let b = big_number_new("5".to_string()).unwrap();
         let result = big_number_divide(a.clone(), b.clone()).unwrap();
-        assert_eq!(result.value, "20");
+        assert_eq!(big_number_string(result), "20");
 
         let c = big_number_new("10".to_string()).unwrap();
         let d = big_number_new("3".to_string()).unwrap();
         let result = big_number_divide(c.clone(), d.clone()).unwrap();
         assert_eq!(
-            result.value,
-            "3.333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333"
+            big_number_string(result),
+            "3.33333333333333333333333333333333"
         );
 
         let e = big_number_new("12.6".to_string()).unwrap();
         let f = big_number_new("2.1".to_string()).unwrap();
         let result = big_number_divide(e.clone(), f.clone()).unwrap();
-        assert_eq!(result.value, "6");
+        assert_eq!(big_number_string(result), "6");
 
         let v1 = big_number_new("68562856798576893673962586728956729056872".to_string()).unwrap();
         let v2 =
@@ -354,8 +362,20 @@ mod tests {
                 .unwrap();
         let result2 = big_number_divide(v1.clone(), v2.clone()).unwrap();
         assert_eq!(
-            result2.value,
-            "15120153188030533505878.87279202398950239411974388454771251441016237778965782051690629312266296336672"
+            big_number_string(result2),
+            "15120153188030533505878.87279202398950239411974388454771"
+        );
+
+        let a1 = big_number_new(
+            "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+                .to_string(),
+        )
+        .unwrap();
+        let b2 = big_number_new("2".to_string()).unwrap();
+        let result21 = big_number_divide(a1.clone(), b2.clone()).unwrap();
+        assert_eq!(
+            big_number_string(result21),
+            "57896044618658097711785492504343953926634992332820282019728792003956564819967.5"
         );
     }
 
@@ -374,19 +394,19 @@ mod tests {
     fn test_big_number_increment_decrement() {
         let a = big_number_new("123".to_string()).unwrap();
         let result = big_number_increment(a.clone()).unwrap();
-        assert_eq!(result.value, "124");
+        assert_eq!(big_number_string(result), "124");
 
         let b = big_number_new("123.5".to_string()).unwrap();
         let result = big_number_increment(b.clone()).unwrap();
-        assert_eq!(result.value, "124.5");
+        assert_eq!(big_number_string(result), "124.5");
 
         let c = big_number_new("123".to_string()).unwrap();
         let result = big_number_decrement(c.clone()).unwrap();
-        assert_eq!(result.value, "122");
+        assert_eq!(big_number_string(result), "122");
 
         let d = big_number_new("123.5".to_string()).unwrap();
         let result = big_number_decrement(d.clone()).unwrap();
-        assert_eq!(result.value, "122.5");
+        assert_eq!(big_number_string(result), "122.5");
     }
 
     #[test]
@@ -453,21 +473,21 @@ mod tests {
         let base = big_number_new("2".to_string()).unwrap();
         let exp = big_number_new("3".to_string()).unwrap();
         let result = big_number_pow(base.clone(), exp.clone()).unwrap();
-        assert_eq!(result.value, "8");
+        assert_eq!(big_number_string(result), "8");
 
         let zero = big_number_new("0".to_string()).unwrap();
         let result = big_number_pow(base.clone(), zero.clone()).unwrap();
-        assert_eq!(result.value, "1");
+        assert_eq!(big_number_string(result), "1");
 
         let ten = big_number_new("10".to_string()).unwrap();
         let exp10 = big_number_new("10".to_string()).unwrap();
         let result = big_number_pow(ten.clone(), exp10.clone()).unwrap();
-        assert_eq!(result.value, "10000000000");
+        assert_eq!(big_number_string(result), "10000000000");
 
         let base_dec = big_number_new("2.5".to_string()).unwrap();
         let exp2 = big_number_new("2".to_string()).unwrap();
         let result = big_number_pow(base_dec.clone(), exp2.clone()).unwrap();
-        assert_eq!(result.value, "6.25");
+        assert_eq!(big_number_string(result), "6.25");
 
         let neg_exp = big_number_new("-1".to_string()).unwrap();
 
@@ -478,22 +498,22 @@ mod tests {
     fn test_big_number_absolute() {
         let positive = big_number_new("123".to_string()).unwrap();
         let result = big_number_absolute(positive.clone()).unwrap();
-        assert_eq!(result.value, "123");
+        assert_eq!(big_number_string(result), "123");
 
         let negative = big_number_new("-456".to_string()).unwrap();
         let result = big_number_absolute(negative.clone()).unwrap();
-        assert_eq!(result.value, "456");
+        assert_eq!(big_number_string(result), "456");
 
         let zero = big_number_new("0".to_string()).unwrap();
         let result = big_number_absolute(zero.clone()).unwrap();
-        assert_eq!(result.value, "0");
+        assert_eq!(big_number_string(result), "0");
 
         let pos_dec = big_number_new("123.45".to_string()).unwrap();
         let result = big_number_absolute(pos_dec.clone()).unwrap();
-        assert_eq!(result.value, "123.45");
+        assert_eq!(big_number_string(result), "123.45");
 
         let neg_dec = big_number_new("-123.45".to_string()).unwrap();
         let result = big_number_absolute(neg_dec.clone()).unwrap();
-        assert_eq!(result.value, "123.45");
+        assert_eq!(big_number_string(result), "123.45");
     }
 }
