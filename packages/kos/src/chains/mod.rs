@@ -535,7 +535,7 @@ impl ChainRegistry {
                 constants::ICP,
                 ChainInfo {
                     factory: || Box::new(icp::ICP {}),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (

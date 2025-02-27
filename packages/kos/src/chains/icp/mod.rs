@@ -81,7 +81,7 @@ impl Chain for ICP {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        let hex = hex::decode(tx.raw_data.clone()).unwrap();
+        let hex = hex::decode(tx.raw_data.clone()).map_err(|_| ChainError::DecodeRawTx)?;
         let raw_data_str = String::from_utf8(hex).map_err(|_| ChainError::DecodeRawTx)?;
 
         let icp_hashes: Vec<String> =
@@ -111,12 +111,16 @@ impl Chain for ICP {
         Ok(tx)
     }
 
-    fn sign_message(
-        &self,
-        _private_key: Vec<u8>,
-        _message: Vec<u8>,
-    ) -> Result<Vec<u8>, ChainError> {
-        todo!()
+    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+        let public_key = self.get_pbk(private_key.clone())?;
+
+        let signature = self.sign_raw(private_key, message)?;
+
+        let mut signature_bytes = Vec::new();
+        signature_bytes.extend_from_slice(&signature);
+        signature_bytes.extend_from_slice(&public_key);
+
+        Ok(signature_bytes)
     }
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -218,6 +222,22 @@ mod test {
 
         let signed_tx = icp.sign_tx(pvk, tx).unwrap();
 
-        println!("{:?}", String::from_utf8(signed_tx.signature).unwrap());
+        assert_eq!(signed_tx.signature.len(), 263);
+    }
+
+    #[test]
+    fn test_icp_sign_message() {
+        let icp = ICP {};
+
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = icp.get_path(0, false);
+
+        let pvk = icp.derive(seed, path).unwrap();
+
+        let message = "Hello, World!".as_bytes().to_vec();
+        let signature = icp.sign_message(pvk, message).unwrap();
+
+        assert_eq!(signature.len(), 96, "Signature length should be 96");
     }
 }
