@@ -29,6 +29,10 @@ uniffi = { workspace = true, features = ["cli"] }
 serde = { workspace = true, features = ["derive"], optional = true }
 num-bigint = "0.4"
 num-traits = "0.2"
+lwk_common = { workspace = true }
+lwk_signer = { workspace = true }
+lwk_wollet = { workspace = true }
+
 
 [build-dependencies]
 uniffi = { workspace = true, features = ["build"] }

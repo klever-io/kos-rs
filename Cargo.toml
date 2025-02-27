@@ -52,3 +52,8 @@ thiserror = "1.0"
 
 kos = { version = "0.2.5", path = "./packages/kos", default-features = false }
 kos-mobile = { version = "0.1.0", path = "./packages/kos-mobile", default-features = false }
+
+lwk_common = "0.8.0"
+lwk_signer = "0.8.0"
+lwk_wollet = { git = "https://github.com/breez/lwk", branch = "breez-sdk-liquid-0.6.3" }
+
