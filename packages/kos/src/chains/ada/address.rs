@@ -81,7 +81,7 @@ pub struct Address {
 
 impl Address {
     pub fn serialize(&self) -> Result<Vec<u8>, ChainError> {
-        let mut addr_bytes = vec![self._type << 4 | self.network];
+        let mut addr_bytes = vec![(self._type << 4) | self.network];
         let addr_type = AddressType::from_u8(self._type);
         match addr_type {
             AddressType::Base => {
