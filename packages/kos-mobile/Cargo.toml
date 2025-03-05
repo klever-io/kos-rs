@@ -32,6 +32,8 @@ num-traits = "0.2"
 lwk_common = { workspace = true }
 lwk_signer = { workspace = true }
 lwk_wollet = { workspace = true }
+anyhow = "1.0.96"
+ecies = { workspace = true }
 
 
 [build-dependencies]

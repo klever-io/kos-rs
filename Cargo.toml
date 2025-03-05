@@ -1,9 +1,7 @@
 [workspace]
 # https://doc.rust-lang.org/edition-guide/rust-2021/default-cargo-resolver.html#details
 resolver = "2"
-members = [
-    "packages/kos", "packages/kos-mobile", "packages/kos-web",
-]
+members = ["packages/kos", "packages/kos-mobile", "packages/kos-web"]
 # This makes the compiled code faster and smaller, but it makes compiling slower,
 # so it's only enabled in release mode.
 # lto = true
@@ -23,10 +21,16 @@ base58 = "0.2.0"
 sha2 = { version = "0.10" }
 sha3 = { version = "0.10" }
 hmac = { version = "0.12" }
-secp256k1 = { version = "0.27", features = ["recovery", "rand", "bitcoin_hashes"] }
+secp256k1 = { version = "0.27", features = [
+    "recovery",
+    "rand",
+    "bitcoin_hashes",
+] }
 ed25519-dalek = { version = "2" }
 coins-bip32 = { version = "0.8", default-features = false }
-coins-bip39 = { version = "0.8", default-features = false, features = ["english"] }
+coins-bip39 = { version = "0.8", default-features = false, features = [
+    "english",
+] }
 bytes = { version = "1.4.0", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 rand = "0.8"
@@ -40,7 +44,11 @@ pbjson-build = { version = "0.5", git = "https://github.com/klever-io/pbjson" }
 
 uniffi = { version = "0.28.1" }
 
-reqwest = { version = "0.12", default-features = false, feature = ["rustls-tls", "blocking", "json"] }
+reqwest = { version = "0.12", default-features = false, feature = [
+    "rustls-tls",
+    "blocking",
+    "json",
+] }
 wasm-bindgen = "0.2"
 enum_delegate = "0.2"
 serde = { version = "1.0", default-features = false }
@@ -56,4 +64,4 @@ kos-mobile = { version = "0.1.0", path = "./packages/kos-mobile", default-featur
 lwk_common = "0.8.0"
 lwk_signer = "0.8.0"
 lwk_wollet = { git = "https://github.com/breez/lwk", branch = "breez-sdk-liquid-0.6.3" }
-
+ecies = { version = "0.2.7", default-features = false, features = ["pure"] }
