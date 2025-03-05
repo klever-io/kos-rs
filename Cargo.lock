@@ -1682,7 +1682,7 @@ dependencies = [
 
 [[package]]
 name = "kos"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "aes",
  "aes-gcm",
@@ -1725,7 +1725,7 @@ dependencies = [
 
 [[package]]
 name = "kos-mobile"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "bigdecimal",
  "hex",
@@ -1739,7 +1739,7 @@ dependencies = [
 
 [[package]]
 name = "kos-web"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "enum_delegate",
  "enum_dispatch",
