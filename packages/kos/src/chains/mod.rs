@@ -398,7 +398,7 @@ impl ChainRegistry {
             (
                 constants::LTC,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(5, "ltc", "LTC", "Litecoin")),
+                    factory: || Box::new(btc::BTC::new_btc_based(5, "ltc", 2, "LTC", "Litecoin")),
                     supported: false,
                 },
             ),
@@ -433,7 +433,7 @@ impl ChainRegistry {
             (
                 constants::SYS,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(15, "sys", "SYS", "Syscoin")),
+                    factory: || Box::new(btc::BTC::new_btc_based(15, "sys", 57, "SYS", "Syscoin")),
                     supported: false,
                 },
             ),
@@ -455,7 +455,9 @@ impl ChainRegistry {
                 constants::DOGE,
                 ChainInfo {
                     factory: || {
-                        Box::new(btc::BTC::new_legacy_btc_based(12, 0x1E, "DOGE", "Dogecoin"))
+                        Box::new(btc::BTC::new_legacy_btc_based(
+                            12, 0x1E, 3, "DOGE", "Dogecoin",
+                        ))
                     },
                     supported: false,
                 },
@@ -463,7 +465,9 @@ impl ChainRegistry {
             (
                 constants::DASH,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_legacy_btc_based(11, 0x4C, "DASH", "Dash")),
+                    factory: || {
+                        Box::new(btc::BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash"))
+                    },
                     supported: false,
                 },
             ),
@@ -477,7 +481,7 @@ impl ChainRegistry {
             (
                 constants::DGB,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(16, "dgb", "DGB", "Digibyte")),
+                    factory: || Box::new(btc::BTC::new_btc_based(16, "dgb", 20, "DGB", "Digibyte")),
                     supported: false,
                 },
             ),

@@ -16,6 +16,7 @@ const BITCOIN_MESSAGE_PREFIX: &str = "\x18Bitcoin Signed Message:\n";
 pub struct BTC {
     pub id: u32,
     pub addr_prefix: String,
+    pub bip44: u32,
     pub symbol: String,
     pub name: String,
     pub use_legacy_address: bool,
@@ -24,13 +25,14 @@ pub struct BTC {
 
 impl BTC {
     pub fn new() -> Self {
-        BTC::new_btc_based(2, "bc", "BTC", "Bitcoin")
+        BTC::new_btc_based(2, "bc", 0, "BTC", "Bitcoin")
     }
 
-    pub fn new_btc_based(id: u32, addr_prefix: &str, symbol: &str, name: &str) -> Self {
+    pub fn new_btc_based(id: u32, addr_prefix: &str, bip44: u32, symbol: &str, name: &str) -> Self {
         BTC {
             id,
             addr_prefix: addr_prefix.to_string(),
+            bip44,
             symbol: symbol.to_string(),
             name: name.to_string(),
             use_legacy_address: false,
@@ -38,10 +40,17 @@ impl BTC {
         }
     }
 
-    pub fn new_legacy_btc_based(id: u32, legacy_version: u8, symbol: &str, name: &str) -> Self {
+    pub fn new_legacy_btc_based(
+        id: u32,
+        legacy_version: u8,
+        bip44: u32,
+        symbol: &str,
+        name: &str,
+    ) -> Self {
         BTC {
             id,
             addr_prefix: "".to_string(),
+            bip44,
             symbol: symbol.to_string(),
             name: name.to_string(),
             use_legacy_address: true,
@@ -127,7 +136,9 @@ impl Chain for BTC {
     }
 
     fn get_path(&self, index: u32, _is_legacy: bool) -> String {
-        format!("m/84'/0'/0'/0/{}", index)
+        let purpose = if self.use_legacy_address { 44 } else { 84 };
+
+        format!("m/{}'/{}'/0'/0/{}", purpose, self.bip44, index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -287,16 +298,77 @@ mod test {
     }
 
     #[test]
-    fn test_get_addr_legacy() {
+    fn test_get_addr_btc() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = "m/44'/3'/0'/0/0".to_string();
 
-        let btc = BTC::new_legacy_btc_based(12, 0x1e, "DOGE", "Dogecoin");
+        let btc = BTC::new();
+        let path = btc.get_path(0, true);
         let seed = btc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let pvk = btc.derive(seed, path).unwrap();
         let pbk = btc.get_pbk(pvk).unwrap();
         let addr = btc.get_address(pbk).unwrap();
+        assert_eq!(addr, "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu");
+    }
+    #[test]
+    fn test_get_addr_doge() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let doge = BTC::new_legacy_btc_based(12, 0x1E, 3, "DOGE", "Dogecoin");
+        let path = doge.get_path(0, true);
+        let seed = doge.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = doge.derive(seed, path).unwrap();
+        let pbk = doge.get_pbk(pvk).unwrap();
+        let addr = doge.get_address(pbk).unwrap();
         assert_eq!(addr, "DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC");
+    }
+
+    #[test]
+    fn test_get_addr_ltc() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let ltc = BTC::new_btc_based(5, "ltc", 2, "LTC", "Litecoin");
+        let path = ltc.get_path(0, true);
+        let seed = ltc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = ltc.derive(seed, path).unwrap();
+        let pbk = ltc.get_pbk(pvk).unwrap();
+        let addr = ltc.get_address(pbk).unwrap();
+        assert_eq!(addr, "ltc1qjmxnz78nmc8nq77wuxh25n2es7rzm5c2rkk4wh");
+    }
+    #[test]
+    fn test_get_addr_dash() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let dash = BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash");
+        let path = dash.get_path(0, true);
+        let seed = dash.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = dash.derive(seed, path).unwrap();
+        let pbk = dash.get_pbk(pvk).unwrap();
+        let addr = dash.get_address(pbk).unwrap();
+        assert_eq!(addr, "XoJA8qE3N2Y3jMLEtZ3vcN42qseZ8LvFf5");
+    }
+    #[test]
+    fn test_get_addr_dgb() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let dgb = BTC::new_btc_based(16, "dgb", 20, "DGB", "Digibyte");
+        let path = dgb.get_path(0, true);
+        let seed = dgb.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = dgb.derive(seed, path).unwrap();
+        let pbk = dgb.get_pbk(pvk).unwrap();
+        let addr = dgb.get_address(pbk).unwrap();
+        assert_eq!(addr, "dgb1q9gmf0pv8jdymcly6lz6fl7lf6mhslsd72e2jq8");
+    }
+    #[test]
+    fn test_get_addr_sys() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let sys = BTC::new_btc_based(15, "sys", 57, "SYS", "Syscoin");
+        let path = sys.get_path(0, true);
+        let seed = sys.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = sys.derive(seed, path).unwrap();
+        let pbk = sys.get_pbk(pvk).unwrap();
+        let addr = sys.get_address(pbk).unwrap();
+        assert_eq!(addr, "sys1q2fs58xaj4tp7qrr3slpdsm65j3nw030d246lmx");
     }
 
     #[test]
