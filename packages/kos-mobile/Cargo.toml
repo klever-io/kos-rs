@@ -22,13 +22,13 @@ path = "src/bin/uniffi-bindgen.rs"
 kos = { workspace = true }
 
 hex = { workspace = true }
-lazy_static = { workspace = true }
 thiserror = { workspace = true }
 
 uniffi = { workspace = true, features = ["cli"] }
 serde = { workspace = true, features = ["derive"], optional = true }
 num-bigint = "0.4"
 num-traits = "0.2"
+bigdecimal = "0.4.7"
 
 [build-dependencies]
 uniffi = { workspace = true, features = ["build"] }
