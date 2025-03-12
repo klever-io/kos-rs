@@ -171,10 +171,8 @@ impl ExtrinsicPayload {
         // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
         if let Some(app_id) = self.app_id {
             encoded.extend(Compact(app_id).encode());
-        } else {
-            if let Some(mode) = self.mode {
-                encoded.extend(mode.encode());
-            }
+        } else if let Some(mode) = self.mode {
+            encoded.extend(mode.encode());
         }
 
         encoded.extend(&self.spec_version.encode());
@@ -213,10 +211,8 @@ impl ExtrinsicPayload {
         // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
         if let Some(app_id) = self.app_id {
             encoded.extend_from_slice(Compact(app_id).encode().as_slice());
-        } else {
-            if let Some(mode) = self.mode {
-                encoded.push(mode);
-            }
+        } else if let Some(mode) = self.mode {
+            encoded.push(mode);
         }
 
         encoded.extend_from_slice(&self.call);
