@@ -64,9 +64,10 @@ impl Chain for Substrate {
 
     fn get_path(&self, index: u32, _is_legacy: bool) -> String {
         if index == 0 {
-            return "".to_string();
+            return String::new();
         }
-        format!("//{}", index)
+
+        format!("//{}", index - 1)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -277,7 +278,7 @@ mod test {
     }
 
     #[test]
-    fn test_get_addr() {
+    fn test_get_addr_1() {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
@@ -290,7 +291,7 @@ mod test {
         assert_eq!(addr, "13KVd4f2a4S5pLp4gTTFezyXdPWx27vQ9vS6xBXJ9yWVd7xo");
     }
     #[test]
-    fn test_get_addr1() {
+    fn test_get_addr_2() {
         let dot = super::Substrate::new(62, 42, "AVAIL", "Avail");
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
@@ -300,7 +301,21 @@ mod test {
         let pvk = dot.derive(seed, path).unwrap();
         let pbk = dot.get_pbk(pvk).unwrap();
         let addr = dot.get_address(pbk).unwrap();
-        assert_eq!(addr, "5DJ8y4CAHnmjt4rdoZpR1wgXnQDnKDksskx7JTphZhMxthiG");
+        assert_eq!(addr, "5DvaFrBesD6jTWd3GEefcM72BSXaFRHqQuZtwBSZii1VMnuP");
+    }
+    #[test]
+    fn test_get_addr_3() {
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
+
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let path = dot.get_path(1, false);
+
+        let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
+        let pvk = dot.derive(seed, path).unwrap();
+        let pbk = dot.get_pbk(pvk).unwrap();
+        let addr = dot.get_address(pbk).unwrap();
+        assert_eq!(addr, "12rsQBSiizNCu3dZDshfkVwB34XDwiqyVQJP6URvGo31YGdp");
     }
 
     #[test]
