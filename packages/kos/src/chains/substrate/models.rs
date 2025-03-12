@@ -149,12 +149,12 @@ pub struct ExtrinsicPayload {
     pub era: Vec<u8>,
     pub nonce: u32,
     pub tip: u8,
-    pub mode: u8,
+    pub mode: Option<u8>,
     pub spec_version: u32,
     pub transaction_version: u32,
     pub genesis_hash: [u8; 32],
     pub block_hash: [u8; 32],
-    pub metadata_hash: u8,
+    pub metadata_hash: Option<u8>,
     pub app_id: Option<u32>,
 }
 
@@ -172,7 +172,9 @@ impl ExtrinsicPayload {
         if let Some(app_id) = self.app_id {
             encoded.extend(Compact(app_id).encode());
         } else {
-            encoded.extend(&self.mode.encode());
+            if let Some(mode) = self.mode {
+                encoded.extend(mode.encode());
+            }
         }
 
         encoded.extend(&self.spec_version.encode());
@@ -182,7 +184,9 @@ impl ExtrinsicPayload {
 
         // Use the metadata_hash if it is not set for AVAIL transactions
         if self.app_id.is_none() {
-            encoded.push(self.metadata_hash);
+            if let Some(metadata_hash) = self.metadata_hash {
+                encoded.push(metadata_hash);
+            }
         }
 
         encoded
@@ -210,7 +214,9 @@ impl ExtrinsicPayload {
         if let Some(app_id) = self.app_id {
             encoded.extend_from_slice(Compact(app_id).encode().as_slice());
         } else {
-            encoded.push(self.mode);
+            if let Some(mode) = self.mode {
+                encoded.push(mode);
+            }
         }
 
         encoded.extend_from_slice(&self.call);

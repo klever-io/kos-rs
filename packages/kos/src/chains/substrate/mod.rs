@@ -6,7 +6,6 @@ use crate::chains::{Chain, ChainError, ChainOptions, Transaction, TxInfo};
 use crate::crypto::hash::{blake2b_64_digest, blake2b_digest};
 use crate::crypto::sr25519::Sr25519Trait;
 use crate::crypto::{b58, bip32, sr25519};
-use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use models::{Call, CallArgs};
@@ -133,17 +132,23 @@ impl Chain for Substrate {
                     .try_into()
                     .map_err(|_| ChainError::InvalidOptions)?;
 
+                // Other chains may have different requirements for mode and metadata_hash
+                let (mode, metadata_hash) = match self.symbol.as_str() {
+                    "REEF" => (None, None),
+                    _ => (Some(0u8), Some(0u8)),
+                };
+
                 ExtrinsicPayload {
                     call,
                     era,
                     nonce,
                     tip,
-                    mode: 0,
+                    mode,
                     spec_version,
                     transaction_version,
                     genesis_hash,
                     block_hash,
-                    metadata_hash: 0,
+                    metadata_hash,
                     app_id,
                 }
             }
@@ -444,6 +449,57 @@ mod test {
             spec_version,
             transaction_version,
             app_id: Some(0),
+        };
+
+        let tx = Transaction {
+            raw_data,
+            signature: Vec::new(),
+            tx_hash: Vec::new(),
+            options: Some(options),
+        };
+
+        let signed_tx = dot.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(signed_tx.signature.len(), 65);
+        assert_eq!(signed_tx.raw_data.len(), 142);
+    }
+
+    #[test]
+    fn sign_tx_4() {
+        let dot = super::Substrate::new(29, 42, "REEF", "Reef");
+
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let path = dot.get_path(1, false);
+
+        let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
+        let pvk = dot.derive(seed, path).unwrap();
+
+        let raw_data = simple_base64_decode("BgMAIBAGX9aAF/hRd/ms+YCatuNZ7HYxyfly/j75aXrwkxMEFQNgAAoAAAACAAAAeDR4HTjkeY1UjjTslH0Z3uop3xSKe/MkhLeyTaz41LdWfCQku+9zEoyAsxnOxPxhQOEisj7yIJbyvkGmUcrXaw==").unwrap();
+
+        let nonce = 24;
+        let spec_version = 10;
+        let transaction_version = 2;
+
+        let options = ChainOptions::SUBSTRATE {
+            call: hex::decode(
+                "0603002010065fd68017f85177f9acf9809ab6e359ec7631c9f972fe3ef9697af0931304",
+            )
+            .unwrap(),
+            era: hex::decode("1503").unwrap(),
+            nonce,
+            tip: 0,
+            block_hash: hex::decode(
+                "567c2424bbef73128c80b319cec4fc6140e122b23ef22096f2be41a651cad76b",
+            )
+            .unwrap(),
+            genesis_hash: hex::decode(
+                "7834781d38e4798d548e34ec947d19deea29df148a7bf32484b7b24dacf8d4b7",
+            )
+            .unwrap(),
+            spec_version,
+            transaction_version,
+            app_id: None,
         };
 
         let tx = Transaction {
