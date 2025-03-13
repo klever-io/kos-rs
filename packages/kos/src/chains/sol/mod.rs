@@ -54,7 +54,11 @@ impl Chain for SOL {
         Ok(String::from_utf8(addr)?)
     }
 
-    fn sign_tx(&self, private_key: Vec<u8>, mut tx: Transaction) -> Result<Transaction, ChainError> {
+    fn sign_tx(
+        &self,
+        private_key: Vec<u8>,
+        mut tx: Transaction,
+    ) -> Result<Transaction, ChainError> {
         let mut sol_tx = models::SolanaTransaction::decode(&tx.raw_data)?;
 
         if sol_tx.message.header.num_required_signatures as usize != 1 {
@@ -86,11 +90,7 @@ impl Chain for SOL {
         Ok(tx)
     }
 
-    fn sign_message(
-        &self,
-        private_key: Vec<u8>,
-        message: Vec<u8>,
-    ) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         self.sign_raw(private_key, message)
     }
 

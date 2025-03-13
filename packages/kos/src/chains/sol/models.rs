@@ -116,11 +116,11 @@ impl Message {
         }
 
         // Address Lookup Tables
-        let mut compiled_address_lookup_tables : Vec<MessageAddressTableLookup> = vec![];
+        let mut compiled_address_lookup_tables: Vec<MessageAddressTableLookup> = vec![];
         if version == String::from(MESSAGE_VERSION_V0) {
-            let address_lookuptable_count:u8 = input[position];
+            let address_lookuptable_count: u8 = input[position];
             position += 1;
-    
+
             for _ in 0..address_lookuptable_count {
                 let mut address_lookup_table_pubkey: Vec<u8> = vec![0u8; 32];
                 address_lookup_table_pubkey.copy_from_slice(&input[position..position + 32]);
@@ -144,13 +144,11 @@ impl Message {
                     position += 1;
                 }
 
-                compiled_address_lookup_tables.push(
-                    MessageAddressTableLookup {
-                        account_key: address_lookup_table_pubkey,
-                        writable_indexes: writable_account_idx_list,
-                        readonly_indexes: read_only_account_idx_list,
-                    }
-                );
+                compiled_address_lookup_tables.push(MessageAddressTableLookup {
+                    account_key: address_lookup_table_pubkey,
+                    writable_indexes: writable_account_idx_list,
+                    readonly_indexes: read_only_account_idx_list,
+                });
             }
         }
 

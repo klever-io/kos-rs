@@ -64,7 +64,7 @@ pub enum ChainError {
     InvalidTransactionHeader,
     InvalidAccountLength,
     InvalidBlockhash,
-    InvalidSignatureLength
+    InvalidSignatureLength,
 }
 
 impl Display for ChainError {
@@ -138,7 +138,7 @@ impl Display for ChainError {
             }
             ChainError::DecodeHash => {
                 write!(f, "decode hash")
-            } 
+            }
             ChainError::InvalidTransactionHeader => {
                 write!(f, "invalid transaction header")
             }
@@ -247,7 +247,7 @@ impl ChainError {
             ChainError::InvalidAccountLength => 26,
             ChainError::InvalidBlockhash => 27,
             ChainError::InvalidSignatureLength => 28,
-            ChainError::InvalidTransactionHeader => 29
+            ChainError::InvalidTransactionHeader => 29,
         }
     }
 }
