@@ -256,7 +256,9 @@ impl Chain for BTC {
             }
         }
 
-        let signed_tx = psbt.extract_tx().unwrap();
+        let signed_tx = psbt
+            .extract_tx()
+            .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
 
         tx.raw_data = bitcoin::consensus::encode::serialize(&signed_tx);
 
@@ -294,6 +296,7 @@ impl Chain for BTC {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::crypto::base64::simple_base64_decode;
     use alloc::string::ToString;
 
     #[test]
@@ -433,5 +436,37 @@ mod test {
         assert_eq!(signed_tx.signature.len(), 32);
         assert_eq!(signed_tx.tx_hash.len(), 32);
         assert_eq!(signed_tx.raw_data.len(), 372);
+    }
+
+    #[test]
+    fn sign_transaction_legacy() {
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let dash = BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash");
+        let path = dash.get_path(1, true);
+
+        let seed = dash.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = dash.derive(seed, path).unwrap();
+
+        let raw = simple_base64_decode("AQAAAAHCwSwvgCSfVoz5D/2H1Hr7vtgegD0qcHbFVOgbcyU6tQAAAAAA/////wLoAwAAAAAAABl2qRSj2S8bq2S7gVTtEYzSf7UIE0TKhIisBFgPAAAAAAAZdqkUvkIytGCGwdRtEsZerL2Afoe5KlSIrAAAAAA=").unwrap();
+
+        let transaction = Transaction {
+            raw_data: raw,
+            signature: vec![],
+            tx_hash: vec![],
+            options: Option::from(ChainOptions::BTC {
+                prev_scripts: vec![
+                    simple_base64_decode("dqkUvkIytGCGwdRtEsZerL2Afoe5KlSIrA==").unwrap()
+                ],
+                input_amounts: vec![1013578],
+            }),
+        };
+
+        let signed_tx = dash.sign_tx(pvk, transaction).unwrap();
+
+        assert_eq!(signed_tx.signature.len(), 32);
+        assert_eq!(signed_tx.tx_hash.len(), 32);
+        assert_eq!(signed_tx.raw_data.len(), 225);
     }
 }

@@ -62,6 +62,7 @@ pub enum ChainError {
     DecodeRawTx,
     DecodeHash,
     UnsupportedScriptType,
+    InvalidTransaction(String),
 }
 
 impl Display for ChainError {
@@ -138,6 +139,9 @@ impl Display for ChainError {
             }
             ChainError::UnsupportedScriptType => {
                 write!(f, "unsupported script type")
+            }
+            ChainError::InvalidTransaction(e) => {
+                write!(f, "invalid transaction: {}", e)
             }
         }
     }
@@ -233,6 +237,7 @@ impl ChainError {
             ChainError::DecodeRawTx => 24,
             ChainError::DecodeHash => 25,
             ChainError::UnsupportedScriptType => 26,
+            ChainError::InvalidTransaction(_) => 27,
         }
     }
 }
@@ -474,7 +479,7 @@ impl ChainRegistry {
                             12, 0x1E, 3, "DOGE", "Dogecoin",
                         ))
                     },
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
@@ -483,7 +488,7 @@ impl ChainRegistry {
                     factory: || {
                         Box::new(btc::BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash"))
                     },
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
