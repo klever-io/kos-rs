@@ -46,6 +46,7 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Optimism (OP)
 - [x] Polygon zkEVM
 - [x] Stolz
+- [x] Solana (SOL)
 
 #### Coming soon | Under development:
 
@@ -60,7 +61,6 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - Cudos
 - Aura
 - Internet Computer (ICP)
-- Solana (SOL)
 - BNB Chain
 - Bitcoin Cash (BCH)
 - Cardano (ADA)
