@@ -48,16 +48,21 @@ impl Message {
     pub fn decode(input: &[u8]) -> Result<Self, prost::DecodeError> {
         let mut position = 0;
 
-        // 1. Header is exactly 3 bytes
-        if input.len() < 3 {
-            return Err(prost::DecodeError::new("Invalid message header length"));
+        if input.is_empty() {
+            return Err(prost::DecodeError::new("empty message data"));
         }
 
+        // 0. Version
         let mut version: String = String::from(MESSAGE_VERSION_LEGACY);
-        if input[0] > 127 {
-            let v: u8 = input[0];
-            version = format!("v{}", v - 128);
+        let version_byte: u8 = input[position];
+        if version_byte > 127 {
+            version = format!("v{}", version_byte - 128);
             position += 1;
+        }
+
+        // 1. Header is exactly 3 bytes
+        if position + 3 > input.len() {
+            return Err(prost::DecodeError::new("Invalid message header length"));
         }
 
         let header = MessageHeader {
@@ -115,7 +120,7 @@ impl Message {
             });
         }
 
-        // Address Lookup Tables
+        // 5. Address Lookup Tables
         let mut compiled_address_lookup_tables: Vec<MessageAddressTableLookup> = vec![];
         if version == *MESSAGE_VERSION_V0 {
             let address_lookuptable_count: u8 = input[position];
@@ -162,14 +167,17 @@ impl Message {
         })
     }
 
-    pub fn encode(&self) -> Vec<u8> {
+    pub fn encode(&self) -> Result<Vec<u8>, prost::DecodeError> {
         let mut output: Vec<u8> = Vec::new();
 
         // 0. add version only if version is not legacy
         if !self.version.is_empty() && self.version != *MESSAGE_VERSION_LEGACY {
             let v_string = self.version[1..].to_string();
-            let v = v_string.parse::<u8>().unwrap();
-            output.push(v + 128);
+            if let Ok(v) = v_string.parse::<u8>() {
+                output.push(v + 128);
+            } else {
+                return Err(prost::DecodeError::new("Invalid version"));
+            }
         }
 
         // 1. Header (3 bytes)
@@ -208,7 +216,7 @@ impl Message {
             }
         }
 
-        output
+        Ok(output)
     }
 }
 
@@ -235,11 +243,11 @@ impl SolanaTransaction {
         })
     }
 
-    pub fn encode(&self) -> Vec<u8> {
+    pub fn encode(&self) -> Result<Vec<u8>, prost::DecodeError> {
         let signature_count = encode_varint(self.signatures.len() as u64);
 
         let mut output = Vec::with_capacity(
-            signature_count.len() + self.signatures.len() * 64 + self.message.encode().len(),
+            signature_count.len() + self.signatures.len() * 64 + self.message.encode()?.len(),
         );
 
         output.extend_from_slice(&signature_count);
@@ -248,9 +256,9 @@ impl SolanaTransaction {
             output.extend_from_slice(signature);
         }
 
-        output.extend_from_slice(&self.message.encode());
+        output.extend_from_slice(&self.message.encode()?);
 
-        output
+        Ok(output)
     }
 }
 

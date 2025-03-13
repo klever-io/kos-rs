@@ -244,10 +244,10 @@ impl ChainError {
             ChainError::InvalidHex => 23,
             ChainError::DecodeRawTx => 24,
             ChainError::DecodeHash => 25,
-            ChainError::InvalidAccountLength => 26,
-            ChainError::InvalidBlockhash => 27,
-            ChainError::InvalidSignatureLength => 28,
-            ChainError::InvalidTransactionHeader => 29,
+            ChainError::InvalidTransactionHeader => 26,
+            ChainError::InvalidAccountLength => 27,
+            ChainError::InvalidBlockhash => 28,
+            ChainError::InvalidSignatureLength => 29,
         }
     }
 }

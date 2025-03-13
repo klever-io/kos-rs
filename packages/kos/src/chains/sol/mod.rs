@@ -73,7 +73,7 @@ impl Chain for SOL {
             return Err(ChainError::InvalidBlockhash);
         }
 
-        let message_bytes = sol_tx.message.encode();
+        let message_bytes = sol_tx.message.encode()?;
 
         let signature = self.sign_raw(private_key, message_bytes)?;
         if signature.len() != 64 {
@@ -83,7 +83,7 @@ impl Chain for SOL {
 
         tx.tx_hash = sol_tx.signatures[0].clone();
 
-        let signed_tx = sol_tx.encode();
+        let signed_tx = sol_tx.encode()?;
 
         tx.raw_data = signed_tx;
         tx.signature = signature;
@@ -148,7 +148,7 @@ mod test {
             },
             signatures: vec![],
         };
-        tx.encode()
+        tx.encode().unwrap()
     }
 
     #[test]
