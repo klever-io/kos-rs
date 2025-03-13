@@ -55,9 +55,8 @@ impl Message {
 
         let mut version: String = String::from(MESSAGE_VERSION_LEGACY);
         if input[0] > 127 {
-            let v = input[0];
-            let value = v - 128;
-            version = format!("v{}", value);
+            let v: u8 = input[0];
+            version = format!("v{}", v - 128);
             position += 1;
         }
 
