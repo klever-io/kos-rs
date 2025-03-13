@@ -61,6 +61,10 @@ pub enum ChainError {
     InvalidHex,
     DecodeRawTx,
     DecodeHash,
+    InvalidTransactionHeader,
+    InvalidAccountLength,
+    InvalidBlockhash,
+    InvalidSignatureLength
 }
 
 impl Display for ChainError {
@@ -134,6 +138,18 @@ impl Display for ChainError {
             }
             ChainError::DecodeHash => {
                 write!(f, "decode hash")
+            } 
+            ChainError::InvalidTransactionHeader => {
+                write!(f, "invalid transaction header")
+            }
+            ChainError::InvalidAccountLength => {
+                write!(f, "iInvalid account length")
+            }
+            ChainError::InvalidBlockhash => {
+                write!(f, "invalid block hash")
+            }
+            ChainError::InvalidSignatureLength => {
+                write!(f, "invalid signature length")
             }
         }
     }
@@ -228,6 +244,10 @@ impl ChainError {
             ChainError::InvalidHex => 23,
             ChainError::DecodeRawTx => 24,
             ChainError::DecodeHash => 25,
+            ChainError::InvalidAccountLength => 26,
+            ChainError::InvalidBlockhash => 27,
+            ChainError::InvalidSignatureLength => 28,
+            ChainError::InvalidTransactionHeader => 29
         }
     }
 }
@@ -542,7 +562,7 @@ impl ChainRegistry {
                 constants::SOL,
                 ChainInfo {
                     factory: || Box::new(sol::SOL {}),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (

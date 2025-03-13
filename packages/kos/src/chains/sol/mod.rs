@@ -1,3 +1,5 @@
+mod models;
+
 use crate::chains::util::private_key_from_vec;
 use crate::chains::{Chain, ChainError, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
@@ -24,7 +26,7 @@ impl Chain for SOL {
     }
 
     fn get_decimals(&self) -> u32 {
-        todo!()
+        9
     }
 
     fn mnemonic_to_seed(&self, mnemonic: String, password: String) -> Result<Vec<u8>, ChainError> {
@@ -52,16 +54,44 @@ impl Chain for SOL {
         Ok(String::from_utf8(addr)?)
     }
 
-    fn sign_tx(&self, _private_key: Vec<u8>, _tx: Transaction) -> Result<Transaction, ChainError> {
-        Err(ChainError::NotSupported)
+    fn sign_tx(&self, private_key: Vec<u8>, mut tx: Transaction) -> Result<Transaction, ChainError> {
+        let mut sol_tx = models::SolanaTransaction::decode(&tx.raw_data)?;
+
+        if sol_tx.message.header.num_required_signatures as usize != 1 {
+            return Err(ChainError::InvalidTransactionHeader);
+        }
+        if sol_tx.message.account_keys.is_empty() {
+            return Err(ChainError::InvalidAccountLength);
+        }
+        if sol_tx.message.recent_blockhash.iter().all(|&x| x == 0)
+            || sol_tx.message.recent_blockhash.iter().all(|&x| x == 1)
+        {
+            return Err(ChainError::InvalidBlockhash);
+        }
+
+        let message_bytes = sol_tx.message.encode();
+
+        let signature = self.sign_raw(private_key, message_bytes)?;
+        if signature.len() != 64 {
+            return Err(ChainError::InvalidSignatureLength);
+        }
+        sol_tx.signatures = vec![signature.clone()];
+
+        tx.tx_hash = sol_tx.signatures[0].clone();
+
+        let signed_tx = sol_tx.encode();
+
+        tx.raw_data = signed_tx;
+        tx.signature = signature;
+        Ok(tx)
     }
 
     fn sign_message(
         &self,
-        _private_key: Vec<u8>,
-        _message: Vec<u8>,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
     ) -> Result<Vec<u8>, ChainError> {
-        Err(ChainError::NotSupported)
+        self.sign_raw(private_key, message)
     }
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -92,5 +122,95 @@ mod test {
         let pbk = sol.get_pbk(pvk).unwrap();
         let addr = sol.get_address(pbk).unwrap();
         assert_eq!(addr, "B9sVeu4rJU12oUrUtzjc6BSNuEXdfvurZkdcaTVkP2LY");
+    }
+
+    fn create_test_transaction() -> Vec<u8> {
+        let tx = models::SolanaTransaction {
+            message: models::Message {
+                version: "legacy".to_string(),
+                header: models::MessageHeader {
+                    num_required_signatures: 1,
+                    num_readonly_signed_accounts: 0,
+                    num_readonly_unsigned_accounts: 0,
+                },
+                account_keys: vec![
+                    vec![1; 32], // Sender
+                    vec![2; 32], // Recipient
+                    vec![3; 32], // Program ID
+                ],
+                recent_blockhash: [42; 32],
+                instructions: vec![models::CompiledInstruction {
+                    program_id_index: 2,
+                    accounts: vec![0, 1],
+                    data: vec![2, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0], // Transfer 100 lamports
+                }],
+                address_table_lookups: vec![],
+            },
+            signatures: vec![],
+        };
+        tx.encode()
+    }
+
+    #[test]
+    fn test_derive_and_sign_tx() {
+        let sol = SOL {};
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
+
+        let raw_tx = create_test_transaction();
+        let tx = Transaction {
+            raw_data: raw_tx,
+            tx_hash: vec![],
+            signature: vec![],
+            options: Option::None,
+        };
+
+        let result = sol.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(result.signature.len(), 64);
+
+        // Verify tx_hash is not all ones and matches signature
+        assert!(!result.tx_hash.iter().all(|&x| x == 1));
+        assert_eq!(result.tx_hash.len(), 64);
+        assert!(!result.tx_hash.iter().all(|&x| x == 1));
+        assert!(!result.tx_hash.iter().all(|&x| x == 0));
+
+        let decoded = models::SolanaTransaction::decode(&result.raw_data).unwrap();
+        assert_eq!(decoded.signatures.len(), 1);
+        assert_eq!(decoded.signatures[0], result.signature);
+        assert_eq!(decoded.message.header.num_required_signatures, 1);
+    }
+
+    use crate::crypto::base64::simple_base64_decode;
+
+    #[test]
+    fn test_sign_tx_consistent_hash() {
+        let sol = SOL {};
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
+
+        let raw_tx = simple_base64_decode("AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAGCpo8aHCuuQaPK/nt3I+xmz1XnaQsMfgwmSee08N3zDdHWO9nf7VjXmRzcktw4WtkBVQDTqR6HHs/zYiFPEFdMlR2uAUKvCmGoT5EOvm/TqTTENr0znYcEsWsViKudXw20rGZQgJtALiRcUwlRMT2kZt8QRbvckZEPIiyFe59326vAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsH4P9uc5VDeldVYzceVRhzPQ3SsaI7BOphAAiCnjaBgMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAAtD/6J/XX9kp0wJsfKVh53ksJqzbfyd1RSzIap7OM5egEedVb8jHAbu50xW7OaBUH/bGy3qP0jlECsc2iVrwTjwbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpheXoR6gYqo7X4aA9Sx2/Qcpf6TpzF6ddVuj771s5eWQFBgAFAua+AQAGAAkDRJEGAAAAAAAIBQMAEwkECZPxe2T0hK52/wgYCQACAwgTAQcIDxELAAIDDgoNDAkSEhAFI+UXy5d6460qAQAAABlkAAH4LgEAAAAAAMGtCQAAAAAAKwAFCQMDAAABCQEP5d+hcffknhCj1qkbVbtXFKZDtelOHlry/os01b5PsgXi4ePoyQXn5ODlRQ==").unwrap();
+        let tx1 = Transaction {
+            raw_data: raw_tx.clone(),
+            tx_hash: vec![],
+            signature: vec![],
+            options: Option::None,
+        };
+
+        let tx2 = Transaction {
+            raw_data: raw_tx,
+            tx_hash: vec![],
+            signature: vec![],
+            options: Option::None,
+        };
+
+        let result1 = sol.sign_tx(pvk.clone(), tx1).unwrap();
+        let result2 = sol.sign_tx(pvk, tx2).unwrap();
+
+        // Same transaction signed with same key should produce same signature and hash
+        assert_eq!(result1.signature, result2.signature);
+        assert_eq!(result1.tx_hash, result2.tx_hash);
     }
 }
