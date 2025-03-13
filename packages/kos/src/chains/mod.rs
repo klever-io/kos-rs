@@ -61,6 +61,7 @@ pub enum ChainError {
     InvalidHex,
     DecodeRawTx,
     DecodeHash,
+    UnsupportedScriptType,
 }
 
 impl Display for ChainError {
@@ -134,6 +135,9 @@ impl Display for ChainError {
             }
             ChainError::DecodeHash => {
                 write!(f, "decode hash")
+            }
+            ChainError::UnsupportedScriptType => {
+                write!(f, "unsupported script type")
             }
         }
     }
@@ -228,6 +232,7 @@ impl ChainError {
             ChainError::InvalidHex => 23,
             ChainError::DecodeRawTx => 24,
             ChainError::DecodeHash => 25,
+            ChainError::UnsupportedScriptType => 26,
         }
     }
 }

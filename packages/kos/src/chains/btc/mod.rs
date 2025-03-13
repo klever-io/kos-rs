@@ -8,7 +8,7 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use alloc::{format, vec};
 use bech32::{u5, Variant};
-use bitcoin::{ecdsa, secp256k1, sighash, Amount, Denomination, Psbt};
+use bitcoin::{ecdsa, secp256k1, sighash, Amount, Denomination, Psbt, ScriptBuf};
 
 const BITCOIN_MESSAGE_PREFIX: &str = "\x18Bitcoin Signed Message:\n";
 
@@ -182,7 +182,7 @@ impl Chain for BTC {
 
         let mut psbt = Psbt::from_unsigned_tx(transaction.clone()).unwrap();
 
-        let mut cache = sighash::SighashCache::new(transaction);
+        let mut cache = sighash::SighashCache::new(transaction.clone());
 
         let sk = secp256k1::SecretKey::from_slice(private_key.clone().as_slice()).unwrap();
 
@@ -204,6 +204,9 @@ impl Chain for BTC {
                 script_pubkey: prev_scripts[inp_idx].clone().into(),
             };
             psbt.inputs[inp_idx].witness_utxo = Some(utxo);
+
+            // Add non_witness_utxo
+            psbt.inputs[inp_idx].non_witness_utxo = Some(transaction.clone());
         }
 
         // sign inputs
@@ -222,32 +225,52 @@ impl Chain for BTC {
         }
 
         // finalize
-        for inp_idx in 0..psbt.inputs.len() {
-            let script_witness = {
-                match psbt.inputs[inp_idx].partial_sigs.first_key_value() {
-                    Some((pubkey, sig)) => {
-                        let mut script_witness = bitcoin::Witness::new();
-                        script_witness.push(sig.to_vec());
-                        script_witness.push(pubkey.to_bytes());
-                        script_witness
-                    }
-                    _ => bitcoin::Witness::default(),
+        for (inp_idx, _) in prev_scripts.iter().enumerate().take(psbt.inputs.len()) {
+            let script_pubkey_bytes = prev_scripts[inp_idx].clone();
+
+            let script_pubkey = bitcoin::Script::from_bytes(script_pubkey_bytes.as_slice());
+
+            // check if it is a legacy or segwit transaction
+            let is_legacy = script_pubkey.is_p2pkh();
+            let is_segwit = script_pubkey.is_p2wpkh();
+
+            if let Some((pubkey, sig)) = psbt.inputs[inp_idx].partial_sigs.first_key_value() {
+                if is_legacy {
+                    let script_sig_builder = bitcoin::Script::builder()
+                        .push_slice(sig.serialize())
+                        .push_slice(pubkey.inner.serialize());
+
+                    let script = script_sig_builder.as_script();
+
+                    psbt.inputs[inp_idx].final_script_sig = Some(ScriptBuf::from(script));
+                } else if is_segwit {
+                    let mut script_witness = bitcoin::Witness::new();
+                    script_witness.push(sig.to_vec());
+                    script_witness.push(pubkey.to_bytes());
+
+                    psbt.inputs[inp_idx].final_script_witness = Some(script_witness);
+                } else {
+                    // unsupported script type
+                    return Err(ChainError::UnsupportedScriptType);
                 }
-            };
-            psbt.inputs[inp_idx].final_script_witness = Some(script_witness);
+            }
         }
 
         let signed_tx = psbt.extract_tx().unwrap();
 
         tx.raw_data = bitcoin::consensus::encode::serialize(&signed_tx);
 
-        tx.signature = bitcoin::consensus::encode::serialize(&signed_tx.compute_wtxid());
+        let has_witness = signed_tx.input.iter().any(|x| !x.witness.is_empty());
+        if has_witness {
+            tx.signature = bitcoin::consensus::encode::serialize(&signed_tx.compute_wtxid());
+        } else {
+            tx.signature = bitcoin::consensus::encode::serialize(&signed_tx.compute_txid());
+        }
 
         tx.tx_hash = bitcoin::consensus::encode::serialize(&signed_tx.compute_txid());
 
         Ok(tx)
     }
-
     fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         let prepared_message = BTC::prepare_message(message);
         let signature = self.sign_raw(private_key, prepared_message.to_vec())?;
