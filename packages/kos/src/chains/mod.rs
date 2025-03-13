@@ -143,7 +143,7 @@ impl Display for ChainError {
                 write!(f, "invalid transaction header")
             }
             ChainError::InvalidAccountLength => {
-                write!(f, "iInvalid account length")
+                write!(f, "invalid account length")
             }
             ChainError::InvalidBlockhash => {
                 write!(f, "invalid block hash")

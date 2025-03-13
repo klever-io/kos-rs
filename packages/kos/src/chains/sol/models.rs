@@ -117,7 +117,7 @@ impl Message {
 
         // Address Lookup Tables
         let mut compiled_address_lookup_tables: Vec<MessageAddressTableLookup> = vec![];
-        if version == String::from(MESSAGE_VERSION_V0) {
+        if version == *MESSAGE_VERSION_V0 {
             let address_lookuptable_count: u8 = input[position];
             position += 1;
 
@@ -166,7 +166,7 @@ impl Message {
         let mut output: Vec<u8> = Vec::new();
 
         // 0. add version only if version is not legacy
-        if self.version.len() > 0 && self.version != String::from(MESSAGE_VERSION_LEGACY) {
+        if !self.version.is_empty() && self.version != *MESSAGE_VERSION_LEGACY {
             let v_string = self.version[1..].to_string();
             let v = v_string.parse::<u8>().unwrap();
             output.push(v + 128);
@@ -197,7 +197,7 @@ impl Message {
         }
 
         // 5. address table lookups
-        if self.version.len() > 0 && self.version != String::from(MESSAGE_VERSION_LEGACY) {
+        if !self.version.is_empty() && self.version != *MESSAGE_VERSION_LEGACY {
             output.push(self.address_table_lookups.len() as u8);
             for key in &self.address_table_lookups {
                 output.extend_from_slice(&key.account_key);
