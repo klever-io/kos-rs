@@ -46,15 +46,15 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Optimism (OP)
 - [x] Polygon zkEVM
 - [x] Stolz
+- [x] Litecoin (LTC)
+- [x] Syscoin (SYS)
+- [x] Dogecoin (DOGE)
+- [x] Dash
+- [x] Digibyte (DGB)
 
 #### Coming soon | Under development:
 
-- Litecoin (LTC)
-- Syscoin (SYS)
-- Dogecoin (DOGE)
-- Dash
 - XRP
-- Digibyte (DGB)
 - Cosmos (ATOM)
 - Celestia (TIA)
 - Cudos
