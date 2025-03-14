@@ -28,7 +28,7 @@ tiny-json-rs = "0.2.5"
 ripemd = { version = "0.1.3", default-features = false }
 schnorrkel = { version = "0.11.4", default-features = false }
 ed25519-dalek = { version = "2.1.0", features = ["hazmat"], default-features = false }
-pbkdf2 = { version = "0.12.2 ", features = ["sha2", "hmac", "password-hash"], default-features = false }
+pbkdf2 = { version = "0.12.2", features = ["sha2", "hmac", "password-hash"], default-features = false }
 bip39-dict = { version = "0.1.0", features = ["english"], default-features = false }
 libsecp256k1 = { version = "0.7.1", features = ["hmac", "static-context"], default-features = false }
 rand_core = { version = "0.6.4", default-features = false }
@@ -47,8 +47,6 @@ pem = { version = "3", optional = true }
 cfb-mode = { version = "0.8", optional = true }
 cbc = { version = "0.1", features = ["block-padding", "std"], optional = true }
 serde = { version = "1.0.215", features = ["derive"], optional = true }
-pbkdf2-extras = { package = "pbkdf2", version = "0.12", features = ["simple"], optional = true }
-rand_core-extras = { package = "rand_core", version = "0.6.4", features = ["getrandom"], default-features = false, optional = true }
 
 [build-dependencies]
 prost-build = "0.12.1"
@@ -65,7 +63,7 @@ not-ksafe = [
     "rand",
     "coins-bip32",
     "coins-bip39",
-    "rand_core-extras",
+    "rand_core/getrandom",
     "getrandom",
     "alloy-dyn-abi",
     "serde_json",
@@ -74,7 +72,7 @@ not-ksafe = [
     "pem",
     "cfb-mode",
     "cbc",
-    "pbkdf2-extras",
+    "pbkdf2/simple",
     "serde"
 ]
 ksafe = []
