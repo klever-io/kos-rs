@@ -19,7 +19,7 @@ name = "uniffi-bindgen"
 path = "src/bin/uniffi-bindgen.rs"
 
 [dependencies]
-kos = { workspace = true }
+kos = { workspace = true, default-features = true }
 
 hex = { workspace = true }
 thiserror = { workspace = true }

@@ -2,9 +2,26 @@
 
 # build env
 BUILD_HOME=$(pwd)
-OS="darwin-x86_64"
-OS_ARCH="darwin64-arm64-cc"
-OS_TOOLCHAIN="darwin-x86_64"
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  OS="darwin-x86_64"
+  OS_ARCH="darwin64-arm64-cc"
+  OS_TOOLCHAIN="darwin-x86_64"
+  IS_MACOS=true
+  LIB_EXTENSION="dylib"
+  JNI_PLATFORM="darwin-aarch64"
+elif [[ "$OSTYPE" == "linux"* ]]; then
+  OS="linux-x86_64"
+  OS_ARCH="linux-x86_64"
+  OS_TOOLCHAIN="linux-x86_64"
+  IS_MACOS=false
+  LIB_EXTENSION="so"
+  JNI_PLATFORM="linux-x86_64"
+else
+  echo "Unsupported operating system: $OSTYPE"
+  exit 1
+fi
+
 ANDROID_PROJECT_PATH="android"
 ANDROID_NDK_PATH="$BUILD_HOME/android/ndk"
 ANDROID_JNI_LIBS_PATH="$BUILD_HOME/$ANDROID_PROJECT_PATH/lib/src/main/jniLibs"
@@ -53,15 +70,28 @@ log_error() {
 configure_android_ndk() {
   if ! dir_exists "$ANDROID_NDK_PATH"; then
     log_status "configuring ndk..."
-    rm -f ndk.dmg
-    log_status "starting ndk download..."
-    curl -0 https://dl.google.com/android/repository/android-ndk-r26b-darwin.dmg --output "$BUILD_HOME"/ndk.dmg
-    hdiutil attach -quiet -nobrowse -noverify -noautoopen "$BUILD_HOME"/ndk.dmg
-    mkdir "$ANDROID_NDK_PATH"
-    log_status "copying ndk files..."
-    cp -r /Volumes/Android\ NDK\ r26b/AndroidNDK10909125.app/Contents/NDK/* "$ANDROID_NDK_PATH"
-    hdiutil detach -quiet /Volumes/Android\ NDK\ r26b/
-    rm ndk.dmg
+
+    if [ "$IS_MACOS" = true ]; then
+      rm -f ndk.dmg
+      log_status "starting ndk download for macOS..."
+      curl -0 https://dl.google.com/android/repository/android-ndk-r26b-darwin.dmg --output "$BUILD_HOME"/ndk.dmg
+      hdiutil attach -quiet -nobrowse -noverify -noautoopen "$BUILD_HOME"/ndk.dmg
+      mkdir -p "$ANDROID_NDK_PATH"
+      log_status "copying ndk files..."
+      cp -r /Volumes/Android\ NDK\ r26b/AndroidNDK10909125.app/Contents/NDK/* "$ANDROID_NDK_PATH"
+      hdiutil detach -quiet /Volumes/Android\ NDK\ r26b/
+      rm ndk.dmg
+    else
+      rm -f ndk.zip
+      log_status "starting ndk download for Linux..."
+      curl -0 https://dl.google.com/android/repository/android-ndk-r26b-linux.zip --output "$BUILD_HOME"/ndk.zip
+      log_status "extracting ndk files..."
+      mkdir -p "$ANDROID_NDK_PATH"
+      unzip -q "$BUILD_HOME"/ndk.zip -d "$BUILD_HOME/android"
+      cp -r "$BUILD_HOME"/android/android-ndk-r26b/* "$ANDROID_NDK_PATH"
+      rm -rf "$BUILD_HOME"/android/android-ndk-r26b
+      rm ndk.zip
+    fi
   fi
   export ANDROID_NDK_ROOT="$ANDROID_NDK_PATH"
 }
@@ -98,7 +128,8 @@ assemble_openssl_lib() {
       export CXX="${TOOLCHAIN_ROOT}/bin/$toolchain${ANDROID_MIN_API}-clang++"
       export CXXFLAGS="-fPIC"
       export CPPFLAGS="-DANDROID -fPIC"
-      ./Configure "$arch" no-asm no-shared -D__ANDROID_API__="$ANDROID_MIN_API"
+
+      ./Configure "$arch" no-asm no-shared
     fi
     log_status "assembling openssl to $toolchain..."
     make clean -s
