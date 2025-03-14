@@ -1,4 +1,5 @@
 use crate::chains::ChainError;
+use alloc::vec::Vec;
 
 pub fn slice_from_vec<const N: usize>(vec: &[u8]) -> Result<[u8; N], ChainError> {
     if vec.len() < N {

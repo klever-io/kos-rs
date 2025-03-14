@@ -1,5 +1,6 @@
 mod models;
 
+use alloc::format;
 use crate::chains::substrate::models::ExtrinsicPayload;
 use crate::chains::util::private_key_from_vec;
 use crate::chains::{Chain, ChainError, ChainOptions, Transaction, TxInfo};

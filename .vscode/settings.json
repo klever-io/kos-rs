@@ -1,10 +1,8 @@
 {
     "rust-analyzer.linkedProjects": [
-        "./packages/kos-crypto/Cargo.toml",
-        "./packages/kos-sdk/Cargo.toml",
-        "./packages/kos-types/Cargo.toml",
         "./packages/kos/Cargo.toml",
-        "./packages/kos-sdk/Cargo.toml",
-        "./packages/kos-utils/Cargo.toml"
+        "./packages/kos-web/Cargo.toml",
+        "./packages/kos-hardware/Cargo.toml",
+        "./packages/kos-mobile/Cargo.toml",
     ]
 }
