@@ -109,6 +109,7 @@ impl Chain for SOL {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::crypto::base64::simple_base64_decode;
     use alloc::string::ToString;
 
     #[test]
@@ -182,8 +183,6 @@ mod test {
         assert_eq!(decoded.message.header.num_required_signatures, 1);
     }
 
-    use crate::crypto::base64::simple_base64_decode;
-
     #[test]
     fn test_sign_tx_consistent_hash() {
         let sol = SOL {};
@@ -191,7 +190,7 @@ mod test {
         let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
 
-        let raw_tx = simple_base64_decode("AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAGCpo8aHCuuQaPK/nt3I+xmz1XnaQsMfgwmSee08N3zDdHWO9nf7VjXmRzcktw4WtkBVQDTqR6HHs/zYiFPEFdMlR2uAUKvCmGoT5EOvm/TqTTENr0znYcEsWsViKudXw20rGZQgJtALiRcUwlRMT2kZt8QRbvckZEPIiyFe59326vAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsH4P9uc5VDeldVYzceVRhzPQ3SsaI7BOphAAiCnjaBgMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAAtD/6J/XX9kp0wJsfKVh53ksJqzbfyd1RSzIap7OM5egEedVb8jHAbu50xW7OaBUH/bGy3qP0jlECsc2iVrwTjwbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpheXoR6gYqo7X4aA9Sx2/Qcpf6TpzF6ddVuj771s5eWQFBgAFAua+AQAGAAkDRJEGAAAAAAAIBQMAEwkECZPxe2T0hK52/wgYCQACAwgTAQcIDxELAAIDDgoNDAkSEhAFI+UXy5d6460qAQAAABlkAAH4LgEAAAAAAMGtCQAAAAAAKwAFCQMDAAABCQEP5d+hcffknhCj1qkbVbtXFKZDtelOHlry/os01b5PsgXi4ePoyQXn5ODlRQ==").unwrap();
+        let raw_tx = create_test_transaction();
         let tx1 = Transaction {
             raw_data: raw_tx.clone(),
             tx_hash: vec![],
@@ -212,5 +211,61 @@ mod test {
         // Same transaction signed with same key should produce same signature and hash
         assert_eq!(result1.signature, result2.signature);
         assert_eq!(result1.tx_hash, result2.tx_hash);
+    }
+
+    #[test]
+    fn test_sign_tx_legacy() {
+        let sol = SOL {};
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
+
+        let raw_tx = simple_base64_decode("AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAIEmjxocK65Bo8r+e3cj7GbPVedpCwx+DCZJ57Tw3fMN0e5dTAYLc651CwBwFga8GLJTsriJc/FAP3GlbhfEGOidAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAACg2vm5+lhfRud/PKY6hEMgdKkQ8I7jtpxDFjknIKRXGQMDAAUCSQIAAAMACQOAlpgAAAAAAAICAAEUAgAAAAEAAAAAAAAAsmBySL6HLBg=").unwrap();
+
+        let tx1 = Transaction {
+            raw_data: raw_tx.clone(),
+            tx_hash: vec![],
+            signature: vec![],
+            options: Option::None,
+        };
+
+        let result = sol.sign_tx(pvk.clone(), tx1).unwrap();
+
+        // Same transaction signed with same key should produce same signature and hash
+        assert_eq!(hex::encode(&result.signature), "b079c666c9ff53bb26d7606d10131ebbc8d398dac9fd1285d5138bbdd521758d7a6b6bdb2876730637704eb1511f3f7d842343b9e406bb3e3583d6588949a904");
+    }
+
+    #[test]
+    fn test_sign_tx_v0() {
+        let sol = SOL {};
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
+
+        let raw_tx = simple_base64_decode("AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAGCpo8aHCuuQaPK/nt3I+xmz1XnaQsMfgwmSee08N3zDdHWO9nf7VjXmRzcktw4WtkBVQDTqR6HHs/zYiFPEFdMlR2uAUKvCmGoT5EOvm/TqTTENr0znYcEsWsViKudXw20rGZQgJtALiRcUwlRMT2kZt8QRbvckZEPIiyFe59326vAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsH4P9uc5VDeldVYzceVRhzPQ3SsaI7BOphAAiCnjaBgMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAAtD/6J/XX9kp0wJsfKVh53ksJqzbfyd1RSzIap7OM5egEedVb8jHAbu50xW7OaBUH/bGy3qP0jlECsc2iVrwTjwbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpheXoR6gYqo7X4aA9Sx2/Qcpf6TpzF6ddVuj771s5eWQFBgAFAua+AQAGAAkDRJEGAAAAAAAIBQMAEwkECZPxe2T0hK52/wgYCQACAwgTAQcIDxELAAIDDgoNDAkSEhAFI+UXy5d6460qAQAAABlkAAH4LgEAAAAAAMGtCQAAAAAAKwAFCQMDAAABCQEP5d+hcffknhCj1qkbVbtXFKZDtelOHlry/os01b5PsgXi4ePoyQXn5ODlRQ==").unwrap();
+        let tx1 = Transaction {
+            raw_data: raw_tx.clone(),
+            tx_hash: vec![],
+            signature: vec![],
+            options: Option::None,
+        };
+
+        let result = sol.sign_tx(pvk.clone(), tx1).unwrap();
+        // Same transaction signed with same key should produce same signature and hash
+        assert_eq!(hex::encode(&result.signature), "40098643a37209b2e0984c2f55872ccf150c44a1100a16a985b1bc04b13c31f9d9d1b070229241df5aaa21af22e0e4f88b6371106766fd95096b67f1066f8701");
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let sol = SOL {};
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
+
+        let message = "Hello, World!".as_bytes().to_vec();
+        let result = sol.sign_message(pvk.clone(), message.into()).unwrap();
+
+        // Same transaction signed with same key should produce same signature and hash
+        assert_eq!(hex::encode(&result), "e8ebd3bf665fe5b57e421c477fa4187ef5f1275ddc8dbf693dd684a0164f11aef22bb98416e2e765d39dbb38451d8996fea135baa9e9fd13890286e8be0e8200");
     }
 }
