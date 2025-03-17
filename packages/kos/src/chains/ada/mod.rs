@@ -1,6 +1,8 @@
 mod address;
+mod transaction;
 
 use crate::chains::ada::address::{Address, AddressType, StakeCredential};
+use crate::chains::ada::transaction::{RosettaTransaction, Tx, TxBody, VKeyWitness, WitnessSet};
 use crate::chains::util::private_key_from_vec;
 use crate::chains::{util, Chain, ChainError, Transaction, TxInfo};
 use crate::crypto::bip32::{derive_ed25519_bip32, mnemonic_to_seed_ed25519_bip32};
@@ -111,8 +113,73 @@ impl Chain for ADA {
         }
     }
 
-    fn sign_tx(&self, _private_key: Vec<u8>, _tx: Transaction) -> Result<Transaction, ChainError> {
-        Err(ChainError::NotSupported)
+    fn sign_tx(&self, private_key: Vec<u8>, tx: Transaction) -> Result<Transaction, ChainError> {
+        let mut rosetta_tx: RosettaTransaction =
+            ciborium::de::from_reader(tx.raw_data.as_slice()).unwrap();
+
+        println!("{:?}", rosetta_tx);
+
+        let metadata = hex::decode(rosetta_tx.0).unwrap();
+
+        // let tx_body: TxBody = ciborium::from_reader(metadata.as_slice()).unwrap();
+
+        let tx_id = "00"; // TODO: get tx_id from tx_body
+
+        // Reducing from xprivkey to privkey
+        let pvk = if private_key.len() == 96 {
+            &private_key[..64]
+        } else {
+            private_key.as_slice()
+        };
+
+        let hash = hex::decode(tx_id).unwrap();
+
+        let hash = if hash.is_empty() {
+            vec![] // TODO: tx_body.hash()?
+        } else {
+            hash
+        };
+
+        let pbk = self.get_pbk(pvk.to_vec())?;
+
+        let witness_set = WitnessSet {
+            v_key_witness_set: vec![VKeyWitness {
+                v_key: pbk,
+                signature,
+            }],
+        };
+
+        let cardano_tx = Tx {
+            body: Some(TxBody {}),
+            witness_set,
+            is_valid: true,
+            auxiliary_data: None,
+        };
+
+        // Encode signed metadata
+        // let signed_metadata = match cbor::to_vec(&cardano_tx) {
+        //     Ok(data) => data,
+        //     Err(_) => {
+        //         return Err(constants::err_marshalizing_data(
+        //             "cardano transaction",
+        //             "cbor",
+        //         ))
+        //     }
+        // };
+        //
+        // rosetta_tx.metadata = hex::encode(&signed_metadata);
+        //
+        // let new_raw = match cbor::to_vec(&rosetta_tx) {
+        //     Ok(data) => data,
+        //     Err(_) => {
+        //         return Err(constants::err_marshalizing_data(
+        //             "rosetta transaction",
+        //             "cbor",
+        //         ))
+        //     }
+        // };
+
+        Ok(tx)
     }
 
     fn sign_message(
@@ -137,7 +204,8 @@ impl Chain for ADA {
 
 #[cfg(test)]
 mod test {
-    use crate::chains::Chain;
+    use crate::chains::{Chain, Transaction};
+    use crate::crypto::base64::simple_base64_decode;
     use alloc::string::ToString;
 
     #[test]
@@ -157,5 +225,31 @@ mod test {
             addr,
             "addr1vy8ac7qqy0vtulyl7wntmsxc6wex80gvcyjy33qffrhm7ss7lxrqp"
         );
+    }
+
+    #[test]
+    fn test_sign() {
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+                .to_string();
+        let ada = super::ADA {};
+
+        let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = ada.get_path(0, false);
+
+        let pvk = ada.derive(seed, path).unwrap();
+
+        let raw_data = simple_base64_decode("gnkBNmE0MDA4MTgyNTgyMGQxOWMwNTQwOTlkODllMjJiNWJlNTU3ZTI0YzAyMzE0ZGU3YWM5M2Q3ZDFlNjAyZDNiYmZjODY4NDY3OWQzYzEwMDAxODI4MjU4MzkwMWFmMDZmYTVmMWIyOGM5MGJkYzFjODdiYmI2NzMwYmMwZGE5ODY0MjBjNGJkMDBmZDRlNWRkMWYyYWViMGM3NDdjNjhhNDAzYzJlY2UwNWE3OTg4MWVmZTk0YWVjMmVjOTIyZmU0YmQxYzA4ZTNkNjMxYTAwMGY0MjQwODI1ODFkNjFkNTVmNDUzZjkzOTU0NzU1OTEzOTkxZDIxMTk1MmU0YmRkZmNjZDllZWE3ZTQyNDk2N2E3NzlmNDFhMDEwZjcxYTEwMjFhMDAwMzM2ZGYwMzFhMDhmNzFlOTWham9wZXJhdGlvbnOBpnRvcGVyYXRpb25faWRlbnRpZmllcqFlaW5kZXgAZHR5cGVlaW5wdXRmc3RhdHVzYGdhY2NvdW50oWdhZGRyZXNzeDphZGRyMXY4MjQ3M2ZsancyNXc0djM4eGdheXl2NDllOWFtbHhkbm00OHVzamZ2N25obmFxOXYyNTl1ZmFtb3VudKJldmFsdWVoMTkwMDAwMDBoY3VycmVuY3miZnN5bWJvbGNBREFoZGVjaW1hbHMGa2NvaW5fY2hhbmdlom9jb2luX2lkZW50aWZpZXKhamlkZW50aWZpZXJ4QmQxOWMwNTQwOTlkODllMjJiNWJlNTU3ZTI0YzAyMzE0ZGU3YWM5M2Q3ZDFlNjAyZDNiYmZjODY4NDY3OWQzYzE6MGtjb2luX2FjdGlvbmpjb2luX3NwZW50").unwrap();
+
+        let tx = Transaction {
+            raw_data,
+            tx_hash: vec![],
+            signature: vec![],
+            options: None,
+        };
+
+        let signed_tx = ada.sign_tx(pvk, tx).unwrap();
+
+        println!("{:}", hex::encode(signed_tx.raw_data))
     }
 }
