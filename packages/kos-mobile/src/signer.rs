@@ -52,6 +52,24 @@ pub fn generate_xpub(
 }
 
 #[uniffi::export]
+pub fn get_xpub_as_string(
+    mnemonic: &str,
+    passphrase: &str,
+    is_mainnet: bool,
+) -> Result<String, LdError> {
+    let seed = mnemonic_to_seed(mnemonic, passphrase).unwrap();
+    let network = if is_mainnet {
+        Network::Bitcoin
+    } else {
+        Network::Testnet
+    };
+    let xprv = Xpriv::new_master(network, &seed).map_err(|_| LdError::IntanceError)?;
+
+    let secp = Secp256k1::new();
+    Ok(Xpub::from_priv(&secp, &xprv).public_key.to_string())
+}
+
+#[uniffi::export]
 pub fn derive_xpub(
     mnemonic: &str,
     passphrase: &str,
