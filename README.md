@@ -51,6 +51,7 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Dogecoin (DOGE)
 - [x] Dash
 - [x] Digibyte (DGB)
+- [x] Internet Computer (ICP)
 
 #### Coming soon | Under development:
 
@@ -59,9 +60,7 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - Celestia (TIA)
 - Cudos
 - Aura
-- Internet Computer (ICP)
 - Solana (SOL)
-- BNB Chain
 - Bitcoin Cash (BCH)
 - Cardano (ADA)
 - Aptos (APT)
