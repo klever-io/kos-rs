@@ -404,14 +404,14 @@ impl ChainRegistry {
             (
                 constants::DOT,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(21, 0, "DOT", "Polkadot")),
+                    factory: || Box::new(substrate::Substrate::new(21, 0, "Polkadot", "DOT")),
                     supported: true,
                 },
             ),
             (
                 constants::KSM,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(27, 2, "KSM", "Kusama")),
+                    factory: || Box::new(substrate::Substrate::new(27, 2, "Kusama", "KSM")),
                     supported: true,
                 },
             ),
@@ -425,28 +425,28 @@ impl ChainRegistry {
             (
                 constants::REEF,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(29, 42, "REEF", "Reef")),
+                    factory: || Box::new(substrate::Substrate::new(29, 42, "Reef", "REEF")),
                     supported: true,
                 },
             ),
             (
                 constants::SDN,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(35, 5, "SDN", "Shiden")),
+                    factory: || Box::new(substrate::Substrate::new(35, 5, "Shiden", "SDN")),
                     supported: true,
                 },
             ),
             (
                 constants::ASTR,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(36, 5, "ASTR", "Astar")),
+                    factory: || Box::new(substrate::Substrate::new(36, 5, "Astar", "ASTR")),
                     supported: true,
                 },
             ),
             (
                 constants::CFG,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(47, 36, "CFG", "Centrifuge")),
+                    factory: || Box::new(substrate::Substrate::new(47, 36, "Centrifuge", "CFG")),
                     supported: true,
                 },
             ),
@@ -460,14 +460,14 @@ impl ChainRegistry {
             (
                 constants::KILT,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(44, 38, "KILT", "KILT")),
+                    factory: || Box::new(substrate::Substrate::new(44, 38, "Kilt", "KILT")),
                     supported: true,
                 },
             ),
             (
                 constants::ALTAIR,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(42, 136, "ALTAIR", "Altair")),
+                    factory: || Box::new(substrate::Substrate::new(42, 136, "Altair", "ALTAIR")),
                     supported: true,
                 },
             ),
