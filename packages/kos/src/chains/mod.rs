@@ -61,6 +61,8 @@ pub enum ChainError {
     InvalidHex,
     DecodeRawTx,
     DecodeHash,
+    UnsupportedScriptType,
+    InvalidTransaction(String),
 }
 
 impl Display for ChainError {
@@ -134,6 +136,12 @@ impl Display for ChainError {
             }
             ChainError::DecodeHash => {
                 write!(f, "decode hash")
+            }
+            ChainError::UnsupportedScriptType => {
+                write!(f, "unsupported script type")
+            }
+            ChainError::InvalidTransaction(e) => {
+                write!(f, "invalid transaction: {}", e)
             }
         }
     }
@@ -228,6 +236,8 @@ impl ChainError {
             ChainError::InvalidHex => 23,
             ChainError::DecodeRawTx => 24,
             ChainError::DecodeHash => 25,
+            ChainError::UnsupportedScriptType => 26,
+            ChainError::InvalidTransaction(_) => 27,
         }
     }
 }
@@ -408,8 +418,8 @@ impl ChainRegistry {
             (
                 constants::LTC,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(5, "ltc", "LTC", "Litecoin")),
-                    supported: false,
+                    factory: || Box::new(btc::BTC::new_btc_based(5, "ltc", 2, "LTC", "Litecoin")),
+                    supported: true,
                 },
             ),
             (
@@ -443,8 +453,8 @@ impl ChainRegistry {
             (
                 constants::SYS,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(15, "sys", "SYS", "Syscoin")),
-                    supported: false,
+                    factory: || Box::new(btc::BTC::new_btc_based(15, "sys", 57, "SYS", "Syscoin")),
+                    supported: true,
                 },
             ),
             (
@@ -465,16 +475,20 @@ impl ChainRegistry {
                 constants::DOGE,
                 ChainInfo {
                     factory: || {
-                        Box::new(btc::BTC::new_legacy_btc_based(12, 0x1E, "DOGE", "Dogecoin"))
+                        Box::new(btc::BTC::new_legacy_btc_based(
+                            12, 0x1E, 3, "DOGE", "Dogecoin",
+                        ))
                     },
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
                 constants::DASH,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_legacy_btc_based(11, 0x4C, "DASH", "Dash")),
-                    supported: false,
+                    factory: || {
+                        Box::new(btc::BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash"))
+                    },
+                    supported: true,
                 },
             ),
             (
@@ -487,8 +501,8 @@ impl ChainRegistry {
             (
                 constants::DGB,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(16, "dgb", "DGB", "Digibyte")),
-                    supported: false,
+                    factory: || Box::new(btc::BTC::new_btc_based(16, "dgb", 20, "DGB", "Digibyte")),
+                    supported: true,
                 },
             ),
             (
