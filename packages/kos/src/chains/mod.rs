@@ -61,6 +61,12 @@ pub enum ChainError {
     InvalidHex,
     DecodeRawTx,
     DecodeHash,
+    InvalidTransactionHeader,
+    InvalidAccountLength,
+    InvalidBlockhash,
+    InvalidSignatureLength,
+    UnsupportedScriptType,
+    InvalidTransaction(String),
     NonAsciiCharacter(usize),
     DuplicateCharacter,
     InvalidCharacter(char),
@@ -138,6 +144,24 @@ impl Display for ChainError {
             }
             ChainError::DecodeHash => {
                 write!(f, "decode hash")
+            }
+            ChainError::InvalidTransactionHeader => {
+                write!(f, "invalid transaction header")
+            }
+            ChainError::InvalidAccountLength => {
+                write!(f, "invalid account length")
+            }
+            ChainError::InvalidBlockhash => {
+                write!(f, "invalid block hash")
+            }
+            ChainError::InvalidSignatureLength => {
+                write!(f, "invalid signature length")
+            }
+            ChainError::UnsupportedScriptType => {
+                write!(f, "unsupported script type")
+            }
+            ChainError::InvalidTransaction(e) => {
+                write!(f, "invalid transaction: {}", e)
             }
             ChainError::NonAsciiCharacter(e) => {
                 write!(f, "non ascii character: {}", e)
@@ -244,10 +268,16 @@ impl ChainError {
             ChainError::InvalidHex => 23,
             ChainError::DecodeRawTx => 24,
             ChainError::DecodeHash => 25,
-            ChainError::NonAsciiCharacter(_) => 26,
-            ChainError::DuplicateCharacter => 27,
-            ChainError::InvalidCharacter(_) => 28,
-            ChainError::BufferTooSmall => 29,
+            ChainError::InvalidTransactionHeader => 26,
+            ChainError::InvalidAccountLength => 27,
+            ChainError::InvalidBlockhash => 28,
+            ChainError::InvalidSignatureLength => 29,
+            ChainError::UnsupportedScriptType => 30,
+            ChainError::InvalidTransaction(_) => 31,
+            ChainError::NonAsciiCharacter(_) => 32,
+            ChainError::DuplicateCharacter => 33,
+            ChainError::InvalidCharacter(_) => 34,
+            ChainError::BufferTooSmall => 35,
         }
     }
 }
@@ -414,70 +444,70 @@ impl ChainRegistry {
             (
                 constants::DOT,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(21, 0, "DOT", "Polkadot")),
+                    factory: || Box::new(substrate::Substrate::new(21, 0, "Polkadot", "DOT")),
                     supported: true,
                 },
             ),
             (
                 constants::KSM,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(27, 2, "KSM", "Kusama")),
+                    factory: || Box::new(substrate::Substrate::new(27, 2, "Kusama", "KSM")),
                     supported: true,
                 },
             ),
             (
                 constants::LTC,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(5, "ltc", "LTC", "Litecoin")),
-                    supported: false,
+                    factory: || Box::new(btc::BTC::new_btc_based(5, "ltc", 2, "LTC", "Litecoin")),
+                    supported: true,
                 },
             ),
             (
                 constants::REEF,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(29, 42, "REEF", "Reef")),
+                    factory: || Box::new(substrate::Substrate::new(29, 42, "Reef", "REEF")),
                     supported: true,
                 },
             ),
             (
                 constants::SDN,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(35, 5, "SDN", "Shiden")),
+                    factory: || Box::new(substrate::Substrate::new(35, 5, "Shiden", "SDN")),
                     supported: true,
                 },
             ),
             (
                 constants::ASTR,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(36, 5, "ASTR", "Astar")),
+                    factory: || Box::new(substrate::Substrate::new(36, 5, "Astar", "ASTR")),
                     supported: true,
                 },
             ),
             (
                 constants::CFG,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(47, 36, "CFG", "Centrifuge")),
+                    factory: || Box::new(substrate::Substrate::new(47, 36, "Centrifuge", "CFG")),
                     supported: true,
                 },
             ),
             (
                 constants::SYS,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(15, "sys", "SYS", "Syscoin")),
-                    supported: false,
+                    factory: || Box::new(btc::BTC::new_btc_based(15, "sys", 57, "SYS", "Syscoin")),
+                    supported: true,
                 },
             ),
             (
                 constants::KILT,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(44, 38, "KILT", "KILT")),
+                    factory: || Box::new(substrate::Substrate::new(44, 38, "Kilt", "KILT")),
                     supported: true,
                 },
             ),
             (
                 constants::ALTAIR,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(42, 136, "ALTAIR", "Altair")),
+                    factory: || Box::new(substrate::Substrate::new(42, 136, "Altair", "ALTAIR")),
                     supported: true,
                 },
             ),
@@ -485,16 +515,20 @@ impl ChainRegistry {
                 constants::DOGE,
                 ChainInfo {
                     factory: || {
-                        Box::new(btc::BTC::new_legacy_btc_based(12, 0x1E, "DOGE", "Dogecoin"))
+                        Box::new(btc::BTC::new_legacy_btc_based(
+                            12, 0x1E, 3, "DOGE", "Dogecoin",
+                        ))
                     },
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
                 constants::DASH,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_legacy_btc_based(11, 0x4C, "DASH", "Dash")),
-                    supported: false,
+                    factory: || {
+                        Box::new(btc::BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash"))
+                    },
+                    supported: true,
                 },
             ),
             (
@@ -507,8 +541,8 @@ impl ChainRegistry {
             (
                 constants::DGB,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(16, "dgb", "DGB", "Digibyte")),
-                    supported: false,
+                    factory: || Box::new(btc::BTC::new_btc_based(16, "dgb", 20, "DGB", "Digibyte")),
+                    supported: true,
                 },
             ),
             (
@@ -562,7 +596,7 @@ impl ChainRegistry {
                 constants::SOL,
                 ChainInfo {
                     factory: || Box::new(sol::SOL {}),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
