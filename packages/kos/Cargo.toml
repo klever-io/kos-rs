@@ -46,6 +46,7 @@ libsecp256k1 = { version = "0.7.1", features = ["hmac", "static-context"], defau
 rand_core = { version = "0.6.4", default-features = false }
 parity-scale-codec = { version = "3.6.9", default-features = false, features = ["derive"] }
 bitcoin = { version = "0.32.5", default-features = false }
+xrpl-rust = { version = "0.5.0", default-features = false, features = ["core", "utils"] }
 
 [target.'cfg(not(feature = "ksafe"))'.dependencies]
 rand = { workspace = true }

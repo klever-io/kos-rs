@@ -6,5 +6,9 @@
         "./packages/kos/Cargo.toml",
         "./packages/kos-sdk/Cargo.toml",
         "./packages/kos-utils/Cargo.toml"
-    ]
+    ],
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true
+    }
 }

@@ -61,6 +61,10 @@ pub enum ChainError {
     InvalidHex,
     DecodeRawTx,
     DecodeHash,
+    NonAsciiCharacter(usize),
+    DuplicateCharacter,
+    InvalidCharacter(char),
+    BufferTooSmall,
 }
 
 impl Display for ChainError {
@@ -134,6 +138,18 @@ impl Display for ChainError {
             }
             ChainError::DecodeHash => {
                 write!(f, "decode hash")
+            }
+            ChainError::NonAsciiCharacter(e) => {
+                write!(f, "non ascii character: {}", e)
+            }
+            ChainError::DuplicateCharacter => {
+                write!(f, "duplicate character")
+            }
+            ChainError::InvalidCharacter(e) => {
+                write!(f, "non ascii character: {}", e)
+            }
+            ChainError::BufferTooSmall => {
+                write!(f, "buffer too small")
             }
         }
     }
@@ -228,6 +244,10 @@ impl ChainError {
             ChainError::InvalidHex => 23,
             ChainError::DecodeRawTx => 24,
             ChainError::DecodeHash => 25,
+            ChainError::NonAsciiCharacter(_) => 26,
+            ChainError::DuplicateCharacter => 27,
+            ChainError::InvalidCharacter(_) => 28,
+            ChainError::BufferTooSmall => 29,
         }
     }
 }
