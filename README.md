@@ -47,21 +47,22 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Polygon zkEVM
 - [x] Stolz
 - [x] Solana (SOL)
+- [x] Litecoin (LTC)
+- [x] Syscoin (SYS)
+- [x] Dogecoin (DOGE)
+- [x] Dash
+- [x] Digibyte (DGB)
+- [x] Internet Computer (ICP)
 
 #### Coming soon | Under development:
 
-- Litecoin (LTC)
-- Syscoin (SYS)
-- Dogecoin (DOGE)
-- Dash
 - XRP
-- Digibyte (DGB)
 - Cosmos (ATOM)
 - Celestia (TIA)
 - Cudos
 - Aura
-- Internet Computer (ICP)
 - BNB Chain
+- Solana (SOL)
 - Bitcoin Cash (BCH)
 - Cardano (ADA)
 - Aptos (APT)
