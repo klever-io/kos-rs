@@ -12,6 +12,8 @@ pub const ARRAY_END_MARKER_NAME: &str = "ArrayEndMarker";
 pub const OBJECT_END_MARKER_ARRAY: &[u8] = &[0xE1];
 
 pub const TRANSACTION_TYPE_PAYMENT: u16 = 0;
+pub const TRANSACTION_TYPE_ACCOUNT_SET: u16 = 3;
+pub const TRANSACTION_TYPE_TRUST_SET: u16 = 20;
 
 // #[repr(u16)]
 // #[derive(Clone, Debug)]

@@ -1,28 +1,25 @@
+pub mod account_set;
 pub mod payment;
 pub mod transaction_base;
-
-use xrpl::core::Parser;
+pub mod trust_set;
 
 use crate::chains::xrp::constants;
-use crate::chains::xrp::transactions;
 use crate::chains::ChainError;
 
+use account_set::AccountSetTransaction;
+use payment::PaymentTransaction;
+use trust_set::TrustSetTransaction;
+use xrpl::core::Parser;
+
+use super::models;
+
 pub trait Serialize {
-    /// Serialize the object
     fn serialize(&self) -> Result<Vec<u8>, ChainError>;
 }
 
 pub trait Transaction: Serialize {
-    // fn common(&self) -> &transaction_base::TransactionCommon;
     fn common_mut(&mut self) -> &mut transaction_base::TransactionCommon;
 }
-// pub trait DecodeTransactionFactory {
-//     fn decode(tx: Vec<u8>) -> Result<Box<dyn Transaction>, ChainError>;
-// }
-
-// impl DecodeTransactionFactory {
-//    fn decode(tx: Vec<u8>) -> Result<Box<dyn Transaction>, ChainError> {}
-// }
 
 pub fn decode_factory(tx: Vec<u8>) -> Result<Box<dyn Transaction>, ChainError> {
     let mut binary_parser = xrpl::core::BinaryParser::from(tx.clone());
@@ -37,9 +34,19 @@ pub fn decode_factory(tx: Vec<u8>) -> Result<Box<dyn Transaction>, ChainError> {
 
     match transaction_type {
         constants::TRANSACTION_TYPE_PAYMENT => {
-            let payment_transaction =
-                transactions::payment::decode_payment_transaction(tx.clone().as_ref()).unwrap();
+            let fields = models::decode_transaction(tx.clone())?;
+            let payment_transaction = PaymentTransaction::from(fields).unwrap();
             Ok(Box::new(payment_transaction))
+        }
+        constants::TRANSACTION_TYPE_ACCOUNT_SET => {
+            let fields = models::decode_transaction(tx.clone())?;
+            let account_set_transaction = AccountSetTransaction::from(fields).unwrap();
+            Ok(Box::new(account_set_transaction))
+        }
+        constants::TRANSACTION_TYPE_TRUST_SET => {
+            let fields = models::decode_transaction(tx.clone())?;
+            let trust_set_transaction = TrustSetTransaction::from(fields).unwrap();
+            Ok(Box::new(trust_set_transaction))
         }
         _ => Err(ChainError::InvalidData("invalid transaction".to_string())),
     }

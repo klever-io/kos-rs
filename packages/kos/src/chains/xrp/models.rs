@@ -2,7 +2,16 @@ use crate::chains::xrp::constants;
 use crate::chains::ChainError;
 
 use xrpl::{
-    core::{BinaryParser, Parser},
+    core::{
+        binarycodec::{
+            definitions::FieldInstance,
+            types::{
+                account_id::AccountId, amount::Amount, blob::Blob, xchain_bridge::XChainBridge,
+                Currency, Hash128, Hash160, Hash256, PathSet, STArray, XRPLType,
+            },
+        },
+        BinaryParser, Parser,
+    },
     utils::ToBytes,
 };
 
@@ -52,4 +61,124 @@ pub fn deserialize_object(binary_parser: &mut BinaryParser) -> Result<Vec<u8>, C
     }
     let concatenated_sink: Vec<u8> = sink.into_iter().flatten().collect();
     Ok(concatenated_sink)
+}
+
+pub fn decode_transaction(buffer: Vec<u8>) -> Result<Vec<(FieldInstance, Vec<u8>)>, ChainError> {
+    let mut fields_and_value: Vec<(FieldInstance, Vec<u8>)> = Vec::new();
+
+    let mut binary_parser = xrpl::core::BinaryParser::from(buffer);
+    while !binary_parser.is_end(None) {
+        let field_info = binary_parser.read_field().unwrap();
+        match field_info.clone().associated_type.as_str() {
+            "AccountID" => {
+                let field_value: AccountId =
+                    binary_parser.read_field_value(&field_info.clone()).unwrap();
+
+                fields_and_value.extend_from_slice(&[(field_info, field_value.as_ref().to_vec())])
+            }
+            "Amount" => {
+                let length_prefix = binary_parser.peek().unwrap();
+                let size = u8::from_be_bytes(length_prefix);
+                let mut bytes = 8;
+                if size != 64 {
+                    bytes = 48
+                }
+
+                let content = binary_parser.read(bytes as usize).unwrap();
+
+                let field_value: Amount = Amount::new(Some(&content)).unwrap();
+
+                fields_and_value.extend_from_slice(&[(field_info, field_value.as_ref().to_vec())])
+            }
+            "Blob" => {
+                let length_prefix = binary_parser.read_length_prefix().unwrap();
+                let content = binary_parser.read(length_prefix).unwrap();
+
+                let field_value: Blob = Blob::new(Some(&content)).unwrap();
+
+                fields_and_value.extend_from_slice(&[(field_info, field_value.as_ref().to_vec())])
+            }
+            "Currency" => {
+                let field_value: Currency = binary_parser.read_field_value(&field_info).unwrap();
+                fields_and_value.extend_from_slice(&[(field_info, field_value.as_ref().to_vec())])
+            }
+            "Hash128" => {
+                let field_value: Hash128 = binary_parser.read_field_value(&field_info).unwrap();
+                fields_and_value.extend_from_slice(&[(field_info, field_value.as_ref().to_vec())])
+            }
+            "Hash160" => {
+                let field_value: Hash160 = binary_parser.read_field_value(&field_info).unwrap();
+                fields_and_value.extend_from_slice(&[(field_info, field_value.as_ref().to_vec())])
+            }
+            "Hash256" => {
+                let field_value: Hash256 = binary_parser.read_field_value(&field_info).unwrap();
+
+                fields_and_value.extend_from_slice(&[(field_info, field_value.as_ref().to_vec())])
+            }
+            "XChainClaimID" => {
+                let field_value: XChainBridge =
+                    binary_parser.read_field_value(&field_info).unwrap();
+                fields_and_value.extend_from_slice(&[(field_info, field_value.as_ref().to_vec())])
+            }
+            "UInt8" => {
+                let field_value: u8 = binary_parser.read_uint8().unwrap();
+                fields_and_value
+                    .extend_from_slice(&[(field_info, field_value.to_be_bytes().to_vec())])
+            }
+            "UInt16" => {
+                let field_value: u16 = binary_parser.read_uint16().unwrap();
+                fields_and_value
+                    .extend_from_slice(&[(field_info, field_value.to_be_bytes().to_vec())])
+            }
+            "UInt32" => {
+                let field_value: u32 = binary_parser.read_uint32().unwrap();
+
+                fields_and_value
+                    .extend_from_slice(&[(field_info, field_value.to_be_bytes().to_vec())]);
+            }
+            "UInt64" => {
+                let result = binary_parser.read(8).unwrap();
+                let field_value = u64::from_be_bytes(result.try_into().unwrap());
+                fields_and_value
+                    .extend_from_slice(&[(field_info, field_value.to_be_bytes().to_vec())]);
+            }
+            "STArray" => {
+                let mut bytes = Vec::new();
+                while !binary_parser.is_end(None) {
+                    let field = binary_parser.read_field().unwrap();
+                    if field.name == constants::ARRAY_END_MARKER_NAME {
+                        break;
+                    }
+                    bytes.extend_from_slice(&field.header.to_bytes());
+
+                    let object_value: Vec<u8> = deserialize_object(&mut binary_parser).unwrap();
+
+                    bytes.extend_from_slice(object_value.as_ref());
+                    bytes.extend_from_slice(constants::OBJECT_END_MARKER_ARRAY);
+                }
+                bytes.extend_from_slice(constants::ARRAY_END_MARKER);
+
+                let field_value: STArray = STArray::new(Some(&bytes)).unwrap();
+
+                fields_and_value.extend_from_slice(&[(field_info, field_value.as_ref().to_vec())]);
+            }
+            "STObject" => {
+                let field_value: Vec<u8> = deserialize_object(&mut binary_parser).unwrap();
+                fields_and_value.extend_from_slice(&[(field_info, field_value)]);
+            }
+            "PathSet" => {
+                let field_value: PathSet = binary_parser.read_field_value(&field_info).unwrap();
+
+                fields_and_value.extend_from_slice(&[(field_info, field_value.as_ref().to_vec())])
+            }
+            _ => {
+                return Err(ChainError::InvalidData(format!(
+                    "invalid type {}",
+                    field_info.associated_type.as_str()
+                )))
+            }
+        }
+    }
+
+    Ok(fields_and_value)
 }
