@@ -98,14 +98,14 @@ impl Serialize for TrustSetTransaction {
         }
 
         if let Some(field_instance) = definition_map.get_field_instance("QualityIn") {
-            if let Some(quality_in) = self.quality_in.as_ref() {
+            if let Some(quality_in) = self.quality_in {
                 fields_and_value
                     .extend_from_slice(&[(field_instance, quality_in.to_be_bytes().to_vec())]);
             }
         }
 
         if let Some(field_instance) = definition_map.get_field_instance("QualityOut") {
-            if let Some(quality_out) = self.quality_out.as_ref() {
+            if let Some(quality_out) = self.quality_out {
                 fields_and_value
                     .extend_from_slice(&[(field_instance, quality_out.to_be_bytes().to_vec())]);
             }
