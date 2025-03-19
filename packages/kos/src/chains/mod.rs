@@ -170,7 +170,7 @@ impl Display for ChainError {
                 write!(f, "duplicate character")
             }
             ChainError::InvalidCharacter(e) => {
-                write!(f, "non ascii character: {}", e)
+                write!(f, "invalid character: {}", e)
             }
             ChainError::BufferTooSmall => {
                 write!(f, "buffer too small")
