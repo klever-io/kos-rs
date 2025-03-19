@@ -24,7 +24,7 @@ pub struct TransactionCommon {
 impl TransactionCommon {
     pub fn from(buffer: Vec<(FieldInstance, Vec<u8>)>) -> Result<Self, ChainError> {
         let mut transaction_type: u16 = 0;
-        let mut account: AccountId = AccountId::new(None).unwrap();
+        let mut account: AccountId = AccountId::new(None).map_err(|_| ChainError::DecodeRawTx)?;
         let mut fee: Option<Amount> = None;
         let mut sequence: Option<u32> = None;
         let mut account_txn_id: Option<Hash256> = None;
@@ -39,40 +39,63 @@ impl TransactionCommon {
         for value in buffer {
             match value.0.name.as_str() {
                 "TransactionType" => {
-                    transaction_type = u16::from_be_bytes(value.1.try_into().unwrap());
+                    transaction_type = u16::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 "Account" => {
-                    account = AccountId::new(Some(value.1.as_ref())).unwrap();
+                    account = AccountId::new(Some(value.1.as_ref()))
+                        .map_err(|_| ChainError::DecodeRawTx)?;
                 }
                 "Fee" => {
-                    fee = Some(Amount::new(Some(value.1.as_ref())).unwrap());
+                    fee = Some(
+                        Amount::new(Some(value.1.as_ref())).map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 "Sequence" => {
-                    sequence = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    sequence = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "AccountTxnID" => {
-                    account_txn_id = Some(Hash256::new(Some(value.1.as_ref())).unwrap());
+                    account_txn_id = Some(
+                        Hash256::new(Some(value.1.as_ref()))
+                            .map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 "LastLedgerSequence" => {
-                    last_ledger_sequence = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    last_ledger_sequence = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "Memos" => {
-                    memos = Some(STArray::new(Some(value.1.as_ref())).unwrap());
+                    memos = Some(
+                        STArray::new(Some(value.1.as_ref()))
+                            .map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 "NetworkID" => {
-                    network_id = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    network_id = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "SourceTag" => {
-                    source_tag = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    source_tag = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "SigningPubKey" => {
-                    signing_pub_key = Some(Blob::new(Some(&value.1)).unwrap());
+                    signing_pub_key =
+                        Some(Blob::new(Some(&value.1)).map_err(|_| ChainError::DecodeRawTx)?);
                 }
                 "TicketSequence" => {
-                    ticket_sequence = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    ticket_sequence = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "TxnSignature" => {
-                    txn_signature = Some(Blob::new(Some(&value.1)).unwrap());
+                    txn_signature =
+                        Some(Blob::new(Some(&value.1)).map_err(|_| ChainError::DecodeRawTx)?);
                 }
                 _ => {}
             }

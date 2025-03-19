@@ -33,16 +33,24 @@ impl TrustSetTransaction {
         for value in buffer {
             match value.0.name.as_str() {
                 "Flags" => {
-                    flags = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    flags = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "LimitAmount" => {
-                    limit_amount = Some(Amount::new(Some(value.1.as_ref())).unwrap());
+                    limit_amount = Some(
+                        Amount::new(Some(value.1.as_ref())).map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 "QualityIn" => {
-                    quality_in = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    quality_in = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "QualityOut" => {
-                    quality_out = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    quality_out = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 _ => {}
             }
