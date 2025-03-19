@@ -78,10 +78,10 @@ impl Chain for ICP {
 
     fn sign_tx(
         &self,
-        _private_key: Vec<u8>,
-        mut _tx: Transaction,
+        private_key: Vec<u8>,
+        mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        /*let hex = hex::decode(tx.raw_data.clone()).map_err(|_| ChainError::DecodeRawTx)?;
+        let hex = hex::decode(tx.raw_data.clone()).map_err(|_| ChainError::DecodeRawTx)?;
         let raw_data_str = String::from_utf8(hex).map_err(|_| ChainError::DecodeRawTx)?;
 
         let icp_hashes: Vec<String> =
@@ -108,8 +108,7 @@ impl Chain for ICP {
             tx.tx_hash = Vec::new();
         }
 
-        Ok(tx)*/
-        todo!()
+        Ok(tx)
     }
 
     fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
