@@ -113,17 +113,20 @@ impl Chain for ADA {
         }
     }
 
-    fn sign_tx(&self, private_key: Vec<u8>, tx: Transaction) -> Result<Transaction, ChainError> {
-        let mut rosetta_tx: RosettaTransaction =
-            ciborium::de::from_reader(tx.raw_data.as_slice()).unwrap();
+    fn sign_tx(
+        &self,
+        private_key: Vec<u8>,
+        mut tx: Transaction,
+    ) -> Result<Transaction, ChainError> {
+        let mut rosetta_tx: RosettaTransaction = minicbor::decode(tx.raw_data.as_slice()).unwrap();
 
         println!("{:?}", rosetta_tx);
 
-        let metadata = hex::decode(rosetta_tx.0).unwrap();
+        let metadata = hex::decode(rosetta_tx.metadata).unwrap();
 
-        // let tx_body: TxBody = ciborium::from_reader(metadata.as_slice()).unwrap();
+        println!("{:?}", hex::encode(metadata.clone()));
 
-        let tx_id = "00"; // TODO: get tx_id from tx_body
+        let tx_body: TxBody = minicbor::decode(metadata.as_slice()).unwrap();
 
         // Reducing from xprivkey to privkey
         let pvk = if private_key.len() == 96 {
@@ -132,52 +135,44 @@ impl Chain for ADA {
             private_key.as_slice()
         };
 
-        let hash = hex::decode(tx_id).unwrap();
-
-        let hash = if hash.is_empty() {
-            vec![] // TODO: tx_body.hash()?
-        } else {
-            hash
-        };
+        let hash = tx_body.hash()?;
 
         let pbk = self.get_pbk(pvk.to_vec())?;
+
+        let signature = self.sign_raw(pvk.to_vec(), hash.to_vec())?;
 
         let witness_set = WitnessSet {
             v_key_witness_set: vec![VKeyWitness {
                 v_key: pbk,
-                signature,
+                signature: signature.clone(),
             }],
         };
 
         let cardano_tx = Tx {
-            body: Some(TxBody {}),
+            body: Some(tx_body),
             witness_set,
             is_valid: true,
             auxiliary_data: None,
         };
 
+        let mut signed_metadata = Vec::new();
+
         // Encode signed metadata
-        // let signed_metadata = match cbor::to_vec(&cardano_tx) {
-        //     Ok(data) => data,
-        //     Err(_) => {
-        //         return Err(constants::err_marshalizing_data(
-        //             "cardano transaction",
-        //             "cbor",
-        //         ))
-        //     }
-        // };
-        //
-        // rosetta_tx.metadata = hex::encode(&signed_metadata);
-        //
-        // let new_raw = match cbor::to_vec(&rosetta_tx) {
-        //     Ok(data) => data,
-        //     Err(_) => {
-        //         return Err(constants::err_marshalizing_data(
-        //             "rosetta transaction",
-        //             "cbor",
-        //         ))
-        //     }
-        // };
+        match minicbor::encode(&cardano_tx, &mut signed_metadata)
+            .map_err(|e| ChainError::InvalidData(e.to_string()))
+        {
+            Ok(_) => (),
+            Err(e) => return Err(e),
+        }
+        rosetta_tx.metadata = hex::encode(&signed_metadata);
+
+        let new_raw = Vec::new();
+
+        minicbor::encode(&rosetta_tx, new_raw.clone())
+            .map_err(|e| ChainError::InvalidData(e.to_string()))?;
+
+        tx.raw_data = new_raw;
+        tx.signature = signature;
 
         Ok(tx)
     }
