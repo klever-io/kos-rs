@@ -61,6 +61,10 @@ pub enum ChainError {
     InvalidHex,
     DecodeRawTx,
     DecodeHash,
+    InvalidTransactionHeader,
+    InvalidAccountLength,
+    InvalidBlockhash,
+    InvalidSignatureLength,
     UnsupportedScriptType,
     InvalidTransaction(String),
 }
@@ -136,6 +140,18 @@ impl Display for ChainError {
             }
             ChainError::DecodeHash => {
                 write!(f, "decode hash")
+            }
+            ChainError::InvalidTransactionHeader => {
+                write!(f, "invalid transaction header")
+            }
+            ChainError::InvalidAccountLength => {
+                write!(f, "invalid account length")
+            }
+            ChainError::InvalidBlockhash => {
+                write!(f, "invalid block hash")
+            }
+            ChainError::InvalidSignatureLength => {
+                write!(f, "invalid signature length")
             }
             ChainError::UnsupportedScriptType => {
                 write!(f, "unsupported script type")
@@ -236,8 +252,12 @@ impl ChainError {
             ChainError::InvalidHex => 23,
             ChainError::DecodeRawTx => 24,
             ChainError::DecodeHash => 25,
-            ChainError::UnsupportedScriptType => 26,
-            ChainError::InvalidTransaction(_) => 27,
+            ChainError::InvalidTransactionHeader => 26,
+            ChainError::InvalidAccountLength => 27,
+            ChainError::InvalidBlockhash => 28,
+            ChainError::InvalidSignatureLength => 29,
+            ChainError::UnsupportedScriptType => 30,
+            ChainError::InvalidTransaction(_) => 31,
         }
     }
 }
@@ -556,7 +576,7 @@ impl ChainRegistry {
                 constants::SOL,
                 ChainInfo {
                     factory: || Box::new(sol::SOL {}),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (

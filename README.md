@@ -46,6 +46,7 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Optimism (OP)
 - [x] Polygon zkEVM
 - [x] Stolz
+- [x] Solana (SOL)
 - [x] Litecoin (LTC)
 - [x] Syscoin (SYS)
 - [x] Dogecoin (DOGE)
@@ -60,6 +61,7 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - Celestia (TIA)
 - Cudos
 - Aura
+- BNB Chain
 - Solana (SOL)
 - Bitcoin Cash (BCH)
 - Cardano (ADA)
