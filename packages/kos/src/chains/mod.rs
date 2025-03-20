@@ -1,4 +1,17 @@
 use crate::alloc::borrow::ToOwned;
+use crate::chains::ada::ADA;
+use crate::chains::apt::APT;
+use crate::chains::atom::ATOM;
+use crate::chains::bch::BCH;
+use crate::chains::btc::BTC;
+use crate::chains::eth::ETH;
+use crate::chains::icp::ICP;
+use crate::chains::klv::KLV;
+use crate::chains::sol::SOL;
+use crate::chains::substrate::Substrate;
+use crate::chains::sui::SUI;
+use crate::chains::trx::TRX;
+use crate::chains::xrp::XRP;
 use crate::crypto::bip32::Bip32Err;
 use crate::crypto::ed25519::Ed25519Err;
 use crate::crypto::secp256k1::Secp256Err;
@@ -20,10 +33,8 @@ pub mod ada;
 mod apt;
 mod atom;
 mod bch;
-mod bnb;
 mod btc;
 pub mod constants;
-pub mod egld;
 mod eth;
 mod icp;
 pub mod klv;
@@ -67,6 +78,7 @@ pub enum ChainError {
     InvalidSignatureLength,
     UnsupportedScriptType,
     InvalidTransaction(String),
+    UnsupportedChain,
 }
 
 impl Display for ChainError {
@@ -158,6 +170,9 @@ impl Display for ChainError {
             }
             ChainError::InvalidTransaction(e) => {
                 write!(f, "invalid transaction: {}", e)
+            }
+            ChainError::UnsupportedChain => {
+                write!(f, "unsupported chain")
             }
         }
     }
@@ -258,6 +273,7 @@ impl ChainError {
             ChainError::InvalidSignatureLength => 29,
             ChainError::UnsupportedScriptType => 30,
             ChainError::InvalidTransaction(_) => 31,
+            ChainError::UnsupportedChain => 32,
         }
     }
 }
@@ -348,6 +364,7 @@ pub trait Chain {
     fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError>;
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError>;
     fn get_tx_info(&self, raw_tx: Vec<u8>) -> Result<TxInfo, ChainError>;
+    fn get_chain_type(&self) -> ChainType;
 }
 
 type ChainFactory = fn() -> Box<dyn Chain>;
@@ -362,132 +379,130 @@ struct ChainRegistry {
 }
 impl ChainRegistry {
     fn new() -> Self {
-        static REGISTRY: [(u32, ChainInfo); 46] = [
+        static REGISTRY: [(u32, ChainInfo); 45] = [
             (
                 constants::ETH,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new()),
+                    factory: || Box::new(ETH::new()),
                     supported: true,
                 },
             ),
             (
                 constants::BSC,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(26, 56, "BSC", "BnbSmartChain")),
+                    factory: || Box::new(ETH::new_eth_based(26, 56, "BSC", "BnbSmartChain")),
                     supported: true,
                 },
             ),
             (
                 constants::POLYGON,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(28, 137, "MATIC", "Polygon")),
+                    factory: || Box::new(ETH::new_eth_based(28, 137, "MATIC", "Polygon")),
                     supported: true,
                 },
             ),
             (
                 constants::HT,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(30, 128, "HT", "Huobi")),
+                    factory: || Box::new(ETH::new_eth_based(30, 128, "HT", "Huobi")),
                     supported: true,
                 },
             ),
             (
                 constants::SYS_NEVM,
                 ChainInfo {
-                    factory: || {
-                        Box::new(eth::ETH::new_eth_based(37, 57, "SYS_NEVM", "Syscoin Nevm"))
-                    },
+                    factory: || Box::new(ETH::new_eth_based(37, 57, "SYS_NEVM", "Syscoin Nevm")),
                     supported: true,
                 },
             ),
             (
                 constants::TRX,
                 ChainInfo {
-                    factory: || Box::new(trx::TRX {}),
+                    factory: || Box::new(TRX {}),
                     supported: true,
                 },
             ),
             (
                 constants::KLV,
                 ChainInfo {
-                    factory: || Box::new(klv::KLV {}),
+                    factory: || Box::new(KLV {}),
                     supported: true,
                 },
             ),
             (
                 constants::BTC,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new()),
+                    factory: || Box::new(BTC::new()),
                     supported: true,
                 },
             ),
             (
                 constants::DOT,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(21, 0, "Polkadot", "DOT")),
+                    factory: || Box::new(Substrate::new(21, 0, "Polkadot", "DOT")),
                     supported: true,
                 },
             ),
             (
                 constants::KSM,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(27, 2, "Kusama", "KSM")),
+                    factory: || Box::new(Substrate::new(27, 2, "Kusama", "KSM")),
                     supported: true,
                 },
             ),
             (
                 constants::LTC,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(5, "ltc", 2, "LTC", "Litecoin")),
+                    factory: || Box::new(BTC::new_btc_based(5, "ltc", 2, "LTC", "Litecoin")),
                     supported: true,
                 },
             ),
             (
                 constants::REEF,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(29, 42, "Reef", "REEF")),
+                    factory: || Box::new(Substrate::new(29, 42, "Reef", "REEF")),
                     supported: true,
                 },
             ),
             (
                 constants::SDN,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(35, 5, "Shiden", "SDN")),
+                    factory: || Box::new(Substrate::new(35, 5, "Shiden", "SDN")),
                     supported: true,
                 },
             ),
             (
                 constants::ASTR,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(36, 5, "Astar", "ASTR")),
+                    factory: || Box::new(Substrate::new(36, 5, "Astar", "ASTR")),
                     supported: true,
                 },
             ),
             (
                 constants::CFG,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(47, 36, "Centrifuge", "CFG")),
+                    factory: || Box::new(Substrate::new(47, 36, "Centrifuge", "CFG")),
                     supported: true,
                 },
             ),
             (
                 constants::SYS,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(15, "sys", 57, "SYS", "Syscoin")),
+                    factory: || Box::new(BTC::new_btc_based(15, "sys", 57, "SYS", "Syscoin")),
                     supported: true,
                 },
             ),
             (
                 constants::KILT,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(44, 38, "Kilt", "KILT")),
+                    factory: || Box::new(Substrate::new(44, 38, "Kilt", "KILT")),
                     supported: true,
                 },
             ),
             (
                 constants::ALTAIR,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(42, 136, "Altair", "ALTAIR")),
+                    factory: || Box::new(Substrate::new(42, 136, "Altair", "ALTAIR")),
                     supported: true,
                 },
             ),
@@ -495,9 +510,7 @@ impl ChainRegistry {
                 constants::DOGE,
                 ChainInfo {
                     factory: || {
-                        Box::new(btc::BTC::new_legacy_btc_based(
-                            12, 0x1E, 3, "DOGE", "Dogecoin",
-                        ))
+                        Box::new(BTC::new_legacy_btc_based(12, 0x1E, 3, "DOGE", "Dogecoin"))
                     },
                     supported: true,
                 },
@@ -505,30 +518,28 @@ impl ChainRegistry {
             (
                 constants::DASH,
                 ChainInfo {
-                    factory: || {
-                        Box::new(btc::BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash"))
-                    },
+                    factory: || Box::new(BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash")),
                     supported: true,
                 },
             ),
             (
                 constants::XRP,
                 ChainInfo {
-                    factory: || Box::new(xrp::XRP::new()),
+                    factory: || Box::new(XRP::new()),
                     supported: false,
                 },
             ),
             (
                 constants::DGB,
                 ChainInfo {
-                    factory: || Box::new(btc::BTC::new_btc_based(16, "dgb", 20, "DGB", "Digibyte")),
+                    factory: || Box::new(BTC::new_btc_based(16, "dgb", 20, "DGB", "Digibyte")),
                     supported: true,
                 },
             ),
             (
                 constants::COSMOS,
                 ChainInfo {
-                    factory: || Box::new(atom::ATOM::new()),
+                    factory: || Box::new(ATOM::new()),
                     supported: false,
                 },
             ),
@@ -536,7 +547,7 @@ impl ChainRegistry {
                 constants::CELESTIA,
                 ChainInfo {
                     factory: || {
-                        Box::new(atom::ATOM::new_cosmos_based(
+                        Box::new(ATOM::new_cosmos_based(
                             "celestia", "celestia", "Celestia", "TIA",
                         ))
                     },
@@ -547,9 +558,7 @@ impl ChainRegistry {
                 constants::CUDOS,
                 ChainInfo {
                     factory: || {
-                        Box::new(atom::ATOM::new_cosmos_based(
-                            "cudos", "cudos-1", "Cudos", "CUDOS",
-                        ))
+                        Box::new(ATOM::new_cosmos_based("cudos", "cudos-1", "Cudos", "CUDOS"))
                     },
                     supported: false,
                 },
@@ -558,9 +567,7 @@ impl ChainRegistry {
                 constants::AURA,
                 ChainInfo {
                     factory: || {
-                        Box::new(atom::ATOM::new_cosmos_based(
-                            "aura", "xstaxy-1", "Aura", "AURA",
-                        ))
+                        Box::new(ATOM::new_cosmos_based("aura", "xstaxy-1", "Aura", "AURA"))
                     },
                     supported: false,
                 },
@@ -568,142 +575,133 @@ impl ChainRegistry {
             (
                 constants::ICP,
                 ChainInfo {
-                    factory: || Box::new(icp::ICP {}),
+                    factory: || Box::new(ICP {}),
                     supported: true,
                 },
             ),
             (
                 constants::SOL,
                 ChainInfo {
-                    factory: || Box::new(sol::SOL {}),
+                    factory: || Box::new(SOL {}),
                     supported: true,
                 },
             ),
             (
                 constants::MOVR,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(32, 1285, "MOVR", "Moonriver")),
+                    factory: || Box::new(ETH::new_eth_based(32, 1285, "MOVR", "Moonriver")),
                     supported: true,
                 },
             ),
             (
                 constants::GLMR,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(34, 1284, "GLMR", "Moonbeam")),
+                    factory: || Box::new(ETH::new_eth_based(34, 1284, "GLMR", "Moonbeam")),
                     supported: true,
-                },
-            ),
-            (
-                constants::BNB,
-                ChainInfo {
-                    factory: || Box::new(bnb::BNB {}),
-                    supported: false,
                 },
             ),
             (
                 constants::BCH,
                 ChainInfo {
-                    factory: || Box::new(bch::BCH {}),
+                    factory: || Box::new(BCH {}),
                     supported: false,
                 },
             ),
             (
                 constants::ADA,
                 ChainInfo {
-                    factory: || Box::new(ada::ADA {}),
+                    factory: || Box::new(ADA {}),
                     supported: false,
                 },
             ),
             (
                 constants::SUI,
                 ChainInfo {
-                    factory: || Box::new(sui::SUI {}),
+                    factory: || Box::new(SUI {}),
                     supported: true,
                 },
             ),
             (
                 constants::APT,
                 ChainInfo {
-                    factory: || Box::new(apt::APT {}),
+                    factory: || Box::new(APT {}),
                     supported: false,
                 },
             ),
             (
                 constants::AVAIL,
                 ChainInfo {
-                    factory: || Box::new(substrate::Substrate::new(62, 42, "Avail", "AVAIL")),
+                    factory: || Box::new(Substrate::new(62, 42, "Avail", "AVAIL")),
                     supported: true,
                 },
             ),
             (
                 constants::ROLLUX,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(63, 570, "ROLLUX", "Rollux")),
+                    factory: || Box::new(ETH::new_eth_based(63, 570, "ROLLUX", "Rollux")),
                     supported: true,
                 },
             ),
             (
                 constants::AVAX,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(39, 43114, "AVAX", "Avalanche")),
+                    factory: || Box::new(ETH::new_eth_based(39, 43114, "AVAX", "Avalanche")),
                     supported: true,
                 },
             ),
             (
                 constants::ARB,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(57, 42161, "ARB", "Arbitrum")),
+                    factory: || Box::new(ETH::new_eth_based(57, 42161, "ARB", "Arbitrum")),
                     supported: true,
                 },
             ),
             (
                 constants::BASE,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(60, 8453, "BASE", "Base")),
+                    factory: || Box::new(ETH::new_eth_based(60, 8453, "BASE", "Base")),
                     supported: true,
                 },
             ),
             (
                 constants::NEAR,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(64, 397, "NEAR", "Near")),
+                    factory: || Box::new(ETH::new_eth_based(64, 397, "NEAR", "Near")),
                     supported: true,
                 },
             ),
             (
                 constants::FTM,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(54, 250, "FTM", "Fantom")),
+                    factory: || Box::new(ETH::new_eth_based(54, 250, "FTM", "Fantom")),
                     supported: true,
                 },
             ),
             (
                 constants::CHZ,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(61, 88888, "CHZ", "Chiliz")),
+                    factory: || Box::new(ETH::new_eth_based(61, 88888, "CHZ", "Chiliz")),
                     supported: true,
                 },
             ),
             (
                 constants::OP,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(53, 10, "OP", "Optimism")),
+                    factory: || Box::new(ETH::new_eth_based(53, 10, "OP", "Optimism")),
                     supported: true,
                 },
             ),
             (
                 constants::POLYGON_ZKEVM,
                 ChainInfo {
-                    factory: || {
-                        Box::new(eth::ETH::new_eth_based(52, 1101, "ZKEVM", "Polygon zkEVM"))
-                    },
+                    factory: || Box::new(ETH::new_eth_based(52, 1101, "ZKEVM", "Polygon zkEVM")),
                     supported: true,
                 },
             ),
             (
                 constants::STOLZ,
                 ChainInfo {
-                    factory: || Box::new(eth::ETH::new_eth_based(67, 2344, "STOLZ", "Stolz")),
+                    factory: || Box::new(ETH::new_eth_based(67, 2344, "STOLZ", "Stolz")),
                     supported: true,
                 },
             ),
@@ -816,4 +814,21 @@ pub fn get_supported_chains() -> Vec<u32> {
 
 pub fn create_custom_evm(chain_id: u32) -> Option<Box<dyn Chain>> {
     ChainRegistry::new().create_custom_evm(chain_id)
+}
+
+pub enum ChainType {
+    ETH,
+    BTC,
+    TRX,
+    KLV,
+    SUBSTRATE,
+    XRP,
+    ICP,
+    SOL,
+    ADA,
+    SUI,
+    APT,
+    ATOM,
+    BCH,
+    BNB,
 }

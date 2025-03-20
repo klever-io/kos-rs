@@ -8,6 +8,7 @@ use kos::chains::{
 };
 use kos::crypto::cipher::CipherAlgo;
 use kos::crypto::{base64, cipher};
+use kos_codec::encode_for_signing;
 
 uniffi::setup_scaffolding!();
 
@@ -267,9 +268,12 @@ fn sign_transaction(
         tx_hash: Vec::new(),
         options,
     };
+
+    let encoded = encode_for_signing(account.chain_id, transaction)?;
+
     let pk = hex::decode(account.private_key.clone())?;
 
-    let signed_transaction = chain.sign_tx(pk, transaction)?;
+    let signed_transaction = chain.sign_tx(pk, encoded)?;
     let signature = signed_transaction.signature;
 
     Ok(KOSTransaction {
