@@ -78,6 +78,7 @@ pub enum ChainError {
     InvalidSignatureLength,
     UnsupportedScriptType,
     InvalidTransaction(String),
+    UnsupportedChain,
 }
 
 impl Display for ChainError {
@@ -169,6 +170,9 @@ impl Display for ChainError {
             }
             ChainError::InvalidTransaction(e) => {
                 write!(f, "invalid transaction: {}", e)
+            }
+            ChainError::UnsupportedChain => {
+                write!(f, "unsupported chain")
             }
         }
     }
@@ -269,6 +273,7 @@ impl ChainError {
             ChainError::InvalidSignatureLength => 29,
             ChainError::UnsupportedScriptType => 30,
             ChainError::InvalidTransaction(_) => 31,
+            ChainError::UnsupportedChain => 32,
         }
     }
 }

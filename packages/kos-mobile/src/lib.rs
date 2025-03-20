@@ -269,7 +269,7 @@ fn sign_transaction(
         options,
     };
 
-    let encoded = encode_for_signing(chain, transaction)?;
+    let encoded = encode_for_signing(account.chain_id, transaction)?;
 
     let pk = hex::decode(account.private_key.clone())?;
 
