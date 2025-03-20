@@ -1,4 +1,5 @@
 pub mod number;
+pub mod signer;
 
 use hex::FromHexError;
 use hex::ToHex;
