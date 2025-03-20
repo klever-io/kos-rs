@@ -1,12 +1,12 @@
 mod models;
 
-use alloc::format;
 use crate::chains::substrate::models::ExtrinsicPayload;
 use crate::chains::util::private_key_from_vec;
 use crate::chains::{Chain, ChainError, ChainOptions, Transaction, TxInfo};
 use crate::crypto::hash::{blake2b_64_digest, blake2b_digest};
 use crate::crypto::sr25519::Sr25519Trait;
 use crate::crypto::{b58, bip32, sr25519};
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use models::{Call, CallArgs};
@@ -216,6 +216,7 @@ mod test {
     use crate::chains::{Chain, ChainOptions, Transaction};
     use crate::crypto::base64::simple_base64_decode;
     use alloc::string::{String, ToString};
+    use alloc::vec::Vec;
     use serde::Deserialize;
 
     #[derive(Deserialize)]

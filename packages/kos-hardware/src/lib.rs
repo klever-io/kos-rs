@@ -130,7 +130,7 @@ pub extern "C" fn rs_sign_tx(
 
     tx.write_tx_hash(signed.tx_hash.as_ptr(), signed.tx_hash.len() as u32);
     tx.write_signature(signed.signature.as_ptr(), signed.signature.len() as u32);
-    
+
     output.write(signed.raw_data.as_ptr(), signed.raw_data.len() as u32);
 
     true

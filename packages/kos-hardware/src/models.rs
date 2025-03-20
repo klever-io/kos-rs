@@ -192,7 +192,7 @@ impl CTxInfo {
                 }
                 String::new()
             }
-        };       
+        };
 
         TxInfo {
             sender,
