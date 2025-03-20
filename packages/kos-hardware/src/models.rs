@@ -1,6 +1,6 @@
-use kos::chains::TxInfo;
 use alloc::string::String;
 use alloc::vec::Vec;
+use kos::chains::TxInfo;
 
 #[repr(C)]
 pub struct CNodeStruct {
@@ -174,9 +174,29 @@ impl CTxInfo {
     }
 
     pub fn to_tx_info(&self) -> TxInfo {
+        let sender = match String::from_utf8(self.read_sender()) {
+            Ok(s) => s,
+            Err(e) => {
+                unsafe {
+                    DebugErrorHandler(format!("Invalid UTF-8 in sender: {}\0", e).as_ptr());
+                }
+                String::new()
+            }
+        };
+
+        let receiver = match String::from_utf8(self.read_receiver()) {
+            Ok(s) => s,
+            Err(e) => {
+                unsafe {
+                    DebugErrorHandler(format!("Invalid UTF-8 in receiver: {}\0", e).as_ptr());
+                }
+                String::new()
+            }
+        };       
+
         TxInfo {
-            sender: String::from_utf8(self.read_sender()).unwrap_or_else(|_| String::new()),
-            receiver: String::from_utf8(self.read_receiver()).unwrap_or_else(|_| String::new()),
+            sender,
+            receiver: receiver,
             value: self.value,
             tx_type: match self.tx_type {
                 1 => crate::chains::TxType::Unknown,
