@@ -42,6 +42,11 @@ export IOS='\033[0;97m'
 RED='\033[0;31m'
 GRAY='\033[37m'
 NC='\033[0m'
+YELLOW='\033[1;33m'
+
+log_warning() {
+  echo -e "${YELLOW}$1${NC}"
+}
 
 dir_exists() {
   if [ ! -d "$1" ]; then
