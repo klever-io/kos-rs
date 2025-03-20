@@ -31,6 +31,9 @@ webpack-npm:
 clean-mobile-build:
 	cd packages/kos-mobile && ./build_clean.sh
 
+build-ksafe:
+	cargo build --package kos-hardware --target thumbv7em-none-eabihf --profile hardware
+
 build-android:
 	cd packages/kos-mobile && ./build_android.sh
 
