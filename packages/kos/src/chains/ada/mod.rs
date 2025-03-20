@@ -2,7 +2,7 @@ mod address;
 
 use crate::chains::ada::address::{Address, AddressType, StakeCredential};
 use crate::chains::util::private_key_from_vec;
-use crate::chains::{util, Chain, ChainError, Transaction, TxInfo};
+use crate::chains::{util, Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::bip32::{derive_ed25519_bip32, mnemonic_to_seed_ed25519_bip32};
 use crate::crypto::ed25519;
 use crate::crypto::ed25519::Ed25519Trait;
@@ -132,6 +132,10 @@ impl Chain for ADA {
 
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
         Err(ChainError::NotSupported)
+    }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::ADA
     }
 }
 

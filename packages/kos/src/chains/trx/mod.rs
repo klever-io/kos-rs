@@ -1,5 +1,5 @@
 use crate::chains::util::{private_key_from_vec, slice_from_vec};
-use crate::chains::{Chain, ChainError, Transaction, TxInfo, TxType};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo, TxType};
 use crate::crypto::b58::b58enc;
 use crate::crypto::bignum::U256;
 use crate::crypto::hash::{keccak256_digest, sha256_digest};
@@ -274,6 +274,10 @@ impl Chain for TRX {
             value: 0.0,
             tx_type: TxType::Unknown,
         })
+    }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::TRX
     }
 }
 

@@ -1724,12 +1724,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "kos-codec"
+version = "0.2.9"
+dependencies = [
+ "kos",
+]
+
+[[package]]
 name = "kos-mobile"
 version = "0.2.9"
 dependencies = [
  "bigdecimal",
  "hex",
  "kos",
+ "kos-codec",
  "num-bigint",
  "num-traits",
  "serde",

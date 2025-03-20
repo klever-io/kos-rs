@@ -2,7 +2,7 @@
 # https://doc.rust-lang.org/edition-guide/rust-2021/default-cargo-resolver.html#details
 resolver = "2"
 members = [
-    "packages/kos", "packages/kos-mobile", "packages/kos-web",
+    "packages/kos", "packages/kos-codec", "packages/kos-mobile", "packages/kos-web",
 ]
 # This makes the compiled code faster and smaller, but it makes compiling slower,
 # so it's only enabled in release mode.
