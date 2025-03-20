@@ -37,7 +37,7 @@ pub extern "C" fn rs_derive(chain: &mut RequestChainParams, node: &mut CNodeStru
         let c = match chains::get_chain_by_params(chain.to_chain_type()) {
             Some(c) => c,
             None => {
-                DebugErrorHandler(format!("Chain not found: {}", chain.chain).as_ptr());
+                DebugErrorHandler(format!("Chain not found: {} \0", chain.chain).as_ptr());
                 return false;
             }
         };
@@ -102,7 +102,7 @@ pub extern "C" fn rs_sign_tx(
         Some(c) => c,
         None => {
             unsafe {
-                DebugErrorHandler(format!("Chain not found: {}", chain.chain).as_ptr());
+                DebugErrorHandler(format!("Chain not found: {} \0", chain.chain).as_ptr());
             }
             return false;
         }
@@ -122,7 +122,7 @@ pub extern "C" fn rs_sign_tx(
         Ok(t) => t,
         Err(e) => {
             unsafe {
-                DebugErrorHandler(format!("Error signing tx: {}", e.to_string()).as_ptr());
+                DebugErrorHandler(format!("Error signing tx: {} \0", e.to_string()).as_ptr());
             }
             return false;
         }
