@@ -50,7 +50,7 @@ pub struct Raw {
     pub version: Option<u32>,
     #[Rename = "ChainID"]
     pub chain_id: String,
-    #[Rename = "KdaFee"] // Use this to match the exact JSON field name for this field
+    #[Rename = "KDAFee"] // Use this to match the exact JSON field name for this field
     pub kda_fee: ::core::option::Option<KdaFee>,
 }
 
@@ -72,7 +72,7 @@ pub struct Parameter {
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct KdaFee {
-    #[Rename = "Kda"]
+    #[Rename = "KDA"]
     pub kda: String,
     #[Rename = "Amount"]
     pub amount: i64,

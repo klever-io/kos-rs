@@ -22,7 +22,6 @@ path = "src/bin/uniffi-bindgen.rs"
 kos = { workspace = true }
 
 hex = { workspace = true }
-lazy_static = { workspace = true }
 thiserror = { workspace = true }
 
 uniffi = { workspace = true, features = ["cli"] }
@@ -34,6 +33,7 @@ lwk_signer = { workspace = true }
 lwk_wollet = { workspace = true }
 anyhow = "1.0.96"
 ecies = { workspace = true }
+bigdecimal = "0.4.7"
 
 
 [build-dependencies]
@@ -45,3 +45,5 @@ opt-level = "z"   # Optimize for size.
 codegen-units = 1 # Reduce Parallel Code Generation Units to Increase Optimization
 panic = "abort"   # Abort on panic, as unwinding code does require extra binary size
 rpath = true
+bigdecimal = "0.4.7"
+
