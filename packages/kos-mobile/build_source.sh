@@ -4,19 +4,19 @@
 BUILD_HOME=$(pwd)
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  OS="darwin-x86_64"
-  OS_ARCH="darwin64-arm64-cc"
-  OS_TOOLCHAIN="darwin-x86_64"
-  IS_MACOS=true
-  LIB_EXTENSION="dylib"
-  JNI_PLATFORM="darwin-aarch64"
+  export OS="darwin-x86_64"
+  export OS_ARCH="darwin64-arm64-cc"
+  export OS_TOOLCHAIN="darwin-x86_64"
+  export IS_MACOS=true
+  export LIB_EXTENSION="dylib"
+  export JNI_PLATFORM="darwin-aarch64"
 elif [[ "$OSTYPE" == "linux"* ]]; then
-  OS="linux-x86_64"
-  OS_ARCH="linux-x86_64"
-  OS_TOOLCHAIN="linux-x86_64"
-  IS_MACOS=false
-  LIB_EXTENSION="so"
-  JNI_PLATFORM="linux-x86_64"
+  export OS="linux-x86_64"
+  export OS_ARCH="linux-x86_64"
+  export  OS_TOOLCHAIN="linux-x86_64"
+  export IS_MACOS=false
+  export LIB_EXTENSION="so"
+  export JNI_PLATFORM="linux-x86_64"
 else
   echo "Unsupported operating system: $OSTYPE"
   exit 1
@@ -24,21 +24,21 @@ fi
 
 ANDROID_PROJECT_PATH="android"
 ANDROID_NDK_PATH="$BUILD_HOME/android/ndk"
-ANDROID_JNI_LIBS_PATH="$BUILD_HOME/$ANDROID_PROJECT_PATH/lib/src/main/jniLibs"
-ANDROID_GENERATED_BINDS_PATH="$BUILD_HOME/$ANDROID_PROJECT_PATH/lib/src/main/kotlin"
+export ANDROID_JNI_LIBS_PATH="$BUILD_HOME/$ANDROID_PROJECT_PATH/lib/src/main/jniLibs"
+export ANDROID_GENERATED_BINDS_PATH="$BUILD_HOME/$ANDROID_PROJECT_PATH/lib/src/main/kotlin"
 ANDROID_MIN_API="27"
-ANDROID_ARCHS=("android-arm64" "android-arm" "android-x86" "android-x86_64")
-ANDROID_TOOLCHAINS=("aarch64-linux-android" "armv7a-linux-androideabi" "i686-linux-android" "x86_64-linux-android")
-ANDROID_JNI=("arm64-v8a" "armeabi-v7a" "x86" "x86_64")
+export ANDROID_ARCHS=("android-arm64" "android-arm" "android-x86" "android-x86_64")
+export ANDROID_TOOLCHAINS=("aarch64-linux-android" "armv7a-linux-androideabi" "i686-linux-android" "x86_64-linux-android")
+export ANDROID_JNI=("arm64-v8a" "armeabi-v7a" "x86" "x86_64")
 OPENSSL_VERSION="openssl-3.2.1"
 OPENSSL_PATH="$BUILD_HOME/android/openssl"
 OPENSSL_GENERATED_LIBS_PATH="$OPENSSL_PATH-libs"
-IOS_ARCHS=("aarch64-apple-ios" "aarch64-apple-ios-sim" "x86_64-apple-ios")
-PACKAGE_NAME="kos_mobile"
+export IOS_ARCHS=("aarch64-apple-ios" "aarch64-apple-ios-sim" "x86_64-apple-ios")
+export PACKAGE_NAME="kos_mobile"
 
 # colors
-ANDROID='\033[0;92m'
-IOS='\033[0;97m'
+export ANDROID='\033[0;92m'
+export IOS='\033[0;97m'
 RED='\033[0;31m'
 GRAY='\033[37m'
 NC='\033[0m'
@@ -119,7 +119,7 @@ assemble_openssl_lib() {
   arch=$1
   toolchain=$2
   if ! dir_exists "$OPENSSL_GENERATED_LIBS_PATH/$toolchain"; then
-    cd "$OPENSSL_PATH"
+    cd "$OPENSSL_PATH" || exit
     log_status "configuring openssl to $toolchain..."
     if [ "$arch" = "$OS_ARCH" ]; then
       ./Configure "$arch" no-asm no-shared
