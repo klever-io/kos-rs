@@ -70,24 +70,43 @@ log_error() {
 configure_android_ndk() {
   if ! dir_exists "$ANDROID_NDK_PATH"; then
     log_status "configuring ndk..."
-
     if [ "$IS_MACOS" = true ]; then
       rm -f ndk.dmg
       log_status "starting ndk download for macOS..."
-      curl -0 https://dl.google.com/android/repository/android-ndk-r26b-darwin.dmg --output "$BUILD_HOME"/ndk.dmg
-      hdiutil attach -quiet -nobrowse -noverify -noautoopen "$BUILD_HOME"/ndk.dmg
+      if ! curl -L https://dl.google.com/android/repository/android-ndk-r26b-darwin.dmg --output "$BUILD_HOME"/ndk.dmg; then
+        log_error "Failed to download Android NDK for macOS"
+        return 1
+      fi
+      
+      if ! hdiutil attach -quiet -nobrowse -noverify -noautoopen "$BUILD_HOME"/ndk.dmg; then
+        log_error "Failed to mount NDK disk image"
+        return 1
+      fi
+      
       mkdir -p "$ANDROID_NDK_PATH"
       log_status "copying ndk files..."
       cp -r /Volumes/Android\ NDK\ r26b/AndroidNDK10909125.app/Contents/NDK/* "$ANDROID_NDK_PATH"
-      hdiutil detach -quiet /Volumes/Android\ NDK\ r26b/
+      
+      if ! hdiutil detach -quiet /Volumes/Android\ NDK\ r26b/; then
+        log_warning "Failed to detach NDK disk image"
+      fi
+      
       rm ndk.dmg
     else
       rm -f ndk.zip
       log_status "starting ndk download for Linux..."
-      curl -0 https://dl.google.com/android/repository/android-ndk-r26b-linux.zip --output "$BUILD_HOME"/ndk.zip
+      if ! curl -L https://dl.google.com/android/repository/android-ndk-r26b-linux.zip --output "$BUILD_HOME"/ndk.zip; then
+        log_error "Failed to download Android NDK for Linux"
+        return 1
+      fi
+      
       log_status "extracting ndk files..."
       mkdir -p "$ANDROID_NDK_PATH"
-      unzip -q "$BUILD_HOME"/ndk.zip -d "$BUILD_HOME/android"
+      if ! unzip -q "$BUILD_HOME"/ndk.zip -d "$BUILD_HOME/android"; then
+        log_error "Failed to unzip NDK package"
+        return 1
+      fi
+      
       cp -r "$BUILD_HOME"/android/android-ndk-r26b/* "$ANDROID_NDK_PATH"
       rm -rf "$BUILD_HOME"/android/android-ndk-r26b
       rm ndk.zip
