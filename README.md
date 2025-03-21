@@ -53,10 +53,10 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Dash
 - [x] Digibyte (DGB)
 - [x] Internet Computer (ICP)
+- [x] XRP
 
 #### Coming soon | Under development:
 
-- XRP
 - Cosmos (ATOM)
 - Celestia (TIA)
 - Cudos

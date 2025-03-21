@@ -8,7 +8,8 @@ use kos::chains::{
 };
 use kos::crypto::cipher::CipherAlgo;
 use kos::crypto::{base64, cipher};
-use kos_codec::encode_for_signing;
+use kos_codec::KosCodedAccount;
+use kos_codec::{encode_for_broadcast, encode_for_signing};
 
 uniffi::setup_scaffolding!();
 
@@ -269,16 +270,24 @@ fn sign_transaction(
         options,
     };
 
-    let encoded = encode_for_signing(account.chain_id, transaction)?;
+    let kos_codec_acc = KosCodedAccount {
+        chain_id: account.chain_id,
+        address: account.address.clone(),
+        public_key: account.public_key.clone(),
+    };
+
+    let encoded = encode_for_signing(kos_codec_acc.clone(), transaction)?;
 
     let pk = hex::decode(account.private_key.clone())?;
 
     let signed_transaction = chain.sign_tx(pk, encoded)?;
-    let signature = signed_transaction.signature;
+    let signature = signed_transaction.signature.clone();
+
+    let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_transaction)?;
 
     Ok(KOSTransaction {
         chain_id: account.chain_id,
-        raw: hex::encode(signed_transaction.raw_data),
+        raw: hex::encode(encoded_to_broadcast.raw_data),
         sender: account.address,
         signature: hex::encode(signature),
     })

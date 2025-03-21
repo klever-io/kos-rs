@@ -43,7 +43,7 @@ mod substrate;
 mod sui;
 pub mod trx;
 pub mod util;
-mod xrp;
+pub mod xrp;
 
 #[derive(Debug)]
 pub enum ChainError {
@@ -79,6 +79,10 @@ pub enum ChainError {
     UnsupportedScriptType,
     InvalidTransaction(String),
     UnsupportedChain,
+    NonAsciiCharacter(usize),
+    DuplicateCharacter,
+    InvalidCharacter(char),
+    BufferTooSmall,
 }
 
 impl Display for ChainError {
@@ -173,6 +177,18 @@ impl Display for ChainError {
             }
             ChainError::UnsupportedChain => {
                 write!(f, "unsupported chain")
+            }
+            ChainError::NonAsciiCharacter(e) => {
+                write!(f, "non ascii character: {}", e)
+            }
+            ChainError::DuplicateCharacter => {
+                write!(f, "duplicate character")
+            }
+            ChainError::InvalidCharacter(e) => {
+                write!(f, "invalid character: {}", e)
+            }
+            ChainError::BufferTooSmall => {
+                write!(f, "buffer too small")
             }
         }
     }
@@ -274,6 +290,10 @@ impl ChainError {
             ChainError::UnsupportedScriptType => 30,
             ChainError::InvalidTransaction(_) => 31,
             ChainError::UnsupportedChain => 32,
+            ChainError::NonAsciiCharacter(_) => 33,
+            ChainError::DuplicateCharacter => 34,
+            ChainError::InvalidCharacter(_) => 35,
+            ChainError::BufferTooSmall => 36,
         }
     }
 }
@@ -308,6 +328,7 @@ pub struct TxInfo {
     pub tx_type: TxType,
 }
 
+#[derive(Clone)]
 pub struct Transaction {
     pub raw_data: Vec<u8>,
     pub tx_hash: Vec<u8>,
@@ -526,7 +547,7 @@ impl ChainRegistry {
                 constants::XRP,
                 ChainInfo {
                     factory: || Box::new(XRP::new()),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (

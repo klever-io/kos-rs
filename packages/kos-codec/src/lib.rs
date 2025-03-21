@@ -1,13 +1,21 @@
 mod chains;
 
 use crate::chains::ada;
-use kos::chains::{get_chain_by_base_id, Chain, ChainError, ChainType, Transaction};
+use crate::chains::xrp;
+use kos::chains::{get_chain_by_base_id, ChainError, ChainType, Transaction};
+
+#[derive(Clone)]
+pub struct KosCodedAccount {
+    pub chain_id: u32,
+    pub address: String,
+    pub public_key: String,
+}
 
 pub fn encode_for_signing(
-    chain_id: u32,
+    account: KosCodedAccount,
     transaction: Transaction,
 ) -> Result<Transaction, ChainError> {
-    let chain = match get_chain_by_base_id(chain_id) {
+    let chain = match get_chain_by_base_id(account.chain_id) {
         Some(chain) => chain,
         None => return Err(ChainError::UnsupportedChain),
     };
@@ -18,7 +26,7 @@ pub fn encode_for_signing(
         ChainType::TRX => transaction,
         ChainType::KLV => transaction,
         ChainType::SUBSTRATE => transaction,
-        ChainType::XRP => transaction,
+        ChainType::XRP => xrp::encode_for_sign(transaction, account.public_key)?,
         ChainType::ICP => transaction,
         ChainType::SOL => transaction,
         ChainType::ADA => ada::encode_for_sign(transaction)?,
@@ -31,16 +39,21 @@ pub fn encode_for_signing(
 }
 
 pub fn encode_for_broadcast(
-    chain: Box<dyn Chain>,
+    account: KosCodedAccount,
     transaction: Transaction,
 ) -> Result<Transaction, ChainError> {
+    let chain = match get_chain_by_base_id(account.chain_id) {
+        Some(chain) => chain,
+        None => return Err(ChainError::UnsupportedChain),
+    };
+
     Ok(match chain.get_chain_type() {
         ChainType::ETH => transaction,
         ChainType::BTC => transaction,
         ChainType::TRX => transaction,
         ChainType::KLV => transaction,
         ChainType::SUBSTRATE => transaction,
-        ChainType::XRP => transaction,
+        ChainType::XRP => xrp::encode_for_broadcast(transaction)?,
         ChainType::ICP => transaction,
         ChainType::SOL => transaction,
         ChainType::ADA => ada::encode_for_broadcast(transaction)?,
@@ -65,7 +78,13 @@ mod test {
             options: None,
         };
 
-        let result = encode_for_signing(20, tx);
+        let account = KosCodedAccount {
+            chain_id: 20,
+            address: "123".to_string(),
+            public_key: "123".to_string(),
+        };
+
+        let result = encode_for_signing(account, tx);
 
         assert!(result.is_ok());
     }
