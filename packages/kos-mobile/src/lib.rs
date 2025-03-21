@@ -8,7 +8,7 @@ use kos::chains::{
 };
 use kos::crypto::cipher::CipherAlgo;
 use kos::crypto::{base64, cipher};
-use kos_codec::encode_for_signing;
+use kos_codec::{encode_for_broadcast, encode_for_signing};
 
 uniffi::setup_scaffolding!();
 
@@ -273,12 +273,19 @@ fn sign_transaction(
 
     let pk = hex::decode(account.private_key.clone())?;
 
-    let signed_transaction = chain.sign_tx(pk, encoded)?;
-    let signature = signed_transaction.signature;
+    let signed_transaction = chain.sign_tx(pk.clone(), encoded)?;
+
+    let finalized_transaction = encode_for_broadcast(
+        account.chain_id,
+        signed_transaction,
+        hex_string_to_vec(account.public_key.as_str())?,
+    )?;
+
+    let signature = finalized_transaction.signature;
 
     Ok(KOSTransaction {
         chain_id: account.chain_id,
-        raw: hex::encode(signed_transaction.raw_data),
+        raw: hex::encode(finalized_transaction.raw_data),
         sender: account.address,
         signature: hex::encode(signature),
     })
@@ -305,7 +312,7 @@ fn get_supported_chains() -> Vec<u32> {
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use kos::chains::get_chains;
+    use kos::chains::{ada, get_chains};
 
     #[test]
     fn should_generate_mnemonic() {
@@ -576,5 +583,20 @@ mod tests {
             !supported_chains.is_empty(),
             "The supported chains should not be empty"
         );
+    }
+
+    #[test]
+    fn cardano_sign_transaction() {
+        let chain_id = ada::BASE_ID;
+        let raw = "8279013661343030383138323538323064313963303534303939643839653232623562653535376532346330323331346465376163393364376431653630326433626266633836383436373964336331303030313832383235383339303161663036666135663162323863393062646331633837626262363733306263306461393836343230633462643030666434653564643166326165623063373437633638613430336332656365303561373938383165666539346165633265633932326665346264316330386533643633316130303066343234303832353831643631643535663435336639333935343735353931333939316432313139353265346264646663636439656561376534323439363761373739663431613031306637316131303231613030303333366466303331613038663731653935a16a6f7065726174696f6e7381a6746f7065726174696f6e5f6964656e746966696572a165696e64657800647479706565696e7075746673746174757360676163636f756e74a16761646472657373783a6164647231763832343733666c6a773235773476333878676179797634396539616d6c78646e6d343875736a6676376e686e617139763235397566616d6f756e74a26576616c75656831393030303030306863757272656e6379a26673796d626f6c6341444168646563696d616c73066b636f696e5f6368616e6765a26f636f696e5f6964656e746966696572a16a6964656e7469666965727842643139633035343039396438396532326235626535353765323463303233313464653761633933643764316536303264336262666338363834363739643363313a306b636f696e5f616374696f6e6a636f696e5f7370656e74";
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false,
+        ).unwrap();
+
+        let transaction = sign_transaction(account, raw.to_string(), None).unwrap();
     }
 }

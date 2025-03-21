@@ -1,8 +1,7 @@
 mod address;
-mod transaction;
+pub mod models;
 
 use crate::chains::ada::address::{Address, AddressType, StakeCredential};
-use crate::chains::ada::transaction::{RosettaTransaction, Tx, TxBody, VKeyWitness, WitnessSet};
 use crate::chains::util::private_key_from_vec;
 use crate::chains::{util, Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::bip32::{derive_ed25519_bip32, mnemonic_to_seed_ed25519_bip32};
@@ -12,11 +11,13 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
+pub const BASE_ID: u32 = 20;
+
 pub struct ADA {}
 
 impl Chain for ADA {
     fn get_id(&self) -> u32 {
-        20
+        BASE_ID
     }
 
     fn get_name(&self) -> &str {
@@ -28,7 +29,7 @@ impl Chain for ADA {
     }
 
     fn get_decimals(&self) -> u32 {
-        todo!()
+        6
     }
 
     fn mnemonic_to_seed(&self, mnemonic: String, _password: String) -> Result<Vec<u8>, ChainError> {
@@ -118,62 +119,9 @@ impl Chain for ADA {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        let mut rosetta_tx: RosettaTransaction = minicbor::decode(tx.raw_data.as_slice()).unwrap();
+        let sig = self.sign_raw(private_key, tx.tx_hash.clone())?;
 
-        println!("{:?}", rosetta_tx);
-
-        let metadata = hex::decode(rosetta_tx.metadata).unwrap();
-
-        println!("{:?}", hex::encode(metadata.clone()));
-
-        let tx_body: TxBody = minicbor::decode(metadata.as_slice()).unwrap();
-
-        // Reducing from xprivkey to privkey
-        let pvk = if private_key.len() == 96 {
-            &private_key[..64]
-        } else {
-            private_key.as_slice()
-        };
-
-        let hash = tx_body.hash()?;
-
-        let pbk = self.get_pbk(pvk.to_vec())?;
-
-        let signature = self.sign_raw(pvk.to_vec(), hash.to_vec())?;
-
-        let witness_set = WitnessSet {
-            v_key_witness_set: vec![VKeyWitness {
-                v_key: pbk,
-                signature: signature.clone(),
-            }],
-        };
-
-        let cardano_tx = Tx {
-            body: Some(tx_body),
-            witness_set,
-            is_valid: true,
-            auxiliary_data: None,
-        };
-
-        let mut signed_metadata = Vec::new();
-
-        // Encode signed metadata
-        match minicbor::encode(&cardano_tx, &mut signed_metadata)
-            .map_err(|e| ChainError::InvalidData(e.to_string()))
-        {
-            Ok(_) => (),
-            Err(e) => return Err(e),
-        }
-        rosetta_tx.metadata = hex::encode(&signed_metadata);
-
-        let new_raw = Vec::new();
-
-        minicbor::encode(&rosetta_tx, new_raw.clone())
-            .map_err(|e| ChainError::InvalidData(e.to_string()))?;
-
-        tx.raw_data = new_raw;
-        tx.signature = signature;
-
+        tx.signature = sig;
         Ok(tx)
     }
 
@@ -219,6 +167,8 @@ mod test {
 
         let pvk = ada.derive(seed, path).unwrap();
         let pbk = ada.get_pbk(pvk).unwrap();
+        println!("{:?}", pbk.len());
+
         let addr = ada.get_address(pbk).unwrap();
         assert_eq!(
             addr,
