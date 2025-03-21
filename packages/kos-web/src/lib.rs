@@ -37,6 +37,14 @@ pub fn decrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
     cipher::decrypt(data, password).map_err(|e| Error::Cipher(format!("{}", e)))
 }
 
+/// Encrypt for GCM the given data with the given password.
+/// Data will have the algorithm tag prepended to it (1 byte).
+#[wasm_bindgen(js_name = "encrypt")]
+pub fn encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
+    cipher::encrypt(cipher::CipherAlgo::GMC, data, password)
+        .map_err(|e| Error::Cipher(format!("{}", e)))
+}
+
 /// Create pem file from tag and data
 #[wasm_bindgen(js_name = "toPem")]
 pub fn to_pem(tag: String, data: &[u8]) -> Result<String, Error> {

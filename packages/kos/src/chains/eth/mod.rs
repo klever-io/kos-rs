@@ -2,7 +2,7 @@ mod models;
 
 use crate::chains::eth::models::EthereumTransaction;
 use crate::chains::util::{private_key_from_vec, slice_from_vec};
-use crate::chains::{Chain, ChainError, Transaction, TxInfo, TxType};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo, TxType};
 use crate::crypto::hash::keccak256_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use crate::crypto::{bip32, secp256k1};
@@ -203,6 +203,10 @@ impl Chain for ETH {
         tx_info.value = eth_tx.value.to_f64(self.get_decimals());
 
         Ok(tx_info)
+    }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::ETH
     }
 }
 

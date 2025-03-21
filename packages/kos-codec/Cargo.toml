@@ -1,0 +1,19 @@
+[package]
+name = "kos-codec"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+
+[lib]
+name = "kos_codec"
+crate-type = ["lib"]
+
+[dependencies]
+kos = { workspace = true }
+xrpl-rust = { version = "0.5.0", default-features = false, features = ["core", "utils"] }
+hex = { version = "0.4.3", features = ["alloc"], default-features = false }

@@ -32,6 +32,8 @@ extern "C" {
     fn c_ecdsa_get_pub_key65(pvk: *const u8, pbk: *mut u8);
 
     fn c_ecdsa_get_pub_key33(pvk: *const u8, pbk: *mut u8);
+
+    fn c_ecdsa_secp256k1_sign_der(msg: *const u8, msg_len: u32, pvk: *const u8, sig: *mut u8);
 }
 
 pub trait Secp256k1Trait {
@@ -39,6 +41,7 @@ pub trait Secp256k1Trait {
     fn private_to_public_compressed(pvk: &[u8; 32]) -> Result<[u8; 33], Secp256Err>;
     fn private_to_public_uncompressed(pvk: &[u8; 32]) -> Result<[u8; 65], Secp256Err>;
     fn sign(msg: &[u8; 32], pvk: &[u8; 32]) -> Result<[u8; 65], Secp256Err>;
+    fn sign_der(msg: &[u8; 32], pvk: &[u8; 32]) -> Result<Vec<u8>, Secp256Err>;
 }
 
 #[cfg(feature = "ksafe")]
@@ -83,6 +86,21 @@ impl Secp256k1Trait for Secp256K1 {
 
         Ok(sig)
     }
+
+    fn sign_der(msg: &[u8; 32], pvk: &[u8; 32]) -> Result<Vec<u8>, Secp256Err> {
+        let mut sig = [0u8; 72];
+
+        unsafe {
+            c_ecdsa_secp256k1_sign_der(
+                msg.as_ptr(),
+                msg.len() as u32,
+                pvk.as_ptr(),
+                sig.as_mut_ptr(),
+            );
+        }
+
+        Ok(sig.to_vec())
+    }
 }
 
 #[cfg(not(feature = "ksafe"))]
@@ -115,5 +133,13 @@ impl Secp256k1Trait for Secp256K1 {
         sig_vec[..64].copy_from_slice(&sig.serialize()[..]);
         sig_vec[64] = rec.serialize();
         Ok(sig_vec)
+    }
+
+    fn sign_der(msg: &[u8; 32], pvk: &[u8; 32]) -> Result<Vec<u8>, Secp256Err> {
+        let sk = libsecp256k1::SecretKey::parse(pvk)?;
+        let msg = libsecp256k1::Message::parse(msg);
+        let (sig, _) = libsecp256k1::sign(&msg, &sk);
+
+        Ok(sig.serialize_der().as_ref().to_vec())
     }
 }
