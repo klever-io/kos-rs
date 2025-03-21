@@ -29,8 +29,9 @@ pub struct PaymentTransaction {
 impl PaymentTransaction {
     pub fn from(buffer: Vec<(FieldInstance, Vec<u8>)>) -> Result<Self, ChainError> {
         let mut flags: Option<u32> = None; // Some(0);
-        let mut amount: Amount = Amount::new(Some(&[0])).unwrap();
-        let mut destination: AccountId = AccountId::new(None).unwrap();
+        let mut amount: Amount = Amount::new(Some(&[0])).map_err(|_| ChainError::DecodeRawTx)?;
+        let mut destination: AccountId =
+            AccountId::new(None).map_err(|_| ChainError::DecodeRawTx)?;
         let mut destination_tag: Option<u32> = None;
         let mut invoice_id: Option<Hash256> = None;
         let mut send_max: Option<Amount> = None;
@@ -42,28 +43,44 @@ impl PaymentTransaction {
         for value in buffer {
             match value.0.name.as_str() {
                 "Flags" => {
-                    flags = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    flags = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "Amount" => {
-                    amount = Amount::new(Some(value.1.as_ref())).unwrap();
+                    amount =
+                        Amount::new(Some(value.1.as_ref())).map_err(|_| ChainError::DecodeRawTx)?;
                 }
                 "Destination" => {
-                    destination = AccountId::new(Some(value.1.as_ref())).unwrap();
+                    destination = AccountId::new(Some(value.1.as_ref()))
+                        .map_err(|_| ChainError::DecodeRawTx)?;
                 }
                 "DestinationTag" => {
-                    destination_tag = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    destination_tag = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "InvoiceID" => {
-                    invoice_id = Some(Hash256::new(Some(value.1.as_ref())).unwrap());
+                    invoice_id = Some(
+                        Hash256::new(Some(value.1.as_ref()))
+                            .map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 "SendMax" => {
-                    send_max = Some(Amount::new(Some(value.1.as_ref())).unwrap());
+                    send_max = Some(
+                        Amount::new(Some(value.1.as_ref())).map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 "DeliverMin" => {
-                    deliver_min = Some(Amount::new(Some(value.1.as_ref())).unwrap());
+                    deliver_min = Some(
+                        Amount::new(Some(value.1.as_ref())).map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 "Paths" => {
-                    paths = Some(PathSet::new(Some(value.1.as_ref())).unwrap());
+                    paths = Some(
+                        PathSet::new(Some(value.1.as_ref()))
+                            .map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 _ => {}
             }
@@ -149,7 +166,7 @@ impl Serialize for PaymentTransaction {
             }
         }
 
-        let mut serializer = BinarySerializer::new();
+        let mut serializer: Vec<u8> = BinarySerializer::new();
 
         fields_and_value.sort_by_key(|fv| fv.0.ordinal);
         for fv in fields_and_value {

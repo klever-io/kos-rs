@@ -47,37 +47,56 @@ impl AccountSetTransaction {
         for value in buffer {
             match value.0.name.as_str() {
                 "Flags" => {
-                    flags = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    flags = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "ClearFlag" => {
-                    clear_flag = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    clear_flag = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "Domain" => {
-                    domain = Some(Blob::new(Some(&value.1)).unwrap());
+                    domain = Some(Blob::new(Some(&value.1)).map_err(|_| ChainError::DecodeRawTx)?);
                 }
                 "EmailHash" => {
-                    email_hash = Some(Hash128::new(Some(value.1.as_ref())).unwrap());
+                    email_hash = Some(
+                        Hash128::new(Some(value.1.as_ref()))
+                            .map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 "MessageKey" => {
-                    message_key = Some(Blob::new(Some(&value.1)).unwrap());
+                    message_key =
+                        Some(Blob::new(Some(&value.1)).map_err(|_| ChainError::DecodeRawTx)?);
                 }
                 "NFTokenMinter" => {
-                    nft_token_minter = Some(Blob::new(Some(&value.1)).unwrap());
+                    nft_token_minter =
+                        Some(Blob::new(Some(&value.1)).map_err(|_| ChainError::DecodeRawTx)?);
                 }
                 "SetFlag" => {
-                    set_flag = Some(Blob::new(Some(&value.1)).unwrap());
+                    set_flag =
+                        Some(Blob::new(Some(&value.1)).map_err(|_| ChainError::DecodeRawTx)?);
                 }
                 "TransferRate" => {
-                    transfer_rate = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    transfer_rate = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "TickSize" => {
-                    ticket_size = Some(u8::from_be_bytes(value.1.try_into().unwrap()));
+                    ticket_size = Some(u8::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 "WalletLocator" => {
-                    wallet_locator = Some(Hash256::new(Some(value.1.as_ref())).unwrap());
+                    wallet_locator = Some(
+                        Hash256::new(Some(value.1.as_ref()))
+                            .map_err(|_| ChainError::DecodeRawTx)?,
+                    );
                 }
                 "WalletSize" => {
-                    wallet_size = Some(u32::from_be_bytes(value.1.try_into().unwrap()));
+                    wallet_size = Some(u32::from_be_bytes(
+                        value.1.try_into().map_err(|_| ChainError::DecodeRawTx)?,
+                    ));
                 }
                 _ => {}
             }
@@ -191,7 +210,7 @@ impl Serialize for AccountSetTransaction {
                     .extend_from_slice(&[(field_instance, wallet_size.to_be_bytes().to_vec())]);
             }
         }
-        let mut serializer = BinarySerializer::new();
+        let mut serializer: Vec<u8> = BinarySerializer::new();
 
         fields_and_value.sort_by_key(|fv| fv.0.ordinal);
         for fv in fields_and_value {

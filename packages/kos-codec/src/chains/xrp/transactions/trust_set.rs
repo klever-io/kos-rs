@@ -111,7 +111,7 @@ impl Serialize for TrustSetTransaction {
             }
         }
 
-        let mut serializer = BinarySerializer::new();
+        let mut serializer: Vec<u8> = BinarySerializer::new();
 
         fields_and_value.sort_by_key(|fv| fv.0.ordinal);
         for fv in fields_and_value {
