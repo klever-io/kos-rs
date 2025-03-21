@@ -2058,7 +2058,7 @@ dependencies = [
 
 [[package]]
 name = "kos"
-version = "0.2.12"
+version = "0.2.13"
 dependencies = [
  "aes",
  "aes-gcm",
@@ -2101,7 +2101,7 @@ dependencies = [
 
 [[package]]
 name = "kos-codec"
-version = "0.2.12"
+version = "0.2.13"
 dependencies = [
  "hex",
  "kos",
@@ -2110,7 +2110,7 @@ dependencies = [
 
 [[package]]
 name = "kos-mobile"
-version = "0.2.12"
+version = "0.2.13"
 dependencies = [
  "bigdecimal",
  "hex",
@@ -2125,12 +2125,13 @@ dependencies = [
 
 [[package]]
 name = "kos-web"
-version = "0.2.12"
+version = "0.2.13"
 dependencies = [
  "enum_delegate",
  "enum_dispatch",
  "hex",
  "kos",
+ "kos-codec",
  "lazy_static",
  "num-bigint",
  "num-traits",
