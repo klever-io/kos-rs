@@ -39,13 +39,19 @@ pub fn encode_variable_length(length: usize) -> Result<Vec<u8>, ChainError> {
 pub fn deserialize_object(binary_parser: &mut BinaryParser) -> Result<Vec<u8>, ChainError> {
     let mut sink: Vec<Vec<u8>> = Vec::new();
     while !binary_parser.is_end(None) {
-        let field = binary_parser.read_field().unwrap();
+        let field = binary_parser
+            .read_field()
+            .map_err(|_| ChainError::DecodeRawTx)?;
         if field.name == constants::OBJECT_END_MARKER_NAME {
             break;
         }
 
-        let length_prefix = binary_parser.read_length_prefix().unwrap();
-        let content = binary_parser.read(length_prefix).unwrap();
+        let length_prefix = binary_parser
+            .read_length_prefix()
+            .map_err(|_| ChainError::DecodeRawTx)?;
+        let content = binary_parser
+            .read(length_prefix)
+            .map_err(|_| ChainError::DecodeRawTx)?;
 
         let teste = vec![field.header.to_bytes()];
         sink.extend_from_slice(&teste);
