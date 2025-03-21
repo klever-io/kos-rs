@@ -54,6 +54,7 @@ mod test {
             address: "rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3".to_string(),
             public_key: "031d68bc1a142e6766b2bdfb006ccfe135ef2e0e2e94abb5cf5c9ab6104776fbae"
                 .to_string(),
+            private_key: "".to_string(),
         };
 
         let result = encode_for_sign(tx, account.public_key.clone()).unwrap();

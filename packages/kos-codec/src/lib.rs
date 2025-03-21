@@ -2,14 +2,14 @@ mod chains;
 
 use crate::chains::ada;
 use crate::chains::xrp;
-use kos::chains::util::hex_string_to_vec;
-use kos::chains::{get_chain_by_base_id, Chain, ChainError, ChainType, Transaction};
+use kos::chains::{get_chain_by_base_id, ChainError, ChainType, Transaction};
 
 #[derive(Clone)]
 pub struct KosCodedAccount {
     pub chain_id: u32,
     pub address: String,
     pub public_key: String,
+    pub private_key: String,
 }
 
 pub fn encode_for_signing(
@@ -39,9 +39,7 @@ pub fn encode_for_broadcast(
 
     Ok(match chain.get_chain_type() {
         ChainType::XRP => xrp::encode_for_broadcast(transaction)?,
-        ChainType::ADA => {
-            ada::encode_for_broadcast(transaction, hex_string_to_vec(account.public_key.as_ref())?)?
-        }
+        ChainType::ADA => ada::encode_for_broadcast(transaction, account)?,
         _ => transaction,
     })
 }
