@@ -88,7 +88,8 @@ impl Secp256k1Trait for Secp256K1 {
     }
 
     fn sign_der(msg: &[u8; 32], pvk: &[u8; 32]) -> Result<Vec<u8>, Secp256Err> {
-        let mut sig = Vec::new();
+        let mut sig = [0u8; 72];
+
         unsafe {
             c_ecdsa_secp256k1_sign_der(
                 msg.as_ptr(),
@@ -98,7 +99,7 @@ impl Secp256k1Trait for Secp256K1 {
             );
         }
 
-        Ok(sig)
+        Ok(sig.to_vec())
     }
 }
 
