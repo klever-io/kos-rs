@@ -547,7 +547,7 @@ impl ChainRegistry {
                 constants::XRP,
                 ChainInfo {
                     factory: || Box::new(XRP::new()),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
