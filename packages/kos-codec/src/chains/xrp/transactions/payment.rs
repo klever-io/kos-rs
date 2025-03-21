@@ -1,7 +1,8 @@
 use crate::chains::xrp::transactions::{
     transaction_base::TransactionCommon, Serialize, Transaction,
 };
-use crate::chains::ChainError;
+
+use kos::chains::ChainError;
 
 use xrpl::core::{
     binarycodec::{

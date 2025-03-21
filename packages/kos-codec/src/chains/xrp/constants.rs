@@ -1,8 +1,3 @@
-/// Unsigned single signer transactions prefix <https://xrpl.org/basic-data-types.html#hash-prefixes>
-pub const HASH_PREFIX_UNSIGNED_TRANSACTION_SINGLE: [u8; 4] = [0x53, 0x54, 0x58, 0x00];
-
-pub const XRP_ALPHA: &[u8; 58] = b"rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
-
 pub const OBJECT_NAME: &str = "STObject";
 pub const OBJECT_END_MARKER_NAME: &str = "ObjectEndMarker";
 pub const OBJECT_END_MARKER_BYTE: &[u8] = &[0xE1];

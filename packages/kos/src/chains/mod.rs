@@ -43,7 +43,7 @@ mod substrate;
 mod sui;
 pub mod trx;
 pub mod util;
-mod xrp;
+pub mod xrp;
 
 #[derive(Debug)]
 pub enum ChainError {
@@ -328,6 +328,7 @@ pub struct TxInfo {
     pub tx_type: TxType,
 }
 
+#[derive(Clone)]
 pub struct Transaction {
     pub raw_data: Vec<u8>,
     pub tx_hash: Vec<u8>,

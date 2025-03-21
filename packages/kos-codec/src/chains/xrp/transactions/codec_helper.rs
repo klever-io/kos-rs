@@ -1,5 +1,5 @@
 use crate::chains::xrp::constants;
-use crate::chains::ChainError;
+use kos::chains::ChainError;
 
 use xrpl::{
     core::{

@@ -1,4 +1,4 @@
-use crate::chains::ChainError;
+use kos::chains::ChainError;
 
 use xrpl::core::binarycodec::{
     definitions::{load_definition_map, DefinitionHandler, FieldInstance},

@@ -15,3 +15,5 @@ crate-type = ["lib"]
 
 [dependencies]
 kos = { workspace = true }
+xrpl-rust = { version = "0.5.0", default-features = false, features = ["core", "utils"] }
+hex = { version = "0.4.3", features = ["alloc"], default-features = false }

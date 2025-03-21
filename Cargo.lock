@@ -2097,14 +2097,15 @@ dependencies = [
  "sha2 0.10.8",
  "sha3",
  "tiny-json-rs",
- "xrpl-rust",
 ]
 
 [[package]]
 name = "kos-codec"
 version = "0.2.12"
 dependencies = [
+ "hex",
  "kos",
+ "xrpl-rust",
 ]
 
 [[package]]
