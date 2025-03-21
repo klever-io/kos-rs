@@ -169,10 +169,6 @@ mod test {
         let path = xrp.get_path(0, false);
         let seed = xrp.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = xrp.derive(seed, path).unwrap();
-        let pub_key = xrp.get_pbk(pvk.clone()).unwrap();
-        let address = xrp.get_address(pub_key.clone()).unwrap();
-        println!("pub key: {}", hex::encode(pub_key));
-        println!("address: {}", address);
 
         let message = "test message".as_bytes().to_vec();
         let signature = xrp.sign_message(pvk, message).unwrap();
@@ -189,10 +185,10 @@ mod test {
         let seed = xrp.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = xrp.derive(seed, path).unwrap();
 
-        let raw_tx = simple_base64_decode("EgAAJAOJPiQuAAAE0mFAAAAAAAAAAWhAAAAAAAAACoEUT3VxzuEHlw82sSKFzBfkTBIcoK6DFIkT5tGhrFdnm0ML+ClCV9S7P1/f").unwrap();
+        let raw_tx = simple_base64_decode("EgAAIgAAAAAkAAADSiAbAJcXvmFAAAAAAJiWgGhAAAAAAAAADGnUVkuWSoRawAAAAAAAAAAAAAAAAFVTRAAAAAAAadM7GNUzhfijGFUWwu2l3tuKxcZzIQMdaLwaFC5nZrK9+wBsz+E17y4OLpSrtc9cmrYQR3b7rnRHMEUCIQDVXtGVP4YK3BvFzZk6u5J/SBVqyjHGRzeGX09P9tAVqAIgYwcE0r0JyOmfJgkMJfEbKPXZahNQRUQCws7ZKzn/26+BFGnTOxjVM4X4oxhVFsLtpd7bisXGgxRp0zsY1TOF+KMYVRbC7aXe24rFxvnqfAZjbGllbnR9B3J0MS4xLjHh8QESAfOxmXVi/XQrVNTr3qHWrqPUkGuPEAAAAAAAAAAAAAAAAAAAAAAAAAAA/wFLTpwG8kKWB097xI+SqXkWxtxeqQHdOcZQqW7aSDNOcMxKhbiy6FAs0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=").unwrap();
 
         let tx = Transaction {
-            raw_data: raw_tx,
+            raw_data: raw_tx.clone(),
             tx_hash: vec![],
             signature: vec![],
             options: Option::None,
@@ -200,8 +196,11 @@ mod test {
 
         let tx_signed = xrp.sign_tx(pvk, tx).unwrap();
 
-        assert_eq!(hex::encode(tx_signed.raw_data.clone()).to_uppercase(), "1200002403893E242E000004D261400000000000000168400000000000000A7321031D68BC1A142E6766B2BDFB006CCFE135EF2E0E2E94ABB5CF5C9AB6104776FBAE74463044022051CA6A9AB7EB0F9994A9B6A838CA49EE7AEEF2B776098A6DD8C7CEA6BF6CB6870220294FFF13FCC7F1ABC24410711243C2084FFC3FC05952B541EA4F759D7A69713881144F7571CEE107970F36B12285CC17E44C121CA0AE83148913E6D1A1AC57679B430BF8294257D4BB3F5FDF");
+        assert_eq!(
+            hex::encode(tx_signed.raw_data.clone()).to_uppercase(),
+            hex::encode(raw_tx).to_uppercase()
+        );
 
-        assert_eq!(hex::encode(tx_signed.signature).to_uppercase(), "3044022051CA6A9AB7EB0F9994A9B6A838CA49EE7AEEF2B776098A6DD8C7CEA6BF6CB6870220294FFF13FCC7F1ABC24410711243C2084FFC3FC05952B541EA4F759D7A697138");
+        assert_eq!(hex::encode(tx_signed.signature).to_uppercase(), "304502210092EF95EDA6B8ECD483B750F1F1078DD81B992ECFC233E98141771071E712424202202741B9E6AE86B80E9FD3D92FCF74D65175B67BC6AC1308B44962AB1E40FF8CAE");
     }
 }
