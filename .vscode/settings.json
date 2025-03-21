@@ -3,7 +3,7 @@
         "packages/kos/Cargo.toml",
         "packages/kos-codec/Cargo.toml",
         "packages/kos-mobile/Cargo.toml",
-        "packages/kos-web/Cargo.toml",
+        "packages/kos-web/Cargo.toml"
     ],
     "[rust]": {
         "editor.defaultFormatter": "rust-lang.rust-analyzer",
