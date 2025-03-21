@@ -1,5 +1,5 @@
 use crate::chains::util::{private_key_from_vec, slice_from_vec};
-use crate::chains::{Chain, ChainError, ChainOptions, Transaction, TxInfo};
+use crate::chains::{Chain, ChainError, ChainOptions, ChainType, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
 use crate::crypto::bip32;
 use crate::crypto::hash::{ripemd160_digest, sha256_digest};
@@ -8,7 +8,7 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use alloc::{format, vec};
 use bech32::{u5, Variant};
-use bitcoin::{ecdsa, secp256k1, sighash, Amount, Denomination, Psbt};
+use bitcoin::{ecdsa, secp256k1, sighash, Amount, Denomination, Psbt, ScriptBuf};
 
 const BITCOIN_MESSAGE_PREFIX: &str = "\x18Bitcoin Signed Message:\n";
 
@@ -16,6 +16,7 @@ const BITCOIN_MESSAGE_PREFIX: &str = "\x18Bitcoin Signed Message:\n";
 pub struct BTC {
     pub id: u32,
     pub addr_prefix: String,
+    pub bip44: u32,
     pub symbol: String,
     pub name: String,
     pub use_legacy_address: bool,
@@ -24,13 +25,14 @@ pub struct BTC {
 
 impl BTC {
     pub fn new() -> Self {
-        BTC::new_btc_based(2, "bc", "BTC", "Bitcoin")
+        BTC::new_btc_based(2, "bc", 0, "BTC", "Bitcoin")
     }
 
-    pub fn new_btc_based(id: u32, addr_prefix: &str, symbol: &str, name: &str) -> Self {
+    pub fn new_btc_based(id: u32, addr_prefix: &str, bip44: u32, symbol: &str, name: &str) -> Self {
         BTC {
             id,
             addr_prefix: addr_prefix.to_string(),
+            bip44,
             symbol: symbol.to_string(),
             name: name.to_string(),
             use_legacy_address: false,
@@ -38,10 +40,17 @@ impl BTC {
         }
     }
 
-    pub fn new_legacy_btc_based(id: u32, legacy_version: u8, symbol: &str, name: &str) -> Self {
+    pub fn new_legacy_btc_based(
+        id: u32,
+        legacy_version: u8,
+        bip44: u32,
+        symbol: &str,
+        name: &str,
+    ) -> Self {
         BTC {
             id,
             addr_prefix: "".to_string(),
+            bip44,
             symbol: symbol.to_string(),
             name: name.to_string(),
             use_legacy_address: true,
@@ -127,7 +136,9 @@ impl Chain for BTC {
     }
 
     fn get_path(&self, index: u32, _is_legacy: bool) -> String {
-        format!("m/84'/0'/0'/0/{}", index)
+        let purpose = if self.use_legacy_address { 44 } else { 84 };
+
+        format!("m/{}'/{}'/0'/0/{}", purpose, self.bip44, index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -171,7 +182,7 @@ impl Chain for BTC {
 
         let mut psbt = Psbt::from_unsigned_tx(transaction.clone()).unwrap();
 
-        let mut cache = sighash::SighashCache::new(transaction);
+        let mut cache = sighash::SighashCache::new(transaction.clone());
 
         let sk = secp256k1::SecretKey::from_slice(private_key.clone().as_slice()).unwrap();
 
@@ -193,6 +204,9 @@ impl Chain for BTC {
                 script_pubkey: prev_scripts[inp_idx].clone().into(),
             };
             psbt.inputs[inp_idx].witness_utxo = Some(utxo);
+
+            // Add non_witness_utxo
+            psbt.inputs[inp_idx].non_witness_utxo = Some(transaction.clone());
         }
 
         // sign inputs
@@ -211,32 +225,54 @@ impl Chain for BTC {
         }
 
         // finalize
-        for inp_idx in 0..psbt.inputs.len() {
-            let script_witness = {
-                match psbt.inputs[inp_idx].partial_sigs.first_key_value() {
-                    Some((pubkey, sig)) => {
-                        let mut script_witness = bitcoin::Witness::new();
-                        script_witness.push(sig.to_vec());
-                        script_witness.push(pubkey.to_bytes());
-                        script_witness
-                    }
-                    _ => bitcoin::Witness::default(),
+        for (inp_idx, _) in prev_scripts.iter().enumerate().take(psbt.inputs.len()) {
+            let script_pubkey_bytes = prev_scripts[inp_idx].clone();
+
+            let script_pubkey = bitcoin::Script::from_bytes(script_pubkey_bytes.as_slice());
+
+            // check if it is a legacy or segwit transaction
+            let is_legacy = script_pubkey.is_p2pkh();
+            let is_segwit = script_pubkey.is_p2wpkh();
+
+            if let Some((pubkey, sig)) = psbt.inputs[inp_idx].partial_sigs.first_key_value() {
+                if is_legacy {
+                    let script_sig_builder = bitcoin::Script::builder()
+                        .push_slice(sig.serialize())
+                        .push_slice(pubkey.inner.serialize());
+
+                    let script = script_sig_builder.as_script();
+
+                    psbt.inputs[inp_idx].final_script_sig = Some(ScriptBuf::from(script));
+                } else if is_segwit {
+                    let mut script_witness = bitcoin::Witness::new();
+                    script_witness.push(sig.to_vec());
+                    script_witness.push(pubkey.to_bytes());
+
+                    psbt.inputs[inp_idx].final_script_witness = Some(script_witness);
+                } else {
+                    // unsupported script type
+                    return Err(ChainError::UnsupportedScriptType);
                 }
-            };
-            psbt.inputs[inp_idx].final_script_witness = Some(script_witness);
+            }
         }
 
-        let signed_tx = psbt.extract_tx().unwrap();
+        let signed_tx = psbt
+            .extract_tx()
+            .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
 
         tx.raw_data = bitcoin::consensus::encode::serialize(&signed_tx);
 
-        tx.signature = bitcoin::consensus::encode::serialize(&signed_tx.compute_wtxid());
+        let has_witness = signed_tx.input.iter().any(|x| !x.witness.is_empty());
+        if has_witness {
+            tx.signature = bitcoin::consensus::encode::serialize(&signed_tx.compute_wtxid());
+        } else {
+            tx.signature = bitcoin::consensus::encode::serialize(&signed_tx.compute_txid());
+        }
 
         tx.tx_hash = bitcoin::consensus::encode::serialize(&signed_tx.compute_txid());
 
         Ok(tx)
     }
-
     fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         let prepared_message = BTC::prepare_message(message);
         let signature = self.sign_raw(private_key, prepared_message.to_vec())?;
@@ -255,11 +291,16 @@ impl Chain for BTC {
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
         Err(ChainError::NotSupported)
     }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::BTC
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::crypto::base64::simple_base64_decode;
     use alloc::string::ToString;
 
     #[test]
@@ -287,16 +328,77 @@ mod test {
     }
 
     #[test]
-    fn test_get_addr_legacy() {
+    fn test_get_addr_btc() {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = "m/44'/3'/0'/0/0".to_string();
 
-        let btc = BTC::new_legacy_btc_based(12, 0x1e, "DOGE", "Dogecoin");
+        let btc = BTC::new();
+        let path = btc.get_path(0, true);
         let seed = btc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let pvk = btc.derive(seed, path).unwrap();
         let pbk = btc.get_pbk(pvk).unwrap();
         let addr = btc.get_address(pbk).unwrap();
+        assert_eq!(addr, "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu");
+    }
+    #[test]
+    fn test_get_addr_doge() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let doge = BTC::new_legacy_btc_based(12, 0x1E, 3, "DOGE", "Dogecoin");
+        let path = doge.get_path(0, true);
+        let seed = doge.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = doge.derive(seed, path).unwrap();
+        let pbk = doge.get_pbk(pvk).unwrap();
+        let addr = doge.get_address(pbk).unwrap();
         assert_eq!(addr, "DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC");
+    }
+
+    #[test]
+    fn test_get_addr_ltc() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let ltc = BTC::new_btc_based(5, "ltc", 2, "LTC", "Litecoin");
+        let path = ltc.get_path(0, true);
+        let seed = ltc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = ltc.derive(seed, path).unwrap();
+        let pbk = ltc.get_pbk(pvk).unwrap();
+        let addr = ltc.get_address(pbk).unwrap();
+        assert_eq!(addr, "ltc1qjmxnz78nmc8nq77wuxh25n2es7rzm5c2rkk4wh");
+    }
+    #[test]
+    fn test_get_addr_dash() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let dash = BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash");
+        let path = dash.get_path(0, true);
+        let seed = dash.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = dash.derive(seed, path).unwrap();
+        let pbk = dash.get_pbk(pvk).unwrap();
+        let addr = dash.get_address(pbk).unwrap();
+        assert_eq!(addr, "XoJA8qE3N2Y3jMLEtZ3vcN42qseZ8LvFf5");
+    }
+    #[test]
+    fn test_get_addr_dgb() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let dgb = BTC::new_btc_based(16, "dgb", 20, "DGB", "Digibyte");
+        let path = dgb.get_path(0, true);
+        let seed = dgb.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = dgb.derive(seed, path).unwrap();
+        let pbk = dgb.get_pbk(pvk).unwrap();
+        let addr = dgb.get_address(pbk).unwrap();
+        assert_eq!(addr, "dgb1q9gmf0pv8jdymcly6lz6fl7lf6mhslsd72e2jq8");
+    }
+    #[test]
+    fn test_get_addr_sys() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let sys = BTC::new_btc_based(15, "sys", 57, "SYS", "Syscoin");
+        let path = sys.get_path(0, true);
+        let seed = sys.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = sys.derive(seed, path).unwrap();
+        let pbk = sys.get_pbk(pvk).unwrap();
+        let addr = sys.get_address(pbk).unwrap();
+        assert_eq!(addr, "sys1q2fs58xaj4tp7qrr3slpdsm65j3nw030d246lmx");
     }
 
     #[test]
@@ -338,5 +440,37 @@ mod test {
         assert_eq!(signed_tx.signature.len(), 32);
         assert_eq!(signed_tx.tx_hash.len(), 32);
         assert_eq!(signed_tx.raw_data.len(), 372);
+    }
+
+    #[test]
+    fn sign_transaction_legacy() {
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let dash = BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash");
+        let path = dash.get_path(1, true);
+
+        let seed = dash.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let pvk = dash.derive(seed, path).unwrap();
+
+        let raw = simple_base64_decode("AQAAAAHCwSwvgCSfVoz5D/2H1Hr7vtgegD0qcHbFVOgbcyU6tQAAAAAA/////wLoAwAAAAAAABl2qRSj2S8bq2S7gVTtEYzSf7UIE0TKhIisBFgPAAAAAAAZdqkUvkIytGCGwdRtEsZerL2Afoe5KlSIrAAAAAA=").unwrap();
+
+        let transaction = Transaction {
+            raw_data: raw,
+            signature: vec![],
+            tx_hash: vec![],
+            options: Option::from(ChainOptions::BTC {
+                prev_scripts: vec![
+                    simple_base64_decode("dqkUvkIytGCGwdRtEsZerL2Afoe5KlSIrA==").unwrap()
+                ],
+                input_amounts: vec![1013578],
+            }),
+        };
+
+        let signed_tx = dash.sign_tx(pvk, transaction).unwrap();
+
+        assert_eq!(signed_tx.signature.len(), 32);
+        assert_eq!(signed_tx.tx_hash.len(), 32);
+        assert_eq!(signed_tx.raw_data.len(), 225);
     }
 }

@@ -1,5 +1,5 @@
 use crate::chains::util::{private_key_from_vec, slice_from_vec};
-use crate::chains::{Chain, ChainError, Transaction, TxInfo};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::b58::custom_b58enc;
 use crate::crypto::bip32;
 use crate::crypto::hash::{ripemd160_digest, sha256_digest};
@@ -103,6 +103,10 @@ impl Chain for XRP {
 
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
         Err(ChainError::NotSupported)
+    }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::XRP
     }
 }
 

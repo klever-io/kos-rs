@@ -1,6 +1,6 @@
 mod models;
 
-use crate::chains::{Chain, ChainError, Transaction, TxInfo, TxType};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo, TxType};
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use crate::crypto::hash::{blake2b_digest, keccak256_digest};
@@ -161,6 +161,10 @@ impl Chain for KLV {
                 tx_type: TxType::Unknown,
             }),
         }
+    }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::KLV
     }
 }
 
@@ -337,6 +341,56 @@ mod test {
             result_tx.tx_hash,
             hex::decode("50fce82cb3f4bf851d86fd594133b13e891d1f565958b0a95b11ce47f2179926")
                 .unwrap()
+        );
+    }
+    #[test]
+    fn test_sign_tx_5() {
+        let pvk = hex::decode("1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727")
+            .unwrap();
+
+        let json = r#"
+        {
+           "RawData": {
+                "Nonce": 606,
+                "Sender": "SqQFUzLDtZNzXexeY++BMVH5GTKLDMSxo72GoRqjZz0=",
+                "Contract": [
+                {
+                    "Parameter": {
+                    "type_url": "type.googleapis.com/proto.TransferContract",
+                    "value": "CiBI/KqGTZBj8/J8YhvX20xb9NP6l5eXRCBmJsWERlhmSRIDS0xWGMCEPQ=="
+                }
+                }
+                ],
+                "Data": [
+                ""
+                ],
+                "KAppFee": 1000000,
+                "BandwidthFee": 2000000,
+                "Version": 1,
+                "ChainID": "MTA4",
+                "KDAFee": {
+                    "KDA": "Q0hJUFMtMUdaUA==",
+                    "Amount": 688200
+                }
+           }
+        }"#;
+        let raw_tx = json.as_bytes().to_vec();
+
+        let tx = crate::chains::Transaction {
+            raw_data: raw_tx,
+            tx_hash: Vec::new(),
+            signature: Vec::new(),
+            options: None,
+        };
+
+        let result_tx = crate::chains::klv::KLV {}.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(
+            result_tx.tx_hash,
+            vec![
+                60, 222, 134, 3, 87, 86, 2, 184, 223, 221, 53, 134, 54, 27, 20, 178, 197, 31, 20,
+                66, 12, 107, 186, 61, 21, 82, 78, 66, 210, 190, 124, 194
+            ]
         );
     }
 

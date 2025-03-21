@@ -1,5 +1,5 @@
 use crate::chains::util::private_key_from_vec;
-use crate::chains::{Chain, ChainError, Transaction, TxInfo};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use crate::crypto::hash::sha3_digest;
@@ -83,6 +83,10 @@ impl Chain for APT {
 
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
         Err(ChainError::NotSupported)
+    }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::APT
     }
 }
 
