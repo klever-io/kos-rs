@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(clippy::to_string_in_format_args)]
 use kos::chains;
 
 mod models;

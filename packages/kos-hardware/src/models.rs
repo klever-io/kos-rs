@@ -1,8 +1,8 @@
+use crate::DebugErrorHandler;
 use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
 use kos::chains::TxInfo;
-use crate::DebugErrorHandler;
 
 #[repr(C)]
 pub struct CNodeStruct {
@@ -175,6 +175,7 @@ impl CTxInfo {
         };
     }
 
+    #[allow(clippy::to_string_in_format_args)]
     pub fn to_tx_info(&self) -> TxInfo {
         let sender = String::from_utf8(self.read_sender()).unwrap_or_else(|e| {
             unsafe {
@@ -192,7 +193,7 @@ impl CTxInfo {
 
         TxInfo {
             sender,
-            receiver: receiver,
+            receiver,
             value: self.value,
             tx_type: match self.tx_type {
                 1 => crate::chains::TxType::Unknown,
