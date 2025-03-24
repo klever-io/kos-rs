@@ -2111,7 +2111,7 @@ dependencies = [
 
 [[package]]
 name = "kos-hardware"
-version = "0.1.0"
+version = "0.2.13"
 dependencies = [
  "kos",
  "tiny-json-rs",
