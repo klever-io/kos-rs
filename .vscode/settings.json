@@ -1,8 +1,13 @@
 {
     "rust-analyzer.linkedProjects": [
-        "./packages/kos/Cargo.toml",
-        "./packages/kos-web/Cargo.toml",
+        "packages/kos/Cargo.toml",
+        "packages/kos-codec/Cargo.toml",
+        "packages/kos-mobile/Cargo.toml",
+        "packages/kos-web/Cargo.toml",
         "./packages/kos-hardware/Cargo.toml",
-        "./packages/kos-mobile/Cargo.toml",
-    ]
+    ],
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true
+    }
 }

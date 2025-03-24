@@ -2,7 +2,7 @@ mod models;
 
 use crate::chains::substrate::models::ExtrinsicPayload;
 use crate::chains::util::private_key_from_vec;
-use crate::chains::{Chain, ChainError, ChainOptions, Transaction, TxInfo};
+use crate::chains::{Chain, ChainError, ChainOptions, ChainType, Transaction, TxInfo};
 use crate::crypto::hash::{blake2b_64_digest, blake2b_digest};
 use crate::crypto::sr25519::Sr25519Trait;
 use crate::crypto::{b58, bip32, sr25519};
@@ -208,6 +208,10 @@ impl Chain for Substrate {
             value: tx_info.amount.to_f64(self.get_decimals()),
         };
         Ok(new_tx_info)
+    }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::SUBSTRATE
     }
 }
 
