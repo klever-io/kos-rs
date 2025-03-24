@@ -2101,20 +2101,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "kos-hardware"
-version = "0.1.0"
-dependencies = [
- "kos",
- "tiny-json-rs",
-]
-
-[[package]]
 name = "kos-codec"
 version = "0.2.13"
 dependencies = [
  "hex",
  "kos",
  "xrpl-rust",
+]
+
+[[package]]
+name = "kos-hardware"
+version = "0.1.0"
+dependencies = [
+ "kos",
+ "tiny-json-rs",
 ]
 
 [[package]]

@@ -77,3 +77,4 @@ not-ksafe = [
 ]
 ksafe = []
 android = []
+extension = ["getrandom/js"]
