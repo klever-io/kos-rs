@@ -10,9 +10,9 @@ mod rng;
 pub mod secp256k1;
 pub mod sr25519;
 
-#[cfg(not(feature = "ksafe"))]
+#[cfg(feature = "not-ksafe")]
 pub mod cipher;
-#[cfg(not(feature = "ksafe"))]
+#[cfg(feature = "not-ksafe")]
 pub mod mnemonic;
 
 #[allow(clippy::module_inception)]
