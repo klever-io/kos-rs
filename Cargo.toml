@@ -50,4 +50,4 @@ serde_json = "1.0"
 lazy_static = "1.4.0"
 thiserror = "1.0"
 
-kos = { version = "0.2.12", path = "./packages/kos", default-features = false }
+kos = { version = "0.2.12", path = "./packages/kos", default-features = false, features = ["not-ksafe"] }
