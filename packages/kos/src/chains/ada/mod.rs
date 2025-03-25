@@ -112,7 +112,7 @@ impl Chain for ADA {
 
                 Ok(address.encode_bech32()?.to_string())
             }
-            64 => {
+            64 | 32 => {
                 let payment = StakeCredential::new(&public_key[0..32]);
                 let address = Address {
                     network: 1,
@@ -138,12 +138,18 @@ impl Chain for ADA {
         Ok(tx)
     }
 
-    fn sign_message(
-        &self,
-        _private_key: Vec<u8>,
-        _message: Vec<u8>,
-    ) -> Result<Vec<u8>, ChainError> {
-        Err(ChainError::NotSupported)
+    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+        let sig = self.sign_raw(private_key.clone(), message)?;
+
+        let pbk = self.get_pbk(private_key)?;
+
+        // public key is not recoverable from signature. So append it to the signature
+        let mut sig_with_pbk = Vec::new();
+
+        sig_with_pbk.append(&mut sig.to_vec());
+        sig_with_pbk.append(&mut pbk.to_vec());
+
+        Ok(sig_with_pbk)
     }
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -182,7 +188,6 @@ mod test {
 
         let pvk = ada.derive(seed, path).unwrap();
         let pbk = ada.get_pbk(pvk).unwrap();
-        println!("{:?}", pbk.len());
 
         let addr = ada.get_address(pbk).unwrap();
         assert_eq!(
@@ -217,5 +222,26 @@ mod test {
         let signed_tx = ada.sign_tx(pvk, tx).unwrap();
 
         println!("{:}", hex::encode(signed_tx.raw_data))
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+                .to_string();
+        let ada = super::ADA {
+            extended_key: false,
+        };
+
+        let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = ada.get_path(0, false);
+
+        let pvk = ada.derive(seed, path).unwrap();
+
+        let message = "hello world".as_bytes().to_vec();
+
+        let sig = ada.sign_message(pvk, message).unwrap();
+
+        assert_eq!(hex::encode(sig), "c9343740a90a19a4ffac066357297c41401dd90710266445803a010a53cc041c3cb5cbbdb6a7ec2e41f8bc9c640876458d3ae31652abe2de2086ea34676923007ea09a34aebb13c9841c71397b1cabfec5ddf950405293dee496cac2f437480a".to_string())
     }
 }
