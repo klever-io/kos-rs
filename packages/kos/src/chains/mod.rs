@@ -356,6 +356,10 @@ pub enum ChainOptions {
         transaction_version: u32,
         app_id: Option<u32>,
     },
+    COSMOS {
+        chain_id: String,
+        account_number: u64,
+    },
 }
 
 #[allow(dead_code)]

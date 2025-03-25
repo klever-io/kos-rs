@@ -1,6 +1,7 @@
 mod chains;
 
 use crate::chains::ada;
+use crate::chains::atom;
 use crate::chains::xrp;
 use kos::chains::{get_chain_by_base_id, ChainError, ChainType, Transaction};
 
@@ -32,7 +33,7 @@ pub fn encode_for_signing(
         ChainType::ADA => ada::encode_for_sign(transaction)?,
         ChainType::SUI => transaction,
         ChainType::APT => transaction,
-        ChainType::ATOM => transaction,
+        ChainType::ATOM => atom::encode_for_sign(transaction)?,
         ChainType::BCH => transaction,
         ChainType::BNB => transaction,
     })
@@ -59,7 +60,7 @@ pub fn encode_for_broadcast(
         ChainType::ADA => ada::encode_for_broadcast(transaction)?,
         ChainType::SUI => transaction,
         ChainType::APT => transaction,
-        ChainType::ATOM => transaction,
+        ChainType::ATOM => atom::encode_for_broadcast(transaction)?,
         ChainType::BCH => transaction,
         ChainType::BNB => transaction,
     })
