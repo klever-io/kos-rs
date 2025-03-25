@@ -1,6 +1,6 @@
 mod models;
 
-use crate::chains::{Chain, ChainError, Transaction, TxInfo, TxType};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo, TxType};
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use crate::crypto::hash::{blake2b_digest, keccak256_digest};
@@ -162,12 +162,17 @@ impl Chain for KLV {
             }),
         }
     }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::KLV
+    }
 }
 
 #[cfg(test)]
 mod test {
     use crate::chains::Chain;
     use alloc::string::{String, ToString};
+    use alloc::vec;
     use alloc::vec::Vec;
 
     #[test]

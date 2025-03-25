@@ -1,5 +1,5 @@
 use crate::chains::util::private_key_from_vec;
-use crate::chains::{Chain, ChainError, Transaction, TxInfo};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use crate::crypto::hash::sha224_digest;
@@ -76,6 +76,7 @@ impl Chain for ICP {
         Ok(addr)
     }
 
+    #[cfg(not(feature = "ksafe"))]
     fn sign_tx(
         &self,
         private_key: Vec<u8>,
@@ -111,6 +112,16 @@ impl Chain for ICP {
         Ok(tx)
     }
 
+    #[cfg(feature = "ksafe")]
+    fn sign_tx(
+        &self,
+        _private_key: Vec<u8>,
+        mut _tx: Transaction,
+    ) -> Result<Transaction, ChainError> {
+        // This is just because of serde_json usage
+        todo!()
+    }
+
     fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         let public_key = self.get_pbk(private_key.clone())?;
 
@@ -133,6 +144,10 @@ impl Chain for ICP {
 
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
         todo!()
+    }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::ICP
     }
 }
 

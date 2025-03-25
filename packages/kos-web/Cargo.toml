@@ -15,7 +15,7 @@ crate-type = ["cdylib", "rlib"]
 default = ["serde"]
 
 [dependencies]
-strum = { version = "0.25", features = ["derive"] }
+strum = { version = "0.26.3", features = ["derive"] }
 serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true }
 serde-wasm-bindgen = "0.5"
@@ -26,7 +26,9 @@ enum_dispatch = "0.3"
 pem = "3"
 postcard = { version = "1.0.6", features = ["use-std"] }
 lazy_static = { workspace = true }
-kos = { workspace = true }
+kos = { workspace = true, features = ["not-ksafe"] }
 wasm-bindgen = { workspace = true }
 num-bigint = "0.4"
 num-traits = "0.2"
+kos-codec = { path = "../kos-codec" }
+

@@ -1,12 +1,13 @@
 mod models;
 
 use crate::chains::util::private_key_from_vec;
-use crate::chains::{Chain, ChainError, Transaction, TxInfo};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use alloc::format;
 use alloc::string::String;
+use alloc::vec;
 use alloc::vec::Vec;
 
 #[allow(clippy::upper_case_acronyms)]
@@ -103,6 +104,10 @@ impl Chain for SOL {
 
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
         Err(ChainError::NotSupported)
+    }
+
+    fn get_chain_type(&self) -> ChainType {
+        ChainType::SOL
     }
 }
 
@@ -263,7 +268,7 @@ mod test {
         let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
 
         let message = "Hello, World!".as_bytes().to_vec();
-        let result = sol.sign_message(pvk.clone(), message.into()).unwrap();
+        let result = sol.sign_message(pvk.clone(), message).unwrap();
 
         // Same transaction signed with same key should produce same signature and hash
         assert_eq!(hex::encode(&result), "e8ebd3bf665fe5b57e421c477fa4187ef5f1275ddc8dbf693dd684a0164f11aef22bb98416e2e765d39dbb38451d8996fea135baa9e9fd13890286e8be0e8200");

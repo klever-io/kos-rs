@@ -14,18 +14,6 @@ build = "build.rs"
 name = "kos"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
-#
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[profile.release]
-opt-level = 'z' # Optimize for size
-lto = true # Enable Link Time Optimization
-panic = 'abort' # Generally reduces size for embedded systems
-codegen-units = 1 # more aggressive code merging
-strip = true # Strip symbols from the final binary
-
-[profile.dev]
-panic = 'abort'
-
 [dependencies]
 hmac = { version = "0.12", default-features = false }
 sha2 = { version = "0.10", default-features = false }
@@ -40,28 +28,25 @@ tiny-json-rs = "0.2.5"
 ripemd = { version = "0.1.3", default-features = false }
 schnorrkel = { version = "0.11.4", default-features = false }
 ed25519-dalek = { version = "2.1.0", features = ["hazmat"], default-features = false }
-pbkdf2 = { version = "0.12.2 ", features = ["sha2", "hmac", "password-hash"], default-features = false }
+pbkdf2 = { version = "0.12.2", features = ["sha2", "hmac", "password-hash"], default-features = false }
 bip39-dict = { version = "0.1.0", features = ["english"], default-features = false }
 libsecp256k1 = { version = "0.7.1", features = ["hmac", "static-context"], default-features = false }
 rand_core = { version = "0.6.4", default-features = false }
 parity-scale-codec = { version = "3.6.9", default-features = false, features = ["derive"] }
 bitcoin = { version = "0.32.5", default-features = false }
 
-[target.'cfg(not(feature = "ksafe"))'.dependencies]
-rand = { workspace = true }
-coins-bip32 = { workspace = true }
-coins-bip39 = { workspace = true }
-rand_core = { version = "0.6.4", features = ["getrandom"], default-features = false }
-getrandom = { version = "0.2", features = ["js"] }
-alloy-dyn-abi = { version = "0.8.5", features = ["eip712"] }
-serde_json = { workspace = true }
-aes-gcm = "0.10"
-aes = { version = "0.8" }
-pem = "3"
-cfb-mode = "0.8"
-cbc = { version = "0.1", features = ["block-padding", "std"] }
-pbkdf2 = { version = "0.12", features = ["simple"] }
-serde = { version = "1.0.215", features = ["derive"] }
+rand = { workspace = true, optional = true }
+coins-bip32 = { workspace = true, optional = true }
+coins-bip39 = { workspace = true, optional = true }
+getrandom = { version = "0.2", features = ["js"], optional = true }
+alloy-dyn-abi = { version = "0.8.5", features = ["eip712"], optional = true }
+serde_json = { workspace = true, optional = true }
+aes-gcm = { version = "0.10", optional = true }
+aes = { version = "0.8", optional = true }
+pem = { version = "3", optional = true }
+cfb-mode = { version = "0.8", optional = true }
+cbc = { version = "0.1", features = ["block-padding", "std"], optional = true }
+serde = { version = "1.0.215", features = ["derive"], optional = true }
 
 [build-dependencies]
 prost-build = "0.12.1"
@@ -73,5 +58,23 @@ heck = "0.4.1"
 
 
 [features]
+default = ["not-ksafe"]
+not-ksafe = [
+    "rand",
+    "coins-bip32",
+    "coins-bip39",
+    "rand_core/getrandom",
+    "getrandom",
+    "alloy-dyn-abi",
+    "serde_json",
+    "aes-gcm",
+    "aes",
+    "pem",
+    "cfb-mode",
+    "cbc",
+    "pbkdf2/simple",
+    "serde"
+]
 ksafe = []
 android = []
+extension = ["getrandom/js"]

@@ -9,6 +9,7 @@ use crate::utils::unpack;
 use kos::chains::util::hex_string_to_vec;
 use kos::chains::{get_chain_by_base_id, ChainOptions, Transaction as KosTransaction};
 use kos::crypto::base64;
+use kos_codec::{encode_for_broadcast, encode_for_signing, KosCodedAccount};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -347,14 +348,24 @@ impl Wallet {
                 let chain = get_chain_by_base_id(self.chain)
                     .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
+                let kos_codec_acc = KosCodedAccount {
+                    chain_id: chain.get_id(),
+                    address: self.public_address.clone(),
+                    public_key: self.public_key.clone(),
+                };
+
+                let encoded = encode_for_signing(kos_codec_acc.clone(), tx)?;
+
                 let signed_tx = chain
-                    .sign_tx(pk_bytes, tx)
+                    .sign_tx(pk_bytes, encoded)
                     .map_err(|e| Error::WalletManager(format!("sign transaction: {}", e)))?;
 
+                let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_tx)?;
+
                 Ok(Transaction {
-                    raw_data: signed_tx.raw_data,
-                    tx_hash: signed_tx.tx_hash,
-                    signature: signed_tx.signature,
+                    raw_data: encoded_to_broadcast.raw_data,
+                    tx_hash: encoded_to_broadcast.tx_hash,
+                    signature: encoded_to_broadcast.signature,
                 })
             }
             None => Err(Error::WalletManager("no private key".to_string())),
