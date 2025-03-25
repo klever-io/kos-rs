@@ -2,11 +2,21 @@
 # https://doc.rust-lang.org/edition-guide/rust-2021/default-cargo-resolver.html#details
 resolver = "2"
 members = [
-    "packages/kos", "packages/kos-codec", "packages/kos-mobile", "packages/kos-web",
+    "packages/kos", "packages/kos-mobile", "packages/kos-web", "packages/kos-hardware",
+    "packages/kos-codec",
 ]
 # This makes the compiled code faster and smaller, but it makes compiling slower,
 # so it's only enabled in release mode.
 # lto = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[profile.hardware]
+inherits = "release"
+opt-level = 'z'   # Optimize for size
+lto = true        # Enable Link Time Optimization
+panic = 'abort'   # Generally reduces size for embedded systems
+codegen-units = 1 # more aggressive code merging
+strip = true      # Strip symbols from the final binary
 
 [workspace.package]
 authors = ["Klever <kos@klever.io>"]
@@ -15,7 +25,7 @@ homepage = "https://klever.org/"
 license = "Apache-2.0"
 repository = "https://github.com/kleverio/kos-rs"
 rust-version = "1.69.0"
-version = "0.2.12"
+version = "0.2.13"
 
 [workspace.dependencies]
 bech32 = "0.9.1"
@@ -41,4 +51,4 @@ serde_json = "1.0"
 lazy_static = "1.4.0"
 thiserror = "1.0"
 
-kos = { version = "0.2.12", path = "./packages/kos", default-features = false }
+kos = { version = "0.2.13", path = "./packages/kos", default-features = false, features = ["not-ksafe"] }

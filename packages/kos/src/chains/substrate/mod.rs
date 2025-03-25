@@ -6,6 +6,7 @@ use crate::chains::{Chain, ChainError, ChainOptions, ChainType, Transaction, TxI
 use crate::crypto::hash::{blake2b_64_digest, blake2b_digest};
 use crate::crypto::sr25519::Sr25519Trait;
 use crate::crypto::{b58, bip32, sr25519};
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use models::{Call, CallArgs};
@@ -219,6 +220,7 @@ mod test {
     use crate::chains::{Chain, ChainOptions, Transaction};
     use crate::crypto::base64::simple_base64_decode;
     use alloc::string::{String, ToString};
+    use alloc::vec::Vec;
     use serde::Deserialize;
 
     #[derive(Deserialize)]
@@ -257,14 +259,14 @@ mod test {
         let tx_browser: TxBrowser = serde_json::from_str(&tx).unwrap();
         let call = hex::decode(tx_browser.method.trim_start_matches("0x")).unwrap();
         let era = hex::decode(tx_browser.era.trim_start_matches("0x")).unwrap();
-        let nonce = u32::from_str_radix(&tx_browser.nonce.trim_start_matches("0x"), 16).unwrap();
-        let tip = u8::from_str_radix(&tx_browser.tip.trim_start_matches("0x"), 16).unwrap();
+        let nonce = u32::from_str_radix(tx_browser.nonce.trim_start_matches("0x"), 16).unwrap();
+        let tip = u8::from_str_radix(tx_browser.tip.trim_start_matches("0x"), 16).unwrap();
         let block_hash = hex::decode(tx_browser.block_hash.trim_start_matches("0x")).unwrap();
         let genesis_hash = hex::decode(tx_browser.genesis_hash.trim_start_matches("0x")).unwrap();
         let spec_version =
-            u32::from_str_radix(&tx_browser.spec_version.trim_start_matches("0x"), 16).unwrap();
+            u32::from_str_radix(tx_browser.spec_version.trim_start_matches("0x"), 16).unwrap();
         let transaction_version =
-            u32::from_str_radix(&tx_browser.transaction_version.trim_start_matches("0x"), 16)
+            u32::from_str_radix(tx_browser.transaction_version.trim_start_matches("0x"), 16)
                 .unwrap();
         let app_id = None;
 
