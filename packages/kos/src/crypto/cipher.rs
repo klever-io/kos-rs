@@ -9,7 +9,12 @@ use aes_gcm::{
     Nonce,
 };
 
+use crate::alloc::borrow::ToOwned;
+use crate::alloc::string::{String, ToString};
 use crate::chains::ChainError;
+use alloc::format;
+use alloc::vec;
+use alloc::vec::Vec;
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
 use pbkdf2::{

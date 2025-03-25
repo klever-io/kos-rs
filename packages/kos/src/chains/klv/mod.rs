@@ -172,6 +172,7 @@ impl Chain for KLV {
 mod test {
     use crate::chains::Chain;
     use alloc::string::{String, ToString};
+    use alloc::vec;
     use alloc::vec::Vec;
 
     #[test]
