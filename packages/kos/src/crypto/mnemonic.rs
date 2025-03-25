@@ -16,11 +16,10 @@ pub fn validate_mnemonic(phrase: &str) -> Result<(), ChainError> {
 
 pub fn mnemonic_to_seed(phrase: &str, passphrase: &str) -> Result<Vec<u8>, ChainError> {
     let _mnemonic: Mnemonic<English> = phrase.parse()?;
-    Ok(
-        _mnemonic.to_seed(Some(passphrase))
-            .map(|seed| seed.to_vec())
-            .map_err(|_| ChainError::InvalidMnemonic)?,
-    )
+    Ok(_mnemonic
+        .to_seed(Some(passphrase))
+        .map(|seed| seed.to_vec())
+        .map_err(|_| ChainError::InvalidMnemonic)?)
 }
 
 impl From<coins_bip39::MnemonicError> for ChainError {
