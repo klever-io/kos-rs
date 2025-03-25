@@ -13,7 +13,15 @@ use alloc::vec::Vec;
 
 pub const BASE_ID: u32 = 20;
 
-pub struct ADA {}
+pub struct ADA {
+    extended_key: bool,
+}
+
+impl ADA {
+    pub fn new(extended_key: bool) -> Self {
+        ADA { extended_key }
+    }
+}
 
 impl Chain for ADA {
     fn get_id(&self) -> u32 {
@@ -69,6 +77,11 @@ impl Chain for ADA {
                 pvk.copy_from_slice(&private_key[..64]);
                 cc.copy_from_slice(&private_key[64..]);
                 let vk = self.get_pbk(pvk.to_vec())?;
+
+                if !self.extended_key {
+                    return Ok(vk);
+                }
+
                 let mut xvk = Vec::new();
                 xvk.append(&mut vk.to_vec());
                 xvk.append(&mut cc.to_vec());
@@ -160,7 +173,9 @@ mod test {
         let mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
                 .to_string();
-        let ada = super::ADA {};
+        let ada = super::ADA {
+            extended_key: false,
+        };
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = ada.get_path(0, false);
@@ -181,7 +196,9 @@ mod test {
         let mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
                 .to_string();
-        let ada = super::ADA {};
+        let ada = super::ADA {
+            extended_key: false,
+        };
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = ada.get_path(0, false);

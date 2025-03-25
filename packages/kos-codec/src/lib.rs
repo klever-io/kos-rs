@@ -9,7 +9,6 @@ pub struct KosCodedAccount {
     pub chain_id: u32,
     pub address: String,
     pub public_key: String,
-    pub private_key: String,
 }
 
 pub fn encode_for_signing(
