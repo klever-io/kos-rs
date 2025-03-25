@@ -3,7 +3,8 @@ use cosmrs::proto::prost::Message;
 use kos::chains::{ChainError, ChainOptions, Transaction};
 
 pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, ChainError> {
-    let tx_decoded: Tx = Tx::decode(transaction.raw_data.as_ref()).unwrap();
+    let tx_decoded: Tx = Tx::decode(transaction.raw_data.as_ref())
+        .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
 
     let options = transaction
         .options
@@ -20,10 +21,20 @@ pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, Chai
         }
     };
 
+    let auth_info_bytes = tx_decoded
+        .auth_info
+        .ok_or_else(|| ChainError::InvalidTransaction("missing auth_info".to_string()))?
+        .encode_to_vec();
+
+    let body_bytes = tx_decoded
+        .body
+        .ok_or_else(|| ChainError::InvalidTransaction("missing body".to_string()))?
+        .encode_to_vec();
+
     let sign_doc = cosmrs::proto::cosmos::tx::v1beta1::SignDoc {
         account_number,
-        auth_info_bytes: tx_decoded.auth_info.clone().unwrap().encode_to_vec(),
-        body_bytes: tx_decoded.body.clone().unwrap().encode_to_vec(),
+        auth_info_bytes,
+        body_bytes,
         chain_id: chain_id.to_string(),
     };
 
@@ -32,7 +43,8 @@ pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, Chai
 }
 
 pub fn encode_for_broadcast(mut transaction: Transaction) -> Result<Transaction, ChainError> {
-    let mut tx_decoded = Tx::decode(transaction.clone().raw_data.as_ref()).unwrap();
+    let mut tx_decoded = Tx::decode(transaction.clone().raw_data.as_ref())
+        .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
 
     let mut signatures: Vec<Vec<u8>> = Vec::new();
     signatures.extend_from_slice(&[transaction.clone().signature]);
@@ -40,7 +52,7 @@ pub fn encode_for_broadcast(mut transaction: Transaction) -> Result<Transaction,
 
     let tx_raw =
         cosmrs::proto::cosmos::tx::v1beta1::TxRaw::decode(tx_decoded.encode_to_vec().as_ref())
-            .unwrap();
+            .map_err(|_| ChainError::DecodeRawTx)?;
 
     transaction.raw_data = tx_raw.encode_to_vec();
 
