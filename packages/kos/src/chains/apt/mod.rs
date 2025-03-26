@@ -1,3 +1,5 @@
+mod models;
+
 use crate::chains::util::private_key_from_vec;
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::bip32;
@@ -61,8 +63,44 @@ impl Chain for APT {
         Ok(addr)
     }
 
-    fn sign_tx(&self, _private_key: Vec<u8>, _tx: Transaction) -> Result<Transaction, ChainError> {
-        Err(ChainError::NotSupported)
+    fn sign_tx(
+        &self,
+        private_key: Vec<u8>,
+        mut tx: Transaction,
+    ) -> Result<Transaction, ChainError> {
+        if private_key.is_empty() {
+            return Err(ChainError::InvalidPrivateKey);
+        }
+
+        let specific_str =
+            String::from_utf8(tx.raw_data.clone()).map_err(|_| ChainError::DecodeRawTx)?;
+
+        let mut specific: TxSpecific =
+            tiny_json_rs::decode(specific_str).map_err(|_| ChainError::DecodeRawTx)?;
+
+        let signing_message = hex::decode(specific.signing_message.trim_start_matches("0x"))
+            .map_err(|_| ChainError::ProtoDecodeError)?;
+
+        let signature = self.sign_raw(private_key.clone(), signing_message)?;
+
+        let public_key = self.get_pbk(private_key)?;
+
+        let signature_hex = format!("0x{}", hex::encode(&signature));
+        let public_key_hex = format!("0x{}", hex::encode(&public_key));
+
+        let transaction_signature = models::AptosSignature {
+            r#type: "ed25519_signature".to_string(),
+            public_key: public_key_hex,
+            signature: signature_hex.clone(),
+        };
+
+        specific.transaction.signature = Some(transaction_signature);
+
+        let specific_json = tiny_json_rs::encode(specific);
+        tx.raw_data = specific_json.as_bytes().to_vec();
+        tx.signature = signature_hex.as_bytes().to_vec();
+
+        Ok(tx)
     }
 
     fn sign_message(
