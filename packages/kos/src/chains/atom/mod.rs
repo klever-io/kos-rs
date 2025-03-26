@@ -157,6 +157,7 @@ impl Chain for ATOM {
 #[cfg(test)]
 mod test {
     use super::*;
+    use alloc::vec;
 
     #[test]
     fn test_get_addr() {
