@@ -74,6 +74,10 @@ enum TransactionChainOptions {
         transaction_version: u32,
         app_id: Option<u32>,
     },
+    Cosmos {
+        chain_id: String,
+        account_number: u64,
+    },
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -126,6 +130,17 @@ fn new_bitcoin_transaction_options(
 #[uniffi::export]
 fn new_evm_transaction_options(chain_id: u32) -> TransactionChainOptions {
     TransactionChainOptions::Evm { chain_id }
+}
+
+#[uniffi::export]
+fn new_cosmos_transaction_options(
+    chain_id: String,
+    account_number: u64,
+) -> TransactionChainOptions {
+    TransactionChainOptions::Cosmos {
+        chain_id,
+        account_number,
+    }
 }
 
 #[uniffi::export]
@@ -249,6 +264,13 @@ fn sign_transaction(
             spec_version,
             transaction_version,
             app_id,
+        }),
+        Some(TransactionChainOptions::Cosmos {
+            chain_id,
+            account_number,
+        }) => Some(ChainOptions::COSMOS {
+            chain_id,
+            account_number,
         }),
         None => None,
     };

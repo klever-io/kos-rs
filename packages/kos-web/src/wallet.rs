@@ -106,6 +106,21 @@ impl TransactionChainOptions {
             },
         })
     }
+
+    #[wasm_bindgen(js_name = "newCosmosSignOptions")]
+    pub fn new_cosmos_sign_options(
+        chain_id: String,
+        account_number: u64,
+    ) -> TransactionChainOptions {
+        TransactionChainOptions {
+            data: {
+                ChainOptions::COSMOS {
+                    chain_id,
+                    account_number,
+                }
+            },
+        }
+    }
 }
 
 #[wasm_bindgen]
