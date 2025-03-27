@@ -4,7 +4,7 @@ use crate::chains::ada::models::RosettaTransaction;
 use crate::KosCodedAccount;
 use kos::chains::{ChainError, Transaction};
 use kos::crypto::hash::blake2b_digest;
-use pallas_primitives::alonzo::{TransactionBody, VKeyWitness, WitnessSet};
+use pallas_primitives::alonzo::{TransactionBody, Tx, VKeyWitness, WitnessSet};
 use pallas_primitives::{Fragment, Nullable};
 
 fn hash_transaction_body(tx_body: TransactionBody) -> Result<[u8; 32], ChainError> {
@@ -21,13 +21,23 @@ fn hash_transaction_body(tx_body: TransactionBody) -> Result<[u8; 32], ChainErro
 }
 
 pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, ChainError> {
-    let rosetta_tx: RosettaTransaction = ciborium::de::from_reader(transaction.raw_data.as_slice())
-        .map_err(|e| ChainError::InvalidData(e.to_string()))?;
+    let tx_body = match ciborium::de::from_reader(transaction.raw_data.as_slice()) {
+        Ok(rosetta_tx) => {
+            let rosetta_tx: RosettaTransaction = rosetta_tx;
+            let metadata =
+                hex::decode(rosetta_tx.0).map_err(|e| ChainError::InvalidData(e.to_string()))?;
 
-    let metadata = hex::decode(rosetta_tx.0).unwrap();
+            TransactionBody::decode_fragment(metadata.as_slice())
+                .map_err(|e| ChainError::InvalidData(e.to_string()))?
+        }
+        Err(_) => {
+            // If fails to decode as RosettaTransaction, try to decode as Tx
+            let tx = Tx::decode_fragment(transaction.raw_data.as_slice())
+                .map_err(|e| ChainError::InvalidData(e.to_string()))?;
 
-    let tx_body = TransactionBody::decode_fragment(metadata.as_slice())
-        .map_err(|e| ChainError::InvalidData(e.to_string()))?;
+            tx.transaction_body
+        }
+    };
 
     let hash = hash_transaction_body(tx_body)?;
 
@@ -66,7 +76,7 @@ pub fn encode_for_broadcast(
         redeemer: None,
     };
 
-    let cardano_tx = pallas_primitives::alonzo::Tx {
+    let cardano_tx = Tx {
         transaction_body: tx_body,
         transaction_witness_set: witness_set,
         success: true,
