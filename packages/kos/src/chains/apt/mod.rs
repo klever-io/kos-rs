@@ -67,18 +67,22 @@ impl Chain for APT {
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
         let sig = self.sign_raw(private_key.clone(), tx.raw_data.clone())?;
-
         tx.signature = sig;
-
         Ok(tx)
     }
 
-    fn sign_message(
-        &self,
-        _private_key: Vec<u8>,
-        _message: Vec<u8>,
-    ) -> Result<Vec<u8>, ChainError> {
-        Err(ChainError::NotSupported)
+    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+        let sig = self.sign_raw(private_key.clone(), message)?;
+
+        let pbk = self.get_pbk(private_key)?;
+
+        // public key is not recoverable from signature. So append it to the signature
+        let mut sig_with_pbk = Vec::new();
+
+        sig_with_pbk.append(&mut sig.to_vec());
+        sig_with_pbk.append(&mut pbk.to_vec());
+
+        Ok(sig_with_pbk)
     }
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -118,5 +122,24 @@ mod test {
             addr,
             "0xeb663b681209e7087d681c5d3eed12aaa8e1915e7c87794542c3f96e94b3d3bf"
         );
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+                .to_string();
+        let ada = super::APT {};
+
+        let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = ada.get_path(0, false);
+
+        let pvk = ada.derive(seed, path).unwrap();
+
+        let message = "hello world".as_bytes().to_vec();
+
+        let sig = ada.sign_message(pvk, message).unwrap();
+
+        assert_eq!(hex::encode(sig), "7c2879913c2939e6e62d45cd3c30fbed11dd37cc147a38e8dbd12b6dee537342f7404632535522156331a44992753ef35982456aed78f7345d85f8c63718cf01a686f0309ab80312979606cfccc10ea2740147ae6888351488d11c46f08fbf60".to_string())
     }
 }
