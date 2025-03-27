@@ -15,6 +15,9 @@ crate-type = ["lib"]
 
 [dependencies]
 kos = { workspace = true }
-xrpl-rust = { version = "0.5.0", default-features = false, features = ["core", "utils"] }
+ciborium = "0.2.2"
 hex = { version = "0.4.3", features = ["alloc"], default-features = false }
+xrpl-rust = { version = "0.5.0", default-features = false, features = ["core", "utils"] }
 cosmrs = { version = "0.21.1", default-features = false }
+serde = { version = "1.0.217", features = ["derive"] }
+pallas-primitives = "0.32.0"

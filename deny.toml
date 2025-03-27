@@ -39,6 +39,7 @@ allow = [
     "Zlib",
     "Unicode-3.0",
     "ISC",
+    "BlueOak-1.0.0"
 ]
 
 [[licenses.clarify]]

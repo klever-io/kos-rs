@@ -639,8 +639,8 @@ impl ChainRegistry {
             (
                 constants::ADA,
                 ChainInfo {
-                    factory: || Box::new(ADA {}),
-                    supported: false,
+                    factory: || Box::new(ADA::new(false)),
+                    supported: true,
                 },
             ),
             (

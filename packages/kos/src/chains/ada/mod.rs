@@ -10,11 +10,21 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
-pub struct ADA {}
+pub const BASE_ID: u32 = 20;
+
+pub struct ADA {
+    extended_key: bool,
+}
+
+impl ADA {
+    pub fn new(extended_key: bool) -> Self {
+        ADA { extended_key }
+    }
+}
 
 impl Chain for ADA {
     fn get_id(&self) -> u32 {
-        20
+        BASE_ID
     }
 
     fn get_name(&self) -> &str {
@@ -26,7 +36,7 @@ impl Chain for ADA {
     }
 
     fn get_decimals(&self) -> u32 {
-        todo!()
+        6
     }
 
     fn mnemonic_to_seed(&self, mnemonic: String, _password: String) -> Result<Vec<u8>, ChainError> {
@@ -66,6 +76,11 @@ impl Chain for ADA {
                 pvk.copy_from_slice(&private_key[..64]);
                 cc.copy_from_slice(&private_key[64..]);
                 let vk = self.get_pbk(pvk.to_vec())?;
+
+                if !self.extended_key {
+                    return Ok(vk);
+                }
+
                 let mut xvk = Vec::new();
                 xvk.append(&mut vk.to_vec());
                 xvk.append(&mut cc.to_vec());
@@ -96,7 +111,7 @@ impl Chain for ADA {
 
                 Ok(address.encode_bech32()?.to_string())
             }
-            64 => {
+            64 | 32 => {
                 let payment = StakeCredential::new(&public_key[0..32]);
                 let address = Address {
                     network: 1,
@@ -111,16 +126,29 @@ impl Chain for ADA {
         }
     }
 
-    fn sign_tx(&self, _private_key: Vec<u8>, _tx: Transaction) -> Result<Transaction, ChainError> {
-        Err(ChainError::NotSupported)
+    fn sign_tx(
+        &self,
+        private_key: Vec<u8>,
+        mut tx: Transaction,
+    ) -> Result<Transaction, ChainError> {
+        let sig = self.sign_raw(private_key, tx.tx_hash.clone())?;
+
+        tx.signature = sig;
+        Ok(tx)
     }
 
-    fn sign_message(
-        &self,
-        _private_key: Vec<u8>,
-        _message: Vec<u8>,
-    ) -> Result<Vec<u8>, ChainError> {
-        Err(ChainError::NotSupported)
+    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+        let sig = self.sign_raw(private_key.clone(), message)?;
+
+        let pbk = self.get_pbk(private_key)?;
+
+        // public key is not recoverable from signature. So append it to the signature
+        let mut sig_with_pbk = Vec::new();
+
+        sig_with_pbk.append(&mut sig.to_vec());
+        sig_with_pbk.append(&mut pbk.to_vec());
+
+        Ok(sig_with_pbk)
     }
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -149,17 +177,41 @@ mod test {
         let mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
                 .to_string();
-        let ada = super::ADA {};
+        let ada = super::ADA {
+            extended_key: false,
+        };
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = ada.get_path(0, false);
 
         let pvk = ada.derive(seed, path).unwrap();
         let pbk = ada.get_pbk(pvk).unwrap();
+
         let addr = ada.get_address(pbk).unwrap();
         assert_eq!(
             addr,
             "addr1vy8ac7qqy0vtulyl7wntmsxc6wex80gvcyjy33qffrhm7ss7lxrqp"
         );
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+                .to_string();
+        let ada = super::ADA {
+            extended_key: false,
+        };
+
+        let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = ada.get_path(0, false);
+
+        let pvk = ada.derive(seed, path).unwrap();
+
+        let message = "hello world".as_bytes().to_vec();
+
+        let sig = ada.sign_message(pvk, message).unwrap();
+
+        assert_eq!(hex::encode(sig), "c9343740a90a19a4ffac066357297c41401dd90710266445803a010a53cc041c3cb5cbbdb6a7ec2e41f8bc9c640876458d3ae31652abe2de2086ea34676923007ea09a34aebb13c9841c71397b1cabfec5ddf950405293dee496cac2f437480a".to_string())
     }
 }
