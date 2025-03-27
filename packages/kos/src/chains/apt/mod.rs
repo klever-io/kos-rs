@@ -61,8 +61,16 @@ impl Chain for APT {
         Ok(addr)
     }
 
-    fn sign_tx(&self, _private_key: Vec<u8>, _tx: Transaction) -> Result<Transaction, ChainError> {
-        Err(ChainError::NotSupported)
+    fn sign_tx(
+        &self,
+        private_key: Vec<u8>,
+        mut tx: Transaction,
+    ) -> Result<Transaction, ChainError> {
+        let sig = self.sign_raw(private_key.clone(), tx.raw_data.clone())?;
+
+        tx.signature = sig;
+
+        Ok(tx)
     }
 
     fn sign_message(
