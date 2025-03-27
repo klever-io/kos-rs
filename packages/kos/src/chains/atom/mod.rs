@@ -10,6 +10,7 @@ use bech32::{u5, Variant};
 
 #[allow(clippy::upper_case_acronyms)]
 pub(crate) struct ATOM {
+    pub id: u32,
     pub addr_prefix: String,
     #[allow(dead_code)]
     pub network_str: String,
@@ -32,6 +33,7 @@ impl ATOM {
 impl ATOM {
     pub fn new() -> Self {
         Self {
+            id: 7,
             addr_prefix: "cosmos".to_string(),
             network_str: "cosmoshub-4".to_string(),
             name: "Cosmos".to_string(),
@@ -40,12 +42,14 @@ impl ATOM {
     }
 
     pub fn new_cosmos_based(
+        id: u32,
         addr_prefix: &str,
         network_str: &str,
         name: &str,
         symbol: &str,
     ) -> Self {
         Self {
+            id,
             addr_prefix: addr_prefix.to_string(),
             network_str: network_str.to_string(),
             name: name.to_string(),
@@ -56,7 +60,7 @@ impl ATOM {
 
 impl Chain for ATOM {
     fn get_id(&self) -> u32 {
-        7
+        self.id
     }
 
     fn get_name(&self) -> &str {
