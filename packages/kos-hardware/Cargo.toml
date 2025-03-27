@@ -1,0 +1,22 @@
+[package]
+name = "kos-hardware"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+kos = { path = "../kos", default-features = false, features = ["ksafe"] }
+tiny-json-rs = "0.2.5"
+
+# Only necessary if using Protobuf well-known types:
+[lib]
+name = "ksafe_core_rs"
+crate-type = ["staticlib"]
+
+[features]
+default = []
+ksafe = []
