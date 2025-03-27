@@ -41,12 +41,12 @@ assemble_android_lib() {
 
 assemble_android_lib_unit_test() {
   cd "$BUILD_HOME"
-  jni=darwin-aarch64
+  jni="$JNI_PLATFORM"
   log_status "assembling android test lib..."
   export OPENSSL_LIB_DIR="$OPENSSL_GENERATED_LIBS_PATH/$OS_TOOLCHAIN"
   cargo build --release -q
   mkdir -p "$ANDROID_JNI_LIBS_PATH/$jni"
-  cp -f ../../target/release/lib"$PACKAGE_NAME".dylib "$ANDROID_JNI_LIBS_PATH"/$jni
+  cp -f ../../target/release/lib"$PACKAGE_NAME"."$LIB_EXTENSION" "$ANDROID_JNI_LIBS_PATH"/$jni
 }
 
 generate_binds() {

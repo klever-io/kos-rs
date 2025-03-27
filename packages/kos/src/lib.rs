@@ -35,7 +35,7 @@ unsafe impl GlobalAlloc for FreeRtosAllocator {
 #[global_allocator]
 static ALLOCATOR: FreeRtosAllocator = FreeRtosAllocator;
 
-#[cfg(all(feature = "ksafe", not(test)))]
+#[cfg(all(feature = "ksafe", not(test), not(feature = "not-ksafe")))]
 #[panic_handler]
 unsafe fn my_panic(_info: &core::panic::PanicInfo) -> ! {
     HardFault_Handler();

@@ -74,6 +74,10 @@ enum TransactionChainOptions {
         transaction_version: u32,
         app_id: Option<u32>,
     },
+    Cosmos {
+        chain_id: String,
+        account_number: u64,
+    },
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -126,6 +130,17 @@ fn new_bitcoin_transaction_options(
 #[uniffi::export]
 fn new_evm_transaction_options(chain_id: u32) -> TransactionChainOptions {
     TransactionChainOptions::Evm { chain_id }
+}
+
+#[uniffi::export]
+fn new_cosmos_transaction_options(
+    chain_id: String,
+    account_number: u64,
+) -> TransactionChainOptions {
+    TransactionChainOptions::Cosmos {
+        chain_id,
+        account_number,
+    }
 }
 
 #[uniffi::export]
@@ -249,6 +264,13 @@ fn sign_transaction(
             spec_version,
             transaction_version,
             app_id,
+        }),
+        Some(TransactionChainOptions::Cosmos {
+            chain_id,
+            account_number,
+        }) => Some(ChainOptions::COSMOS {
+            chain_id,
+            account_number,
         }),
         None => None,
     };
@@ -526,6 +548,31 @@ mod tests {
             transaction.signature, "81464320f4b14aae344234c1337f3f0c002e5939bb0f54c7a3629656a8624d80ae9b93be3925b04d8960214d11809eae9e083572e0893dc99858d8230ca03f0c",
             "The signature doesn't match"
         );
+    }
+
+    #[test]
+    fn should_sign_raw_transaction_cosmos() {
+        let chain_id = 48;
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false,
+        )
+        .unwrap();
+
+        let transaction = sign_transaction(
+            account,
+            "0a94010a8d010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126d0a2f63656c65737469613173706b326e686a6d67706d37713767796d753839727a37636c686e34787578757a3430717566122f63656c65737469613130377871366b787036353471666832643872687171736d36793364656a7237396130367479631a090a047574696112013112026f6912670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21020271b9bc2af1a68367375a64337f1cdbfae718217946d45e5ee1b83c312291a212040a020801180312130a0d0a04757469611205323530303010aa8c06".to_string(),
+            Some(TransactionChainOptions::Cosmos {
+                chain_id: "celestia".to_string(),
+                account_number: 274454,
+            }),
+        )
+        .unwrap();
+
+        assert_eq!(transaction.raw, "0a94010a8d010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126d0a2f63656c65737469613173706b326e686a6d67706d37713767796d753839727a37636c686e34787578757a3430717566122f63656c65737469613130377871366b787036353471666832643872687171736d36793364656a7237396130367479631a090a047574696112013112026f6912670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21020271b9bc2af1a68367375a64337f1cdbfae718217946d45e5ee1b83c312291a212040a020801180312130a0d0a04757469611205323530303010aa8c061a409c611838f8614c3f9bbbda156d39f4219b8cbb181b0e34466d1e9daf05f5973c2f302f60d49333a0e12956021d51ce048b475765e6b46ba3c678594b1b7513f7", "The raw doesn't match");
     }
 
     #[test]

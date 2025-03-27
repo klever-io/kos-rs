@@ -7,6 +7,7 @@ use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use alloc::format;
 use alloc::string::String;
+use alloc::vec;
 use alloc::vec::Vec;
 
 #[allow(clippy::upper_case_acronyms)]
@@ -267,7 +268,7 @@ mod test {
         let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
 
         let message = "Hello, World!".as_bytes().to_vec();
-        let result = sol.sign_message(pvk.clone(), message.into()).unwrap();
+        let result = sol.sign_message(pvk.clone(), message).unwrap();
 
         // Same transaction signed with same key should produce same signature and hash
         assert_eq!(hex::encode(&result), "e8ebd3bf665fe5b57e421c477fa4187ef5f1275ddc8dbf693dd684a0164f11aef22bb98416e2e765d39dbb38451d8996fea135baa9e9fd13890286e8be0e8200");

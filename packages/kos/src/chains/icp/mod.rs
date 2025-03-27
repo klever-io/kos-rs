@@ -76,6 +76,7 @@ impl Chain for ICP {
         Ok(addr)
     }
 
+    #[cfg(not(feature = "ksafe"))]
     fn sign_tx(
         &self,
         private_key: Vec<u8>,
@@ -109,6 +110,16 @@ impl Chain for ICP {
         }
 
         Ok(tx)
+    }
+
+    #[cfg(feature = "ksafe")]
+    fn sign_tx(
+        &self,
+        _private_key: Vec<u8>,
+        mut _tx: Transaction,
+    ) -> Result<Transaction, ChainError> {
+        // This is just because of serde_json usage
+        todo!()
     }
 
     fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {

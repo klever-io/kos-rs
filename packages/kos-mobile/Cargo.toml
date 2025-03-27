@@ -19,7 +19,7 @@ name = "uniffi-bindgen"
 path = "src/bin/uniffi-bindgen.rs"
 
 [dependencies]
-kos = { workspace = true }
+kos = { workspace = true, default-features = true }
 kos-codec = { path = "../kos-codec" }
 
 hex = { workspace = true }
