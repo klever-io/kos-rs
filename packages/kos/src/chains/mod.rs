@@ -573,7 +573,7 @@ impl ChainRegistry {
                 ChainInfo {
                     factory: || {
                         Box::new(ATOM::new_cosmos_based(
-                            "celestia", "celestia", "Celestia", "TIA",
+                            48, "celestia", "celestia", "Celestia", "TIA",
                         ))
                     },
                     supported: true,
@@ -583,7 +583,9 @@ impl ChainRegistry {
                 constants::CUDOS,
                 ChainInfo {
                     factory: || {
-                        Box::new(ATOM::new_cosmos_based("cudos", "cudos-1", "Cudos", "CUDOS"))
+                        Box::new(ATOM::new_cosmos_based(
+                            45, "cudos", "cudos-1", "Cudos", "CUDOS",
+                        ))
                     },
                     supported: true,
                 },
@@ -592,7 +594,9 @@ impl ChainRegistry {
                 constants::AURA,
                 ChainInfo {
                     factory: || {
-                        Box::new(ATOM::new_cosmos_based("aura", "xstaxy-1", "Aura", "AURA"))
+                        Box::new(ATOM::new_cosmos_based(
+                            49, "aura", "xstaxy-1", "Aura", "AURA",
+                        ))
                     },
                     supported: true,
                 },
