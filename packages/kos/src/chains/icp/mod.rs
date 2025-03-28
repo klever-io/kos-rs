@@ -6,6 +6,7 @@ use crate::crypto::hash::sha224_digest;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use alloc::{format, vec};
+use tiny_json_rs::serializer;
 
 const ASN1_ED25519_HEADER: [u8; 12] = [48u8, 42, 48, 5, 6, 3, 43, 101, 112, 3, 33, 0];
 const ICP_TAIL: u8 = 2;
@@ -76,7 +77,6 @@ impl Chain for ICP {
         Ok(addr)
     }
 
-    #[cfg(not(feature = "ksafe"))]
     fn sign_tx(
         &self,
         private_key: Vec<u8>,
@@ -85,8 +85,17 @@ impl Chain for ICP {
         let hex = hex::decode(tx.raw_data.clone()).map_err(|_| ChainError::DecodeRawTx)?;
         let raw_data_str = String::from_utf8(hex).map_err(|_| ChainError::DecodeRawTx)?;
 
-        let icp_hashes: Vec<String> =
-            serde_json::from_str(raw_data_str.as_str()).map_err(|_| ChainError::DecodeHash)?;
+        let wrapped_data = format!("{{\"hashes\":{}}}", raw_data_str);
+
+        #[derive(tiny_json_rs::Deserialize)]
+        struct HashContainer {
+            hashes: Vec<String>,
+        }
+
+        let container: HashContainer =
+            tiny_json_rs::decode(wrapped_data).map_err(|_| ChainError::DecodeHash)?;
+
+        let icp_hashes = container.hashes;
 
         let mut pvk_bytes = private_key_from_vec(&private_key)?;
 
@@ -110,16 +119,6 @@ impl Chain for ICP {
         }
 
         Ok(tx)
-    }
-
-    #[cfg(feature = "ksafe")]
-    fn sign_tx(
-        &self,
-        _private_key: Vec<u8>,
-        mut _tx: Transaction,
-    ) -> Result<Transaction, ChainError> {
-        // This is just because of serde_json usage
-        todo!()
     }
 
     fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
