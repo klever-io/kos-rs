@@ -1,5 +1,5 @@
-const API = "https://api.testnet.klever.finance"
-const NODE = "https://node.testnet.klever.finance"
+const API = "https://api.testnet.klever.org"
+const NODE = "https://node.testnet.klever.org"
 function debugWallet(tag, w) {
   let data = JSON.stringify({chain: w.getChain(), baseChain: w.getBaseChain().getName(), address: w.getAddress(), privateKey: w.getPrivateKey(), publicKey: w.getPublicKey(), mnemonic: w.getMnemonic(), path: w.getPath()})
   document.getElementById("demo").innerHTML += "<br><b>"+tag+":</b>"+data+"<br>";
