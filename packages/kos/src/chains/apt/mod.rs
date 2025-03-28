@@ -7,12 +7,14 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
+pub const ID: u32 = 50;
+
 #[allow(clippy::upper_case_acronyms)]
 pub struct APT {}
 
 impl Chain for APT {
     fn get_id(&self) -> u32 {
-        50
+        ID
     }
 
     fn get_name(&self) -> &str {

@@ -30,7 +30,7 @@ use tiny_json_rs::serializer::Token;
 use tiny_json_rs::Serialize;
 
 pub mod ada;
-mod apt;
+pub mod apt;
 mod atom;
 mod bch;
 mod btc;
