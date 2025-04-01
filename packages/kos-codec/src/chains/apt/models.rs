@@ -1,56 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Transaction {
-    #[serde(rename = "type")]
-    pub r#type: String,
-    pub hash: String,
-    pub sender: String,
-    #[serde(rename = "sequence_number")]
-    pub sequence_number: String,
-    #[serde(rename = "max_gas_amount")]
-    pub max_gas_amount: String,
-    #[serde(rename = "gas_unit_price")]
-    pub gas_unit_price: String,
-    #[serde(rename = "gas_currency_code")]
-    pub gas_currency_code: String,
-    #[serde(rename = "expiration_timestamp_secs")]
-    pub expiration_timestamp_secs: String,
-    pub payload: Option<Payload>,
-    pub signature: Option<JSONSignature>,
-
-    pub version: u64,
-    #[serde(rename = "state_root_hash")]
-    pub state_root_hash: String,
-    #[serde(rename = "event_root_hash")]
-    pub event_root_hash: String,
-    #[serde(rename = "gas_used")]
-    pub gas_used: u64,
-    pub success: bool,
-    #[serde(rename = "vm_status")]
-    pub vm_status: String,
-    #[serde(rename = "accumulator_root_hash")]
-    pub accumulator_root_hash: String,
-
-    pub timestamp: u64,
-
-    pub id: String,
-    pub round: u64,
-    #[serde(rename = "previous_block_votes")]
-    pub previous_block_votes: Vec<bool>,
-    pub proposer: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Payload {
-    #[serde(rename = "type")]
-    pub r#type: String,
-    #[serde(rename = "type_arguments")]
-    pub type_arguments: Vec<String>,
-    pub arguments: Vec<serde_json::Value>,
-    pub function: String,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum JSONSignature {
