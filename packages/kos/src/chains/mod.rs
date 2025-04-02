@@ -30,17 +30,17 @@ use tiny_json_rs::serializer::Token;
 use tiny_json_rs::Serialize;
 
 pub mod ada;
-mod apt;
-mod atom;
-mod bch;
+pub mod apt;
+pub mod atom;
+pub mod bch;
 pub mod btc;
 pub mod constants;
-mod eth;
-mod icp;
+pub mod eth;
+pub mod icp;
 pub mod klv;
-mod sol;
-mod substrate;
-mod sui;
+pub mod sol;
+pub mod substrate;
+pub mod sui;
 pub mod trx;
 pub mod util;
 pub mod xrp;
@@ -639,8 +639,8 @@ impl ChainRegistry {
             (
                 constants::ADA,
                 ChainInfo {
-                    factory: || Box::new(ADA {}),
-                    supported: false,
+                    factory: || Box::new(ADA::new(false)),
+                    supported: true,
                 },
             ),
             (
@@ -654,7 +654,7 @@ impl ChainRegistry {
                 constants::APT,
                 ChainInfo {
                     factory: || Box::new(APT {}),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
