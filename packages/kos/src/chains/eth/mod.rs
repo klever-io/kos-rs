@@ -23,6 +23,12 @@ pub struct ETH {
     pub name: String,
 }
 
+impl Default for ETH {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ETH {
     pub fn new() -> Self {
         ETH::new_eth_based(3, 1, "ETH", "Ethereum")

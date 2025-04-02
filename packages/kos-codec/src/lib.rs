@@ -1,8 +1,6 @@
 mod chains;
 
-use crate::chains::ada;
-use crate::chains::atom;
-use crate::chains::xrp;
+use crate::chains::{ada, apt, atom, xrp};
 use kos::chains::{get_chain_by_base_id, ChainError, ChainType, Transaction};
 
 #[derive(Clone)]
@@ -42,6 +40,7 @@ pub fn encode_for_broadcast(
         ChainType::XRP => xrp::encode_for_broadcast(transaction)?,
         ChainType::ADA => ada::encode_for_broadcast(transaction, account)?,
         ChainType::ATOM => atom::encode_for_broadcast(transaction)?,
+        ChainType::APT => apt::encode_for_broadcast(transaction, account)?,
         _ => transaction,
     })
 }
