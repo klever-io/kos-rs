@@ -62,7 +62,6 @@ it as a premier choice for constructing secure and high-performing blockchain so
 
 #### Coming soon | Under development:
 
-- BNB Chain
 - Bitcoin Cash (BCH)
 - Cardano (ADA)
 
