@@ -55,3 +55,4 @@ pub const HBAR: u32 = 49;
 pub const FLOW: u32 = 50;
 pub const POLYGON_ZKEVM: u32 = 51;
 pub const STOLZ: u32 = 52;
+pub const MON: u32 = 53;
