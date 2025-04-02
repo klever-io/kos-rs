@@ -8,14 +8,15 @@ pub fn encode_for_broadcast(
     mut transaction: Transaction,
     account: KosCodedAccount,
 ) -> Result<Transaction, ChainError> {
-    let pub_key = hex::decode(account.public_key).unwrap();
+    let pub_key = hex::decode(account.public_key).map_err(|_| ChainError::InvalidPublicKey)?;
 
     let transaction_signature = JSONSignature::ED25519(ED25519Signature {
-        public_key: format!("0x{:}", hex::encode(pub_key)),
-        signature: format!("0x{:}", hex::encode(transaction.signature.clone())),
+        public_key: format!("0x{:}", hex::encode(&pub_key)),
+        signature: format!("0x{:}", hex::encode(&transaction.signature)),
     });
 
-    let signature_json = serde_json::to_string(&transaction_signature).unwrap();
+    let signature_json =
+        serde_json::to_string(&transaction_signature).map_err(|_| ChainError::InvalidSignature)?;
 
     transaction.signature = signature_json.as_bytes().to_vec();
 
@@ -59,8 +60,8 @@ mod test {
                 public_key,
                 signature,
             }) => {
-                assert_eq!(public_key, "1234567890abcdef");
-                assert_eq!(signature, "05060708");
+                assert_eq!(public_key, "0x1234567890abcdef");
+                assert_eq!(signature, "0x05060708");
             }
             _ => panic!("Invalid signature type"),
         }
