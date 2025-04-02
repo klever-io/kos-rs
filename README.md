@@ -58,13 +58,13 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Celestia (TIA)
 - [x] Cudos
 - [x] Aura
+- [x] Aptos (APT)
 
 #### Coming soon | Under development:
 
 - BNB Chain
 - Bitcoin Cash (BCH)
 - Cardano (ADA)
-- Aptos (APT)
 
 ## Getting Started with Javascript and Node.js
 
