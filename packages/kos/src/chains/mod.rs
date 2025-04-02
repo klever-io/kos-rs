@@ -33,7 +33,7 @@ pub mod ada;
 mod apt;
 mod atom;
 mod bch;
-mod btc;
+pub mod btc;
 pub mod constants;
 mod eth;
 mod icp;

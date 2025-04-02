@@ -2215,6 +2215,8 @@ dependencies = [
 name = "kos-codec"
 version = "0.2.14"
 dependencies = [
+ "bitcoin",
+ "byteorder",
  "cosmrs",
  "hex",
  "kos",
