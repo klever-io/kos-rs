@@ -633,7 +633,7 @@ impl ChainRegistry {
                 constants::BCH,
                 ChainInfo {
                     factory: || Box::new(BCH {}),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
