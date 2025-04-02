@@ -54,6 +54,7 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Digibyte (DGB)
 - [x] Internet Computer (ICP)
 - [x] XRP
+- [x] Cardano (ADA)
 - [x] Cosmos (ATOM)
 - [x] Celestia (TIA)
 - [x] Cudos
@@ -63,7 +64,6 @@ it as a premier choice for constructing secure and high-performing blockchain so
 #### Coming soon | Under development:
 
 - Bitcoin Cash (BCH)
-- Cardano (ADA)
 
 ## Getting Started with Javascript and Node.js
 
