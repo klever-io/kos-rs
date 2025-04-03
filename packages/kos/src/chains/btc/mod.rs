@@ -23,6 +23,12 @@ pub struct BTC {
     pub legacy_version: u8,
 }
 
+impl Default for BTC {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BTC {
     pub fn new() -> Self {
         BTC::new_btc_based(2, "bc", 0, "BTC", "Bitcoin")
