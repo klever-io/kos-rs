@@ -1,4 +1,6 @@
 use crate::chains::ChainError;
+use alloc::vec::Vec;
+
 use coins_bip39::{English, Mnemonic};
 
 pub fn generate_mnemonic(count: usize) -> Result<Mnemonic<English>, ChainError> {
