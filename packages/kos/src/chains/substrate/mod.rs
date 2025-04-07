@@ -64,11 +64,11 @@ impl Chain for Substrate {
     }
 
     fn get_path(&self, index: u32, _is_legacy: bool) -> String {
-        if index == 0 {
-            return String::new();
+        if index > 0 {
+            format!("//{}///", index - 1)
+        } else {
+            String::new()
         }
-
-        format!("//{}", index - 1)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -534,6 +534,109 @@ mod test {
 
         assert_eq!(signed_tx.signature.len(), 65);
         assert_eq!(signed_tx.raw_data.len(), 142);
+    }
+
+    #[test]
+    fn sign_tx_5() {
+        let dot = super::Substrate::new(41, 8, "Karura", "KAR");
+
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let path = dot.get_path(0, false);
+
+        let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
+        let pvk = dot.derive(seed, path).unwrap();
+
+        let pbk = dot.get_pbk(pvk.clone()).unwrap();
+
+        let raw_data = simple_base64_decode("CgMAbW9kbGFjYS9pbmN0AAAAAAAAAAAAAAAAAAAAAAAAAAAE9QIAAADoCAAAAgAAALr1qr5AZG0R8O6Ku9xk9KS3Z0kly6COSgX/nr7W4hJrTimIjSb829wZAW19nqKqT5jkpTo80WAgCLqC3vJu6ycA").unwrap();
+
+        let nonce = 0;
+        let spec_version = 2280;
+        let transaction_version = 2;
+
+        let options = ChainOptions::SUBSTRATE {
+            call: hex::decode(
+                "0a03006d6f646c6163612f696e6374000000000000000000000000000000000000000004",
+            )
+            .unwrap(),
+            era: hex::decode("f502").unwrap(),
+            nonce,
+            tip: 0,
+            block_hash: hex::decode(
+                "4e29888d26fcdbdc19016d7d9ea2aa4f98e4a53a3cd1602008ba82def26eeb27",
+            )
+            .unwrap(),
+            genesis_hash: hex::decode(
+                "baf5aabe40646d11f0ee8abbdc64f4a4b7674925cba08e4a05ff9ebed6e2126b",
+            )
+            .unwrap(),
+            spec_version,
+            transaction_version,
+            app_id: None,
+        };
+
+        let tx = Transaction {
+            raw_data,
+            signature: Vec::new(),
+            tx_hash: Vec::new(),
+            options: Some(options),
+        };
+
+        let signed_tx = dot.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(signed_tx.signature.len(), 65);
+        assert_eq!(signed_tx.raw_data.len(), 142);
+    }
+    #[test]
+    fn sign_tx_6() {
+        let dot = super::Substrate::new(46, 10, "Acala", "ACA");
+
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let path = dot.get_path(0, false);
+
+        let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
+        let pvk = dot.derive(seed, path).unwrap();
+        let pbk = dot.get_pbk(pvk.clone()).unwrap();
+
+        let raw_data = simple_base64_decode("CgMAbW9kbGFjYS9kZXhtAAAAAAAAAAAAAAAAAAAAAAAAAAAEBQPVTQAA6AgAAAMAAAD8Qbm9jvj+U9WMfqZ8eUx+yac9rwXm1UsU/2NCyZumTMZAZ+YgN3HGoPCoy9HNtxDCqeRTcz9HtiAUy505IgcjAA==").unwrap();
+
+        let nonce = 4981;
+        let spec_version = 2280;
+        let transaction_version = 3;
+
+        let options = ChainOptions::SUBSTRATE {
+            call: hex::decode(
+                "0a03006d6f646c6163612f6465786d000000000000000000000000000000000000000004",
+            )
+            .unwrap(),
+            era: hex::decode("0503").unwrap(),
+            nonce,
+            tip: 0,
+            block_hash: hex::decode(
+                "c64067e6203771c6a0f0a8cbd1cdb710c2a9e453733f47b62014cb9d39220723",
+            )
+            .unwrap(),
+            genesis_hash: hex::decode(
+                "fc41b9bd8ef8fe53d58c7ea67c794c7ec9a73daf05e6d54b14ff6342c99ba64c",
+            )
+            .unwrap(),
+            spec_version,
+            transaction_version,
+            app_id: None,
+        };
+
+        let tx = Transaction {
+            raw_data,
+            signature: Vec::new(),
+            tx_hash: Vec::new(),
+            options: Some(options),
+        };
+
+        let signed_tx = dot.sign_tx(pvk, tx).unwrap();
+
+        assert_eq!(signed_tx.signature.len(), 65);
+        assert_eq!(signed_tx.raw_data.len(), 143);
     }
 
     #[test]
