@@ -60,8 +60,9 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Cudos
 - [x] Aura
 - [x] Aptos (APT)
-- Bitcoin Cash (BCH)
-
+- [x] Bitcoin Cash (BCH)
+- [x] Acala (ACA)
+- [x] Karura (KAR)
 
 ## Getting Started with Javascript and Node.js
 
