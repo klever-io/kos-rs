@@ -6,4 +6,4 @@ CURRENT_VERSION="${CURRENT_VERSION}"
 echo "Release dev ${CURRENT_VERSION}"
 
 # change version in package.json using jq
-jq --arg version "$CURRENT_VERSION" '.version = $version' demo/kos/package.json > tmp.$$.json && mv tmp.$$.json demo/kos/package.json
+jq --arg version "$CURRENT_VERSION" '.version = $version' packages/kos-web/demo/kos/package.json > tmp.$$.json && mv tmp.$$.json packages/kos-web/demo/kos/package.json

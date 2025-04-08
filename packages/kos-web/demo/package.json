@@ -13,7 +13,6 @@
     "vite": "^6.2.0"
   },
   "dependencies": {
-    "jsqr": "1.4.0",
     "kos": "file:./kos",
     "vite-plugin-wasm": "^3.4.1"
   }
