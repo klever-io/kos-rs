@@ -121,13 +121,9 @@ pub fn get_supported_chains_data() -> Vec<ChainData> {
 
 #[wasm_bindgen(js_name = "getChainInfo")]
 pub fn get_chain_info(id: u32) -> Option<ChainData> {
-    if let Some(chain) = kos::chains::get_chain_by_id(id) {
-        Some(ChainData {
-            id: chain.get_id(),
-            name: chain.get_name().to_string(),
-            symbol: chain.get_symbol().to_string(),
-        })
-    } else {
-        None
-    }
+    kos::chains::get_chain_by_id(id).map(|chain| ChainData {
+        id: chain.get_id(),
+        name: chain.get_name().to_string(),
+        symbol: chain.get_symbol().to_string(),
+    })
 }
