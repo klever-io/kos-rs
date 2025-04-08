@@ -404,7 +404,7 @@ struct ChainRegistry {
 }
 impl ChainRegistry {
     fn new() -> Self {
-        static REGISTRY: [(u32, ChainInfo); 45] = [
+        static REGISTRY: [(u32, ChainInfo); 47] = [
             (
                 constants::ETH,
                 ChainInfo {
@@ -472,6 +472,20 @@ impl ChainRegistry {
                 constants::KSM,
                 ChainInfo {
                     factory: || Box::new(Substrate::new(27, 2, "Kusama", "KSM")),
+                    supported: true,
+                },
+            ),
+            (
+                constants::KAR,
+                ChainInfo {
+                    factory: || Box::new(Substrate::new(41, 8, "Karura", "KAR")),
+                    supported: true,
+                },
+            ),
+            (
+                constants::ACA,
+                ChainInfo {
+                    factory: || Box::new(Substrate::new(46, 10, "Acala", "ACA")),
                     supported: true,
                 },
             ),
@@ -633,7 +647,7 @@ impl ChainRegistry {
                 constants::BCH,
                 ChainInfo {
                     factory: || Box::new(BCH {}),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
