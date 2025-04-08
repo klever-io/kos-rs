@@ -54,18 +54,15 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Digibyte (DGB)
 - [x] Internet Computer (ICP)
 - [x] XRP
-
-#### Coming soon | Under development:
-
-- Cosmos (ATOM)
-- Celestia (TIA)
-- Cudos
-- Aura
-- BNB Chain
-- Solana (SOL)
-- Bitcoin Cash (BCH)
-- Cardano (ADA)
-- Aptos (APT)
+- [x] Cardano (ADA)
+- [x] Cosmos (ATOM)
+- [x] Celestia (TIA)
+- [x] Cudos
+- [x] Aura
+- [x] Aptos (APT)
+- [x] Bitcoin Cash (BCH)
+- [x] Acala (ACA)
+- [x] Karura (KAR)
 
 ## Getting Started with Javascript and Node.js
 

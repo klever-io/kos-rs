@@ -30,17 +30,17 @@ use tiny_json_rs::serializer::Token;
 use tiny_json_rs::Serialize;
 
 pub mod ada;
-mod apt;
-mod atom;
-mod bch;
-mod btc;
+pub mod apt;
+pub mod atom;
+pub mod bch;
+pub mod btc;
 pub mod constants;
-mod eth;
-mod icp;
+pub mod eth;
+pub mod icp;
 pub mod klv;
-mod sol;
-mod substrate;
-mod sui;
+pub mod sol;
+pub mod substrate;
+pub mod sui;
 pub mod trx;
 pub mod util;
 pub mod xrp;
@@ -356,6 +356,10 @@ pub enum ChainOptions {
         transaction_version: u32,
         app_id: Option<u32>,
     },
+    COSMOS {
+        chain_id: String,
+        account_number: u64,
+    },
 }
 
 #[allow(dead_code)]
@@ -400,7 +404,7 @@ struct ChainRegistry {
 }
 impl ChainRegistry {
     fn new() -> Self {
-        static REGISTRY: [(u32, ChainInfo); 45] = [
+        static REGISTRY: [(u32, ChainInfo); 47] = [
             (
                 constants::ETH,
                 ChainInfo {
@@ -468,6 +472,20 @@ impl ChainRegistry {
                 constants::KSM,
                 ChainInfo {
                     factory: || Box::new(Substrate::new(27, 2, "Kusama", "KSM")),
+                    supported: true,
+                },
+            ),
+            (
+                constants::KAR,
+                ChainInfo {
+                    factory: || Box::new(Substrate::new(41, 8, "Karura", "KAR")),
+                    supported: true,
+                },
+            ),
+            (
+                constants::ACA,
+                ChainInfo {
+                    factory: || Box::new(Substrate::new(46, 10, "Acala", "ACA")),
                     supported: true,
                 },
             ),
@@ -561,7 +579,7 @@ impl ChainRegistry {
                 constants::COSMOS,
                 ChainInfo {
                     factory: || Box::new(ATOM::new()),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
@@ -569,28 +587,32 @@ impl ChainRegistry {
                 ChainInfo {
                     factory: || {
                         Box::new(ATOM::new_cosmos_based(
-                            "celestia", "celestia", "Celestia", "TIA",
+                            48, "celestia", "celestia", "Celestia", "TIA",
                         ))
                     },
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
                 constants::CUDOS,
                 ChainInfo {
                     factory: || {
-                        Box::new(ATOM::new_cosmos_based("cudos", "cudos-1", "Cudos", "CUDOS"))
+                        Box::new(ATOM::new_cosmos_based(
+                            45, "cudos", "cudos-1", "Cudos", "CUDOS",
+                        ))
                     },
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
                 constants::AURA,
                 ChainInfo {
                     factory: || {
-                        Box::new(ATOM::new_cosmos_based("aura", "xstaxy-1", "Aura", "AURA"))
+                        Box::new(ATOM::new_cosmos_based(
+                            49, "aura", "xstaxy-1", "Aura", "AURA",
+                        ))
                     },
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
@@ -625,14 +647,14 @@ impl ChainRegistry {
                 constants::BCH,
                 ChainInfo {
                     factory: || Box::new(BCH {}),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
                 constants::ADA,
                 ChainInfo {
-                    factory: || Box::new(ADA {}),
-                    supported: false,
+                    factory: || Box::new(ADA::new(false)),
+                    supported: true,
                 },
             ),
             (
@@ -646,7 +668,7 @@ impl ChainRegistry {
                 constants::APT,
                 ChainInfo {
                     factory: || Box::new(APT {}),
-                    supported: false,
+                    supported: true,
                 },
             ),
             (
