@@ -1,6 +1,8 @@
 import {
   AccountType,
+  ChainData,
   generateMnemonicPhrase,
+  getSupportedChains,
   isChainSupported,
   PathOptions,
   Wallet,
@@ -9,6 +11,7 @@ import {
 export class WalletGenerator {
   private container: HTMLElement;
   private result: HTMLDivElement;
+  private chainMap: Map<number, ChainData> = new Map();
 
   constructor(containerId: string) {
     const container = document.getElementById(containerId);
@@ -21,6 +24,8 @@ export class WalletGenerator {
     this.result.className = "result";
     this.result.style.display = "none";
     this.container.appendChild(this.result);
+
+    this.populateBlockchainSelect();
   }
 
   private initUI(): void {
@@ -75,10 +80,7 @@ export class WalletGenerator {
       <div class="form-group">
         <label for="blockchain">Blockchain:</label>
         <select id="blockchain">
-          <option value="1">Tron</option>
-          <option value="2">Bitcoin</option>
-          <option value="3">Ethereum</option>
-          <option value="38">Klever</option>
+          <option value="">Loading blockchains...</option>
         </select>
       </div>
 
@@ -89,6 +91,45 @@ export class WalletGenerator {
 
     // Add event listeners
     this.addEventListeners();
+  }
+
+  private populateBlockchainSelect(): void {
+    try {
+      const blockchainSelect = document.getElementById(
+        "blockchain"
+      ) as HTMLSelectElement;
+      if (!blockchainSelect) return;
+
+      blockchainSelect.innerHTML = "";
+
+      const chains = getSupportedChains();
+
+      chains.forEach((chain) => {
+        this.chainMap.set(chain.id, chain);
+      });
+
+      chains.sort((a, b) => a.getName().localeCompare(b.getName()));
+
+      chains.forEach((chain) => {
+        const option = document.createElement("option");
+        option.value = chain.getId().toString();
+        option.textContent = `${chain.getName()} (${chain.getSymbol()})`;
+        blockchainSelect.appendChild(option);
+      });
+
+      chains.forEach((chain) => {
+        chain.free();
+      });
+    } catch (error) {
+      console.error(error);
+      const blockchainSelect = document.getElementById(
+        "blockchain"
+      ) as HTMLSelectElement;
+      if (blockchainSelect) {
+        blockchainSelect.innerHTML =
+          '<option value="">Error while loading blockchains</option>';
+      }
+    }
   }
 
   private addEventListeners(): void {
@@ -225,9 +266,6 @@ export class WalletGenerator {
     };
 
     let info = `<h3>Wallet Information</h3>
-      <p><strong>Blockchain:</strong> ${this.getChainName(
-        wallet.getChain()
-      )}</p>
       <p><strong>Type:</strong> ${
         accountTypeLabels[wallet.getAccountType()]
       }</p>
@@ -238,17 +276,6 @@ export class WalletGenerator {
 
     this.result.innerHTML = info;
     this.result.style.display = "flex";
-  }
-
-  private getChainName(chainId: number): string {
-    const chains: Record<number, string> = {
-      1: "Tron",
-      2: "Bitcoin",
-      3: "Ethereum",
-      38: "Klever",
-    };
-
-    return chains[chainId] || `Chain ID ${chainId}`;
   }
 
   private showError(message: string): void {
