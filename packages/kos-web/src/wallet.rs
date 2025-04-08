@@ -7,10 +7,7 @@ use strum::{EnumCount, IntoStaticStr};
 use crate::error::Error;
 use crate::utils::unpack;
 use kos::chains::util::hex_string_to_vec;
-use kos::chains::{
-    get_chain_by_base_id, ChainOptions,
-    Transaction as KosTransaction,
-};
+use kos::chains::{get_chain_by_base_id, ChainOptions, Transaction as KosTransaction};
 use kos::crypto::base64;
 use kos_codec::{encode_for_broadcast, encode_for_signing, KosCodedAccount};
 use wasm_bindgen::prelude::*;
