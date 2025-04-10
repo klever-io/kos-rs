@@ -2221,7 +2221,6 @@ dependencies = [
  "alloy-dyn-abi",
  "bech32 0.9.1",
  "bip39-dict",
- "bitcoin",
  "blake2b-ref",
  "cbc",
  "cfb-mode",

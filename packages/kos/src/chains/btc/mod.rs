@@ -9,7 +9,6 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use alloc::{format, vec};
 use bech32::{u5, Variant};
-use bitcoin::secp256k1;
 
 pub const ID: u32 = 2;
 
@@ -195,12 +194,9 @@ impl Chain for BTC {
 
             let mut hash_array = [0u8; 32];
             hash_array.copy_from_slice(hash);
-            let msg = secp256k1::Message::from_digest_slice(&hash_array).map_err(|_| {
-                ChainError::InvalidTransaction("Invalid message digest".to_string())
-            })?;
 
             // Sign hash
-            let sig = Secp256K1::sign(msg.as_ref(), &pvk_bytes)?;
+            let sig = Secp256K1::sign(&hash_array, &pvk_bytes)?;
 
             // The first 64 bytes are the signature, and the last byte is the recovery id
             // We just need the first 64 bytes
