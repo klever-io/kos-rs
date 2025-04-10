@@ -226,8 +226,8 @@ mod test {
     use crate::crypto::base64::simple_base64_decode;
     use alloc::string::{String, ToString};
     use alloc::vec::Vec;
+    use schnorrkel;
     use serde::Deserialize;
-
     #[derive(Deserialize)]
     struct TxBrowser {
         #[serde(rename = "specVersion")]
@@ -720,11 +720,29 @@ mod test {
         let seed = dot.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = dot.get_path(0, false);
         let pvk = dot.derive(seed, path).unwrap();
+        let pbk = dot.get_pbk(pvk.clone()).unwrap();
 
         let message = "test message".as_bytes().to_vec();
-        let result = dot.sign_message(pvk.clone(), message, false).unwrap();
+        let result = dot
+            .sign_message(pvk.clone(), message.clone(), false)
+            .unwrap();
 
-        // Same transaction signed with same key should produce same signature and hash
-        assert_eq!(hex::encode(&result), "2099af82b371ef0f2409e56369a65c03cb92962efbca766099c6f3dccda5cb64a6f8c2c74153ae0dc4dd05e911daea242f9d593635af23f07495f55e16afc783");
+        let secret_key = schnorrkel::SecretKey::from_bytes(&pvk).unwrap();
+        let public_key = schnorrkel::PublicKey::from_bytes(&pbk).unwrap();
+
+        let key_pair = schnorrkel::Keypair {
+            secret: secret_key,
+            public: public_key,
+        };
+
+        let signature = schnorrkel::Signature::from_bytes(&result).unwrap();
+
+        let substrate_ctx: &[u8; 9] = b"substrate";
+
+        let verify_result = key_pair
+            .verify_simple(substrate_ctx, &message, &signature)
+            .unwrap();
+
+        assert_eq!(true, verify_result == ());
     }
 }
