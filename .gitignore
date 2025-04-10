@@ -20,6 +20,7 @@ dist
 
 .DS_Store
 demo/.DS_Store
+packages/kos-web/demo/.DS_Store
 packages/.DS_Store
 .idea/*
 

@@ -16,7 +16,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-        
+
       - name: RustUp
         uses: klever-io/kos-rs/.github/actions/rustup@develop
         with:
@@ -42,6 +42,6 @@ jobs:
           always-auth: true
 
       - name: Publish npm module
-        run: npm publish ./demo/kos --access public --tag dev
+        run: npm publish ./packages/kos-web/demo/kos --access public --tag dev
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
