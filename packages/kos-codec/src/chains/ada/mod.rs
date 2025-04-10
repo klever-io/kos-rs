@@ -112,7 +112,7 @@ mod test {
         let mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
                 .to_string();
-        let ada = ADA::new(false);
+        let ada = ADA::new();
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = ada.get_path(0, false);
