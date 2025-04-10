@@ -91,7 +91,12 @@ impl Chain for SOL {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         self.sign_raw(private_key, message)
     }
 
@@ -267,10 +272,10 @@ mod test {
         let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
 
-        let message = "Hello, World!".as_bytes().to_vec();
-        let result = sol.sign_message(pvk.clone(), message).unwrap();
+        let message = "test message".as_bytes().to_vec();
+        let result = sol.sign_message(pvk.clone(), message, false).unwrap();
 
         // Same transaction signed with same key should produce same signature and hash
-        assert_eq!(hex::encode(&result), "e8ebd3bf665fe5b57e421c477fa4187ef5f1275ddc8dbf693dd684a0164f11aef22bb98416e2e765d39dbb38451d8996fea135baa9e9fd13890286e8be0e8200");
+        assert_eq!(hex::encode(&result), "a3c211cc274707367d89ee4ecdab99fa99d856c4ccbc03591bddcaf325da2f3b64f74f4e692da212d3ce157bea6277195c66765e4f552c42ea63d513a07d8907");
     }
 }

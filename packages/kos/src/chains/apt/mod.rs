@@ -73,7 +73,12 @@ impl Chain for APT {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         let sig = self.sign_raw(private_key.clone(), message)?;
 
         let pbk = self.get_pbk(private_key)?;
@@ -138,10 +143,10 @@ mod test {
 
         let pvk = ada.derive(seed, path).unwrap();
 
-        let message = "hello world".as_bytes().to_vec();
+        let message = "test message".as_bytes().to_vec();
 
-        let sig = ada.sign_message(pvk, message).unwrap();
+        let sig = ada.sign_message(pvk, message, true).unwrap();
 
-        assert_eq!(hex::encode(sig), "7c2879913c2939e6e62d45cd3c30fbed11dd37cc147a38e8dbd12b6dee537342f7404632535522156331a44992753ef35982456aed78f7345d85f8c63718cf01a686f0309ab80312979606cfccc10ea2740147ae6888351488d11c46f08fbf60".to_string())
+        assert_eq!(hex::encode(sig), "8f64c4f4717b60b4ab14633636aab83fa0d7b41455b9c3133224816e2cae32ee9b3221f67ab8698126cd165a841d9e8b2ce0044e5a33deac57125c5233a05e0ea686f0309ab80312979606cfccc10ea2740147ae6888351488d11c46f08fbf60".to_string())
     }
 }

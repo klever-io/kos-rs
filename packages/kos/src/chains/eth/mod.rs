@@ -149,7 +149,12 @@ impl Chain for ETH {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         #[cfg(not(feature = "ksafe"))]
         {
             if let Ok(data) = std::str::from_utf8(&message) {
@@ -332,7 +337,27 @@ mod test {
             .unwrap();
         let message = data.as_bytes();
 
-        let signature = eth.sign_message(pvk, message.to_vec()).unwrap();
+        let signature = eth.sign_message(pvk, message.to_vec(), false).unwrap();
         assert_eq!(signature.len(), 65);
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let eth = super::ETH::new();
+        let seed = eth.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = eth.get_path(0, false);
+        let pvk = eth.derive(seed, path).unwrap();
+
+        let message_bytes = "test message".as_bytes().to_vec();
+
+        let signature = eth.sign_message(pvk, message_bytes, false).unwrap();
+
+        assert_eq!(
+            hex::encode(signature),
+            "960e9bb7f2cdfa4325661e11218c28ab2804b8966d6529b86073886a95142c881a965b3608a573ff035a780039afcbca13be25ee57ac175dd5ca7b82b79948c61c"
+        );
     }
 }

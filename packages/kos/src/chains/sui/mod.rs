@@ -68,12 +68,17 @@ impl Chain for SUI {
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
         let raw = tx.raw_data.clone();
-        let signature = self.sign_message(private_key, raw)?;
+        let signature = self.sign_message(private_key, raw, false)?;
         tx.signature = signature;
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         let mut intent_message = Vec::new();
         intent_message.append(&mut [0; 3].to_vec());
         intent_message.append(&mut message.clone());
@@ -82,7 +87,9 @@ impl Chain for SUI {
         let mut pvk_bytes = private_key_from_vec(&private_key)?;
 
         let mut response = Vec::new();
-        response.push(0x00);
+        if !legacy {
+            response.push(0x00);
+        }
 
         let signature = Ed25519::sign(&pvk_bytes, &check_sum)?;
         response.append(&mut signature.clone());
@@ -129,6 +136,26 @@ mod test {
         assert_eq!(
             addr,
             "0x5e93a736d04fbb25737aa40bee40171ef79f65fae833749e3c089fe7cc2161f1"
+        );
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let chain = super::SUI {};
+        let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = chain.get_path(0, false);
+        let pvk = chain.derive(seed, path).unwrap();
+
+        let message_bytes = "test message".as_bytes().to_vec();
+
+        let signature = chain.sign_message(pvk, message_bytes, false).unwrap();
+
+        assert_eq!(
+            hex::encode(signature),
+            "73b5a37df5ae989ec52a970547fdee96e4e76f0c668159b40a4864f2e06637cac485bfcd3e5af9a29a383243c41549c7c5b2ba645ad68aa849c6b08a53a18b02900b4d81eecea3df2f74b14200c4f4cf3f49afaca7a634ffd2cf6ff82bdaecf2"
         );
     }
 }

@@ -184,7 +184,12 @@ impl Chain for Substrate {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         self.sign_raw(private_key, message)
     }
 
@@ -706,5 +711,20 @@ mod test {
         let raw_data_hex = hex::decode(raw_data).unwrap();
         let tx_info = dot.get_tx_info(raw_data_hex);
         assert!(tx_info.is_ok());
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = dot.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = dot.get_path(0, false);
+        let pvk = dot.derive(seed, path).unwrap();
+
+        let message = "test message".as_bytes().to_vec();
+        let result = dot.sign_message(pvk.clone(), message, false).unwrap();
+
+        // Same transaction signed with same key should produce same signature and hash
+        assert_eq!(hex::encode(&result), "2099af82b371ef0f2409e56369a65c03cb92962efbca766099c6f3dccda5cb64a6f8c2c74153ae0dc4dd05e911daea242f9d593635af23f07495f55e16afc783");
     }
 }
