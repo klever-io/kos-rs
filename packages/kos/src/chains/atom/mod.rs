@@ -131,7 +131,7 @@ impl Chain for ATOM {
         &self,
         private_key: Vec<u8>,
         message: Vec<u8>,
-        legacy: bool,
+        _legacy: bool,
     ) -> Result<Vec<u8>, ChainError> {
         let prepared_msg: [u8; 32] = ATOM::prepare_message(message);
         let signature = self.sign_raw(private_key, prepared_msg.to_vec())?;

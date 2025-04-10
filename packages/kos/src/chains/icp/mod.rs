@@ -125,7 +125,7 @@ impl Chain for ICP {
         &self,
         private_key: Vec<u8>,
         message: Vec<u8>,
-        legacy: bool,
+        _legacy: bool,
     ) -> Result<Vec<u8>, ChainError> {
         let public_key = self.get_pbk(private_key.clone())?;
 

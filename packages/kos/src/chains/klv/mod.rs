@@ -117,7 +117,7 @@ impl Chain for KLV {
         &self,
         private_key: Vec<u8>,
         message: Vec<u8>,
-        legacy: bool,
+        _legacy: bool,
     ) -> Result<Vec<u8>, ChainError> {
         let prepared_messafe = KLV::prepare_message(message);
         let signature = self.sign_raw(private_key, prepared_messafe.to_vec())?;

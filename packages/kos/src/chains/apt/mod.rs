@@ -77,7 +77,7 @@ impl Chain for APT {
         &self,
         private_key: Vec<u8>,
         message: Vec<u8>,
-        legacy: bool,
+        _legacy: bool,
     ) -> Result<Vec<u8>, ChainError> {
         let sig = self.sign_raw(private_key.clone(), message)?;
 

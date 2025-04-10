@@ -150,7 +150,7 @@ impl Chain for TRX {
         &self,
         private_key: Vec<u8>,
         message: Vec<u8>,
-        legacy: bool,
+        _legacy: bool,
     ) -> Result<Vec<u8>, ChainError> {
         if private_key.len() != 32 {
             return Err(ChainError::InvalidPrivateKey);

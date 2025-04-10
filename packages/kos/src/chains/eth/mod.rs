@@ -153,7 +153,7 @@ impl Chain for ETH {
         &self,
         private_key: Vec<u8>,
         message: Vec<u8>,
-        legacy: bool,
+        _legacy: bool,
     ) -> Result<Vec<u8>, ChainError> {
         #[cfg(not(feature = "ksafe"))]
         {

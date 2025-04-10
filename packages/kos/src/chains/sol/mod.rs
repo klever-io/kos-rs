@@ -95,7 +95,7 @@ impl Chain for SOL {
         &self,
         private_key: Vec<u8>,
         message: Vec<u8>,
-        legacy: bool,
+        _legacy: bool,
     ) -> Result<Vec<u8>, ChainError> {
         self.sign_raw(private_key, message)
     }
