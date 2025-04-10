@@ -602,6 +602,33 @@ mod tests {
 
         assert_eq!(transaction.raw, "0100000002afa8838dbaa03cd3e4fee38bdcb6a428965559ae941dca5a8f91999cfd6d8b0d010000006b48304502210099626d28374fa3d1a0034330fee7745ab02db07cd37649e6d3ffbe046ff92e9402203793bee2372ab59a05b45188c2bace3b48e73209a01e4d5d862925971632c80a412102bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217ffffffffdb6d60d4a93a95738e72f641bcdd166c94f6e1f439dfe695e40583997284463c010000006a4730440220447084aae4c6800db7c86b8bc8da675e464991a035b2b4010cde48b64a1013a10220582acfb5265c22eae9c2880e07ae66fc86cbef2e97a2ca1bc513535ba322360d412102bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217ffffffff0240420f00000000001976a91434bf902df5d66f0e9b89d0f83fbcad638ad19ae988acea970700000000001976a9145bb0ba5ba58cdab459f27f2d29f40e1dd5db238188ac00000000", "The raw doesn't match");
     }
+    #[test]
+    fn should_sign_raw_transaction_btc() {
+        let chain_id = kos::chains::btc::ID;
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false,
+        )
+        .unwrap();
+
+        let transaction = sign_transaction(
+            account,
+            "0100000002badfa0606bc6a1738d8ddf951b1ebf9e87779934a5774b836668efb5a6d643970000000000fffffffffe60fbeb66791b10c765a207c900a08b2a9bd7ef21e1dd6e5b2ef1e9d686e5230000000000ffffffff028813000000000000160014e4132ab9175345e24b344f50e6d6764a651a89e6c21f000000000000160014546d5f8e86641e4d1eec5b9155a540d953245e4a00000000".to_string(),
+            Some(TransactionChainOptions::Btc {
+                prev_scripts: vec![
+                    hex::decode("0014546d5f8e86641e4d1eec5b9155a540d953245e4a").unwrap(),
+                    hex::decode("0014546d5f8e86641e4d1eec5b9155a540d953245e4a").unwrap(),
+                ],
+                input_amounts: vec![5000, 10000],
+            }),
+        )
+        .unwrap();
+
+        assert_eq!(transaction.raw, "01000000000102badfa0606bc6a1738d8ddf951b1ebf9e87779934a5774b836668efb5a6d643970000000000fffffffffe60fbeb66791b10c765a207c900a08b2a9bd7ef21e1dd6e5b2ef1e9d686e5230000000000ffffffff028813000000000000160014e4132ab9175345e24b344f50e6d6764a651a89e6c21f000000000000160014546d5f8e86641e4d1eec5b9155a540d953245e4a02483045022100ca1df8381e56e2ac2228e040cc2ff1c1079928222365f5c62cd6c18f398a6f55022029dca1177ab6edcfa03a25c7df32e1644c5d1fe496c6c7995a715373b56a591901210330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c024830450221009496122a56551a0dab4fa8562474c943c79158f7592a845abd7b60ddf34c10c902205021b73e27a44b0c365fbd015133a4bb6dce79dd09705096de1c7b31a1f9b8a701210330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c00000000", "The raw doesn't match");
+    }
 
     #[test]
     fn should_sign_transaction_with_options() {
