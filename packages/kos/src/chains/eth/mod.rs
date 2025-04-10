@@ -353,7 +353,7 @@ mod test {
 
         let message_bytes = "test message".as_bytes().to_vec();
 
-        let signature = eth.sign_message(pvk, message_bytes, false).unwrap();
+        let signature = eth.sign_message(pvk, message_bytes, true).unwrap();
 
         assert_eq!(
             hex::encode(signature),
