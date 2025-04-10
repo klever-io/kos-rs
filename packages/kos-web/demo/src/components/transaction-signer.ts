@@ -235,7 +235,16 @@ export class TransactionSigner {
         `Wallet successfully loaded! Address: ${this.wallet.getAddress()}`
       );
     } catch (error) {
-      this.showError((error as Error).message);
+      if (error instanceof Error) {
+        this.showError(error.message);
+        return;
+      }
+      if (typeof error === "string") {
+        this.showError(error);
+        return;
+      }
+
+      this.showError("An unknown error occurred");
     }
   }
 
@@ -267,7 +276,16 @@ export class TransactionSigner {
           <p><strong>Signature (hex):</strong> ${hexSignature}</p>
         `);
     } catch (error) {
-      this.showError((error as Error).message);
+      if (error instanceof Error) {
+        this.showError(error.message);
+        return;
+      }
+      if (typeof error === "string") {
+        this.showError(error);
+        return;
+      }
+
+      this.showError("An unknown error occurred");
     }
   }
 
@@ -324,7 +342,16 @@ export class TransactionSigner {
       // Free the transaction
       transaction.free();
     } catch (error) {
-      this.showError((error as Error).message);
+      if (error instanceof Error) {
+        this.showError(error.message);
+        return;
+      }
+      if (typeof error === "string") {
+        this.showError(error);
+        return;
+      }
+
+      this.showError("An unknown error occurred");
     }
   }
 
