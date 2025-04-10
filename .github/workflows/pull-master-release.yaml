@@ -68,12 +68,12 @@ jobs:
         run: make webpack-npm
 
       - name: Package kos-js
-        run: zip -r ./demo/kos-js.zip ./demo/kos || { echo 'Packaging failed'; exit 1; }
+        run: zip -r ./packages/kos-web/demo/kos-js.zip ./packages/kos-web/demo/kos || { echo 'Packaging failed'; exit 1; }
 
       - name: Create GitHub Release
         run: |
           VERSION=$(cat VERSION)
-          gh release create "v$VERSION" ./demo/kos-js.zip --title "Release v$VERSION" --generate-notes --target master || { echo 'Release creation failed'; exit 1; }
+          gh release create "v$VERSION" ./packages/kos-web/demo/kos-js.zip --title "Release v$VERSION" --generate-notes --target master || { echo 'Release creation failed'; exit 1; }
         env:
           GH_TOKEN: ${{ secrets.GIT_PASS }}
 
@@ -86,6 +86,6 @@ jobs:
           always-auth: true
 
       - name: Publish npm module
-        run: npm publish ./demo/kos --access public
+        run: npm publish ./packages/kos-web/demo/kos --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
