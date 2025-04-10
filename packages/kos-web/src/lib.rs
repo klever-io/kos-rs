@@ -71,7 +71,59 @@ pub fn is_chain_supported(chain: u32) -> bool {
     kos::chains::is_chain_supported(chain)
 }
 
+#[wasm_bindgen]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct ChainData {
+    pub id: u32,
+    #[wasm_bindgen(skip)]
+    pub name: String,
+    #[wasm_bindgen(skip)]
+    pub symbol: String,
+}
+
+#[wasm_bindgen]
+impl ChainData {
+    #[wasm_bindgen(js_name = getId)]
+    pub fn get_id(&self) -> u32 {
+        self.id
+    }
+
+    #[wasm_bindgen(js_name = getName)]
+    pub fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[wasm_bindgen(js_name = getSymbol)]
+    pub fn get_symbol(&self) -> String {
+        self.symbol.clone()
+    }
+}
+
 #[wasm_bindgen(js_name = "getSupportedChains")]
-pub fn get_supported_chains() -> Vec<u32> {
-    kos::chains::get_supported_chains()
+pub fn get_supported_chains_data() -> Vec<ChainData> {
+    let ids = kos::chains::get_supported_chains();
+
+    let mut chains_data = Vec::new();
+
+    for id in ids {
+        if let Some(chain) = kos::chains::get_chain_by_base_id(id) {
+            chains_data.push(ChainData {
+                id: chain.get_id(),
+                name: chain.get_name().to_string(),
+                symbol: chain.get_symbol().to_string(),
+            });
+        }
+    }
+
+    chains_data
+}
+
+#[wasm_bindgen(js_name = "getChainInfo")]
+pub fn get_chain_info(id: u32) -> Option<ChainData> {
+    kos::chains::get_chain_by_id(id).map(|chain| ChainData {
+        id: chain.get_id(),
+        name: chain.get_name().to_string(),
+        symbol: chain.get_symbol().to_string(),
+    })
 }

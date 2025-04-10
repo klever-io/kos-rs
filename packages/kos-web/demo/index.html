@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KOS-Rust example</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>KOS-Rust example</h1>
+
+      <div class="card">
+        <h2>Wallet Generator</h2>
+        <div id="wallet-generator"></div>
+      </div>
+
+      <div class="card">
+        <h2>Transaction Signer</h2>
+        <div id="transaction-signer"></div>
+      </div>
+
+      <div class="card">
+        <h2>Cryptography</h2>
+        <div id="cryptography-demo"></div>
+      </div>
+
+      <div class="card">
+        <h2>SDK Usage Examples in TypeScript</h2>
+        <pre><code>
+// Example 1: Create a wallet from a mnemonic
+import { Wallet } from '@klever/kos-web';
+
+const mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+const path = "m/44'/0'/0'/0/0";
+const wallet = Wallet.fromMnemonic(0, mnemonic, path);
+
+console.log("Address:", wallet.getAddress());
+console.log("Public Key:", wallet.getPublicKey());
+
+// Example 2: Sign a message
+const message = "Hello, World!";
+const messageBytes = new TextEncoder().encode(message);
+const signature = wallet.signMessage(messageBytes);
+
+console.log("Signature:", Array.from(signature).map(b => b.toString(16).padStart(2, '0')).join(''));
+
+// Example 3: Encrypt and decrypt data
+import { encrypt, decrypt, toBytes, toString } from '@klever/kos-web';
+
+const data = "Confidential data";
+const password = "secret-password";
+
+const encryptedData = encrypt(toBytes(data), password);
+const decryptedData = decrypt(encryptedData, password);
+
+console.log("Original data:", data);
+console.log("Decrypted data:", toString(decryptedData));
+
+// Don't forget to free resources
+wallet.free();
+          </code></pre>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
