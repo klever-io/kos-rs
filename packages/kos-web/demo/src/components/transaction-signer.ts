@@ -323,11 +323,6 @@ export class TransactionSigner {
 
       // Free the transaction
       transaction.free();
-
-      // Free chain options
-      if (chainOptions) {
-        chainOptions.free();
-      }
     } catch (error) {
       this.showError((error as Error).message);
     }
