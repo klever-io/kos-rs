@@ -46,19 +46,31 @@ pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, Chai
     let mut tx_hash_data = Vec::new();
     for inp_idx in 0..prev_scripts.len() {
         let script_code = prev_scripts[inp_idx].clone();
-        let script_code_buf: ScriptBuf = script_code.into();
+        let script: ScriptBuf = script_code.into();
 
-        // Compute sighash
-        let sighash = cache
-            .p2wpkh_signature_hash(
-                inp_idx,
-                &script_code_buf,
-                values[inp_idx],
-                sighash::EcdsaSighashType::All,
-            )
-            .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
-
-        tx_hash_data.extend_from_slice(&sighash[..]);
+        // Determine if it's a legacy or segwit transaction based on script type
+        if script.is_p2wpkh() {
+            // For SegWit (P2WPKH) transactions
+            let sig_hash = cache
+                .p2wpkh_signature_hash(
+                    inp_idx,
+                    &script,
+                    values[inp_idx],
+                    sighash::EcdsaSighashType::All,
+                )
+                .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
+            tx_hash_data.extend_from_slice(&sig_hash[..]);
+        } else if script.is_p2pkh() {
+            // For legacy (P2PKH) transactions
+            let sig_hash = cache
+                .legacy_signature_hash(inp_idx, &script, sighash::EcdsaSighashType::All.to_u32())
+                .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
+            tx_hash_data.extend_from_slice(&sig_hash[..]);
+        } else {
+            return Err(ChainError::InvalidTransaction(
+                "Unsupported script type. Only P2PKH and P2WPKH are supported.".to_string(),
+            ));
+        };
     }
 
     transaction.tx_hash = tx_hash_data;
