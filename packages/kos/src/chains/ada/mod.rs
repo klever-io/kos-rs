@@ -81,7 +81,14 @@ impl Chain for ADA {
                 cc.copy_from_slice(&private_key[64..]);
                 let vk = self.get_pbk(pvk.to_vec())?;
 
-                Ok(vk)
+                let mut xvk = Vec::new();
+                xvk.append(&mut vk.to_vec());
+                xvk.append(&mut cc.to_vec());
+
+                pvk.fill(0);
+                cc.fill(0);
+
+                Ok(xvk)
             }
             _ => Err(ChainError::InvalidPrivateKey),
         }
