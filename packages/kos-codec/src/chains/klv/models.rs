@@ -1,23 +1,19 @@
-use crate::alloc::borrow::ToOwned;
-use crate::alloc::string::ToString;
-use crate::crypto::base64::simple_base64_decode;
 use crate::protos::generated::klv::proto;
 use crate::protos::generated::klv::proto::tx_contract::ContractType;
-use crate::{chains, protos};
-use alloc::format;
-use alloc::string::String;
-use alloc::vec::Vec;
 use tiny_json_rs::mapper;
 use tiny_json_rs::serializer;
 use tiny_json_rs::Deserialize;
 use tiny_json_rs::Serialize;
+
+use crate::protos;
+use kos::crypto::base64::simple_base64_decode;
 
 #[derive(Serialize, Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq)]
 pub struct Transaction {
     #[Rename = "RawData"]
-    pub raw_data: ::core::option::Option<Raw>,
+    pub raw_data: Option<Raw>,
     #[Rename = "Signature"]
     pub signature: Option<Vec<String>>, //Base64 encoded
     #[Rename = "Result"]
@@ -37,11 +33,11 @@ pub struct Raw {
     #[Rename = "Sender"]
     pub sender: String,
     #[Rename = "Contract"]
-    pub contract: ::prost::alloc::vec::Vec<TxContract>,
+    pub contract: Vec<TxContract>,
     #[Rename = "PermissionID"]
     pub permission_id: Option<i32>,
     #[Rename = "Data"]
-    pub data: Option<alloc::vec::Vec<String>>,
+    pub data: Option<Vec<String>>,
     #[Rename = "KAppFee"] // Use this to match the exact JSON field name for this field
     pub k_app_fee: Option<i64>,
     #[Rename = "BandwidthFee"] // Use this to match the exact JSON field name for this field
@@ -81,7 +77,7 @@ pub struct KdaFee {
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Receipt {
     #[Rename = "Data"]
-    pub data: ::prost::alloc::vec::Vec<String>,
+    pub data: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -91,11 +87,11 @@ pub enum ConversionError {
     // You can add more error types as needed for detailed error handling
 }
 
-impl TryFrom<chains::klv::models::Transaction> for proto::Transaction {
+impl TryFrom<Transaction> for proto::Transaction {
     type Error = ConversionError;
 
     #[allow(clippy::needless_update)]
-    fn try_from(value: chains::klv::models::Transaction) -> Result<Self, Self::Error> {
+    fn try_from(value: Transaction) -> Result<Self, Self::Error> {
         let raw_data = match value.raw_data {
             Some(raw) => Some(proto::transaction::Raw::try_from(raw)?),
             None => None,
@@ -129,11 +125,11 @@ impl TryFrom<chains::klv::models::Transaction> for proto::Transaction {
     }
 }
 
-impl TryFrom<chains::klv::models::Raw> for proto::transaction::Raw {
+impl TryFrom<Raw> for proto::transaction::Raw {
     type Error = ConversionError;
 
     #[allow(clippy::needless_update)]
-    fn try_from(value: chains::klv::models::Raw) -> Result<Self, Self::Error> {
+    fn try_from(value: Raw) -> Result<Self, Self::Error> {
         let contracts = value
             .contract
             .into_iter()
@@ -172,10 +168,10 @@ impl TryFrom<chains::klv::models::Raw> for proto::transaction::Raw {
     }
 }
 
-impl TryFrom<chains::klv::models::TxContract> for proto::TxContract {
+impl TryFrom<TxContract> for proto::TxContract {
     type Error = ConversionError;
 
-    fn try_from(value: chains::klv::models::TxContract) -> Result<Self, Self::Error> {
+    fn try_from(value: TxContract) -> Result<Self, Self::Error> {
         // Remove escapes
         let contract_name = value.parameter.type_url.replace("\\", "");
 
@@ -196,11 +192,11 @@ impl TryFrom<chains::klv::models::TxContract> for proto::TxContract {
     }
 }
 
-impl TryFrom<chains::klv::models::Parameter> for protos::Any {
+impl TryFrom<Parameter> for protos::Any {
     type Error = ConversionError;
 
     #[allow(clippy::needless_update)]
-    fn try_from(value: chains::klv::models::Parameter) -> Result<Self, Self::Error> {
+    fn try_from(value: Parameter) -> Result<Self, Self::Error> {
         let proto_parameter = protos::Any {
             type_url: value.type_url,
             value: simple_base64_decode(&value.value.unwrap_or_default())
@@ -212,11 +208,11 @@ impl TryFrom<chains::klv::models::Parameter> for protos::Any {
     }
 }
 
-impl TryFrom<chains::klv::models::KdaFee> for proto::transaction::KdaFee {
+impl TryFrom<KdaFee> for proto::transaction::KdaFee {
     type Error = ConversionError;
 
     #[allow(clippy::needless_update)]
-    fn try_from(value: chains::klv::models::KdaFee) -> Result<Self, Self::Error> {
+    fn try_from(value: KdaFee) -> Result<Self, Self::Error> {
         let kda_bytes =
             simple_base64_decode(&value.kda).map_err(|_| ConversionError::Base64Error)?;
 
@@ -230,11 +226,11 @@ impl TryFrom<chains::klv::models::KdaFee> for proto::transaction::KdaFee {
     }
 }
 
-impl TryFrom<chains::klv::models::Receipt> for proto::transaction::Receipt {
+impl TryFrom<Receipt> for proto::transaction::Receipt {
     type Error = ConversionError;
 
     #[allow(clippy::needless_update)]
-    fn try_from(value: chains::klv::models::Receipt) -> Result<Self, Self::Error> {
+    fn try_from(value: Receipt) -> Result<Self, Self::Error> {
         let data = value
             .data
             .into_iter()
