@@ -177,6 +177,7 @@ pub extern "C" fn rs_sign_message(
     node: &mut CNodeStruct,
     message: &mut CBuffer,
     sig: &mut CBuffer,
+    legacy: bool,
 ) -> bool {
     let pvk = node.read_pvk();
     let c = match chains::get_chain_by_params(chain.to_chain_type()) {
@@ -191,7 +192,7 @@ pub extern "C" fn rs_sign_message(
 
     let message = message.read();
 
-    let signature = match c.sign_message(pvk, message) {
+    let signature = match c.sign_message(pvk, message, legacy) {
         Ok(s) => s,
         Err(e) => {
             unsafe {

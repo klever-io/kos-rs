@@ -32,6 +32,11 @@ impl XRP {
         sha512_half
     }
 
+    fn prepare_message_legacy(message: Vec<u8>) -> [u8; 32] {
+        let sha256_hash: [u8; 32] = sha256_digest(&sha256_digest(&message));
+        sha256_hash
+    }
+
     fn prepare_transaction(message: Vec<u8>) -> [u8; 32] {
         let mut buffer: Vec<u8> = Vec::new();
         buffer.extend_from_slice(&HASH_PREFIX_UNSIGNED_TRANSACTION_SINGLE);
@@ -43,6 +48,27 @@ impl XRP {
         sha512_half.copy_from_slice(&sha512_hash[..32]);
 
         sha512_half
+    }
+
+    fn sign_message_legacy(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+    ) -> Result<Vec<u8>, ChainError> {
+        let prepared_msg: [u8; 32] = XRP::prepare_message_legacy(message);
+        let pvk_bytes = private_key_from_vec(&private_key)?;
+        let payload_bytes = slice_from_vec(&prepared_msg)?;
+
+        let signature = Secp256K1::sign(&payload_bytes, &pvk_bytes)?;
+
+        let rec_byte = signature[64];
+
+        let mut sig_vec = Vec::new();
+        // <(byte of 27+public key solution)+4 if compressed >< padded bytes for signature R><padded bytes for signature S>
+        sig_vec.extend_from_slice(&[27 + rec_byte]);
+        sig_vec.extend_from_slice(&signature[..64]);
+
+        Ok(sig_vec)
     }
 }
 
@@ -118,7 +144,16 @@ impl Chain for XRP {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
+        if legacy {
+            return self.sign_message_legacy(private_key, message);
+        }
+
         let prepared_msg: [u8; 32] = XRP::prepare_message(message);
         self.sign_raw(private_key, prepared_msg.to_vec())
     }
@@ -171,9 +206,15 @@ mod test {
         let pvk = xrp.derive(seed, path).unwrap();
 
         let message = "test message".as_bytes().to_vec();
-        let signature = xrp.sign_message(pvk, message).unwrap();
+        let signature = xrp
+            .sign_message(pvk.clone(), message.clone(), false)
+            .unwrap();
 
         assert_eq!(hex::encode(signature).to_uppercase(), "3045022100E10177E86739A9C38B485B6AA04BF2B9AA00E79189A1132E7172B70F400ED1170220566BD64AA3F01DDE8D99DFFF0523D165E7DD2B9891ABDA1944E2F3A52CCCB83A");
+
+        let signature_legacy = xrp.sign_message(pvk, message, true).unwrap();
+
+        assert_eq!(hex::encode(signature_legacy), "1cbab59f99b3ff9571f3b8ad534b3a15d342459fef6c4660bba18554e8bc54dec566c3e864a8c3e1f818b8979b4fd864db474c261151e48f42e4a7a76687237376");
     }
 
     #[test]

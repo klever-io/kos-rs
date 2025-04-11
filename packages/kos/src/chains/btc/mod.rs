@@ -114,6 +114,10 @@ impl BTC {
 
         sha256_digest(&msg[..])
     }
+
+    pub fn prepare_message_legacy(message: Vec<u8>) -> [u8; 32] {
+        sha256_digest(&sha256_digest(&message))
+    }
 }
 
 impl Chain for BTC {
@@ -279,7 +283,26 @@ impl Chain for BTC {
 
         Ok(tx)
     }
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
+        if legacy {
+            let prepared_message = BTC::prepare_message_legacy(message);
+            let signature = self.sign_raw(private_key, prepared_message.to_vec())?;
+
+            // <(byte of 27+public key solution)+4 if compressed >< padded bytes for signature R><padded bytes for signature S>
+            let mut sig_vec = Vec::new();
+            let rec_byte = signature[64];
+            sig_vec.extend_from_slice(&[27 + rec_byte]);
+            sig_vec.extend_from_slice(&signature[..64]);
+
+            return Ok(sig_vec);
+        }
+
         let prepared_message = BTC::prepare_message(message);
         let signature = self.sign_raw(private_key, prepared_message.to_vec())?;
         Ok(signature)
@@ -416,7 +439,7 @@ mod test {
         let seed = btc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let pvk = btc.derive(seed, path).unwrap();
         let message = "Hello, World!".as_bytes().to_vec();
-        let signature = btc.sign_message(pvk, message).unwrap();
+        let signature = btc.sign_message(pvk, message, false).unwrap();
         assert_eq!(hex::encode(signature.clone()), "9d561a0ba6ea562e61606e7f3b6a92c889246eec2c05e86e3f465f43469ae9436d7e46accdcfaea848460e42c83c52238b6956c4bfb192e67023b6024e95bdcf01");
         assert_eq!(signature.len(), 65);
     }

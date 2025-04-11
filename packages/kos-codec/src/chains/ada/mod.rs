@@ -59,8 +59,12 @@ pub fn encode_for_broadcast(
     let tx_body = TransactionBody::decode_fragment(metadata.as_slice())
         .map_err(|e| ChainError::InvalidData(e.to_string()))?;
 
-    let public_key =
+    let mut public_key =
         hex::decode(account.public_key.clone()).map_err(|_| ChainError::InvalidPublicKey)?;
+
+    if public_key.len() > 32 {
+        public_key = public_key[..32].to_vec();
+    }
 
     let v_key_witness = VKeyWitness {
         vkey: public_key.into(),
@@ -112,12 +116,12 @@ mod test {
         let mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
                 .to_string();
-        let ada = ADA::new(false);
+        let ada = ADA::new();
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = ada.get_path(0, false);
 
-        let pvk = ada.derive(seed, path).unwrap();
+        let pvk: Vec<u8> = ada.derive(seed, path).unwrap();
 
         let transaction = Transaction {
             raw_data: simple_base64_decode("gnkBNmE0MDA4MTgyNTgyMGQxOWMwNTQwOTlkODllMjJiNWJlNTU3ZTI0YzAyMzE0ZGU3YWM5M2Q3ZDFlNjAyZDNiYmZjODY4NDY3OWQzYzEwMDAxODI4MjU4MzkwMWFmMDZmYTVmMWIyOGM5MGJkYzFjODdiYmI2NzMwYmMwZGE5ODY0MjBjNGJkMDBmZDRlNWRkMWYyYWViMGM3NDdjNjhhNDAzYzJlY2UwNWE3OTg4MWVmZTk0YWVjMmVjOTIyZmU0YmQxYzA4ZTNkNjMxYTAwMGY0MjQwODI1ODFkNjFkNTVmNDUzZjkzOTU0NzU1OTEzOTkxZDIxMTk1MmU0YmRkZmNjZDllZWE3ZTQyNDk2N2E3NzlmNDFhMDEwZjcxYTEwMjFhMDAwMzM2ZGYwMzFhMDhmNzFlOTWham9wZXJhdGlvbnOBpnRvcGVyYXRpb25faWRlbnRpZmllcqFlaW5kZXgAZHR5cGVlaW5wdXRmc3RhdHVzYGdhY2NvdW50oWdhZGRyZXNzeDphZGRyMXY4MjQ3M2ZsancyNXc0djM4eGdheXl2NDllOWFtbHhkbm00OHVzamZ2N25obmFxOXYyNTl1ZmFtb3VudKJldmFsdWVoMTkwMDAwMDBoY3VycmVuY3miZnN5bWJvbGNBREFoZGVjaW1hbHMGa2NvaW5fY2hhbmdlom9jb2luX2lkZW50aWZpZXKhamlkZW50aWZpZXJ4QmQxOWMwNTQwOTlkODllMjJiNWJlNTU3ZTI0YzAyMzE0ZGU3YWM5M2Q3ZDFlNjAyZDNiYmZjODY4NDY3OWQzYzE6MGtjb2luX2FjdGlvbmpjb2luX3NwZW50").unwrap(),

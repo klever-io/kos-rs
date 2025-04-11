@@ -172,9 +172,14 @@ impl Chain for BCH {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         let btc = BTC::new();
-        btc.sign_message(private_key, message)
+        btc.sign_message(private_key, message, legacy)
     }
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -257,9 +262,9 @@ mod test {
         let pvk = bch.derive(seed, path).unwrap();
 
         let result = bch
-            .sign_message(pvk, "test message".as_bytes().to_vec())
+            .sign_message(pvk, "test message".as_bytes().to_vec(), true)
             .unwrap();
 
-        assert_eq!(hex::encode(result), "303a181697a1b5d5b4f5adac6f42a44a660c893589c4b52ef71385ccc301a4d27b6c9068e30b84e5f3d08ca314cd45563c3114b4f42216945de1304f85e0617b00");
+        assert_eq!(hex::encode(result), "1ba94d065712b8c35814d67a2923caae4626d902c852c1be95bb038e689b647ae97b0fdd5ea813da9c261c90d406f6bd2a42854a355fbdcdbb074223461dee2032");
     }
 }

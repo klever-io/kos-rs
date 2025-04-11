@@ -120,19 +120,27 @@ impl Chain for ATOM {
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
         let prepared_tx = ATOM::prepare_transaction(tx.raw_data.clone()).to_vec();
-        tx.signature = self.sign_raw(private_key, prepared_tx)?;
+        let signature = self.sign_raw(private_key, prepared_tx)?;
+
+        tx.signature = signature[..64].to_vec();
 
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        _legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         let prepared_msg: [u8; 32] = ATOM::prepare_message(message);
         let signature = self.sign_raw(private_key, prepared_msg.to_vec())?;
 
-        let mut sig_vec = Vec::new();
         // <(byte of 27+public key solution)+4 if compressed >< padded bytes for signature R><padded bytes for signature S>
-        sig_vec.extend_from_slice(&[27]);
-        sig_vec.extend_from_slice(signature.as_ref());
+        let mut sig_vec = Vec::new();
+        let rec_byte = signature[64];
+        sig_vec.extend_from_slice(&[27 + rec_byte]);
+        sig_vec.extend_from_slice(&signature[..64]);
 
         Ok(sig_vec.to_vec())
     }
@@ -143,10 +151,7 @@ impl Chain for ATOM {
 
         let sig: [u8; 65] = secp256k1::Secp256K1::sign(&payload_bytes, &pvk_bytes)?;
 
-        let mut sig_vec = [0; 64];
-        sig_vec.copy_from_slice(&sig[..64]);
-
-        Ok(sig_vec.to_vec())
+        Ok(sig.to_vec())
     }
 
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
@@ -190,11 +195,11 @@ mod test {
 
         let message_bytes = "test message".as_bytes().to_vec();
 
-        let signature = atom.sign_message(pvk, message_bytes).unwrap();
+        let signature = atom.sign_message(pvk, message_bytes, false).unwrap();
 
         assert_eq!(
             hex::encode(signature),
-            "1bd48bf6446d3cd53869ff9ab787548fd04648fe4a1bc72cab594f9cd9a525d88e6a1b0c6252247f11dd8361629635df0e98f2ceedfee06bb6a116d18f5c5da150"
+            "1cd48bf6446d3cd53869ff9ab787548fd04648fe4a1bc72cab594f9cd9a525d88e6a1b0c6252247f11dd8361629635df0e98f2ceedfee06bb6a116d18f5c5da150"
         );
     }
 
