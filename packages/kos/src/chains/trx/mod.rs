@@ -1,15 +1,12 @@
 use crate::chains::util::{private_key_from_vec, slice_from_vec};
-use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo, TxType};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
-use crate::crypto::bignum::U256;
 use crate::crypto::hash::{keccak256_digest, sha256_digest};
 use crate::crypto::secp256k1::Secp256k1Trait;
 use crate::crypto::{bip32, secp256k1};
-use crate::protos::generated::trx::protocol;
-use crate::protos::generated::trx::protocol::transaction::contract::ContractType;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
-use alloc::{format, vec};
+use alloc::format;
 use prost::Message;
 
 const TRX_ADDR_PREFIX: u8 = 0x41;
@@ -39,24 +36,6 @@ impl TRX {
         address_with_checksum[21..].copy_from_slice(&hash[0..4]);
         let bytes_addr = b58enc(&address_with_checksum[..]);
         String::from_utf8(bytes_addr).unwrap()
-    }
-
-    #[allow(clippy::single_match)]
-    pub fn decode_transaction(raw_tx: Vec<u8>) -> Result<protocol::Transaction, ChainError> {
-        let tx = protocol::Transaction::decode(raw_tx.as_slice());
-        match tx {
-            Ok(t) => return Ok(t),
-            Err(_) => {}
-        }
-
-        let raw_tx = protocol::transaction::Raw::decode(raw_tx.as_slice())?;
-        let tx = protocol::Transaction {
-            raw_data: Some(raw_tx),
-            signature: vec![],
-            ret: vec![],
-        };
-
-        Ok(tx)
     }
 }
 
@@ -115,34 +94,18 @@ impl Chain for TRX {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        let raw_tx = tx.raw_data;
-
         if private_key.len() != 32 {
             return Err(ChainError::InvalidPrivateKey);
         }
 
         let mut pvk_bytes: [u8; 32] = [0; 32];
         pvk_bytes.copy_from_slice(&private_key[..32]);
-        let mut tron_tx = TRX::decode_transaction(raw_tx)?;
 
-        let raw_data_clone = tron_tx
-            .raw_data
-            .clone()
-            .ok_or(ChainError::ProtoDecodeError)?;
-        let mut tx_raw = Vec::new();
-        raw_data_clone.encode(&mut tx_raw)?;
+        let mut payload = [0u8; 32];
+        payload.copy_from_slice(&tx.tx_hash[..]);
 
-        let tx_id = sha256_digest(&tx_raw[..]);
-        let sig = secp256k1::Secp256K1::sign(&tx_id, &pvk_bytes)?;
+        tx.signature = secp256k1::Secp256K1::sign(&payload, &pvk_bytes)?.to_vec();
 
-        tron_tx.signature.push(sig.to_vec());
-
-        let mut tx_data = Vec::new();
-        tron_tx.encode(&mut tx_data)?;
-
-        tx.raw_data = tx_data;
-        tx.tx_hash = tx_id.to_vec();
-        tx.signature = sig.as_slice().to_vec();
         Ok(tx)
     }
 
@@ -169,111 +132,8 @@ impl Chain for TRX {
         Ok(sig.to_vec())
     }
 
-    fn get_tx_info(&self, raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
-        let tx = TRX::decode_transaction(raw_tx)?;
-        let raw = tx.raw_data.ok_or(ChainError::ProtoDecodeError)?;
-        if raw.contract.is_empty() {
-            return Err(ChainError::ProtoDecodeError);
-        }
-
-        let contract = raw.contract[0].clone();
-
-        let contract_type =
-            ContractType::try_from(contract.r#type).map_err(|_| ChainError::ProtoDecodeError)?;
-        let parameter = contract.parameter.ok_or(ChainError::ProtoDecodeError)?;
-
-        match contract_type {
-            ContractType::TransferContract => {
-                let transfer_contract =
-                    protocol::TransferContract::decode(parameter.value.as_slice())?;
-                let mut owner_u8_addr: [u8; 21] = [0; 21];
-                let mut owner_address = String::from("");
-
-                if transfer_contract.owner_address.len() >= TRX_ADD_RAW_LEN {
-                    owner_u8_addr.copy_from_slice(&transfer_contract.owner_address[..]);
-                    owner_address = TRX::expand_address_with_checksum(&owner_u8_addr);
-                }
-
-                let mut to_u8_addr: [u8; 21] = [0; 21];
-                let mut to_address = String::from("");
-
-                if transfer_contract.to_address.len() >= TRX_ADD_RAW_LEN {
-                    to_u8_addr.copy_from_slice(&transfer_contract.to_address[..]);
-                    to_address = TRX::expand_address_with_checksum(&to_u8_addr);
-                }
-
-                let value = U256::from_i64(transfer_contract.amount).to_f64(self.get_decimals());
-                return Ok(TxInfo {
-                    sender: owner_address,
-                    receiver: to_address,
-                    value,
-                    tx_type: TxType::Transfer,
-                });
-            }
-
-            ContractType::TransferAssetContract => {
-                let transfer_contract: protocol::TransferAssetContract =
-                    protocol::TransferAssetContract::decode(parameter.value.as_slice())?;
-                let mut owner_u8_addr: [u8; 21] = [0; 21];
-                let mut owner_address = String::from("");
-
-                if transfer_contract.owner_address.len() >= TRX_ADD_RAW_LEN {
-                    owner_u8_addr.copy_from_slice(&transfer_contract.owner_address[..]);
-                    owner_address = TRX::expand_address_with_checksum(&owner_u8_addr);
-                }
-
-                let mut to_u8_addr: [u8; 21] = [0; 21];
-                let mut to_address = String::from("");
-
-                if transfer_contract.to_address.len() >= TRX_ADD_RAW_LEN {
-                    to_u8_addr.copy_from_slice(&transfer_contract.to_address[..]);
-                    to_address = TRX::expand_address_with_checksum(&to_u8_addr);
-                }
-
-                let value = U256::from_i64(transfer_contract.amount).to_f64(self.get_decimals());
-                return Ok(TxInfo {
-                    sender: owner_address,
-                    receiver: to_address,
-                    value,
-                    tx_type: TxType::Transfer,
-                });
-            }
-
-            ContractType::TriggerSmartContract => {
-                let trigger_contract =
-                    protocol::TriggerSmartContract::decode(parameter.value.as_slice())?;
-                let mut owner_u8_addr: [u8; 21] = [0; 21];
-                let mut owner_address = String::from("");
-
-                if trigger_contract.owner_address.len() >= TRX_ADD_RAW_LEN {
-                    owner_u8_addr.copy_from_slice(&trigger_contract.owner_address[..]);
-                    owner_address = TRX::expand_address_with_checksum(&owner_u8_addr);
-                }
-
-                let mut to_u8_addr: [u8; 21] = [0; 21];
-                let mut to_address = String::from("");
-
-                if trigger_contract.contract_address.len() >= TRX_ADD_RAW_LEN {
-                    to_u8_addr.copy_from_slice(&trigger_contract.contract_address[..]);
-                    to_address = TRX::expand_address_with_checksum(&to_u8_addr);
-                }
-
-                return Ok(TxInfo {
-                    sender: owner_address,
-                    receiver: to_address,
-                    value: 0.0,
-                    tx_type: TxType::TriggerContract,
-                });
-            }
-            _ => {}
-        };
-
-        Ok(TxInfo {
-            sender: "".to_string(),
-            receiver: "".to_string(),
-            value: 0.0,
-            tx_type: TxType::Unknown,
-        })
+    fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
+        Err(ChainError::NotSupported)
     }
 
     fn get_chain_type(&self) -> ChainType {

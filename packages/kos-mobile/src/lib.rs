@@ -520,7 +520,7 @@ mod tests {
     }
 
     #[test]
-    fn should_sign_raw_transaction() {
+    fn should_sign_raw_transaction_klv() {
         let chain_id = 38;
 
         let raw = hex::encode("{\"RawData\":{\"BandwidthFee\":1000000,\"ChainID\":\"MTAwNDIw\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Version\":1}}".as_bytes());
@@ -546,6 +546,37 @@ mod tests {
         );
         assert_eq!(
             transaction.signature, "81464320f4b14aae344234c1337f3f0c002e5939bb0f54c7a3629656a8624d80ae9b93be3925b04d8960214d11809eae9e083572e0893dc99858d8230ca03f0c",
+            "The signature doesn't match"
+        );
+    }
+    #[test]
+    fn should_sign_raw_transaction_trx() {
+        let chain_id = 1;
+
+        let raw =
+            "0a02487c22080608af18f6ec6c8340d8f8fae2e0315a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541e825d52582eec346c839b4875376117904a76cbc12154120ab1300cf70c048e4cf5d5b1b33f59653ed6626180a708fb1f7e2e031";
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false,
+        )
+            .unwrap();
+
+        let transaction = sign_transaction(account, raw.to_string(), None).unwrap();
+
+        assert_eq!(transaction.chain_id, chain_id, "The chain_id doesn't match");
+        assert_eq!(
+            transaction.sender, "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH",
+            "The sender doesn't match"
+        );
+        assert_eq!(
+            transaction.raw, "0a83010a02487c22080608af18f6ec6c8340d8f8fae2e0315a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541e825d52582eec346c839b4875376117904a76cbc12154120ab1300cf70c048e4cf5d5b1b33f59653ed6626180a708fb1f7e2e0311241e8469947140bdaff5cce4000e60a3bd95ca3de551870a450ce51ab41acfefe8b009e7ca1caaad63efdae94332f6282ef8766471236849511e70d7b1c22c15f7b01",
+            "The raw doesn't match"
+        );
+        assert_eq!(
+            transaction.signature, "e8469947140bdaff5cce4000e60a3bd95ca3de551870a450ce51ab41acfefe8b009e7ca1caaad63efdae94332f6282ef8766471236849511e70d7b1c22c15f7b01",
             "The signature doesn't match"
         );
     }

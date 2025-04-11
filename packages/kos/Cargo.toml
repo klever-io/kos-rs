@@ -7,7 +7,6 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
-build = "build.rs"
 
 ## Only necessary if using Protobuf well-known types:
 [lib]
@@ -19,7 +18,6 @@ hmac = { version = "0.12", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 sha3 = { version = "0.10", default-features = false }
 prost = { version = "0.13.5", default-features = false, features = ["prost-derive"] }
-prost-types = { version = "0.13.5", default-features = false }
 bech32 = { version = "0.9.1", default-features = false }
 blake2b-ref = { version = "0.3.1", default-features = false }
 rlp = { version = "0.5.0", default-features = false }
@@ -46,15 +44,6 @@ pem = { version = "3", optional = true }
 cfb-mode = { version = "0.8", optional = true }
 cbc = { version = "0.1", features = ["block-padding", "std"], optional = true }
 serde = { version = "1.0.215", features = ["derive"], optional = true }
-
-[build-dependencies]
-prost-build = "0.13.5"
-quote = "1.0.33"
-prost-wkt-build = "0.6.0"
-prost-wkt = { version = "0.6.0", default-features = false }
-prost-wkt-types = { version = "0.6.0", default-features = false }
-heck = "0.4.1"
-
 
 [features]
 default = ["not-ksafe"]

@@ -1,19 +1,13 @@
-mod models;
-
-use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo, TxType};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
-use crate::crypto::hash::{blake2b_digest, keccak256_digest};
-use crate::protos::generated::klv::proto;
+use crate::crypto::hash::keccak256_digest;
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use bech32::{u5, Variant};
 
 use crate::chains::util::private_key_from_vec;
-use crate::crypto::base64::simple_base64_encode;
-use crate::crypto::bignum::U256;
-use prost::Message;
 
 const KLEVER_MESSAGE_PREFIX: &str = "\x17Klever Signed Message:\n";
 
@@ -84,31 +78,8 @@ impl Chain for KLV {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        let raw_tx = tx.raw_data;
+        let sig = self.sign_raw(private_key, tx.tx_hash.clone())?;
 
-        // Parse [] empty arrays to [""] to avoid decoding errors
-        let json = String::from_utf8(raw_tx.clone())?;
-        let parsed = json.replace("[]", "[\"\"]").as_bytes().to_vec();
-
-        let mut js_tx: models::Transaction = tiny_json_rs::decode(String::from_utf8(parsed)?)?;
-
-        let klv_tx = proto::Transaction::try_from(js_tx.clone())
-            .map_err(|_| ChainError::ProtoDecodeError)?;
-
-        let raw_data = klv_tx
-            .raw_data
-            .clone()
-            .ok_or(ChainError::ProtoDecodeError)?;
-        let mut tx_raw = Vec::with_capacity(raw_data.encoded_len());
-        raw_data.encode(&mut tx_raw)?;
-        let result_buffer = blake2b_digest(&tx_raw);
-
-        let sig = self.sign_raw(private_key, result_buffer.to_vec())?;
-
-        js_tx.signature = Some(Vec::from([simple_base64_encode(&sig)]));
-
-        tx.raw_data = tiny_json_rs::encode(js_tx).into_bytes();
-        tx.tx_hash = result_buffer.to_vec();
         tx.signature = sig.as_slice().to_vec();
         Ok(tx)
     }
@@ -126,41 +97,8 @@ impl Chain for KLV {
         Ok(signature)
     }
 
-    fn get_tx_info(&self, raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
-        let js_tx: models::Transaction = tiny_json_rs::decode(String::from_utf8(raw_tx)?)?;
-        let tx = proto::Transaction::try_from(js_tx).map_err(|_| ChainError::ProtoDecodeError)?;
-        let raw = tx.raw_data.ok_or(ChainError::ProtoDecodeError)?;
-
-        if raw.contract.len() != 1 {
-            return Err(ChainError::ProtoDecodeError);
-        }
-
-        let c_type: proto::tx_contract::ContractType =
-            proto::tx_contract::ContractType::try_from(raw.contract[0].r#type)
-                .map_err(|_| ChainError::ProtoDecodeError)?;
-        match c_type {
-            proto::tx_contract::ContractType::TransferContractType => {
-                let value = raw.contract[0].clone().parameter.unwrap().value;
-                let tc = proto::TransferContract::decode(value.as_slice())
-                    .map_err(|_| ChainError::ProtoDecodeError)?;
-                let sender = self.get_address(raw.sender)?;
-                let receiver = self.get_address(tc.to_address)?;
-                let value = U256::from_i64(tc.amount).to_f64(self.get_decimals());
-
-                Ok(TxInfo {
-                    sender,
-                    receiver,
-                    value,
-                    tx_type: TxType::Transfer,
-                })
-            }
-            _ => Ok(TxInfo {
-                sender: String::new(),
-                receiver: String::new(),
-                value: 0.0,
-                tx_type: TxType::Unknown,
-            }),
-        }
+    fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
+        Err(ChainError::NotSupported)
     }
 
     fn get_chain_type(&self) -> ChainType {
