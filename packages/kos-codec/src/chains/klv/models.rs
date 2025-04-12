@@ -81,6 +81,7 @@ pub struct Receipt {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum ConversionError {
     InvalidData(&'static str),
     Base64Error,

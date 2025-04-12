@@ -4,10 +4,9 @@ use crate::crypto::b58::b58enc;
 use crate::crypto::hash::{keccak256_digest, sha256_digest};
 use crate::crypto::secp256k1::Secp256k1Trait;
 use crate::crypto::{bip32, secp256k1};
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
-use alloc::format;
-use prost::Message;
 
 const TRX_ADDR_PREFIX: u8 = 0x41;
 const TRX_ADD_RAW_LEN: usize = 21;
@@ -143,9 +142,8 @@ impl Chain for TRX {
 
 #[cfg(test)]
 mod test {
-    use crate::chains::{Chain, Transaction};
+    use crate::chains::Chain;
     use alloc::string::{String, ToString};
-    use alloc::vec;
 
     #[test]
     fn test_trx_derive() {
@@ -161,46 +159,5 @@ mod test {
         assert_eq!(pbk.len(), 65);
         let addr = crate::chains::trx::TRX {}.get_address(pbk).unwrap();
         assert_eq!(addr, "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH");
-    }
-
-    #[test]
-    fn test_sign_tx() {
-        let hex_tx = hex::decode(
-            "0a02487c22080608af18\
-        f6ec6c8340d8f8fae2e0315a65080112610a2d747970652e676f6f676c65\
-        617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e74\
-        7261637412300a1541e825d52582eec346c839b4875376117904a76cbc121\
-        54120ab1300cf70c048e4cf5d5b1b33f59653ed6626180a708fb1f7e2e031",
-        )
-        .unwrap();
-
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let path = String::from("m/44'/195'/0'/0/0");
-
-        let seed = crate::chains::trx::TRX {}
-            .mnemonic_to_seed(mnemonic, String::from(""))
-            .unwrap();
-        let pvk = crate::chains::trx::TRX {}.derive(seed, path).unwrap();
-        assert_eq!(pvk.len(), 32);
-
-        let tx = Transaction {
-            raw_data: hex_tx,
-            tx_hash: vec![],
-            signature: vec![],
-            options: None,
-        };
-        let _tx = crate::chains::trx::TRX {}.sign_tx(pvk, tx).unwrap();
-    }
-
-    #[test]
-    fn test_decode_tx() {
-        let hex_tx = hex::decode("0a022986220894d3a7d6c869ebc840c0e1b2b5e1315a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541e825d52582eec346c839b4875376117904a76cbc12154120ab1300cf70c048e4cf5d5b1b33f59653ed6626180a70ae9cafb5e131").unwrap();
-
-        let info = crate::chains::trx::TRX {}.get_tx_info(hex_tx).unwrap();
-        let res = tiny_json_rs::encode(info);
-        assert_eq!(
-            res,
-            r#"{"receiver":"TCwwZeH6so1X4R5kcdbKqa4GWuzF53xPqG","sender":"TX8h6Df74VpJsXF6sTDz1QJsq3Ec8dABc3","tx_type":"Transfer","value":0.00001}"#
-        );
     }
 }

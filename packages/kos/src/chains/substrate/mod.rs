@@ -547,8 +547,6 @@ mod test {
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = dot.derive(seed, path).unwrap();
 
-        let pbk = dot.get_pbk(pvk.clone()).unwrap();
-
         let raw_data = simple_base64_decode("CgMAbW9kbGFjYS9pbmN0AAAAAAAAAAAAAAAAAAAAAAAAAAAE9QIAAADoCAAAAgAAALr1qr5AZG0R8O6Ku9xk9KS3Z0kly6COSgX/nr7W4hJrTimIjSb829wZAW19nqKqT5jkpTo80WAgCLqC3vJu6ycA").unwrap();
 
         let nonce = 0;
@@ -597,7 +595,6 @@ mod test {
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = dot.derive(seed, path).unwrap();
-        let pbk = dot.get_pbk(pvk.clone()).unwrap();
 
         let raw_data = simple_base64_decode("CgMAbW9kbGFjYS9kZXhtAAAAAAAAAAAAAAAAAAAAAAAAAAAEBQPVTQAA6AgAAAMAAAD8Qbm9jvj+U9WMfqZ8eUx+yac9rwXm1UsU/2NCyZumTMZAZ+YgN3HGoPCoy9HNtxDCqeRTcz9HtiAUy505IgcjAA==").unwrap();
 
