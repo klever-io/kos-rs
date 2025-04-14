@@ -325,7 +325,7 @@ impl Wallet {
 impl Wallet {
     #[wasm_bindgen(js_name = "signMessage")]
     /// sign message with keypair
-    pub fn sign_message(&self, message: &[u8]) -> Result<Vec<u8>, Error> {
+    pub fn sign_message(&self, message: &[u8], legacy: bool) -> Result<Vec<u8>, Error> {
         match self.private_key {
             Some(ref pk_hex) => {
                 let pk_bytes = hex::decode(pk_hex)?;
@@ -333,7 +333,7 @@ impl Wallet {
                     .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
                 chain
-                    .sign_message(pk_bytes, message.to_vec())
+                    .sign_message(pk_bytes, message.to_vec(), legacy)
                     .map_err(|e| Error::WalletManager(format!("sign message: {}", e)))
             }
             None => Err(Error::WalletManager("no keypair".to_string())),
@@ -490,7 +490,7 @@ mod tests {
 
         let wallet = Wallet::from_private_key(chain_id, TEST_PRIVATE_KEY.to_string()).unwrap();
 
-        let signature = wallet.sign_message(message).unwrap();
+        let signature = wallet.sign_message(message, true).unwrap();
         assert!(!signature.is_empty());
     }
 
@@ -556,7 +556,7 @@ mod tests {
 
         // Signing operations should fail
         let message = b"test message";
-        assert!(wallet.sign_message(message).is_err());
+        assert!(wallet.sign_message(message, true).is_err());
     }
 
     #[test]

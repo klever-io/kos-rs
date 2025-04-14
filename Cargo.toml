@@ -28,7 +28,7 @@ homepage = "https://klever.org/"
 license = "Apache-2.0"
 repository = "https://github.com/kleverio/kos-rs"
 rust-version = "1.69.0"
-version = "0.2.15"
+version = "0.2.16"
 
 [workspace.dependencies]
 bech32 = "0.9.1"
@@ -73,4 +73,4 @@ lwk_signer = "0.8.0"
 lwk_wollet = { git = "https://github.com/breez/lwk", branch = "breez-sdk-liquid-0.6.3" }
 ecies = { version = "0.2.7", default-features = false, features = ["pure"] }
 
-kos = { version = "0.2.15", path = "./packages/kos", default-features = false, features = ["not-ksafe"] }
+kos = { version = "0.2.16", path = "./packages/kos", default-features = false, features = ["not-ksafe"] }
