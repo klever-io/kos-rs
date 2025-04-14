@@ -2976,7 +2976,7 @@ dependencies = [
  "hex",
  "kos",
  "kos-codec",
- "lwk_common",
+ "lwk_common 0.9.0",
  "lwk_signer",
  "lwk_wollet",
  "num-bigint",
@@ -3118,6 +3118,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "lwk_common"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e055bce03c8a966bbdf11b1de04b2973d8c8854d7cc5877a37c5bb0c492a2909"
+dependencies = [
+ "base64 0.21.7",
+ "elements",
+ "elements-miniscript",
+ "getrandom 0.2.15",
+ "qr_code",
+ "rand 0.8.5",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "lwk_containers"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3139,7 +3154,7 @@ dependencies = [
  "elements-miniscript",
  "hex",
  "log",
- "lwk_common",
+ "lwk_common 0.8.0",
  "lwk_containers",
  "rand 0.8.5",
  "reqwest",
@@ -3161,7 +3176,7 @@ dependencies = [
  "base64 0.13.1",
  "bip39",
  "elements-miniscript",
- "lwk_common",
+ "lwk_common 0.8.0",
  "lwk_jade",
  "thiserror 1.0.69",
 ]
@@ -3183,7 +3198,7 @@ dependencies = [
  "idna",
  "js-sys",
  "log",
- "lwk_common",
+ "lwk_common 0.8.0",
  "once_cell",
  "rand 0.8.5",
  "regex-lite",
