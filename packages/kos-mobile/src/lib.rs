@@ -789,6 +789,48 @@ mod tests {
 
         assert_eq!(transaction.raw, "02f8b30182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac001a0ac17a21525645e7bdf653b2e46b4fb7b33668b0cb42ce38bf8fbb752e527fb63a0e56f5ff3e3eb15441eeaf144237204b0435ed31d0e009153512074fa56b2cc62", "The raw doesn't match");
     }
+    #[test]
+    fn should_sign_raw_transaction_dot() {
+        let chain_id = 21;
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false,
+        )
+        .unwrap();
+
+        let options = TransactionChainOptions::Substrate {
+            call: hex::decode(
+                "0503000c2441b8cedbfc7a2edc0968b9a535819969d3e9e0998680babb5827287fc07004",
+            )
+            .unwrap(),
+            era: hex::decode("d501").unwrap(),
+            nonce: 27,
+            tip: 0,
+            block_hash: hex::decode(
+                "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+            )
+            .unwrap(),
+            genesis_hash: hex::decode(
+                "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+            )
+            .unwrap(),
+            spec_version: 1003004,
+            transaction_version: 26,
+            app_id: None,
+        };
+
+        let transaction = sign_transaction(
+            account,
+            "0503000c2441b8cedbfc7a2edc0968b9a535819969d3e9e0998680babb5827287fc07004d5016c0000fc4d0f001a00000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c347ee1c48ed396721e74df1c81e95b2aab3e13763e8a2dec7ed5a8b94af4c808d00".to_string(),
+            Some(options),
+        )
+        .unwrap();
+
+        assert_eq!(transaction.raw.len(), 284, "The raw length doesn't match");
+    }
 
     #[test]
     fn should_sign_transaction_with_options() {

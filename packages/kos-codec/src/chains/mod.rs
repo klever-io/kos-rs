@@ -6,5 +6,6 @@ pub mod btc;
 pub mod eth;
 pub mod klv;
 pub mod sol;
+pub mod substrate;
 pub mod trx;
 pub mod xrp;

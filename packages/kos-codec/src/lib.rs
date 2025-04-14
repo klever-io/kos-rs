@@ -1,10 +1,10 @@
 mod chains;
 mod protos;
 
-use crate::chains::{ada, apt, atom, bch, btc, eth, klv, sol, trx, xrp};
+use crate::chains::{ada, apt, atom, bch, btc, eth, klv, sol, substrate, trx, xrp};
 use kos::chains::{get_chain_by_base_id, ChainError, ChainType, Transaction};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct KosCodedAccount {
     pub chain_id: u32,
     pub address: String,
@@ -30,6 +30,7 @@ pub fn encode_for_signing(
         ChainType::TRX => trx::encode_for_sign(transaction)?,
         ChainType::SOL => sol::encode_for_sign(transaction)?,
         ChainType::ETH => eth::encode_for_sign(transaction)?,
+        ChainType::SUBSTRATE => substrate::encode_for_sign(transaction, account)?,
         _ => transaction,
     })
 }
@@ -54,6 +55,7 @@ pub fn encode_for_broadcast(
         ChainType::TRX => trx::encode_for_broadcast(transaction)?,
         ChainType::SOL => sol::encode_for_broadcast(transaction)?,
         ChainType::ETH => eth::encode_for_broadcast(transaction)?,
+        ChainType::SUBSTRATE => substrate::encode_for_broadcast(transaction, account)?,
         _ => transaction,
     })
 }

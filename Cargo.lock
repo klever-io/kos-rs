@@ -2233,6 +2233,7 @@ dependencies = [
  "hex",
  "kos",
  "pallas-primitives",
+ "parity-scale-codec",
  "prost",
  "prost-build",
  "prost-types",
