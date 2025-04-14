@@ -121,7 +121,12 @@ impl Chain for ICP {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        _legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         let public_key = self.get_pbk(private_key.clone())?;
 
         let signature = self.sign_raw(private_key, message)?;
@@ -249,9 +254,14 @@ mod test {
 
         let pvk = icp.derive(seed, path).unwrap();
 
-        let message = "Hello, World!".as_bytes().to_vec();
-        let signature = icp.sign_message(pvk, message).unwrap();
+        let message = "test message".as_bytes().to_vec();
+        let signature = icp.sign_message(pvk, message, true).unwrap();
 
         assert_eq!(signature.len(), 96, "Signature length should be 96");
+
+        assert_eq!(
+            hex::encode(signature),
+            "db41e41de474e2cb6d997ae5aa5de9aa81512a19d1337881363a3c481431935992a118ba863b6d00612c638b5caf7bac65cb2cf31a7d30f9c5473fcb97bf620bc006bf0760963c13c1c1478adbc326b96338060f03487ebd1c3b261dbccd8daf"
+        );
     }
 }

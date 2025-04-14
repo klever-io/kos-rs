@@ -113,7 +113,12 @@ impl Chain for KLV {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        _legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         let prepared_messafe = KLV::prepare_message(message);
         let signature = self.sign_raw(private_key, prepared_messafe.to_vec())?;
         Ok(signature)
@@ -416,6 +421,26 @@ mod test {
         assert_eq!(
             tx_info.sender,
             "klv16sd7crk4jlc8csrv7lwskqrpjgjklvcsmlhexuesa9p6a3dm57rs5vh0hq"
+        );
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let chain = super::KLV {};
+        let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = chain.get_path(0, false);
+        let pvk = chain.derive(seed, path).unwrap();
+
+        let message_bytes = "test message".as_bytes().to_vec();
+
+        let signature = chain.sign_message(pvk, message_bytes, false).unwrap();
+
+        assert_eq!(
+            hex::encode(signature),
+            "458fc2752927ae5ae68e6c0c95a4b408d6329ffc13de19c29bacf3d7efb12500567ca14d67460197ea6097fc93f1fd7c9b41c02a4aedcf1ab15d28b50935bb07"
         );
     }
 }

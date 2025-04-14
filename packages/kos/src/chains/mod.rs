@@ -386,7 +386,12 @@ pub trait Chain {
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError>;
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError>;
     fn sign_tx(&self, private_key: Vec<u8>, tx: Transaction) -> Result<Transaction, ChainError>;
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError>;
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        legacy: bool,
+    ) -> Result<Vec<u8>, ChainError>;
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError>;
     fn get_tx_info(&self, raw_tx: Vec<u8>) -> Result<TxInfo, ChainError>;
     fn get_chain_type(&self) -> ChainType;
@@ -653,7 +658,7 @@ impl ChainRegistry {
             (
                 constants::ADA,
                 ChainInfo {
-                    factory: || Box::new(ADA::new(false)),
+                    factory: || Box::new(ADA::new()),
                     supported: true,
                 },
             ),

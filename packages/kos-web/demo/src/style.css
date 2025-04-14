@@ -1,0 +1,107 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+}
+
+h1 {
+  font-size: 2.5rem;
+  line-height: 1.1;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.card {
+  padding: 1.5rem;
+  border-radius: 8px;
+  background-color: #1a1a1a;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+button {
+  padding: 0.6em 1.2em;
+  cursor: pointer;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+input,
+select,
+textarea {
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  background-color: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  color: white;
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  margin-top: 1rem;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.error {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.success {
+  color: #4caf50;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+@media (prefers-color-scheme: light) {
+  input,
+  select,
+  textarea {
+    border: 1px solid #ddd;
+    color: #213547;
+  }
+}

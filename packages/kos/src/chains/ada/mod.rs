@@ -12,13 +12,17 @@ use alloc::vec::Vec;
 
 pub const BASE_ID: u32 = 20;
 
-pub struct ADA {
-    extended_key: bool,
-}
+pub struct ADA {}
 
 impl ADA {
-    pub fn new(extended_key: bool) -> Self {
-        ADA { extended_key }
+    pub fn new() -> Self {
+        ADA {}
+    }
+}
+
+impl Default for ADA {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -77,10 +81,6 @@ impl Chain for ADA {
                 cc.copy_from_slice(&private_key[64..]);
                 let vk = self.get_pbk(pvk.to_vec())?;
 
-                if !self.extended_key {
-                    return Ok(vk);
-                }
-
                 let mut xvk = Vec::new();
                 xvk.append(&mut vk.to_vec());
                 xvk.append(&mut cc.to_vec());
@@ -137,7 +137,12 @@ impl Chain for ADA {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        _legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         let sig = self.sign_raw(private_key.clone(), message)?;
 
         let pbk = self.get_pbk(private_key)?;
@@ -177,9 +182,7 @@ mod test {
         let mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
                 .to_string();
-        let ada = super::ADA {
-            extended_key: false,
-        };
+        let ada = super::ADA {};
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = ada.get_path(0, false);
@@ -199,19 +202,16 @@ mod test {
         let mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
                 .to_string();
-        let ada = super::ADA {
-            extended_key: false,
-        };
+        let ada = super::ADA {};
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = ada.get_path(0, false);
 
         let pvk = ada.derive(seed, path).unwrap();
+        let message = "test message".as_bytes().to_vec();
 
-        let message = "hello world".as_bytes().to_vec();
+        let sig = ada.sign_message(pvk, message, false).unwrap();
 
-        let sig = ada.sign_message(pvk, message).unwrap();
-
-        assert_eq!(hex::encode(sig), "c9343740a90a19a4ffac066357297c41401dd90710266445803a010a53cc041c3cb5cbbdb6a7ec2e41f8bc9c640876458d3ae31652abe2de2086ea34676923007ea09a34aebb13c9841c71397b1cabfec5ddf950405293dee496cac2f437480a".to_string())
+        assert_eq!(hex::encode(sig), "3a958c70d7e86c7beae52eba5e0738ee4ede4f27bb2ce79b8082373cb9ac16ea3988a1500b6cc47cde5769d7f7fee886c998ab5e5ea4646024682fadb1adb3057ea09a34aebb13c9841c71397b1cabfec5ddf950405293dee496cac2f437480a88848e8af62a27a57e982215741c9eac17e6e45cbfd6ea65a0e0dcc03bb777b2".to_string())
     }
 }
