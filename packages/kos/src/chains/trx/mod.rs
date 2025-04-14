@@ -108,7 +108,12 @@ impl Chain for TRX {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        _legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         if private_key.len() != 32 {
             return Err(ChainError::InvalidPrivateKey);
         }
@@ -159,5 +164,25 @@ mod test {
         assert_eq!(pbk.len(), 65);
         let addr = crate::chains::trx::TRX {}.get_address(pbk).unwrap();
         assert_eq!(addr, "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH");
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let chain = super::TRX {};
+        let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = chain.get_path(0, false);
+        let pvk = chain.derive(seed, path).unwrap();
+
+        let message_bytes = "test message".as_bytes().to_vec();
+
+        let signature = chain.sign_message(pvk, message_bytes, false).unwrap();
+
+        assert_eq!(
+            hex::encode(signature),
+            "cf7b64342bc41955671164c8d5fe7ee992e9497ff4bedcad02f7236be994e4821e2e3fe5807f88ff7099ab3ce8973e4399ccb24bcb41c8d92c64675a32c77e7101"
+        );
     }
 }

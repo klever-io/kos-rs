@@ -184,7 +184,12 @@ impl Chain for Substrate {
         Ok(tx)
     }
 
-    fn sign_message(&self, private_key: Vec<u8>, message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    fn sign_message(
+        &self,
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        _legacy: bool,
+    ) -> Result<Vec<u8>, ChainError> {
         self.sign_raw(private_key, message)
     }
 
@@ -221,8 +226,8 @@ mod test {
     use crate::crypto::base64::simple_base64_decode;
     use alloc::string::{String, ToString};
     use alloc::vec::Vec;
+    use schnorrkel;
     use serde::Deserialize;
-
     #[derive(Deserialize)]
     struct TxBrowser {
         #[serde(rename = "specVersion")]
@@ -703,5 +708,38 @@ mod test {
         let raw_data_hex = hex::decode(raw_data).unwrap();
         let tx_info = dot.get_tx_info(raw_data_hex);
         assert!(tx_info.is_ok());
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = dot.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = dot.get_path(0, false);
+        let pvk = dot.derive(seed, path).unwrap();
+        let pbk = dot.get_pbk(pvk.clone()).unwrap();
+
+        let message = "test message".as_bytes().to_vec();
+        let result = dot
+            .sign_message(pvk.clone(), message.clone(), false)
+            .unwrap();
+
+        let secret_key = schnorrkel::SecretKey::from_bytes(&pvk).unwrap();
+        let public_key = schnorrkel::PublicKey::from_bytes(&pbk).unwrap();
+
+        let key_pair = schnorrkel::Keypair {
+            secret: secret_key,
+            public: public_key,
+        };
+
+        let signature = schnorrkel::Signature::from_bytes(&result).unwrap();
+
+        let substrate_ctx: &[u8; 9] = b"substrate";
+
+        let verify_result = key_pair
+            .verify_simple(substrate_ctx, &message, &signature)
+            .unwrap();
+
+        assert_eq!(true, verify_result == ());
     }
 }
