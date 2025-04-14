@@ -767,6 +767,30 @@ mod tests {
     }
 
     #[test]
+    fn should_sign_raw_transaction_eth() {
+        let chain_id = 3;
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false,
+        )
+        .unwrap();
+
+        let transaction = sign_transaction(
+            account,
+            "b87602f8730182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac0808080".to_string(),
+            Some(TransactionChainOptions::Evm {
+                chain_id:1
+            }),
+        )
+        .unwrap();
+
+        assert_eq!(transaction.raw, "02f8b30182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac001a0ac17a21525645e7bdf653b2e46b4fb7b33668b0cb42ce38bf8fbb752e527fb63a0e56f5ff3e3eb15441eeaf144237204b0435ed31d0e009153512074fa56b2cc62", "The raw doesn't match");
+    }
+
+    #[test]
     fn should_sign_transaction_with_options() {
         let chain_id = 61;
         let raw =

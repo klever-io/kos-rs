@@ -3,6 +3,7 @@ pub mod apt;
 pub mod atom;
 pub mod bch;
 pub mod btc;
+pub mod eth;
 pub mod klv;
 pub mod sol;
 pub mod trx;
