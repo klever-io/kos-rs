@@ -29,7 +29,21 @@ uniffi = { workspace = true, features = ["cli"] }
 serde = { workspace = true, features = ["derive"], optional = true }
 num-bigint = "0.4"
 num-traits = "0.2"
+lwk_common = { workspace = true }
+lwk_signer = { workspace = true }
+lwk_wollet = { workspace = true }
+anyhow = "1.0.96"
+ecies = { workspace = true }
 bigdecimal = "0.4.7"
+
 
 [build-dependencies]
 uniffi = { workspace = true, features = ["build"] }
+
+[profile.release]
+lto = true
+opt-level = "z"   # Optimize for size.
+codegen-units = 1 # Reduce Parallel Code Generation Units to Increase Optimization
+panic = "abort"   # Abort on panic, as unwinding code does require extra binary size
+rpath = true
+

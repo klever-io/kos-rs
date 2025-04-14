@@ -1,4 +1,6 @@
 use crate::chains::ChainError;
+use alloc::vec::Vec;
+
 use coins_bip39::{English, Mnemonic};
 
 pub fn generate_mnemonic(count: usize) -> Result<Mnemonic<English>, ChainError> {
@@ -12,6 +14,14 @@ pub fn validate_mnemonic(phrase: &str) -> Result<(), ChainError> {
     // validate mnemonic phrase
     let _mnemonic: Mnemonic<English> = phrase.parse()?;
     Ok(())
+}
+
+pub fn mnemonic_to_seed(phrase: &str, passphrase: &str) -> Result<Vec<u8>, ChainError> {
+    let mnemonic: Mnemonic<English> = phrase.parse()?;
+    mnemonic
+        .to_seed(Some(passphrase))
+        .map(|seed| seed.to_vec())
+        .map_err(|_| ChainError::InvalidMnemonic)
 }
 
 impl From<coins_bip39::MnemonicError> for ChainError {
