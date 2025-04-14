@@ -25,7 +25,7 @@ homepage = "https://klever.org/"
 license = "Apache-2.0"
 repository = "https://github.com/kleverio/kos-rs"
 rust-version = "1.69.0"
-version = "0.2.15"
+version = "0.2.16"
 
 [workspace.dependencies]
 bech32 = "0.9.1"
@@ -51,4 +51,4 @@ serde_json = "1.0"
 lazy_static = "1.4.0"
 thiserror = "1.0"
 
-kos = { version = "0.2.15", path = "./packages/kos", default-features = false, features = ["not-ksafe"] }
+kos = { version = "0.2.16", path = "./packages/kos", default-features = false, features = ["not-ksafe"] }
