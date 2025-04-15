@@ -1,7 +1,7 @@
 mod chains;
 mod protos;
 
-use crate::chains::{ada, apt, atom, bch, btc, eth, klv, sol, substrate, trx, xrp};
+use crate::chains::{ada, apt, atom, bch, btc, eth, icp, klv, sol, substrate, trx, xrp};
 use kos::chains::{get_chain_by_base_id, ChainError, ChainType, Transaction};
 
 #[derive(Clone, Debug)]
@@ -31,6 +31,7 @@ pub fn encode_for_signing(
         ChainType::SOL => sol::encode_for_sign(transaction)?,
         ChainType::ETH => eth::encode_for_sign(transaction)?,
         ChainType::SUBSTRATE => substrate::encode_for_sign(transaction, account)?,
+        ChainType::ICP => icp::encode_for_sign(transaction)?,
         _ => transaction,
     })
 }
@@ -56,6 +57,7 @@ pub fn encode_for_broadcast(
         ChainType::SOL => sol::encode_for_broadcast(transaction)?,
         ChainType::ETH => eth::encode_for_broadcast(transaction)?,
         ChainType::SUBSTRATE => substrate::encode_for_broadcast(transaction, account)?,
+        ChainType::ICP => icp::encode_for_broadcast(transaction)?,
         _ => transaction,
     })
 }

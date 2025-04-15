@@ -2206,7 +2206,6 @@ dependencies = [
  "hex",
  "hmac 0.12.1",
  "libsecp256k1",
- "parity-scale-codec",
  "pbkdf2",
  "pem",
  "prost",
@@ -2219,7 +2218,6 @@ dependencies = [
  "serde_json",
  "sha2 0.10.8",
  "sha3",
- "tiny-json-rs",
 ]
 
 [[package]]

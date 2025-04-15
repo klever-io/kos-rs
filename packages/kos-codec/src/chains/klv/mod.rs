@@ -13,7 +13,8 @@ pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, Chai
     let json = String::from_utf8(raw_tx.clone())?;
     let parsed = json.replace("[]", "[\"\"]").as_bytes().to_vec();
 
-    let js_tx: models::Transaction = tiny_json_rs::decode(String::from_utf8(parsed)?)?;
+    let js_tx: models::Transaction = tiny_json_rs::decode(String::from_utf8(parsed)?)
+        .map_err(|_| ChainError::InvalidTransaction("Failed to decode transaction".to_string()))?;
 
     let klv_tx =
         proto::Transaction::try_from(js_tx.clone()).map_err(|_| ChainError::ProtoDecodeError)?;
@@ -36,7 +37,8 @@ pub fn encode_for_broadcast(mut transaction: Transaction) -> Result<Transaction,
     let json = String::from_utf8(raw_tx.clone())?;
     let parsed = json.replace("[]", "[\"\"]").as_bytes().to_vec();
 
-    let mut js_tx: models::Transaction = tiny_json_rs::decode(String::from_utf8(parsed)?)?;
+    let mut js_tx: models::Transaction = tiny_json_rs::decode(String::from_utf8(parsed)?)
+        .map_err(|_| ChainError::InvalidTransaction("Failed to decode transaction".to_string()))?;
 
     js_tx.signature = Some(Vec::from([simple_base64_encode(&transaction.signature)]));
 

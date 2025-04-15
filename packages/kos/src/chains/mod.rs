@@ -1,4 +1,3 @@
-use crate::alloc::borrow::ToOwned;
 use crate::chains::ada::ADA;
 use crate::chains::apt::APT;
 use crate::chains::atom::ATOM;
@@ -18,16 +17,11 @@ use crate::crypto::secp256k1::Secp256Err;
 use crate::crypto::sr25519::Sr25519Error;
 use alloc::boxed::Box;
 use alloc::format;
-use alloc::string::{FromUtf8Error, String, ToString};
+use alloc::string::{FromUtf8Error, String};
 use alloc::vec::Vec;
 use core::fmt::Display;
 use prost::{DecodeError, EncodeError};
 use rlp::DecoderError;
-use tiny_json_rs::lexer::StringType;
-use tiny_json_rs::mapper;
-use tiny_json_rs::serializer;
-use tiny_json_rs::serializer::Token;
-use tiny_json_rs::Serialize;
 
 pub mod ada;
 pub mod apt;
@@ -242,12 +236,6 @@ impl From<DecoderError> for ChainError {
     }
 }
 
-impl From<serializer::DecodeError> for ChainError {
-    fn from(_: serializer::DecodeError) -> Self {
-        ChainError::ProtoDecodeError
-    }
-}
-
 impl From<Sr25519Error> for ChainError {
     fn from(value: Sr25519Error) -> Self {
         ChainError::CurveErrorSr(value)
@@ -304,23 +292,6 @@ pub enum TxType {
     TriggerContract,
 }
 
-impl serializer::Serialize for TxType {
-    fn serialize(&self) -> mapper::Value {
-        let str = match self {
-            TxType::Unknown => "Unknown",
-            TxType::Transfer => "Transfer",
-            TxType::TriggerContract => "TriggerContract",
-        };
-        let token = Token {
-            token_type: tiny_json_rs::lexer::TokenType::String(StringType::SimpleString),
-            literal: str.to_string(),
-        };
-
-        mapper::Value::Token(token)
-    }
-}
-
-#[derive(Serialize)]
 pub struct TxInfo {
     pub sender: String,
     pub receiver: String,

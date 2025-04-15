@@ -22,7 +22,6 @@ bech32 = { version = "0.9.1", default-features = false }
 blake2b-ref = { version = "0.3.1", default-features = false }
 rlp = { version = "0.5.0", default-features = false }
 hex = { version = "0.4.3", features = ["alloc"], default-features = false }
-tiny-json-rs = "0.2.5"
 ripemd = { version = "0.1.3", default-features = false }
 schnorrkel = { version = "0.11.4", default-features = false }
 ed25519-dalek = { version = "2.1.0", features = ["hazmat"], default-features = false }
@@ -30,7 +29,6 @@ pbkdf2 = { version = "0.12.2", features = ["sha2", "hmac", "password-hash"], def
 bip39-dict = { version = "0.1.0", features = ["english"], default-features = false }
 libsecp256k1 = { version = "0.7.1", features = ["hmac", "static-context"], default-features = false }
 rand_core = { version = "0.6.4", default-features = false }
-parity-scale-codec = { version = "3.6.9", default-features = false, features = ["derive"] }
 
 rand = { workspace = true, optional = true }
 coins-bip32 = { workspace = true, optional = true }
