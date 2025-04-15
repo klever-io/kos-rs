@@ -13,6 +13,7 @@ use alloc::string::{String, ToString};
 use core::alloc::GlobalAlloc;
 use kos::chains::TxType;
 
+use tiny_json_rs::mapper;
 use tiny_json_rs::serializer;
 
 #[allow(dead_code)]
