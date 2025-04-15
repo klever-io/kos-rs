@@ -1,10 +1,9 @@
 #![no_std]
 #![allow(clippy::to_string_in_format_args)]
+extern crate alloc;
 use kos::chains;
 
 mod models;
-
-extern crate alloc;
 
 use crate::models::{CBuffer, CNodeStruct, CTransaction, CTxInfo, RequestChainParams};
 use alloc::format;
@@ -12,6 +11,7 @@ use alloc::string::{String, ToString};
 
 #[allow(unused_imports)]
 use core::alloc::GlobalAlloc;
+use kos::chains::TxType;
 
 #[allow(dead_code)]
 struct FreeRtosAllocator;
@@ -330,7 +330,34 @@ pub extern "C" fn rs_mnemonic_to_seed(
 #[no_mangle]
 pub extern "C" fn rs_tx_info_to_json(info: &mut CTxInfo, result: &mut CBuffer) -> bool {
     let tx_info = info.to_tx_info();
-    let json = tiny_json_rs::encode(tx_info);
+
+    #[derive(tiny_json_rs::Deserialize)]
+    pub enum TransactionType {
+        Unknown,
+        Transfer,
+        TriggerContract,
+    }
+
+    #[derive(tiny_json_rs::Deserialize)]
+    pub struct TransactionDetails {
+        pub sender: String,
+        pub receiver: String,
+        pub value: f64,
+        pub tx_type: TransactionType,
+    }
+
+    let transaction_details = TransactionDetails {
+        sender: tx_info.sender,
+        receiver: tx_info.receiver,
+        value: tx_info.value,
+        tx_type: match tx_info.tx_type {
+            TxType::Transfer => TransactionType::Transfer,
+            TxType::TriggerContract => TransactionType::TriggerContract,
+            _ => TransactionType::Unknown,
+        },
+    };
+
+    let json = tiny_json_rs::encode(transaction_details);
 
     result.write(json.as_ptr(), json.len() as u32);
     true
