@@ -5,6 +5,7 @@ use kos::chains;
 
 mod models;
 
+use crate::alloc::borrow::ToOwned;
 use crate::models::{CBuffer, CNodeStruct, CTransaction, CTxInfo, RequestChainParams};
 use alloc::format;
 use alloc::string::{String, ToString};
