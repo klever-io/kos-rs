@@ -155,6 +155,13 @@ fn validate_mnemonic(mnemonic: String) -> bool {
 }
 
 #[uniffi::export]
+fn get_path_by_chain(chain_id: u32, index: u32, use_legacy_path: bool) -> Result<String, KOSError> {
+    let chain = get_chain_by(chain_id)?;
+    let path = chain.get_path(index, use_legacy_path);
+    Ok(path)
+}
+
+#[uniffi::export]
 fn generate_wallet_from_mnemonic(
     mnemonic: String,
     chain_id: u32,
@@ -662,5 +669,17 @@ mod tests {
             !supported_chains.is_empty(),
             "The supported chains should not be empty"
         );
+    }
+
+    #[test]
+    fn should_get_path_by_chain() {
+        let path = get_path_by_chain(38, 0, false).unwrap();
+        assert_eq!(path, "m/44'/690'/0'/0'/0'");
+
+        let path = get_path_by_chain(27, 0, false).unwrap();
+        assert_eq!(path, "");
+
+        let path = get_path_by_chain(27, 1, false).unwrap();
+        assert_eq!(path, "//0///");
     }
 }
