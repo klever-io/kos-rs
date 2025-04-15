@@ -75,6 +75,15 @@ fn big_number_new(value: String) -> Result<BigNumber, KOSError> {
 }
 
 #[uniffi::export]
+fn big_number_new_zero() -> BigNumber {
+    BigNumber {
+        digits: vec![0],
+        scale: 0,
+        sign: Sign::NoSign,
+    }
+}
+
+#[uniffi::export]
 fn big_number_string(value: BigNumber) -> String {
     value
         .to_bigdecimal()

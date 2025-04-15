@@ -16,7 +16,7 @@ assemble_ios_lib() {
   arch=$1
   cd "$BUILD_HOME"
   log_status "assembling iOS lib to $arch..."
-  cargo build --target "$arch" --release -q
+  cargo build --target "$arch" --release
   cd ../../target/"$arch"/release
   mv lib"$PACKAGE_NAME".a "$arch"-lib"$PACKAGE_NAME".a
 }
