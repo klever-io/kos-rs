@@ -13,6 +13,8 @@ use alloc::string::{String, ToString};
 use core::alloc::GlobalAlloc;
 use kos::chains::TxType;
 
+use tiny_json_rs::serializer;
+
 #[allow(dead_code)]
 struct FreeRtosAllocator;
 #[allow(dead_code)]
@@ -331,30 +333,19 @@ pub extern "C" fn rs_mnemonic_to_seed(
 pub extern "C" fn rs_tx_info_to_json(info: &mut CTxInfo, result: &mut CBuffer) -> bool {
     let tx_info = info.to_tx_info();
 
-    #[derive(tiny_json_rs::Deserialize)]
-    pub enum TransactionType {
-        Unknown,
-        Transfer,
-        TriggerContract,
-    }
-
-    #[derive(tiny_json_rs::Deserialize)]
+    #[derive(tiny_json_rs::Serialize)]
     pub struct TransactionDetails {
         pub sender: String,
         pub receiver: String,
         pub value: f64,
-        pub tx_type: TransactionType,
+        pub tx_type: TxType,
     }
 
     let transaction_details = TransactionDetails {
         sender: tx_info.sender,
         receiver: tx_info.receiver,
         value: tx_info.value,
-        tx_type: match tx_info.tx_type {
-            TxType::Transfer => TransactionType::Transfer,
-            TxType::TriggerContract => TransactionType::TriggerContract,
-            _ => TransactionType::Unknown,
-        },
+        tx_type: tx_info.tx_type,
     };
 
     let json = tiny_json_rs::encode(transaction_details);
