@@ -11,7 +11,7 @@ pub enum Error {
     // JSON serialization error
     JSONSerde(String),
     // UnsupportedChain,
-    UnsupportedChain(&'static str),
+    UnsupportedChain(String),
     // InvalidMnemonic,
     InvalidMnemonic(&'static str),
     // InvalidPath,

@@ -1,17 +1,23 @@
 #![no_std]
 #![allow(clippy::to_string_in_format_args)]
+extern crate alloc;
 use kos::chains;
 
 mod models;
 
-extern crate alloc;
-
+use crate::alloc::borrow::ToOwned;
 use crate::models::{CBuffer, CNodeStruct, CTransaction, CTxInfo, RequestChainParams};
 use alloc::format;
 use alloc::string::{String, ToString};
 
 #[allow(unused_imports)]
 use core::alloc::GlobalAlloc;
+use kos::chains::TxType;
+use tiny_json_rs::lexer::StringType;
+
+use tiny_json_rs::mapper;
+use tiny_json_rs::serializer;
+use tiny_json_rs::serializer::Token;
 
 #[allow(dead_code)]
 struct FreeRtosAllocator;
@@ -330,7 +336,49 @@ pub extern "C" fn rs_mnemonic_to_seed(
 #[no_mangle]
 pub extern "C" fn rs_tx_info_to_json(info: &mut CTxInfo, result: &mut CBuffer) -> bool {
     let tx_info = info.to_tx_info();
-    let json = tiny_json_rs::encode(tx_info);
+
+    enum TransactionType {
+        Unknown,
+        Transfer,
+        TriggerContract,
+    }
+
+    #[derive(tiny_json_rs::Serialize)]
+    struct TransactionDetails {
+        pub sender: String,
+        pub receiver: String,
+        pub value: f64,
+        pub tx_type: TransactionType,
+    }
+
+    let transaction_details = TransactionDetails {
+        sender: tx_info.sender,
+        receiver: tx_info.receiver,
+        value: tx_info.value,
+        tx_type: match tx_info.tx_type {
+            TxType::Unknown => TransactionType::Unknown,
+            TxType::Transfer => TransactionType::Transfer,
+            TxType::TriggerContract => TransactionType::TriggerContract,
+        },
+    };
+
+    impl serializer::Serialize for TransactionType {
+        fn serialize(&self) -> mapper::Value {
+            let str = match self {
+                TransactionType::Unknown => "Unknown",
+                TransactionType::Transfer => "Transfer",
+                TransactionType::TriggerContract => "TriggerContract",
+            };
+            let token = Token {
+                token_type: tiny_json_rs::lexer::TokenType::String(StringType::SimpleString),
+                literal: str.to_string(),
+            };
+
+            mapper::Value::Token(token)
+        }
+    }
+
+    let json = tiny_json_rs::encode(transaction_details);
 
     result.write(json.as_ptr(), json.len() as u32);
     true

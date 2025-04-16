@@ -71,6 +71,18 @@ pub fn is_chain_supported(chain: u32) -> bool {
     kos::chains::is_chain_supported(chain)
 }
 
+#[wasm_bindgen(js_name = "getPathByChain")]
+pub fn get_path_by_chain(
+    chain_id: u32,
+    index: u32,
+    use_legacy_path: bool,
+) -> Result<String, Error> {
+    let chain = kos::chains::get_chain_by_id(chain_id)
+        .ok_or(Error::UnsupportedChain(format!("{}", chain_id)))?;
+    let path = chain.get_path(index, use_legacy_path);
+    Ok(path)
+}
+
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

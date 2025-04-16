@@ -1,8 +1,5 @@
-mod models;
-
-use crate::chains::eth::models::EthereumTransaction;
 use crate::chains::util::{private_key_from_vec, slice_from_vec};
-use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo, TxType};
+use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::hash::keccak256_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use crate::crypto::{bip32, secp256k1};
@@ -122,30 +119,12 @@ impl Chain for ETH {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        let mut eth_tx = EthereumTransaction::decode(&tx.raw_data)?;
-
-        //Ensure empty signature
-        eth_tx.signature = None;
-        if eth_tx.transaction_type == models::TransactionType::Legacy {
-            eth_tx.chain_id = Some(self.chaincode as u64);
-        }
-
-        let new_rlp = eth_tx.encode()?;
-        let to_sign = keccak256_digest(&new_rlp[..]);
-        let signature = self.sign_raw(private_key, to_sign.to_vec())?;
+        let signature = self.sign_raw(private_key, tx.tx_hash.clone())?;
         if signature.len() != 65 {
             return Err(ChainError::InvalidSignature);
         }
-
-        let _sig_hex = hex::encode(&signature[..]);
-
-        let mut signature_bytes: [u8; 65] = [0; 65];
-        signature_bytes.copy_from_slice(&signature[..]);
-        eth_tx.signature = Some(signature_bytes);
-        let signed_rlp = eth_tx.encode()?;
-        tx.raw_data = signed_rlp.clone();
-        tx.tx_hash = Vec::from(keccak256_digest(&signed_rlp[..]));
         tx.signature = signature.to_vec();
+
         Ok(tx)
     }
 
@@ -194,26 +173,8 @@ impl Chain for ETH {
         Ok(sig.to_vec())
     }
 
-    fn get_tx_info(&self, raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
-        let eth_tx = EthereumTransaction::decode(raw_tx.as_slice())?;
-        let mut tx_info = TxInfo {
-            sender: String::new(),
-            receiver: String::new(),
-            value: 0.0,
-            tx_type: TxType::Transfer,
-        };
-
-        if eth_tx.to.is_some() {
-            tx_info.tx_type = TxType::TriggerContract;
-            let addr_vec = eth_tx.to.unwrap_or([0; ETH_ADDR_SIZE].to_vec());
-            let mut address_bytes: [u8; ETH_ADDR_SIZE] = [0; ETH_ADDR_SIZE];
-            address_bytes.copy_from_slice(&addr_vec[..]);
-            tx_info.receiver = ETH::addr_bytes_to_string(address_bytes)?;
-        }
-
-        tx_info.value = eth_tx.value.to_f64(self.get_decimals());
-
-        Ok(tx_info)
+    fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
+        Err(ChainError::NotSupported)
     }
 
     fn get_chain_type(&self) -> ChainType {
@@ -225,7 +186,6 @@ impl Chain for ETH {
 mod test {
     use crate::chains::Chain;
     use alloc::string::ToString;
-    use alloc::vec::Vec;
 
     #[test]
     fn test_derive() {
@@ -238,58 +198,6 @@ mod test {
         let pbk = eth.get_pbk(pvk).unwrap();
         let addr = eth.get_address(pbk).unwrap();
         assert_eq!(addr, "0x9858EfFD232B4033E47d90003D41EC34EcaEda94");
-    }
-
-    #[test]
-    fn test_sign_tx() {
-        let raw_tx = hex::decode(
-            "b302f101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c0808080",
-        )
-        .unwrap();
-        let pvk = hex::decode("1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727")
-            .unwrap();
-        let eth = super::ETH::new();
-
-        let tx = crate::chains::Transaction {
-            raw_data: raw_tx,
-            tx_hash: Vec::new(),
-            signature: Vec::new(),
-            options: None,
-        };
-
-        let _ = eth.sign_tx(pvk, tx).unwrap();
-    }
-
-    #[test]
-    fn test_sign_london_tx() {
-        let raw_tx = hex::decode("b87602f8730182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac0808080").unwrap();
-        let pvk = hex::decode("1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727")
-            .unwrap();
-        let eth = super::ETH::new_eth_based(3, 56, "ETH", "Ethereum");
-
-        let tx = crate::chains::Transaction {
-            raw_data: raw_tx,
-            tx_hash: Vec::new(),
-            signature: Vec::new(),
-            options: None,
-        };
-
-        let _ = eth.sign_tx(pvk, tx).unwrap();
-    }
-
-    #[test]
-    fn test_decode_tx() {
-        let raw_tx = hex::decode(
-            "ad02eb01038493a7d5d085068da15595825208944cbeee256240c92a9ad920ea6f4d7df6466d2cdc0a80c0808080",
-        )
-        .unwrap();
-        let eth = super::ETH::new();
-        let tx_info = eth.get_tx_info(raw_tx).unwrap();
-        assert_eq!(
-            tx_info.receiver,
-            "0x4cBeee256240c92A9ad920ea6f4d7Df6466D2Cdc"
-        );
-        assert_eq!(tx_info.value, 4.523128485832664e57);
     }
 
     #[test]

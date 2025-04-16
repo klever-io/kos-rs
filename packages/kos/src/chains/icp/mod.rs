@@ -1,4 +1,4 @@
-use crate::chains::util::private_key_from_vec;
+use crate::chains::util::{byte_vectors_to_bytes, bytes_to_byte_vectors, private_key_from_vec};
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
@@ -6,7 +6,6 @@ use crate::crypto::hash::sha224_digest;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use alloc::{format, vec};
-use tiny_json_rs::serializer;
 
 const ASN1_ED25519_HEADER: [u8; 12] = [48u8, 42, 48, 5, 6, 3, 43, 101, 112, 3, 33, 0];
 const ICP_TAIL: u8 = 2;
@@ -82,37 +81,18 @@ impl Chain for ICP {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        let hex = hex::decode(tx.raw_data.clone()).map_err(|_| ChainError::DecodeRawTx)?;
-        let raw_data_str = String::from_utf8(hex).map_err(|_| ChainError::DecodeRawTx)?;
-
-        let wrapped_data = format!("{{\"hashes\":{}}}", raw_data_str);
-
-        #[derive(tiny_json_rs::Deserialize)]
-        struct HashContainer {
-            hashes: Vec<String>,
-        }
-
-        let container: HashContainer =
-            tiny_json_rs::decode(wrapped_data).map_err(|_| ChainError::DecodeHash)?;
-
-        let icp_hashes = container.hashes;
-
+        let icp_hashes = bytes_to_byte_vectors(tx.tx_hash.clone())?;
         let mut pvk_bytes = private_key_from_vec(&private_key)?;
+        let mut signatures = Vec::new();
 
-        let mut signatures: Vec<String> = Vec::new();
-
-        for hash_hex in icp_hashes {
-            let hash_bytes = hex::decode(&hash_hex).map_err(|_| ChainError::DecodeHash)?;
-
-            let signature = Ed25519::sign(&pvk_bytes, &hash_bytes)?;
-            signatures.push(hex::encode(signature));
+        for hash in icp_hashes {
+            let signature = Ed25519::sign(&pvk_bytes, &hash)?;
+            signatures.push(signature);
         }
 
         pvk_bytes.fill(0);
 
-        let signatures_json = tiny_json_rs::encode(signatures);
-
-        tx.signature = signatures_json.into_bytes();
+        tx.signature = byte_vectors_to_bytes(&signatures);
 
         if tx.tx_hash.is_empty() {
             tx.tx_hash = Vec::new();
@@ -147,7 +127,7 @@ impl Chain for ICP {
     }
 
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
-        todo!()
+        Err(ChainError::NotSupported)
     }
 
     fn get_chain_type(&self) -> ChainType {
@@ -203,7 +183,6 @@ pub fn crc_calc_singletable(buffer: &[u8]) -> u32 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::crypto::base64::simple_base64_decode;
     #[test]
     fn test_icp_get_address() {
         let icp = ICP {};
@@ -219,29 +198,6 @@ mod test {
             addr,
             "11d238129427ef0e44d86bd27cb6d9da4d7e8934cb0306a93a540e657082d885"
         );
-    }
-
-    #[test]
-    fn test_icp_sign_tx() {
-        let icp = ICP {};
-
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
-        let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
-        let path = icp.get_path(0, false);
-        let pvk = icp.derive(seed, path).unwrap();
-
-        let raw_data = simple_base64_decode("NWIyMjMwNjEzNjM5MzYzMzMyNjQzNzMyMzYzNTM3MzEzNzM1MzYzNTM3MzMzNzM0MzUzMjMxMzc2NTM1MzYzNjM0Mzk2NjY2MzIzMTMyMzgzMzM2NjYzMDYxMzIzMjM2MzIzNjM3NjYzMzMwNjM2MTMwMzA2NTM4NjUzNDY2MzI2NTM4MzMzNDYyNjEzNjYzMzA2NDMyNjQzODMyMzQzMjM3MzIzNjM5MzAzNzMwMzAyMjJjMjIzMDYxMzYzOTM2MzMzMjY0MzczMjM2MzUzNzMxMzczNTM2MzUzNzMzMzczNDMxNjIzMTM0MzA2MjYyNjQzNzM2MzUzNzMxNjMzMDYxMzMzNDMzMzMzMTMzMzEzODM1MzQzMzM3NjI2NTM4NjIzODYyNjMzNDY0MzU2NTMyMzgzOTM4MzAzMTYxNjU2MTMxMzc2NTYxMzAzNjYxNjYzMjMwNjQzMTY1MzkzNzM1MjI1ZA==").unwrap();
-
-        let tx = Transaction {
-            raw_data,
-            signature: vec![],
-            tx_hash: vec![],
-            options: None,
-        };
-
-        let signed_tx = icp.sign_tx(pvk, tx).unwrap();
-
-        assert_eq!(signed_tx.signature.len(), 263);
     }
 
     #[test]
