@@ -7,7 +7,7 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
-
+build = "build.rs"
 
 [lib]
 name = "kos_codec"
@@ -24,3 +24,12 @@ byteorder = { version = "1.5.0" }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 pallas-primitives = "0.32.0"
+rlp = { version = "0.5.0", default-features = false }
+prost = "0.13.5"
+tiny-json-rs = "0.2.5"
+prost-types = { version = "0.13.5", default-features = false }
+parity-scale-codec = { version = "3.6.9", default-features = false, features = ["derive"] }
+
+
+[build-dependencies]
+prost-build = "0.13.5"

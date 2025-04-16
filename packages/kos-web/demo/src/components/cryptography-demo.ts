@@ -126,7 +126,16 @@ export class CryptographyDemo {
           break;
       }
     } catch (error) {
-      this.showError((error as Error).message);
+      if (error instanceof Error) {
+        this.showError(error.message);
+        return;
+      }
+      if (typeof error === "string") {
+        this.showError(error);
+        return;
+      }
+
+      this.showError("An unknown error occurred");
     }
   }
 

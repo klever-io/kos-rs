@@ -235,7 +235,7 @@ checksum = "83ad5da86c127751bc607c174d6c9fe9b85ef0889a9ca0c641735d77d4f98f26"
 dependencies = [
  "alloy-sol-macro-input",
  "const-hex",
- "heck 0.5.0",
+ "heck",
  "indexmap 2.9.0",
  "proc-macro-error2",
  "proc-macro2",
@@ -253,7 +253,7 @@ checksum = "ba3d30f0d3f9ba3b7686f3ff1de9ee312647aac705604417a2f40c604f409a9e"
 dependencies = [
  "const-hex",
  "dunce",
- "heck 0.5.0",
+ "heck",
  "macro-string",
  "proc-macro2",
  "quote",
@@ -1116,7 +1116,7 @@ version = "4.5.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09176aae279615badda0765c0c0b3f6ed53f4709118af73cf4655d85d1530cd7"
 dependencies = [
- "heck 0.5.0",
+ "heck",
  "proc-macro2",
  "quote",
  "syn 2.0.100",
@@ -1831,16 +1831,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
-name = "erased-serde"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e004d887f51fcb9fef17317a2f3525c887d8aa3f4f50fed920816a688284a5b7"
-dependencies = [
- "serde",
- "typeid",
-]
-
-[[package]]
 name = "errno"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2328,12 +2318,6 @@ dependencies = [
  "hash32 0.3.1",
  "stable_deref_trait",
 ]
-
-[[package]]
-name = "heck"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "heck"
@@ -2865,15 +2849,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "inventory"
-version = "0.3.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab08d7cd2c5897f2c949e5383ea7c7db03fb19130ffcfbf7eda795137ae3cb83"
-dependencies = [
- "rustversion",
-]
-
-[[package]]
 name = "io_tee"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2979,7 +2954,6 @@ dependencies = [
  "alloy-dyn-abi",
  "bech32 0.9.1",
  "bip39-dict",
- "bitcoin",
  "blake2b-ref",
  "cbc",
  "cfb-mode",
@@ -2987,20 +2961,12 @@ dependencies = [
  "coins-bip39",
  "ed25519-dalek",
  "getrandom 0.2.15",
- "heck 0.4.1",
  "hex",
  "hmac 0.12.1",
  "libsecp256k1",
- "parity-scale-codec",
  "pbkdf2",
  "pem",
  "prost",
- "prost-build",
- "prost-types",
- "prost-wkt",
- "prost-wkt-build",
- "prost-wkt-types",
- "quote",
  "rand 0.8.5",
  "rand_core 0.6.4",
  "ripemd",
@@ -3010,7 +2976,6 @@ dependencies = [
  "serde_json",
  "sha2 0.10.8",
  "sha3",
- "tiny-json-rs",
 ]
 
 [[package]]
@@ -3024,8 +2989,14 @@ dependencies = [
  "hex",
  "kos",
  "pallas-primitives",
+ "parity-scale-codec",
+ "prost",
+ "prost-build",
+ "prost-types",
+ "rlp",
  "serde",
  "serde_json",
+ "tiny-json-rs",
  "xrpl-rust",
 ]
 
@@ -3906,7 +3877,7 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.5.0",
+ "heck",
  "itertools 0.14.0",
  "log",
  "multimap",
@@ -3940,52 +3911,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52c2c1bf36ddb1a1c396b3601a3cec27c2462e45f07c386894ec3ccf5332bd16"
 dependencies = [
  "prost",
-]
-
-[[package]]
-name = "prost-wkt"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8d84e2bee181b04c2bac339f2bfe818c46a99750488cc6728ce4181d5aa8299"
-dependencies = [
- "chrono",
- "inventory",
- "prost",
- "serde",
- "serde_derive",
- "serde_json",
- "typetag",
-]
-
-[[package]]
-name = "prost-wkt-build"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a669d5acbe719010c6f62a64e6d7d88fdedc1fe46e419747949ecb6312e9b14"
-dependencies = [
- "heck 0.5.0",
- "prost",
- "prost-build",
- "prost-types",
- "quote",
-]
-
-[[package]]
-name = "prost-wkt-types"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01ef068e9b82e654614b22e6b13699bd545b6c0e2e721736008b00b38aeb4f64"
-dependencies = [
- "chrono",
- "prost",
- "prost-build",
- "prost-types",
- "prost-wkt",
- "prost-wkt-build",
- "regex",
- "serde",
- "serde_derive",
- "serde_json",
 ]
 
 [[package]]
@@ -5006,7 +4931,7 @@ version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c6bee85a5a24955dc440386795aa378cd9cf82acd5f764469152d2270e581be"
 dependencies = [
- "heck 0.5.0",
+ "heck",
  "proc-macro2",
  "quote",
  "rustversion",
@@ -5470,40 +5395,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "typeid"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc7d623258602320d5c55d1bc22793b57daff0ec7efc270ea7d55ce1d5f5471c"
-
-[[package]]
 name = "typenum"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
-
-[[package]]
-name = "typetag"
-version = "0.2.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73f22b40dd7bfe8c14230cf9702081366421890435b2d625fa92b4acc4c3de6f"
-dependencies = [
- "erased-serde",
- "inventory",
- "once_cell",
- "serde",
- "typetag-impl",
-]
-
-[[package]]
-name = "typetag-impl"
-version = "0.2.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35f5380909ffc31b4de4f4bdf96b877175a016aa2ca98cee39fcfd8c4d53d952"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.100",
-]
 
 [[package]]
 name = "ucd-trie"
@@ -5610,7 +5505,7 @@ dependencies = [
  "fs-err",
  "glob",
  "goblin",
- "heck 0.5.0",
+ "heck",
  "once_cell",
  "paste",
  "serde",

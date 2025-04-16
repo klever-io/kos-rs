@@ -1,9 +1,5 @@
-use crate::crypto::bignum::U256;
-use alloc::string::{String, ToString};
-use alloc::vec::Vec;
+use kos::crypto::bignum::U256;
 use rlp::{DecoderError, Rlp, RlpStream};
-
-extern crate rlp;
 
 #[derive(Debug, PartialEq)]
 pub enum TransactionType {

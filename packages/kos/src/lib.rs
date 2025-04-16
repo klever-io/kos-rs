@@ -1,9 +1,7 @@
 #![cfg_attr(feature = "ksafe", no_std)]
+extern crate alloc;
 pub mod chains;
 pub mod crypto;
-pub mod protos;
-
-extern crate alloc;
 
 #[cfg(feature = "ksafe")]
 use core::alloc::{GlobalAlloc, Layout};
