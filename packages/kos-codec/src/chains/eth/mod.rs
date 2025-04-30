@@ -32,14 +32,12 @@ pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, Chai
     Ok(transaction)
 }
 
-pub fn encode_for_broadcast(mut transaction: Transaction) -> Result<Transaction, ChainError> {
+pub fn encode_for_broadcast(transaction: Transaction) -> Result<Transaction, ChainError> {
     let mut eth_tx = EthereumTransaction::decode(&transaction.raw_data)?;
 
     let mut signature_bytes: [u8; 65] = [0; 65];
     signature_bytes.copy_from_slice(&transaction.signature[..]);
     eth_tx.signature = Some(signature_bytes);
-    let signed_rlp = eth_tx.encode()?;
-    transaction.raw_data = signed_rlp.clone();
 
     Ok(transaction)
 }

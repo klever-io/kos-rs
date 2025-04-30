@@ -298,7 +298,7 @@ fn sign_ecdsa(
 mod tests {
     use crate::signer::derive_xpub;
     use crate::signer::generate_xpub;
-    use crate::*;
+
     const MNEMONIC: &str = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
     #[test]
