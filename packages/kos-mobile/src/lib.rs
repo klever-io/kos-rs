@@ -796,8 +796,33 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(transaction.raw, "02f8b30182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac001a0ac17a21525645e7bdf653b2e46b4fb7b33668b0cb42ce38bf8fbb752e527fb63a0e56f5ff3e3eb15441eeaf144237204b0435ed31d0e009153512074fa56b2cc62", "The raw doesn't match");
+        assert_eq!(transaction.raw, "b87602f8730182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac0808080", "The raw doesn't match");
     }
+
+    #[test]
+    fn should_sign_raw_transaction_eth_based_legacy() {
+        let chain_id = 3;
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            false,
+        )
+        .unwrap();
+
+        let transaction = sign_transaction(
+            account,
+            "ea13840afab0ab82520894f1eea5c58414264171cf40592c3468adb6af1b3387038d7ea4c6800080808080".to_string(),
+            Some(TransactionChainOptions::Evm {
+                chain_id: 43114
+            }),
+        )
+        .unwrap();
+
+        assert_eq!(transaction.raw, "ea13840afab0ab82520894f1eea5c58414264171cf40592c3468adb6af1b3387038d7ea4c6800080808080", "The raw doesn't match");
+    }
+
     #[test]
     fn should_sign_raw_transaction_dot() {
         let chain_id = 21;
@@ -879,7 +904,7 @@ mod tests {
         let options = new_evm_transaction_options(88888);
         let transaction = sign_transaction(account, raw.to_string(), Some(options)).unwrap();
 
-        assert_eq!(transaction.raw, "02f87101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c001a044c69f41bf47ad50dc98c74af68811384c9172055b01fcaa39e70f53df69b632a05e071cf1f9e12500b525f03a29f567520e1ea49a97e6a29d1fd432dc6303353e", "The raw doesn't match");
+        assert_eq!(transaction.raw, "b302f101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c0808080", "The raw doesn't match");
     }
 
     #[test]
