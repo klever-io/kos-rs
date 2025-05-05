@@ -2,7 +2,9 @@ mod chains;
 mod protos;
 
 use crate::chains::{ada, apt, atom, bch, btc, eth, icp, klv, sol, substrate, trx, xrp};
-use kos::chains::{get_chain_by_base_id, ChainError, ChainType, Transaction};
+use kos::chains::{get_chain_by_base_id, ChainError, ChainType};
+
+pub use kos::chains::{ChainOptions, Transaction};
 
 #[derive(Clone, Debug)]
 pub struct KosCodedAccount {
