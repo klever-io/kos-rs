@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/klever-io/kos-rs/packages/kos-go/kos_mobile"
+	"github.com/stretchr/testify/assert"
 )
 
 const MNEMONIC = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
@@ -15,13 +16,9 @@ func TestGenerateXpub(t *testing.T) {
 	index := uint32(0)
 
 	xpub, err := kos_mobile.GenerateXpub(MNEMONIC, passphrase, isMainnet, index)
-	if err != nil {
-		t.Fatalf("Failed to generate xpub: %v", err)
-	}
 
-	if len(xpub) != 78 {
-		t.Errorf("Expected xpub length to be 78, got %d", len(xpub))
-	}
+	assert.Nil(t, err, "Failed to generate xpub")
+	assert.Equal(t, 78, len(xpub), "Expected xpub length to be 78")
 }
 
 func TestDeriveXpub(t *testing.T) {
@@ -31,12 +28,8 @@ func TestDeriveXpub(t *testing.T) {
 	derivationPath := "84'/1'/0'"
 
 	derivedXpub, err := kos_mobile.DeriveXpub(MNEMONIC, passphrase, isMainnet, index, derivationPath)
-	if err != nil {
-		t.Fatalf("Failed to derive xpub: %v", err)
-	}
 
+	assert.Nil(t, err, "Failed to derive xpub")
 	fmt.Printf("%v\n", []byte(derivedXpub))
-	if len(derivedXpub) != 78 {
-		t.Errorf("Expected derived xpub length to be 78, got %d", len(derivedXpub))
-	}
+	assert.Equal(t, 78, len(derivedXpub), "Expected derived xpub length to be 78")
 }
