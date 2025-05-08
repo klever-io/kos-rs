@@ -44,7 +44,7 @@ build-ios:
 	cd packages/kos-mobile && ./build_ios.sh
 
 build-go:
-	cargo build --package kos-mobile && uniffi-bindgen-go --library target/debug/libkos_mobile.a --out-dir ./demo
+	cargo build --package kos-mobile && uniffi-bindgen-go --library target/debug/libkos_mobile.a --out-dir ./packages/kos-go
 
 test-ios: build-ios
 	cd packages/kos-mobile/ios/framework/KOSMobile && xcodebuild \
