@@ -6,11 +6,11 @@ use crate::crypto::{bip32, secp256k1};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+
 #[cfg(not(feature = "ksafe"))]
-use alloy_dyn_abi::TypedData;
 
 pub(crate) const ETH_ADDR_SIZE: usize = 20;
-const ETH_MESSAGE_PREFIX: &[u8; 26] = b"\x19Ethereum Signed Message:\n";
+pub const ETH_MESSAGE_PREFIX: &[u8; 26] = b"\x19Ethereum Signed Message:\n";
 
 #[allow(clippy::upper_case_acronyms)]
 pub struct ETH {
@@ -56,7 +56,7 @@ impl ETH {
                     let n = u16::from_str_radix(&address_hash[index..index + 1], 16).unwrap();
 
                     if n > 7 {
-                        // make char uppercase if ith character is 9..f
+                        // make char uppercase if ith character is 9.f
                         acc.push_str(&address_char.to_uppercase().to_string())
                     } else {
                         // already lowercased
@@ -134,29 +134,7 @@ impl Chain for ETH {
         message: Vec<u8>,
         _legacy: bool,
     ) -> Result<Vec<u8>, ChainError> {
-        #[cfg(not(feature = "ksafe"))]
-        {
-            if let Ok(data) = std::str::from_utf8(&message) {
-                if let Ok(typed_data) = serde_json::from_str::<TypedData>(data) {
-                    let digest = typed_data.eip712_signing_hash().unwrap();
-                    let mut sig = self.sign_raw(private_key, digest.to_vec())?;
-
-                    let last_index = sig.len() - 1;
-                    sig[last_index] += 27;
-
-                    return Ok(sig);
-                }
-            }
-        }
-
-        let to_sign = [
-            ETH_MESSAGE_PREFIX,
-            message.len().to_string().as_bytes(),
-            &message[..],
-        ]
-        .concat();
-        let hashed = keccak256_digest(&to_sign[..]);
-        let mut signature = self.sign_raw(private_key, hashed.to_vec())?;
+        let mut signature = self.sign_raw(private_key, message)?;
 
         let last_index = signature.len() - 1;
         signature[last_index] += 27;
@@ -202,50 +180,14 @@ mod test {
 
     #[test]
     fn test_sign_typed_data() {
-        let data = r#"{
-            "types": {
-                "EIP712Domain": [
-                    { "name": "name", "type": "string" },
-                    { "name": "version", "type": "string" },
-                    { "name": "chainId", "type": "uint256" },
-                    { "name": "verifyingContract", "type": "address" }
-                ],
-                "Person": [
-                    { "name": "name", "type": "string" },
-                    { "name": "wallet", "type": "address" }
-                ],
-                "Mail": [
-                    { "name": "from", "type": "Person" },
-                    { "name": "to", "type": "Person" },
-                    { "name": "contents", "type": "string" }
-                ]
-            },
-            "primaryType": "Mail",
-            "domain": {
-                "name": "Ether Mail",
-                "version": "1",
-                "chainId": 1,
-                "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
-            },
-            "message": {
-                "from": {
-                    "name": "Cow",
-                    "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
-                },
-                "to": {
-                    "name": "Bob",
-                    "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
-                },
-                "contents": "Hello, Bob!"
-            }
-        }"#;
+        let data = "be609aee343fb3c4b28e1df9e632fca64fcfaede20f02e86244efddf30957bd2";
 
         let eth = super::ETH::new();
         let pvk = hex::decode("1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727")
             .unwrap();
-        let message = data.as_bytes();
+        let message = hex::decode(data).unwrap().to_vec();
 
-        let signature = eth.sign_message(pvk, message.to_vec(), false).unwrap();
+        let signature = eth.sign_message(pvk, message, false).unwrap();
         assert_eq!(signature.len(), 65);
     }
 
@@ -259,9 +201,9 @@ mod test {
         let path = eth.get_path(0, false);
         let pvk = eth.derive(seed, path).unwrap();
 
-        let message_bytes = "test message".as_bytes().to_vec();
+        let message = hex::decode("3e2d111c8c52a5ef0ba64fe4d85e32a5153032367ec44aaae0a4e2d1bfb9bebd").unwrap().to_vec();
 
-        let signature = eth.sign_message(pvk, message_bytes, true).unwrap();
+        let signature = eth.sign_message(pvk, message, true).unwrap();
 
         assert_eq!(
             hex::encode(signature),
