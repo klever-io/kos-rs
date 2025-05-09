@@ -6,7 +6,9 @@ use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
-
+use k256::ecdsa::signature::Signer;
+use k256::ecdsa::{Signature, SigningKey};
+use k256::SecretKey;
 use sha2::digest::Update;
 use sha2::{Digest, Sha224};
 
@@ -199,13 +201,22 @@ impl Chain for ICP {
     }
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
-        let mut pvk_bytes = private_key_from_vec(&private_key)?;
+        let secret_key = match SecretKey::from_slice(private_key.as_slice()) {
+            Ok(sk) => sk,
+            Err(_) => return Err(ChainError::InvalidPrivateKey),
+        };
 
-        let signature = Ed25519::sign(&pvk_bytes, &payload)?;
-        pvk_bytes.fill(0);
-        Ok(signature)
+        let signing_key = SigningKey::from(secret_key);
+
+        let signature: Signature = match signing_key.try_sign(payload.as_slice()) {
+            Ok(sig) => sig,
+            Err(_) => return Err(ChainError::InvalidSignature),
+        };
+
+        let signature_bytes = signature.to_bytes();
+
+        Ok(signature_bytes.to_vec())
     }
-
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
         Err(ChainError::NotSupported)
     }
@@ -293,11 +304,11 @@ mod test {
         let message = "test message".as_bytes().to_vec();
         let signature = icp.sign_message(pvk, message, true).unwrap();
 
-        assert_eq!(signature.len(), 96, "Signature length should be 96");
+        assert_eq!(signature.len(), 152, "Signature length should be 152");
 
         assert_eq!(
             hex::encode(signature),
-            "db41e41de474e2cb6d997ae5aa5de9aa81512a19d1337881363a3c481431935992a118ba863b6d00612c638b5caf7bac65cb2cf31a7d30f9c5473fcb97bf620bc006bf0760963c13c1c1478adbc326b96338060f03487ebd1c3b261dbccd8daf"
+            "72aa053da358a05c4db3f9c082022274605f6736ceb29f15a8ebdb46f072f6c76bb5ff8f7c8c3e5f7ba32116af449bb0308171f88515798a0e4a9efc8f0a03ff3056301006072a8648ce3d020106052b8104000a03420004abdb60eb7c96408414d1e251d41ca0ecf89a4541768cba7eed8174c53246d58c56031b23388bc7d275b4b26bf29137bdc181ae4d6b6f64f30db8d4bfd9222c27"
         );
     }
 }

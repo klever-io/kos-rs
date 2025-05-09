@@ -2963,6 +2963,7 @@ dependencies = [
  "getrandom 0.2.15",
  "hex",
  "hmac 0.12.1",
+ "k256",
  "libsecp256k1",
  "pbkdf2",
  "pem",
