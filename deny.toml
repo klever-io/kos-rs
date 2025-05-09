@@ -57,5 +57,6 @@ ignore = [
     "RUSTSEC-2021-0127", # this libs is a sub-dependency of lwk_common/serde_cbol
     "RUSTSEC-2024-0384", # this libs is a sub-dependency of lwk_common/serde_cbol
     "RUSTSEC-2024-0370",
-    "RUSTSEC-2024-0421"
+    "RUSTSEC-2024-0421",
+    { id = "RUSTSEC-2023-0089", reason = "this is a deprecation warning for a dependency of a dependency. https://github.com/jamesmunns/postcard/issues/223 tracks fixing the dependency; until that's resolved, we can accept the deprecated code as it has no known vulnerabilities."}
 ]
