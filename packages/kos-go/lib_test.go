@@ -313,6 +313,33 @@ func TestShouldSignRawTransactionEth(t *testing.T) {
 	)
 }
 
+func TestShouldSignRawTransactionEthBasedLegacy(t *testing.T) {
+	chainID := uint32(3)
+
+	account, err := kos_mobile.GenerateWalletFromMnemonic(
+		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+		chainID,
+		0,
+		false,
+	)
+	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
+
+	options := kos_mobile.NewEvmTransactionOptions(43114)
+
+	transaction, err := kos_mobile.SignTransaction(
+		account,
+		"ea13840afab0ab82520894f1eea5c58414264171cf40592c3468adb6af1b3387038d7ea4c6800080808080",
+		&options,
+	)
+	assert.Nil(t, err, "Failed to sign transaction")
+
+	assert.Equal(t,
+		"ea13840afab0ab82520894f1eea5c58414264171cf40592c3468adb6af1b3387038d7ea4c6800080808080",
+		transaction.Raw,
+		"The raw doesn't match",
+	)
+}
+
 func TestShouldSignRawTransactionIcp(t *testing.T) {
 	chainID := uint32(31)
 
