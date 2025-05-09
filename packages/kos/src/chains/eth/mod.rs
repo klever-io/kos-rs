@@ -7,8 +7,6 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
-#[cfg(not(feature = "ksafe"))]
-
 pub(crate) const ETH_ADDR_SIZE: usize = 20;
 pub const ETH_MESSAGE_PREFIX: &[u8; 26] = b"\x19Ethereum Signed Message:\n";
 
