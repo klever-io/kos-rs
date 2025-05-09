@@ -1,14 +1,13 @@
-
 mod tip712;
 
-use alloy_dyn_abi::TypedData;
+use crate::chains::trx::tip712::{StructuredData, StructuredDataError};
 use crate::protos::generated::trx::protocol;
+use alloy_dyn_abi::TypedData;
+use bs58;
 use kos::chains::{ChainError, Transaction};
 use kos::crypto::hash::{keccak256_digest, sha256_digest};
 use prost::Message;
-use bs58;
 use serde::Deserialize;
-use crate::chains::trx::tip712::{StructuredData, StructuredDataError};
 
 pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, ChainError> {
     let tron_tx = decode_transaction(transaction.raw_data.clone())?;

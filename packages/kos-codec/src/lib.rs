@@ -1,8 +1,8 @@
 mod chains;
 mod protos;
 
-use alloy_dyn_abi::TypedData;
 use crate::chains::{ada, apt, atom, bch, btc, eth, icp, klv, sol, substrate, trx, xrp};
+use alloy_dyn_abi::TypedData;
 use kos::chains::{get_chain_by_base_id, ChainError, ChainType};
 
 pub use kos::chains::{ChainOptions, Transaction};
@@ -49,7 +49,7 @@ pub fn encode_for_sign_message(
     };
 
     if let Ok(data) = std::str::from_utf8(&message) {
-        if let Ok( mut typed_data) = serde_json::from_str::<TypedData>(data) {
+        if let Ok(mut typed_data) = serde_json::from_str::<TypedData>(data) {
             return Ok(match chain.get_chain_type() {
                 ChainType::ETH => eth::encode_sign_typed(message)?,
                 ChainType::TRX => trx::encode_sign_typed(message)?,

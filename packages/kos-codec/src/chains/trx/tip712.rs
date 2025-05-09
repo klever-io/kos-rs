@@ -256,7 +256,7 @@ fn encode_integer(value: &Value) -> Result<Vec<u8>> {
         } else {
             value_str.parse::<u64>()
         }
-            .map_err(|_| StructuredDataError::InvalidData("Invalid numeric value".to_string()))?
+        .map_err(|_| StructuredDataError::InvalidData("Invalid numeric value".to_string()))?
     } else {
         return Err(StructuredDataError::InvalidData(
             "Expected numeric value".to_string(),
@@ -560,13 +560,14 @@ pub fn hash_typed_data_json(json_data: &str) -> Result<[u8; 32]> {
     ];
 
     // Insira o vetor na HashMap com a chave "EIP712Domain"
-    typed_data.types.insert(String::from("EIP712Domain"), eip712_domain_entries);
-    
+    typed_data
+        .types
+        .insert(String::from("EIP712Domain"), eip712_domain_entries);
+
     let hash = hash_typed_data(&typed_data)?;
 
     Ok(hash)
 }
-
 
 #[cfg(test)]
 #[test]

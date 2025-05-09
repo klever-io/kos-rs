@@ -1,7 +1,7 @@
 mod models;
 
-use alloy_dyn_abi::TypedData;
 use crate::chains::eth::models::EthereumTransaction;
+use alloy_dyn_abi::TypedData;
 use kos::chains::{ChainError, ChainOptions, Transaction};
 use kos::crypto::hash::keccak256_digest;
 

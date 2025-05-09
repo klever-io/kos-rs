@@ -201,7 +201,10 @@ mod test {
         let path = eth.get_path(0, false);
         let pvk = eth.derive(seed, path).unwrap();
 
-        let message = hex::decode("3e2d111c8c52a5ef0ba64fe4d85e32a5153032367ec44aaae0a4e2d1bfb9bebd").unwrap().to_vec();
+        let message =
+            hex::decode("3e2d111c8c52a5ef0ba64fe4d85e32a5153032367ec44aaae0a4e2d1bfb9bebd")
+                .unwrap()
+                .to_vec();
 
         let signature = eth.sign_message(pvk, message, true).unwrap();
 
