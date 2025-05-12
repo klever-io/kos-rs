@@ -5,7 +5,6 @@ deny = [
 ]
 skip = [
     { name = "base64", version = "<=0.22" }, # openssl
-    { name = "heck", version = "0.4.1" },
     { name = "secp256k1", version = "0.29.1" }, # bitcoin locked at this version
     { name = "hash32", version = "0.2.1" },
     { name = "heapless", version = "0.7.17" },
@@ -36,7 +35,8 @@ allow = [
     "Zlib",
     "Unicode-3.0",
     "ISC",
-    "BlueOak-1.0.0"
+    "BlueOak-1.0.0",
+    "CDLA-Permissive-2.0",
 ]
 
 [[licenses.clarify]]

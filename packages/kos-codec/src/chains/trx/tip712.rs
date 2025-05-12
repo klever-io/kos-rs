@@ -7,6 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum StructuredDataError {
     InvalidType(String),
@@ -228,11 +229,7 @@ fn encode_bytes(value: &Value) -> Result<Vec<u8>> {
         .ok_or_else(|| StructuredDataError::InvalidData("Expected bytes as string".to_string()))?;
 
     // Remove o prefixo 0x se existir
-    let bytes_str = if value_str.starts_with("0x") {
-        &value_str[2..]
-    } else {
-        value_str
-    };
+    let bytes_str = value_str.strip_prefix("0x").unwrap_or(value_str);
 
     // Converte de hex para bytes
     let bytes = hex::decode(bytes_str)
@@ -251,12 +248,14 @@ fn encode_integer(value: &Value) -> Result<Vec<u8>> {
             .ok_or_else(|| StructuredDataError::InvalidData("Expected numeric value".to_string()))?
     } else if value.is_string() {
         let value_str = value.as_str().unwrap();
-        if value_str.starts_with("0x") {
-            u64::from_str_radix(&value_str[2..], 16)
+        let parse_result = if let Some(hex_body) = value_str.strip_prefix("0x") {
+            u64::from_str_radix(hex_body, 16)
         } else {
             value_str.parse::<u64>()
-        }
-        .map_err(|_| StructuredDataError::InvalidData("Invalid numeric value".to_string()))?
+        };
+
+        parse_result
+            .map_err(|_| StructuredDataError::InvalidData("Invalid numeric value".to_string()))?
     } else {
         return Err(StructuredDataError::InvalidData(
             "Expected numeric value".to_string(),
@@ -311,9 +310,8 @@ fn encode_address(value: &Value) -> Result<Vec<u8>> {
         } else {
             decoded
         }
-    } else if value_str.starts_with("0x") {
-        // Endereço Ethereum já em formato hex
-        hex::decode(&value_str[2..])
+    } else if let Some(hex_body) = value_str.strip_prefix("0x") {
+        hex::decode(hex_body)
             .map_err(|_| StructuredDataError::InvalidData("Invalid hex address".to_string()))?
     } else {
         // Tenta decodificar como endereço Tron sem prefixo 'T'
