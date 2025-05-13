@@ -1,6 +1,8 @@
+mod tip712;
+
 use crate::protos::generated::trx::protocol;
 use kos::chains::{ChainError, Transaction};
-use kos::crypto::hash::sha256_digest;
+use kos::crypto::hash::{keccak256_digest, sha256_digest};
 use prost::Message;
 
 pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, ChainError> {
@@ -28,6 +30,25 @@ pub fn encode_for_broadcast(mut transaction: Transaction) -> Result<Transaction,
     transaction.raw_data = tx_data;
 
     Ok(transaction)
+}
+
+pub fn encode_sign_typed(message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    if let Ok(data) = std::str::from_utf8(&message) {
+        let digest = crate::chains::trx::tip712::hash_typed_data_json(data)
+            .map_err(|e| ChainError::InvalidData(format!("TIP-712 hash error: {e}")))?;
+        return Ok(digest.to_vec());
+    }
+
+    Err(ChainError::InvalidData("invalid typed data".to_string()))
+}
+
+pub fn encode_sign_message(message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    let mut msg = Vec::new();
+    msg.extend_from_slice(kos::chains::trx::TRON_MESSAGE_PREFIX.as_bytes());
+    msg.extend_from_slice(message.len().to_string().as_bytes());
+    msg.extend_from_slice(&message);
+
+    Ok(keccak256_digest(&msg[..]).to_vec())
 }
 
 pub fn decode_transaction(raw_tx: Vec<u8>) -> Result<protocol::Transaction, ChainError> {
@@ -91,6 +112,90 @@ mod test {
         assert_eq!(
             hex::encode(result.signature),
             "02000000480000003045220109962b28374fa3d1a0034330fe7745ab02db07cd376449e64d6e6d"
+        );
+    }
+
+    #[test]
+    fn test_encode_typed_data() {
+        let data = r#"{
+    "types": {
+        "PermitTransfer": [
+            {
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "name": "serviceProvider",
+                "type": "address"
+            },
+            {
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "name": "receiver",
+                "type": "address"
+            },
+            {
+                "name": "value",
+                "type": "uint256"
+            },
+            {
+                "name": "maxFee",
+                "type": "uint256"
+            },
+            {
+                "name": "deadline",
+                "type": "uint256"
+            },
+            {
+                "name": "version",
+                "type": "uint256"
+            },
+            {
+                "name": "nonce",
+                "type": "uint256"
+            }
+        ]
+    },
+    "primaryType": "PermitTransfer",
+    "domain": {
+        "name": "GasFreeController",
+        "version": "V1.0.0",
+        "chainId": 728126428,
+        "verifyingContract": "TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U"
+    },
+    "message": {
+        "token": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+        "serviceProvider": "TLntW9Z59LYY5KEi9cmwk3PKjQga828ird",
+        "user": "TCXs584P995owJmBifUZqNUUD6BSnBmvot",
+        "receiver": "TGJSxpAWwaUoqT8sLFxX2TD7BP7MrpdwWo",
+        "value": "1000000",
+        "maxFee": "2000000",
+        "deadline": "1746015449",
+        "version": "1",
+        "nonce": "1"
+    }
+}"#;
+
+        let message = data.as_bytes();
+
+        let signature = encode_sign_typed(message.to_vec()).unwrap();
+        assert_eq!(
+            hex::encode(signature),
+            "a546b17147e14ec2aa418ca2eb7490bacaa60453cf902e292b01f02e02e83264"
+        );
+    }
+
+    #[test]
+    fn test_encode_sign_message() {
+        let message_bytes = "test message".as_bytes().to_vec();
+
+        let signature = crate::chains::trx::encode_sign_message(message_bytes).unwrap();
+
+        assert_eq!(
+            hex::encode(signature),
+            "991bc803d1ebee72d48c8872e8f8a6275423b848b23d898fd47b94210f4c84fe"
         );
     }
 }

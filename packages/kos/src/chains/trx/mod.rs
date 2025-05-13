@@ -14,7 +14,7 @@ const TRX_ADD_SIZE: usize = 25;
 
 pub const BIP44_PATH: u32 = 195;
 
-const TRON_MESSAGE_PREFIX: &str = "\x19TRON Signed Message:\n";
+pub const TRON_MESSAGE_PREFIX: &str = "\x19TRON Signed Message:\n";
 pub struct TRX {}
 
 impl TRX {
