@@ -49,7 +49,7 @@ pub fn encode_for_sign_message(
     };
 
     if let Ok(data) = std::str::from_utf8(&message) {
-        if serde_json::from_str::<TypedData>(data).is_ok() {
+        if serde_json::from_str::<crate::chains::trx::tip712::StructuredData>(data).is_ok() {
             return Ok(match chain.get_chain_type() {
                 ChainType::ETH => eth::encode_sign_typed(message)?,
                 ChainType::TRX => trx::encode_sign_typed(message)?,
