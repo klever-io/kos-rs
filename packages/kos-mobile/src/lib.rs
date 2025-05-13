@@ -328,8 +328,20 @@ fn sign_transaction(
 fn sign_message(account: KOSAccount, hex: String, legacy: bool) -> Result<Vec<u8>, KOSError> {
     let chain = get_chain_by(account.chain_id)?;
     let message = hex::decode(hex)?;
-    let signature =
-        chain.sign_message(hex::decode(account.private_key).unwrap(), message, legacy)?;
+
+    let kos_codec_acc = KosCodedAccount {
+        chain_id: account.chain_id,
+        address: account.address.clone(),
+        public_key: account.public_key.clone(),
+    };
+
+    let message_encoded = kos_codec::encode_for_sign_message(kos_codec_acc, message)?;
+
+    let signature = chain.sign_message(
+        hex::decode(account.private_key).unwrap(),
+        message_encoded,
+        legacy,
+    )?;
     Ok(signature)
 }
 

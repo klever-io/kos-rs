@@ -1,4 +1,4 @@
-mod tip712;
+pub(crate) mod tip712;
 
 use crate::protos::generated::trx::protocol;
 use kos::chains::{ChainError, Transaction};
