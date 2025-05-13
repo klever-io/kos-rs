@@ -46,8 +46,9 @@ pub fn encode_for_broadcast(transaction: Transaction) -> Result<Transaction, Cha
 pub fn encode_sign_typed(message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
     if let Ok(data) = std::str::from_utf8(&message) {
         if let Ok(typed_data) = serde_json::from_str::<TypedData>(data) {
-            let digest = typed_data.eip712_signing_hash().unwrap();
-
+            let digest = typed_data
+                .eip712_signing_hash()
+                .map_err(|e| ChainError::InvalidData(format!("EIP-712 hash error: {e}")))?;
             return Ok(digest.to_vec());
         }
     }

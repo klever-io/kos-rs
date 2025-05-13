@@ -48,7 +48,7 @@ pub struct StructuredData {
     pub message: Value,
 }
 
-// Estrutura para armazenar informações sobre um tipo parseado
+// Structure to store information about a parsed type
 #[derive(Debug, Clone)]
 pub struct ParsedType {
     pub base_type: String,
@@ -57,9 +57,9 @@ pub struct ParsedType {
     pub is_reference: bool,
 }
 
-// Funções utilitárias independentes
+// Independent utility functions
 
-// Função para calcular o hash Keccak256
+// Function to calculate the Keccak256 hash
 fn keccak256(data: &[u8]) -> [u8; 32] {
     let mut hasher = Keccak256::new();
     hasher.update(data);
@@ -70,9 +70,9 @@ fn keccak256(data: &[u8]) -> [u8; 32] {
     result
 }
 
-// Parse um tipo de dados Solidity
+// Parse a Solidity data type
 fn parse_type(type_str: &str, types_set: &HashSet<String>) -> Result<ParsedType> {
-    // Expressão regular para identificar arrays
+    // Regular expression to identify arrays
     let re_array = Regex::new(r"^([a-zA-Z0-9_]+)(\[([0-9]*)\])?$").unwrap();
 
     if let Some(caps) = re_array.captures(type_str) {
@@ -80,18 +80,18 @@ fn parse_type(type_str: &str, types_set: &HashSet<String>) -> Result<ParsedType>
         let is_array = caps.get(2).is_some();
         let array_length = if let Some(length_str) = caps.get(3) {
             if length_str.as_str().is_empty() {
-                None // Array dinâmico []
+                None // Dynamic array []
             } else {
-                // Array com tamanho fixo [N]
+                // Fixed-size array [N]
                 Some(length_str.as_str().parse::<usize>().map_err(|e| {
                     StructuredDataError::ParseError(format!("Invalid array length: {}", e))
                 })?)
             }
         } else {
-            None // Não é um array
+            None // Not an array
         };
 
-        // Verifica se o tipo base é um tipo de referência (tipo personalizado)
+        // Check if the base type is a reference type (custom type)
         let is_reference = types_set.contains(base_type);
 
         let parsed = ParsedType {
@@ -104,7 +104,7 @@ fn parse_type(type_str: &str, types_set: &HashSet<String>) -> Result<ParsedType>
         return Ok(parsed);
     }
 
-    // Tipo básico ou tipo de referência, sem array
+    // Basic type or reference type, not an array
     let is_reference = types_set.contains(type_str);
 
     let parsed = ParsedType {
@@ -117,7 +117,7 @@ fn parse_type(type_str: &str, types_set: &HashSet<String>) -> Result<ParsedType>
     Ok(parsed)
 }
 
-// Encontra as dependências recursivas de um tipo
+// Find recursive dependencies of a type
 fn find_type_dependencies(
     primary_type: &str,
     types: &HashMap<String, Vec<Entry>>,
@@ -134,12 +134,12 @@ fn find_type_dependencies(
         for field in fields {
             let parsed_type = parse_type(&field.r#type, types_set)?;
 
-            // Se for um tipo de referência, adiciona às dependências
+            // If it's a reference type, add to dependencies
             if parsed_type.is_reference {
                 find_type_dependencies(&parsed_type.base_type, types, types_set, deps)?;
             }
 
-            // Se for um array de tipos de referência, adiciona o tipo do array
+            // If it's an array of reference types, add the array's base type
             if parsed_type.is_array && types_set.contains(&parsed_type.base_type) {
                 find_type_dependencies(&parsed_type.base_type, types, types_set, deps)?;
             }
@@ -149,7 +149,7 @@ fn find_type_dependencies(
     Ok(())
 }
 
-// Codifica um único tipo com seus campos
+// Encode a single type with its fields
 fn encode_single_type(type_name: &str, types: &HashMap<String, Vec<Entry>>) -> Result<String> {
     if !types.contains_key(type_name) {
         return Err(StructuredDataError::TypeNotFound(type_name.to_string()));
@@ -174,7 +174,7 @@ fn encode_single_type(type_name: &str, types: &HashMap<String, Vec<Entry>>) -> R
     Ok(result)
 }
 
-// Codifica um tipo complexo com todas as suas dependências
+// Encode a complex type with all its dependencies
 fn encode_type(
     primary_type: &str,
     types: &HashMap<String, Vec<Entry>>,
@@ -183,17 +183,17 @@ fn encode_type(
     let mut deps = HashSet::new();
     find_type_dependencies(primary_type, types, types_set, &mut deps)?;
 
-    // Remove primary_type das dependências
+    // Remove primary_type from dependencies
     deps.remove(primary_type);
 
-    // Ordena as dependências
+    // Sort the dependencies
     let mut sorted_deps: Vec<String> = deps.into_iter().collect();
     sorted_deps.sort();
 
-    // Adiciona o tipo primário no início
+    // Add the primary type at the beginning
     let mut result = encode_single_type(primary_type, types)?;
 
-    // Para cada dependência, adiciona a sua representação
+    // For each dependency, add its representation
     for dep in sorted_deps {
         result.push_str(&encode_single_type(&dep, types)?);
     }
@@ -201,7 +201,7 @@ fn encode_type(
     Ok(result)
 }
 
-// Calcula o hash de um tipo
+// Calculate the hash of a type
 fn type_hash(
     primary_type: &str,
     types: &HashMap<String, Vec<Entry>>,
@@ -211,9 +211,9 @@ fn type_hash(
     Ok(keccak256(encoded_type.as_bytes()))
 }
 
-// Funções para codificação de tipos específicos
+// Functions for encoding specific types
 
-// Codifica uma string
+// Encode a string
 fn encode_string(value: &Value) -> Result<Vec<u8>> {
     let value_str = value
         .as_str()
@@ -222,25 +222,25 @@ fn encode_string(value: &Value) -> Result<Vec<u8>> {
     Ok(keccak256(value_str.as_bytes()).to_vec())
 }
 
-// Codifica bytes
+// Encode bytes
 fn encode_bytes(value: &Value) -> Result<Vec<u8>> {
     let value_str = value
         .as_str()
         .ok_or_else(|| StructuredDataError::InvalidData("Expected bytes as string".to_string()))?;
 
-    // Remove o prefixo 0x se existir
+    // Remove the 0x prefix if it exists
     let bytes_str = value_str.strip_prefix("0x").unwrap_or(value_str);
 
-    // Converte de hex para bytes
+    // Convert from hex to bytes
     let bytes = hex::decode(bytes_str)
         .map_err(|_| StructuredDataError::InvalidData("Invalid hex string".to_string()))?;
 
     Ok(keccak256(&bytes).to_vec())
 }
 
-// Codifica valores numéricos
+// Encode numeric values
 fn encode_integer(value: &Value) -> Result<Vec<u8>> {
-    // Converte para valores numéricos
+    // Convert to numeric values
     let value_num = if value.is_number() {
         value
             .as_u64()
@@ -262,7 +262,7 @@ fn encode_integer(value: &Value) -> Result<Vec<u8>> {
         ));
     };
 
-    // Codifica como uint256/int256 (32 bytes)
+    // Encode as uint256/int256 (32 bytes)
     let mut result = [0u8; 32];
     for i in 0..8 {
         result[31 - i] = ((value_num >> (i * 8)) & 0xFF) as u8;
@@ -271,7 +271,7 @@ fn encode_integer(value: &Value) -> Result<Vec<u8>> {
     Ok(result.to_vec())
 }
 
-// Codifica um valor booleano
+// Encode a boolean value
 fn encode_bool(value: &Value) -> Result<Vec<u8>> {
     let value_bool = value
         .as_bool()
@@ -283,28 +283,28 @@ fn encode_bool(value: &Value) -> Result<Vec<u8>> {
     Ok(result.to_vec())
 }
 
-// Decodifica um endereço tron da codificação base58
+// Decode a Tron address from base58 encoding
 fn bs58_decode(input: &str) -> Result<Vec<u8>> {
-    // Esta função deve usar uma biblioteca real como bs58
-    // Aqui está uma implementação de exemplo usando a biblioteca bs58
+    // This function should use a real library like bs58
+    // Here is an example implementation using the bs58 library
     bs58::decode(input).into_vec().map_err(|e| {
         StructuredDataError::InvalidData(format!("Failed to decode base58 string: {}", e))
     })
 }
 
-// Codifica um endereço
+// Encode an address
 fn encode_address(value: &Value) -> Result<Vec<u8>> {
     let value_str = value.as_str().ok_or_else(|| {
         StructuredDataError::InvalidData("Expected address as string".to_string())
     })?;
 
-    // Para endereços Tron, remover o prefixo 0x41 se presente
-    // e converter de base58 para bytes
+    // For Tron addresses, remove the 0x41 prefix if present
+    // and convert from base58 to bytes
     let address_bytes = if value_str.starts_with("T") {
-        // Conversão de endereço Tron (base58) para bytes
+        // Tron address conversion (base58) to bytes
         let decoded = bs58_decode(value_str)?;
 
-        // Remove o prefixo 0x41
+        // Remove the 0x41 prefix
         if decoded.len() > 1 && decoded[0] == 0x41 {
             decoded[1..].to_vec()
         } else {
@@ -314,10 +314,10 @@ fn encode_address(value: &Value) -> Result<Vec<u8>> {
         hex::decode(hex_body)
             .map_err(|_| StructuredDataError::InvalidData("Invalid hex address".to_string()))?
     } else {
-        // Tenta decodificar como endereço Tron sem prefixo 'T'
+        // Try to decode as a Tron address without the 'T' prefix
         let decoded = bs58_decode(value_str)?;
 
-        // Remove o prefixo 0x41 se presente
+        // Remove the 0x41 prefix if present
         if decoded.len() > 1 && decoded[0] == 0x41 {
             decoded[1..].to_vec()
         } else {
@@ -325,9 +325,9 @@ fn encode_address(value: &Value) -> Result<Vec<u8>> {
         }
     };
 
-    // Preenche com zeros à esquerda para 32 bytes
+    // Pad with leading zeros to 32 bytes
     let mut result = [0u8; 32];
-    let start_idx = 32 - std::cmp::min(address_bytes.len(), 20); // Endereços não devem ter mais que 20 bytes
+    let start_idx = 32 - std::cmp::min(address_bytes.len(), 20); // Addresses should not be longer than 20 bytes
 
     for (i, b) in address_bytes.iter().take(20).enumerate() {
         result[start_idx + i] = *b;
@@ -336,7 +336,7 @@ fn encode_address(value: &Value) -> Result<Vec<u8>> {
     Ok(result.to_vec())
 }
 
-// Codifica um array
+// Encode an array
 fn encode_array(
     element_type: &str,
     array_length: Option<usize>,
@@ -344,7 +344,7 @@ fn encode_array(
     types: &HashMap<String, Vec<Entry>>,
     types_set: &HashSet<String>,
 ) -> Result<Vec<u8>> {
-    // Para arrays fixos, verifica se o tamanho corresponde
+    // For fixed arrays, check if the length matches
     if let Some(expected_length) = array_length {
         if values.len() != expected_length {
             return Err(StructuredDataError::InvalidData(format!(
@@ -355,7 +355,7 @@ fn encode_array(
         }
     }
 
-    // Arrays dinâmicos são codificados com o hash da concatenação dos elementos
+    // Dynamic arrays are encoded with the hash of the concatenation of their elements
     if array_length.is_none() {
         let mut encoded_items = Vec::new();
 
@@ -367,7 +367,7 @@ fn encode_array(
         return Ok(keccak256(&encoded_items).to_vec());
     }
 
-    // Arrays fixos são codificados como a concatenação dos elementos
+    // Fixed arrays are encoded as the concatenation of their elements
     let mut encoded = Vec::new();
 
     for item in values {
@@ -378,7 +378,7 @@ fn encode_array(
     Ok(encoded)
 }
 
-// Codifica um campo específico
+// Encode a specific field
 fn encode_field(
     field_type: &str,
     value: &Value,
@@ -387,7 +387,7 @@ fn encode_field(
 ) -> Result<Vec<u8>> {
     let parsed_type = parse_type(field_type, types_set)?;
 
-    // Trata arrays
+    // Handle arrays
     if parsed_type.is_array {
         if !value.is_array() {
             return Err(StructuredDataError::InvalidData(format!(
@@ -405,25 +405,25 @@ fn encode_field(
         );
     }
 
-    // Trata tipo trcToken como uint256
+    // Handle trcToken type as uint256
     if parsed_type.base_type == "trcToken" {
         return encode_integer(value);
     }
 
-    // Verifica se é um tipo conhecido (struct)
+    // Check if it is a known type (struct)
     if parsed_type.is_reference {
-        // É um tipo struct
+        // It is a struct type
         return hash_struct(&parsed_type.base_type, value, types, types_set);
     }
 
-    // Tipos básicos
+    // Basic types
     match parsed_type.base_type.as_str() {
         "string" => encode_string(value),
         "bytes" => encode_bytes(value),
         t if t.starts_with("uint") || t.starts_with("int") => encode_integer(value),
         "bool" => encode_bool(value),
         "address" => encode_address(value),
-        // Adicione outros tipos conforme necessário
+        // Add other types as needed
         _ => Err(StructuredDataError::InvalidType(format!(
             "Unsupported type: {}",
             field_type
@@ -431,7 +431,7 @@ fn encode_field(
     }
 }
 
-// Codifica todos os dados de uma struct
+// Encode all data for a struct
 fn encode_data(
     type_name: &str,
     data: &Value,
@@ -449,7 +449,7 @@ fn encode_data(
         let field_name = &field.name;
         let field_type = &field.r#type;
 
-        // Obtém o valor do campo dos dados
+        // Get the field value from the data
         let value = match data.get(field_name) {
             Some(v) => v,
             None => {
@@ -467,7 +467,7 @@ fn encode_data(
     Ok(encoded)
 }
 
-// Calcula o hash de uma struct
+// Calculate the hash of a struct
 fn hash_struct(
     type_name: &str,
     data: &Value,
@@ -481,7 +481,7 @@ fn hash_struct(
     let type_hash_value = type_hash(type_name, types, types_set)?;
     let encoded_data = encode_data(type_name, data, types, types_set)?;
 
-    // Concatenar type_hash + encoded_data
+    // Concatenate type_hash + encoded_data
     let mut buffer = Vec::with_capacity(type_hash_value.len() + encoded_data.len());
     buffer.extend_from_slice(&type_hash_value);
     buffer.extend_from_slice(&encoded_data);
@@ -489,14 +489,14 @@ fn hash_struct(
     Ok(keccak256(&buffer).to_vec())
 }
 
-// Calcula o hash do domínio
+// Calculate the domain hash
 fn hash_domain(data: &StructuredData, types_set: &HashSet<String>) -> Result<[u8; 32]> {
-    // Para TIP-712, o domínio é codificado como "TIP712Domain"
-    // Verifica se existe explicitamente no types
+    // For TIP-712, the domain is encoded as "TIP712Domain"
+    // Check if it explicitly exists in types
     let domain_type = if data.types.contains_key("TIP712Domain") {
         "TIP712Domain"
     } else if data.types.contains_key("EIP712Domain") {
-        // Fallback para compatibilidade com Ethereum
+        // Fallback for Ethereum compatibility
         "EIP712Domain"
     } else {
         return Err(StructuredDataError::TypeNotFound(
@@ -512,9 +512,9 @@ fn hash_domain(data: &StructuredData, types_set: &HashSet<String>) -> Result<[u8
     Ok(result)
 }
 
-// Calcula o hash final de um documento estruturado
+// Calculate the final hash of a structured document
 fn hash_typed_data(data: &StructuredData) -> Result<[u8; 32]> {
-    // Cria o conjunto de tipos
+    // Create the set of types
     let mut types_set = HashSet::new();
     for (type_name, _) in data.types.iter() {
         types_set.insert(type_name.to_string());
@@ -524,7 +524,7 @@ fn hash_typed_data(data: &StructuredData) -> Result<[u8; 32]> {
 
     let primary_hash = hash_struct(&data.primary_type, &data.message, &data.types, &types_set)?;
 
-    // Concatenar conforme especificação TIP-712
+    // Concatenate according to TIP-712 specification
     let mut buffer = Vec::with_capacity(2 + domain_hash.len() + primary_hash.len());
     buffer.extend_from_slice(&[0x19, 0x01]);
     buffer.extend_from_slice(&domain_hash);
@@ -533,7 +533,7 @@ fn hash_typed_data(data: &StructuredData) -> Result<[u8; 32]> {
     Ok(keccak256(&buffer))
 }
 
-// Função de alto nível para conversão de JSON para hash
+// High-level function for JSON to hash conversion
 pub fn hash_typed_data_json(json_data: &str) -> Result<[u8; 32]> {
     let mut typed_data: StructuredData = serde_json::from_str(json_data)
         .map_err(|e| StructuredDataError::InvalidData(format!("Invalid JSON: {}", e)))?;
@@ -557,7 +557,7 @@ pub fn hash_typed_data_json(json_data: &str) -> Result<[u8; 32]> {
         },
     ];
 
-    // Insira o vetor na HashMap com a chave "EIP712Domain"
+    // Insert the vector into the HashMap with the key "EIP712Domain"
     typed_data
         .types
         .insert(String::from("EIP712Domain"), eip712_domain_entries);

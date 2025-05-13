@@ -34,9 +34,9 @@ pub fn encode_for_broadcast(mut transaction: Transaction) -> Result<Transaction,
 
 pub fn encode_sign_typed(message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
     if let Ok(data) = std::str::from_utf8(&message) {
-        let digest = crate::chains::trx::tip712::hash_typed_data_json(data);
-
-        return Ok(digest.unwrap().to_vec());
+        let digest = crate::chains::trx::tip712::hash_typed_data_json(data)
+            .map_err(|e| ChainError::InvalidData(format!("TIP-712 hash error: {e}")))?;
+        return Ok(digest.to_vec());
     }
 
     Err(ChainError::InvalidData("invalid typed data".to_string()))
