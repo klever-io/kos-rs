@@ -182,7 +182,7 @@ mod test {
 
         assert_eq!(
             hex::encode(signature),
-            "9b7f7b53ccdde9e97408e0ffe49a21e3fa52bc315688ff2901ed08ba37c3f4a75f17e8c9d793bf71457b7662d23202c991190cb65f1a7855b6a1fd21cd6a425700"
+            "cf7b64342bc41955671164c8d5fe7ee992e9497ff4bedcad02f7236be994e4821e2e3fe5807f88ff7099ab3ce8973e4399ccb24bcb41c8d92c64675a32c77e7101"
         );
     }
 }

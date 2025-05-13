@@ -640,5 +640,8 @@ fn test_hash_struct() {
     let typed_data: StructuredData = serde_json::from_str(data).unwrap();
 
     let digest = hash_typed_data(&typed_data).unwrap();
-    println!("{}", hex::encode(digest));
+    assert_eq!(
+        hex::encode(digest),
+        "cf7b64342bc41955671164c8d5fe7ee992e9497ff4bedcad02f7236be994e4821e2e3fe5807f88ff7099ab3ce8973e4399ccb24bcb41c8d92c64675a32c77e7101"
+    );
 }
