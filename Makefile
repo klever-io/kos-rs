@@ -35,13 +35,13 @@ build-ksafe:
 	cargo build --package kos-hardware --target thumbv7em-none-eabihf --profile hardware
 
 build-android:
-	cd packages/kos-mobile && ./build_android.sh
+	cd packages/kos-mobile --profile mobile && ./build_android.sh
 
 publish-android:
 	cd packages/kos-mobile/android && ./gradlew lib:publishKOSPublicationToGithubPackagesRepository
 
 build-ios:
-	cd packages/kos-mobile && ./build_ios.sh
+	cd packages/kos-mobile --profile mobile && ./build_ios.sh
 
 build-go:
 	cargo build --package kos-mobile && uniffi-bindgen-go --library target/debug/libkos_mobile.a --out-dir ./packages/kos-go

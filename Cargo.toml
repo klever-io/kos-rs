@@ -21,6 +21,14 @@ panic = 'abort'      # Generally reduces size for embedded systems
 codegen-units = 1    # more aggressive code merging
 strip = true         # Strip symbols from the final binary
 
+[profile.mobile]
+inherits = "release"
+lto = true
+opt-level = "z"   # Optimize for size.
+codegen-units = 1 # Reduce Parallel Code Generation Units to Increase Optimization
+panic = "abort"   # Abort on panic, as unwinding code does require extra binary size
+rpath = true
+
 [workspace.package]
 authors = ["Klever <kos@klever.io>"]
 edition = "2021"
