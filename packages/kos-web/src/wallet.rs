@@ -176,7 +176,7 @@ impl Wallet {
     ) -> Result<Wallet, Error> {
         let chain = get_chain_by_base_id(chain_id)
             .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
-        let path = chain.get_path(path_options.index, path_options.is_legacy.unwrap());
+        let path = chain.get_path(path_options.index, path_options.is_legacy.unwrap_or(false));
 
         let mut wallet = Wallet::from_mnemonic(chain_id, mnemonic, path, password)?;
         wallet.index = Some(path_options.index);

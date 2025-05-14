@@ -1,7 +1,6 @@
 use crate::chains::util::{byte_vectors_to_bytes, bytes_to_byte_vectors, private_key_from_vec};
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::bip32 as bipin32;
-use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use alloc::format;
 use alloc::string::{String, ToString};
@@ -126,13 +125,12 @@ impl Chain for ICP {
         let raw_pubkey = Secp256K1::private_to_public_uncompressed(&pvk_bytes)?;
         pvk_bytes.fill(0);
 
-        // Encode the public key in DER format
-        let der_encoded = encode_pubkey_to_der(&raw_pubkey);
-
-        Ok(der_encoded)
+        Ok(raw_pubkey.to_vec())
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
+        let public_key = encode_pubkey_to_der(&public_key);
+
         let mut hasher = Sha224::new();
         Update::update(&mut hasher, &public_key);
         let hash_result = hasher.finalize();
@@ -164,15 +162,12 @@ impl Chain for ICP {
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
         let icp_hashes = bytes_to_byte_vectors(tx.tx_hash.clone())?;
-        let mut pvk_bytes = private_key_from_vec(&private_key)?;
         let mut signatures = Vec::new();
 
         for hash in icp_hashes {
-            let signature = Ed25519::sign(&pvk_bytes, &hash)?;
+            let signature = self.sign_raw(private_key.clone(), hash)?;
             signatures.push(signature);
         }
-
-        pvk_bytes.fill(0);
 
         tx.signature = byte_vectors_to_bytes(&signatures);
 
@@ -217,6 +212,7 @@ impl Chain for ICP {
 
         Ok(signature_bytes.to_vec())
     }
+
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
         Err(ChainError::NotSupported)
     }
@@ -309,6 +305,31 @@ mod test {
         assert_eq!(
             hex::encode(signature),
             "72aa053da358a05c4db3f9c082022274605f6736ceb29f15a8ebdb46f072f6c76bb5ff8f7c8c3e5f7ba32116af449bb0308171f88515798a0e4a9efc8f0a03ff3056301006072a8648ce3d020106052b8104000a03420004abdb60eb7c96408414d1e251d41ca0ecf89a4541768cba7eed8174c53246d58c56031b23388bc7d275b4b26bf29137bdc181ae4d6b6f64f30db8d4bfd9222c27"
+        );
+    }
+    #[test]
+    fn test_icp_sign_raw() {
+        let icp = ICP {};
+
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = icp.get_path(0, false);
+
+        let pvk = icp.derive(seed, path).unwrap();
+
+        let pbk = icp.get_pbk(pvk.clone()).unwrap();
+
+        let message = vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+            25, 26, 27, 28, 29, 30, 31, 32,
+        ];
+
+        let signature = icp.sign_raw(pvk, message).unwrap();
+
+        assert_eq!(
+            hex::encode(signature),
+            "063a468b4038d466ea5ccfb08b76c179d0e29a4f2c1d43d5ab831b8001ba450777199c5e6adc5a14583d2aa20bbef99ba4f2cec64457e7acf694cb291cbd3fe3"
         );
     }
 }
