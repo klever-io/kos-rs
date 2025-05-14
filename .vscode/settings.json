@@ -9,5 +9,9 @@
     "[rust]": {
         "editor.defaultFormatter": "rust-lang.rust-analyzer",
         "editor.formatOnSave": true
+    },
+    "go.testEnvVars": {
+        "CGO_LDFLAGS": "-L${workspaceFolder}/target/debug -lkos_mobile",
+        "LD_LIBRARY_PATH": "${workspaceFolder}/target/debug"
     }
 }
