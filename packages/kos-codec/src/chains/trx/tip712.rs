@@ -563,79 +563,13 @@ pub fn hash_typed_data_json(json_data: &str) -> Result<[u8; 32]> {
         .insert(String::from("EIP712Domain"), eip712_domain_entries);
 
     let hash = hash_typed_data(&typed_data)?;
-
     Ok(hash)
 }
 
 #[cfg(test)]
 #[test]
 fn test_hash_struct() {
-    let data = r#"{
-    "types": {
-    "EIP712Domain": [
-                    { "name": "name", "type": "string" },
-                    { "name": "version", "type": "string" },
-                    { "name": "chainId", "type": "uint256" },
-                    { "name": "verifyingContract", "type": "address" }
-                ],
-        "PermitTransfer": [
-            {
-                "name": "token",
-                "type": "address"
-            },
-            {
-                "name": "serviceProvider",
-                "type": "address"
-            },
-            {
-                "name": "user",
-                "type": "address"
-            },
-            {
-                "name": "receiver",
-                "type": "address"
-            },
-            {
-                "name": "value",
-                "type": "uint256"
-            },
-            {
-                "name": "maxFee",
-                "type": "uint256"
-            },
-            {
-                "name": "deadline",
-                "type": "uint256"
-            },
-            {
-                "name": "version",
-                "type": "uint256"
-            },
-            {
-                "name": "nonce",
-                "type": "uint256"
-            }
-        ]
-    },
-    "primaryType": "PermitTransfer",
-    "domain": {
-        "name": "GasFreeController",
-        "version": "V1.0.0",
-        "chainId": 728126428,
-        "verifyingContract": "TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U"
-    },
-    "message": {
-        "token": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-        "serviceProvider": "TLntW9Z59LYY5KEi9cmwk3PKjQga828ird",
-        "user": "TCXs584P995owJmBifUZqNUUD6BSnBmvot",
-        "receiver": "TGJSxpAWwaUoqT8sLFxX2TD7BP7MrpdwWo",
-        "value": "1000000",
-        "maxFee": "2000000",
-        "deadline": "1746015449",
-        "version": "1",
-        "nonce": "1"
-    }
-}"#;
+    let data = r#"{"types":{"PermitTransfer":[{"name":"token","type":"address"},{"name":"serviceProvider","type":"address"},{"name":"user","type":"address"},{"name":"receiver","type":"address"},{"name":"value","type":"uint256"},{"name":"maxFee","type":"uint256"},{"name":"deadline","type":"uint256"},{"name":"version","type":"uint256"},{"name":"nonce","type":"uint256"}]},"primaryType":"PermitTransfer","domain":{"name":"GasFreeController","version":"V1.0.0","chainId":728126428,"verifyingContract":"TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U"},"message":{"token":"TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t","serviceProvider":"TLntW9Z59LYY5KEi9cmwk3PKjQga828ird","user":"TCXs584P995owJmBifUZqNUUD6BSnBmvot","receiver":"TZ8gnwQpy63puyJTJqnr7fhWxjjU5K6k2J","value":"1000000","maxFee":"2000000","deadline":"1747247626","version":"1","nonce":"4"}}"#;
 
     let typed_data: StructuredData = serde_json::from_str(data).unwrap();
 
