@@ -137,11 +137,11 @@ impl Chain for TRX {
 
 #[cfg(test)]
 mod test {
-    use crate::chains::{trx, Chain};
-    use alloc::string::{String, ToString};
     use crate::chains;
     use crate::chains::trx::TRON_MESSAGE_PREFIX;
+    use crate::chains::{trx, Chain};
     use crate::crypto::hash::keccak256_digest;
+    use alloc::string::{String, ToString};
 
     #[test]
     fn test_trx_derive() {
@@ -178,7 +178,9 @@ mod test {
 
         let message_bytes = keccak256_digest(&msg[..]);
 
-        let signature = chain.sign_message(pvk, message_bytes.to_vec(), false).unwrap();
+        let signature = chain
+            .sign_message(pvk, message_bytes.to_vec(), false)
+            .unwrap();
 
         assert_eq!(
             hex::encode(signature),
