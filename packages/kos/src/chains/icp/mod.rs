@@ -1,13 +1,14 @@
-use crate::chains::util::{byte_vectors_to_bytes, bytes_to_byte_vectors, private_key_from_vec};
+use crate::chains::util::{
+    byte_vectors_to_bytes, bytes_to_byte_vectors, private_key_from_vec, slice_from_vec,
+};
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::bip32 as bipin32;
+use crate::crypto::hash::sha256_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
-use k256::ecdsa::signature::Signer;
-use k256::ecdsa::{Signature, SigningKey};
-use k256::SecretKey;
+
 use sha2::digest::Update;
 use sha2::{Digest, Sha224};
 
@@ -165,7 +166,9 @@ impl Chain for ICP {
         let mut signatures = Vec::new();
 
         for hash in icp_hashes {
-            let signature = self.sign_raw(private_key.clone(), hash)?;
+            let digest = sha256_digest(&hash);
+
+            let signature = self.sign_raw(private_key.clone(), digest.to_vec())?;
             signatures.push(signature);
         }
 
@@ -196,21 +199,16 @@ impl Chain for ICP {
     }
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
-        let secret_key = match SecretKey::from_slice(private_key.as_slice()) {
-            Ok(sk) => sk,
-            Err(_) => return Err(ChainError::InvalidPrivateKey),
-        };
+        let pvk_bytes = private_key_from_vec(&private_key)?;
+        let payload_bytes = slice_from_vec(&payload)?;
 
-        let signing_key = SigningKey::from(secret_key);
+        let sig = Secp256K1::sign(&payload_bytes, &pvk_bytes)?;
 
-        let signature: Signature = match signing_key.try_sign(payload.as_slice()) {
-            Ok(sig) => sig,
-            Err(_) => return Err(ChainError::InvalidSignature),
-        };
+        // Remove last byte (0x01) from signature
+        let mut sig = sig.to_vec();
+        sig.pop();
 
-        let signature_bytes = signature.to_bytes();
-
-        Ok(signature_bytes.to_vec())
+        Ok(sig)
     }
 
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
@@ -318,14 +316,14 @@ mod test {
 
         let pvk = icp.derive(seed, path).unwrap();
 
-        let pbk = icp.get_pbk(pvk.clone()).unwrap();
-
         let message = vec![
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
             25, 26, 27, 28, 29, 30, 31, 32,
         ];
 
-        let signature = icp.sign_raw(pvk, message).unwrap();
+        let digest = sha256_digest(message.as_slice());
+
+        let signature = icp.sign_raw(pvk, digest.to_vec()).unwrap();
 
         assert_eq!(
             hex::encode(signature),
