@@ -5,7 +5,7 @@ use crate::crypto::hash::{keccak256_digest, sha256_digest};
 use crate::crypto::secp256k1::Secp256k1Trait;
 use crate::crypto::{bip32, secp256k1};
 use alloc::format;
-use alloc::string::{String, ToString};
+use alloc::string::String;
 use alloc::vec::Vec;
 
 const TRX_ADDR_PREFIX: u8 = 0x41;
@@ -18,15 +18,6 @@ pub const TRON_MESSAGE_PREFIX: &str = "\x19TRON Signed Message:\n";
 pub struct TRX {}
 
 impl TRX {
-    pub fn prepare_message(message: Vec<u8>) -> [u8; 32] {
-        let mut msg = Vec::new();
-        msg.extend_from_slice(TRON_MESSAGE_PREFIX.as_bytes());
-        msg.extend_from_slice(message.len().to_string().as_bytes());
-        msg.extend_from_slice(&message);
-
-        keccak256_digest(&msg[..])
-    }
-
     pub fn expand_address_with_checksum(address: &[u8; 21]) -> String {
         let mut address_with_checksum: [u8; TRX_ADD_SIZE] = [0; TRX_ADD_SIZE];
         address_with_checksum[..TRX_ADD_RAW_LEN].copy_from_slice(&address[..]);
@@ -121,8 +112,7 @@ impl Chain for TRX {
         let mut pvk_bytes: [u8; 32] = [0; 32];
         pvk_bytes.copy_from_slice(&private_key[..32]);
 
-        let parsed_message = TRX::prepare_message(message);
-        let sig = self.sign_raw(private_key, parsed_message.to_vec())?;
+        let sig = self.sign_raw(private_key, message)?;
         Ok(sig.as_slice().to_vec())
     }
 
@@ -147,7 +137,10 @@ impl Chain for TRX {
 
 #[cfg(test)]
 mod test {
-    use crate::chains::Chain;
+    use crate::chains;
+    use crate::chains::trx::TRON_MESSAGE_PREFIX;
+    use crate::chains::{trx, Chain};
+    use crate::crypto::hash::keccak256_digest;
     use alloc::string::{String, ToString};
 
     #[test]
@@ -176,9 +169,18 @@ mod test {
         let path = chain.get_path(0, false);
         let pvk = chain.derive(seed, path).unwrap();
 
-        let message_bytes = "test message".as_bytes().to_vec();
+        let message = "test message".as_bytes().to_vec();
 
-        let signature = chain.sign_message(pvk, message_bytes, false).unwrap();
+        let mut msg = Vec::new();
+        msg.extend_from_slice(TRON_MESSAGE_PREFIX.as_bytes());
+        msg.extend_from_slice(message.len().to_string().as_bytes());
+        msg.extend_from_slice(&message);
+
+        let message_bytes = keccak256_digest(&msg[..]);
+
+        let signature = chain
+            .sign_message(pvk, message_bytes.to_vec(), false)
+            .unwrap();
 
         assert_eq!(
             hex::encode(signature),
