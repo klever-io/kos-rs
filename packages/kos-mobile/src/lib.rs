@@ -2,16 +2,14 @@ pub mod models;
 pub mod number;
 pub mod signer;
 
-use crate::models::{WalletChainOptions, WalletOptions};
+use crate::models::{
+    convert_tx_options, wallet_options_to_chain_type, TransactionChainOptions, WalletOptions,
+};
 use hex::FromHexError;
 use hex::ToHex;
-use kos::chains::util::hex_string_to_vec;
-use kos::chains::{
-    get_chain_by_base_id, get_chain_by_params, Chain, ChainError, ChainOptions, CustomChainType,
-    Transaction,
-};
+use kos::chains::{get_chain_by_base_id, get_chain_by_params, Chain, ChainError, Transaction};
+use kos::crypto::cipher;
 use kos::crypto::cipher::CipherAlgo;
-use kos::crypto::{base64, cipher};
 use kos_codec::KosCodedAccount;
 use kos_codec::{encode_for_broadcast, encode_for_signing};
 
@@ -58,95 +56,6 @@ struct KOSTransaction {
     pub signature: String,
 }
 
-#[derive(uniffi::Enum)]
-enum TransactionChainOptions {
-    Evm {
-        chain_id: u32,
-    },
-    Btc {
-        prev_scripts: Vec<Vec<u8>>,
-        input_amounts: Vec<u64>,
-    },
-    Substrate {
-        call: Vec<u8>,
-        era: Vec<u8>,
-        nonce: u32,
-        tip: u8,
-        block_hash: Vec<u8>,
-        genesis_hash: Vec<u8>,
-        spec_version: u32,
-        transaction_version: u32,
-        app_id: Option<u32>,
-    },
-    Cosmos {
-        chain_id: String,
-        account_number: u64,
-    },
-}
-
-#[allow(clippy::too_many_arguments)]
-#[uniffi::export]
-fn new_substrate_transaction_options(
-    call: String,
-    era: String,
-    nonce: u32,
-    tip: u8,
-    block_hash: String,
-    genesis_hash: String,
-    spec_version: u32,
-    transaction_version: u32,
-    app_id: Option<u32>,
-) -> TransactionChainOptions {
-    let call = hex_string_to_vec(call.as_str()).unwrap_or_default();
-    let era = hex_string_to_vec(era.as_str()).unwrap_or_default();
-    let block_hash = hex_string_to_vec(block_hash.as_str()).unwrap_or_default();
-    let genesis_hash = hex_string_to_vec(genesis_hash.as_str()).unwrap_or_default();
-
-    TransactionChainOptions::Substrate {
-        call,
-        era,
-        nonce,
-        tip,
-        block_hash,
-        genesis_hash,
-        spec_version,
-        transaction_version,
-        app_id,
-    }
-}
-
-#[uniffi::export]
-fn new_bitcoin_transaction_options(
-    input_amounts: Vec<u64>,
-    prev_scripts: Vec<String>,
-) -> TransactionChainOptions {
-    let prev_scripts = prev_scripts
-        .iter()
-        .map(|s| base64::simple_base64_decode(s).unwrap_or_default())
-        .collect();
-
-    TransactionChainOptions::Btc {
-        prev_scripts,
-        input_amounts,
-    }
-}
-
-#[uniffi::export]
-fn new_evm_transaction_options(chain_id: u32) -> TransactionChainOptions {
-    TransactionChainOptions::Evm { chain_id }
-}
-
-#[uniffi::export]
-fn new_cosmos_transaction_options(
-    chain_id: String,
-    account_number: u64,
-) -> TransactionChainOptions {
-    TransactionChainOptions::Cosmos {
-        chain_id,
-        account_number,
-    }
-}
-
 #[uniffi::export]
 fn generate_mnemonic(size: i32) -> Result<String, KOSError> {
     Ok(kos::crypto::mnemonic::generate_mnemonic(size as usize)?.to_phrase())
@@ -175,28 +84,16 @@ fn generate_wallet_from_mnemonic(
         return Err(KOSError::KOSDelegate("Invalid mnemonic".to_string()));
     }
 
-    // Get default options if none provided
-    let options = options.unwrap_or(WalletOptions {
-        use_legacy_path: false,
-        specific: None,
-    });
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
 
-    // Create the appropriate chain params based on options
-    let chain_params = match options.clone().specific {
-        Some(WalletChainOptions::CustomEth {
-            chain_id: custom_chain_id,
-        }) => CustomChainType::CustomEth(custom_chain_id),
-        Some(WalletChainOptions::CustomIcp { key_type }) => CustomChainType::CustomIcp(key_type),
-        None => CustomChainType::NotCustomBase(chain_id),
-    };
-
-    // Get the chain
     let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
         id: chain_id.to_string(),
     })?;
 
+    let use_legacy_path = options.as_ref().map_or(false, |opt| opt.use_legacy_path);
+
     let seed = chain.mnemonic_to_seed(mnemonic, String::from(""))?;
-    let path = chain.get_path(index, options.use_legacy_path);
+    let path = chain.get_path(index, use_legacy_path);
     let private_key = chain.derive(seed, path.clone())?;
     let public_key = chain.get_pbk(private_key.clone())?;
 
@@ -206,7 +103,7 @@ fn generate_wallet_from_mnemonic(
         public_key: hex::encode(public_key.clone()),
         address: chain.get_address(public_key)?,
         path,
-        options: Some(options),
+        options,
     })
 }
 
@@ -214,18 +111,24 @@ fn generate_wallet_from_mnemonic(
 fn generate_wallet_from_private_key(
     chain_id: u32,
     private_key: String,
+    options: Option<WalletOptions>,
 ) -> Result<KOSAccount, KOSError> {
-    let chain = get_chain_by(chain_id)?;
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
+
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: chain_id.to_string(),
+    })?;
 
     let public_key = chain.get_pbk(hex::decode(private_key.clone())?)?;
     let address = chain.get_address(public_key.clone())?;
+
     Ok(KOSAccount {
         chain_id,
         private_key: private_key.clone(),
         public_key: hex::encode(public_key.clone()),
         address,
         path: String::new(),
-        options: None,
+        options,
     })
 }
 
@@ -267,73 +170,18 @@ fn sign_transaction(
     raw: String,
     options: Option<TransactionChainOptions>,
 ) -> Result<KOSTransaction, KOSError> {
-    let options = match options {
-        Some(TransactionChainOptions::Evm { chain_id }) => Some(ChainOptions::EVM { chain_id }),
-        Some(TransactionChainOptions::Btc {
-            prev_scripts,
-            input_amounts,
-        }) => Some(ChainOptions::BTC {
-            prev_scripts,
-            input_amounts,
-        }),
-        Some(TransactionChainOptions::Substrate {
-            call,
-            era,
-            nonce,
-            tip,
-            block_hash,
-            genesis_hash,
-            spec_version,
-            transaction_version,
-            app_id,
-        }) => Some(ChainOptions::SUBSTRATE {
-            call,
-            era,
-            nonce,
-            tip,
-            block_hash,
-            genesis_hash,
-            spec_version,
-            transaction_version,
-            app_id,
-        }),
-        Some(TransactionChainOptions::Cosmos {
-            chain_id,
-            account_number,
-        }) => Some(ChainOptions::COSMOS {
-            chain_id,
-            account_number,
-        }),
-        None => None,
-    };
+    let chain_options = convert_tx_options(options);
 
-    // Get default options if none provided
-    let wallet_options = account.options.unwrap_or(WalletOptions {
-        use_legacy_path: false,
-        specific: None,
-    });
-
-    // Create the appropriate chain params based on options
-    let chain_params = match wallet_options.clone().specific {
-        Some(WalletChainOptions::CustomEth {
-            chain_id: custom_chain_id,
-        }) => CustomChainType::CustomEth(custom_chain_id),
-        Some(WalletChainOptions::CustomIcp { key_type }) => CustomChainType::CustomIcp(key_type),
-        None => CustomChainType::NotCustomBase(account.chain_id),
-    };
-
-    // Get the chain
+    let chain_params = wallet_options_to_chain_type(account.chain_id, &account.options);
     let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
         id: account.chain_id.to_string(),
     })?;
 
-    let raw_tx_bytes = hex::decode(raw.clone())?;
-
     let transaction = Transaction {
-        raw_data: raw_tx_bytes,
+        raw_data: hex::decode(raw.clone())?,
         signature: Vec::new(),
         tx_hash: Vec::new(),
-        options,
+        options: chain_options,
     };
 
     let kos_codec_acc = KosCodedAccount {
@@ -343,26 +191,22 @@ fn sign_transaction(
     };
 
     let encoded = encode_for_signing(kos_codec_acc.clone(), transaction)?;
-
-    let pk = hex::decode(account.private_key.clone())?;
-
-    let signed_transaction = chain.sign_tx(pk, encoded)?;
-
+    let signed_transaction = chain.sign_tx(hex::decode(account.private_key.clone())?, encoded)?;
     let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_transaction)?;
-
-    let signature = encoded_to_broadcast.signature.clone();
 
     Ok(KOSTransaction {
         chain_id: account.chain_id,
         raw: hex::encode(encoded_to_broadcast.raw_data),
         sender: account.address,
-        signature: hex::encode(signature),
+        signature: hex::encode(encoded_to_broadcast.signature),
     })
 }
-
 #[uniffi::export]
 fn sign_message(account: KOSAccount, hex: String, legacy: bool) -> Result<Vec<u8>, KOSError> {
-    let chain = get_chain_by(account.chain_id)?;
+    let chain_params = wallet_options_to_chain_type(account.chain_id, &account.options);
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: account.chain_id.to_string(),
+    })?;
     let message = hex::decode(hex)?;
 
     let kos_codec_acc = KosCodedAccount {
@@ -393,7 +237,9 @@ fn get_supported_chains() -> Vec<u32> {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::new_icp_wallet_options;
+    use crate::models::{
+        new_evm_transaction_options, new_icp_wallet_options, TransactionChainOptions,
+    };
     use crate::*;
     use kos::chains::get_chains;
 
@@ -509,7 +355,7 @@ mod tests {
         let private_key =
             "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d".to_string();
         let chain_id = 38;
-        match generate_wallet_from_private_key(chain_id, private_key) {
+        match generate_wallet_from_private_key(chain_id, private_key, None) {
             Ok(account) => {
                 assert_eq!(
                     account.address,
@@ -531,7 +377,7 @@ mod tests {
     fn should_fail_to_get_account_from_private_key() {
         let private_key = "".to_string();
         let chain_id = 38;
-        match generate_wallet_from_private_key(chain_id, private_key) {
+        match generate_wallet_from_private_key(chain_id, private_key, None) {
             Ok(account) => panic!(
                 "A error was expected but found a pk {}.",
                 account.private_key
