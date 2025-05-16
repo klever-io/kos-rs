@@ -797,14 +797,17 @@ pub fn get_chain_by_id(id: u32) -> Option<Box<dyn Chain>> {
 
 pub enum CustomChainType {
     NotCustom(u32),
+    NotCustomBase(u32),
     CustomEth(u32),
     CustomSubstrate(u32),
     CustomCosmos(String),
+    CustomIcp(String),
 }
 
 pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
     match params {
         CustomChainType::NotCustom(c) => get_chain_by_id(c),
+        CustomChainType::NotCustomBase(c) => get_chain_by_base_id(c),
         CustomChainType::CustomEth(chaincode) => Some(Box::new(eth::ETH::new_eth_based(
             0,
             chaincode,
@@ -813,6 +816,7 @@ pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
         ))),
         CustomChainType::CustomSubstrate(_) => None,
         CustomChainType::CustomCosmos(_) => None,
+        CustomChainType::CustomIcp(key_type) => Some(Box::new(ICP::new_from_string(key_type))),
     }
 }
 

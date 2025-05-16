@@ -1,11 +1,14 @@
+pub mod models;
 pub mod number;
 pub mod signer;
 
+use crate::models::{WalletChainOptions, WalletOptions};
 use hex::FromHexError;
 use hex::ToHex;
 use kos::chains::util::hex_string_to_vec;
 use kos::chains::{
-    create_custom_evm, get_chain_by_base_id, Chain, ChainError, ChainOptions, Transaction,
+    get_chain_by_base_id, get_chain_by_params, Chain, ChainError, ChainOptions, CustomChainType,
+    Transaction,
 };
 use kos::crypto::cipher::CipherAlgo;
 use kos::crypto::{base64, cipher};
@@ -45,8 +48,8 @@ struct KOSAccount {
     pub public_key: String,
     pub address: String,
     pub path: String,
+    pub options: Option<WalletOptions>,
 }
-
 #[derive(uniffi::Record)]
 struct KOSTransaction {
     pub chain_id: u32,
@@ -166,16 +169,35 @@ fn generate_wallet_from_mnemonic(
     mnemonic: String,
     chain_id: u32,
     index: u32,
-    use_legacy_path: bool,
+    options: Option<WalletOptions>,
 ) -> Result<KOSAccount, KOSError> {
     if !validate_mnemonic(mnemonic.clone()) {
         return Err(KOSError::KOSDelegate("Invalid mnemonic".to_string()));
     }
-    let chain = get_chain_by(chain_id)?;
-    let seed = chain.mnemonic_to_seed(mnemonic, String::from(""))?;
-    let path = chain.get_path(index, use_legacy_path);
-    let private_key = chain.derive(seed, path.clone())?;
 
+    // Get default options if none provided
+    let options = options.unwrap_or(WalletOptions {
+        use_legacy_path: false,
+        specific: None,
+    });
+
+    // Create the appropriate chain params based on options
+    let chain_params = match options.clone().specific {
+        Some(WalletChainOptions::CustomEth {
+            chain_id: custom_chain_id,
+        }) => CustomChainType::CustomEth(custom_chain_id),
+        Some(WalletChainOptions::CustomIcp { key_type }) => CustomChainType::CustomIcp(key_type),
+        None => CustomChainType::NotCustomBase(chain_id),
+    };
+
+    // Get the chain
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: chain_id.to_string(),
+    })?;
+
+    let seed = chain.mnemonic_to_seed(mnemonic, String::from(""))?;
+    let path = chain.get_path(index, options.use_legacy_path);
+    let private_key = chain.derive(seed, path.clone())?;
     let public_key = chain.get_pbk(private_key.clone())?;
 
     Ok(KOSAccount {
@@ -184,6 +206,7 @@ fn generate_wallet_from_mnemonic(
         public_key: hex::encode(public_key.clone()),
         address: chain.get_address(public_key)?,
         path,
+        options: Some(options),
     })
 }
 
@@ -202,6 +225,7 @@ fn generate_wallet_from_private_key(
         public_key: hex::encode(public_key.clone()),
         address,
         path: String::new(),
+        options: None,
     })
 }
 
@@ -283,13 +307,25 @@ fn sign_transaction(
         None => None,
     };
 
-    let mut chain = get_chain_by(account.chain_id)?;
+    // Get default options if none provided
+    let wallet_options = account.options.unwrap_or(WalletOptions {
+        use_legacy_path: false,
+        specific: None,
+    });
 
-    if let Some(ChainOptions::EVM { chain_id }) = options {
-        chain = create_custom_evm(chain_id).ok_or(KOSError::KOSDelegate(
-            "Failed to create custom evm chain".to_string(),
-        ))?;
-    }
+    // Create the appropriate chain params based on options
+    let chain_params = match wallet_options.clone().specific {
+        Some(WalletChainOptions::CustomEth {
+            chain_id: custom_chain_id,
+        }) => CustomChainType::CustomEth(custom_chain_id),
+        Some(WalletChainOptions::CustomIcp { key_type }) => CustomChainType::CustomIcp(key_type),
+        None => CustomChainType::NotCustomBase(account.chain_id),
+    };
+
+    // Get the chain
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: account.chain_id.to_string(),
+    })?;
 
     let raw_tx_bytes = hex::decode(raw.clone())?;
 
@@ -357,6 +393,7 @@ fn get_supported_chains() -> Vec<u32> {
 
 #[cfg(test)]
 mod tests {
+    use crate::models::new_icp_wallet_options;
     use crate::*;
     use kos::chains::get_chains;
 
@@ -397,7 +434,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 999;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
             Ok(_) => panic!("A error was expected but found a mnemonic"),
             Err(e) => {
                 if let KOSError::UnsupportedChain { id } = e {
@@ -414,7 +451,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 38;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
             Ok(account) => {
                 assert_eq!(
                     account.address,
@@ -437,7 +474,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon klv abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 38;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
             Ok(_) => panic!("A error was expected but found a account"),
             Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), " Invalid error"),
         }
@@ -449,7 +486,7 @@ mod tests {
         let index = 0;
 
         for chain_code in get_chains() {
-            match generate_wallet_from_mnemonic(mnemonic.clone(), chain_code, index, false) {
+            match generate_wallet_from_mnemonic(mnemonic.clone(), chain_code, index, None) {
                 Ok(account) => {
                     assert!(
                         !account.address.is_empty(),
@@ -551,7 +588,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -582,7 +619,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -613,7 +650,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -639,7 +676,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -665,7 +702,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -689,7 +726,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -714,7 +751,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -741,7 +778,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -768,7 +805,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -795,7 +832,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -819,7 +856,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -843,7 +880,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -885,7 +922,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            Some(new_icp_wallet_options(false, "ed25519".to_string())),
         )
         .unwrap();
 
@@ -909,7 +946,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -928,7 +965,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false
+            None
         ).unwrap();
 
         let signature = sign_message(account, message, true).unwrap();
