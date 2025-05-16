@@ -1,4 +1,7 @@
-use crate::models::{PathOptions, Transaction};
+use crate::models::{
+    wallet_options_to_chain_type, PathOptions, Transaction, TransactionChainOptions,
+    WalletChainOptions,
+};
 
 use pem::{parse as parse_pem, Pem};
 use serde::{Deserialize, Serialize};
@@ -6,9 +9,7 @@ use strum::{EnumCount, IntoStaticStr};
 
 use crate::error::Error;
 use crate::utils::unpack;
-use kos::chains::util::hex_string_to_vec;
-use kos::chains::{get_chain_by_base_id, ChainOptions, Transaction as KosTransaction};
-use kos::crypto::base64;
+use kos::chains::{get_chain_by_base_id, get_chain_by_params, Transaction as KosTransaction};
 use kos_codec::{encode_for_broadcast, encode_for_signing, KosCodedAccount};
 use wasm_bindgen::prelude::*;
 
@@ -34,93 +35,7 @@ pub struct Wallet {
     mnemonic: Option<String>,
     private_key: Option<String>,
     path: Option<String>,
-}
-
-#[wasm_bindgen]
-#[derive(Clone)]
-pub struct TransactionChainOptions {
-    #[wasm_bindgen(skip)]
-    pub data: ChainOptions,
-}
-
-#[wasm_bindgen]
-impl TransactionChainOptions {
-    #[wasm_bindgen(js_name = "newBitcoinSignOptions")]
-    pub fn new_bitcoin_sign_options(
-        input_amounts: Vec<u64>,
-        prev_scripts: Vec<String>,
-    ) -> TransactionChainOptions {
-        let prev_scripts = prev_scripts
-            .iter()
-            .map(|s| base64::simple_base64_decode(s).unwrap_or_default())
-            .collect();
-
-        TransactionChainOptions {
-            data: ChainOptions::BTC {
-                prev_scripts,
-                input_amounts,
-            },
-        }
-    }
-
-    #[wasm_bindgen(js_name = "newEthereumSignOptions")]
-    pub fn new_ethereum_sign_options(chain_id: u32) -> TransactionChainOptions {
-        TransactionChainOptions {
-            data: ChainOptions::EVM { chain_id },
-        }
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    #[wasm_bindgen(js_name = "newSubstrateSignOptions")]
-    pub fn new_substrate_sign_options(
-        call: String,
-        era: String,
-        nonce: u32,
-        tip: u8,
-        block_hash: String,
-        genesis_hash: String,
-        spec_version: u32,
-        transaction_version: u32,
-        app_id: Option<u32>,
-    ) -> Result<TransactionChainOptions, Error> {
-        let call = hex_string_to_vec(call.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid call hex: {}", e)))?;
-        let era = hex_string_to_vec(era.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid era hex: {}", e)))?;
-        let block_hash = hex_string_to_vec(block_hash.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid block hash hex: {}", e)))?;
-        let genesis_hash = hex_string_to_vec(genesis_hash.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid genesis hash hex: {}", e)))?;
-
-        Ok(TransactionChainOptions {
-            data: ChainOptions::SUBSTRATE {
-                call,
-                era,
-                nonce,
-                tip,
-                block_hash,
-                genesis_hash,
-                spec_version,
-                transaction_version,
-                app_id,
-            },
-        })
-    }
-
-    #[wasm_bindgen(js_name = "newCosmosSignOptions")]
-    pub fn new_cosmos_sign_options(
-        chain_id: String,
-        account_number: u64,
-    ) -> TransactionChainOptions {
-        TransactionChainOptions {
-            data: {
-                ChainOptions::COSMOS {
-                    chain_id,
-                    account_number,
-                }
-            },
-        }
-    }
+    options: Option<WalletChainOptions>,
 }
 
 #[wasm_bindgen]
@@ -132,11 +47,14 @@ impl Wallet {
         mnemonic: String,
         path: String,
         password: Option<String>,
+        options: Option<WalletChainOptions>,
     ) -> Result<Wallet, Error> {
         // validate mnemonic entropy
         kos::crypto::mnemonic::validate_mnemonic(&mnemonic)?;
 
-        let chain = get_chain_by_base_id(chain_id)
+        let custom_chain_options = wallet_options_to_chain_type(chain_id, &options);
+
+        let chain = get_chain_by_params(custom_chain_options.clone())
             .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
         let seed = chain
@@ -163,6 +81,7 @@ impl Wallet {
             private_key: Some(hex::encode(private_key)),
             mnemonic: Some(mnemonic),
             path: Some(path),
+            options,
         })
     }
 
@@ -173,12 +92,13 @@ impl Wallet {
         mnemonic: String,
         path_options: &PathOptions,
         password: Option<String>,
+        options: Option<WalletChainOptions>,
     ) -> Result<Wallet, Error> {
         let chain = get_chain_by_base_id(chain_id)
             .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
         let path = chain.get_path(path_options.index, path_options.is_legacy.unwrap_or(false));
 
-        let mut wallet = Wallet::from_mnemonic(chain_id, mnemonic, path, password)?;
+        let mut wallet = Wallet::from_mnemonic(chain_id, mnemonic, path, password, options)?;
         wallet.index = Some(path_options.index);
 
         Ok(wallet)
@@ -186,7 +106,11 @@ impl Wallet {
 
     #[wasm_bindgen(js_name = "fromPrivateKey")]
     /// restore wallet from mnemonic
-    pub fn from_private_key(chain_id: u32, private_key: String) -> Result<Wallet, Error> {
+    pub fn from_private_key(
+        chain_id: u32,
+        private_key: String,
+        options: Option<WalletChainOptions>,
+    ) -> Result<Wallet, Error> {
         // convert hex to bytes
         let private_key_bytes = hex::decode(private_key.clone())?;
 
@@ -195,7 +119,9 @@ impl Wallet {
             return Err(Error::WalletManager("Invalid private key".to_string()));
         }
 
-        let chain = get_chain_by_base_id(chain_id)
+        let custom_chain_options = wallet_options_to_chain_type(chain_id, &options);
+
+        let chain = get_chain_by_params(custom_chain_options.clone())
             .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
         let public_key = chain
@@ -216,12 +142,17 @@ impl Wallet {
             mnemonic: None,
             private_key: Some(private_key),
             path: None,
+            options,
         })
     }
 
     #[wasm_bindgen(js_name = "fromKCPem")]
     /// restore wallet from mnemonic
-    pub fn from_kc_pem(chain: u32, data: &[u8]) -> Result<Wallet, Error> {
+    pub fn from_kc_pem(
+        chain: u32,
+        data: &[u8],
+        options: Option<WalletChainOptions>,
+    ) -> Result<Wallet, Error> {
         // decode pem file
         let pem =
             parse_pem(data).map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
@@ -232,7 +163,7 @@ impl Wallet {
         let pk_hex = content.chars().take(64).collect::<String>();
 
         // import from private key
-        Wallet::from_private_key(chain, pk_hex)
+        Wallet::from_private_key(chain, pk_hex, options)
     }
 
     #[wasm_bindgen(js_name = "fromPem")]
@@ -329,7 +260,9 @@ impl Wallet {
         match self.private_key {
             Some(ref pk_hex) => {
                 let pk_bytes = hex::decode(pk_hex)?;
-                let chain = get_chain_by_base_id(self.chain)
+                let custom_chain_options = wallet_options_to_chain_type(self.chain, &self.options);
+
+                let chain = get_chain_by_params(custom_chain_options.clone())
                     .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
                 chain
@@ -360,7 +293,9 @@ impl Wallet {
                     options,
                 };
 
-                let chain = get_chain_by_base_id(self.chain)
+                let custom_chain_options = wallet_options_to_chain_type(self.chain, &self.options);
+
+                let chain = get_chain_by_params(custom_chain_options.clone())
                     .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
                 let kos_codec_acc = KosCodedAccount {
@@ -405,8 +340,14 @@ mod tests {
         let chain = get_chain_by_base_id(chain_id).unwrap();
         let path = chain.get_path(0, false);
 
-        let wallet =
-            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path.clone(), None).unwrap();
+        let wallet = Wallet::from_mnemonic(
+            chain_id,
+            TEST_MNEMONIC.to_string(),
+            path.clone(),
+            None,
+            None,
+        )
+        .unwrap();
 
         assert_eq!(wallet.get_chain(), chain_id);
         assert_eq!(wallet.get_account_type(), AccountType::Mnemonic);
@@ -427,7 +368,8 @@ mod tests {
         let password = Some("mysecretpassword".to_string());
 
         let wallet =
-            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, password).unwrap();
+            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, password, None)
+                .unwrap();
 
         assert_eq!(wallet.get_account_type(), AccountType::Mnemonic);
         assert_eq!(wallet.get_private_key().len(), 64); // Should be valid hex
@@ -443,9 +385,14 @@ mod tests {
             is_legacy: Some(false),
         };
 
-        let wallet =
-            Wallet::from_mnemonic_index(chain_id, TEST_MNEMONIC.to_string(), &path_options, None)
-                .unwrap();
+        let wallet = Wallet::from_mnemonic_index(
+            chain_id,
+            TEST_MNEMONIC.to_string(),
+            &path_options,
+            None,
+            None,
+        )
+        .unwrap();
 
         assert_eq!(wallet.get_index().unwrap(), index);
         assert_eq!(wallet.get_account_type(), AccountType::Mnemonic);
@@ -464,7 +411,8 @@ mod tests {
     fn test_wallet_from_private_key() {
         let chain_id = 38;
 
-        let wallet = Wallet::from_private_key(chain_id, TEST_PRIVATE_KEY.to_string()).unwrap();
+        let wallet =
+            Wallet::from_private_key(chain_id, TEST_PRIVATE_KEY.to_string(), None).unwrap();
 
         assert_eq!(wallet.get_chain(), chain_id);
         assert_eq!(wallet.get_account_type(), AccountType::PrivateKey);
@@ -479,7 +427,7 @@ mod tests {
         let chain_id = 38;
         let invalid_pk = "invalid_private_key";
 
-        let result = Wallet::from_private_key(chain_id, invalid_pk.to_string());
+        let result = Wallet::from_private_key(chain_id, invalid_pk.to_string(), None);
         assert!(result.is_err());
     }
 
@@ -488,7 +436,8 @@ mod tests {
         let chain_id = 38;
         let message = b"Hello, World!";
 
-        let wallet = Wallet::from_private_key(chain_id, TEST_PRIVATE_KEY.to_string()).unwrap();
+        let wallet =
+            Wallet::from_private_key(chain_id, TEST_PRIVATE_KEY.to_string(), None).unwrap();
 
         let signature = wallet.sign_message(message, true).unwrap();
         assert!(!signature.is_empty());
@@ -503,7 +452,8 @@ mod tests {
             let path = chain.get_path(0, false);
 
             let wallet =
-                Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None).unwrap();
+                Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None, None)
+                    .unwrap();
 
             assert_eq!(wallet.get_chain(), chain_id);
             assert!(!wallet.get_address().is_empty());
@@ -516,7 +466,13 @@ mod tests {
         let chain = get_chain_by_base_id(2).unwrap();
         let path = chain.get_path(0, false);
 
-        let result = Wallet::from_mnemonic(invalid_chain_id, TEST_MNEMONIC.to_string(), path, None);
+        let result = Wallet::from_mnemonic(
+            invalid_chain_id,
+            TEST_MNEMONIC.to_string(),
+            path,
+            None,
+            None,
+        );
 
         assert!(result.is_err());
     }
@@ -528,7 +484,8 @@ mod tests {
         let chain = get_chain_by_base_id(chain_id).unwrap();
         let path = chain.get_path(0, false);
 
-        let result = Wallet::from_mnemonic(chain_id, invalid_mnemonic.to_string(), path, None);
+        let result =
+            Wallet::from_mnemonic(chain_id, invalid_mnemonic.to_string(), path, None, None);
 
         assert!(result.is_err());
     }
@@ -548,6 +505,7 @@ mod tests {
             mnemonic: None,
             private_key: None,
             path: None,
+            options: None,
         };
 
         assert_eq!(wallet.get_address(), public_address);
@@ -566,7 +524,7 @@ mod tests {
         let path = chain.get_path(0, false);
 
         let wallet =
-            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None).unwrap();
+            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None, None).unwrap();
 
         let tx_raw = r#"{"RawData":{"Sender":"UMjR49Dkn+HleedQY88TSjXXJhtbDpX7f7QVF/Dcqos=","Contract":[{"Type":63,"Parameter":{"type_url":"type.googleapis.com/proto.SmartContract","value":"EiAAAAAAAAAAAAUAIPnuq04LIuz1ew83LbqEVgLiyNyybBoRCghGUkctMlZCVRIFCIDh6xc="}}],"Data":["c3Rha2VGYXJt"],"KAppFee":2000000,"BandwidthFee":4622449,"Version":1,"ChainID":"MTAwMDAx"}}"#;
 

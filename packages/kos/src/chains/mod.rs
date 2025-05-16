@@ -795,6 +795,7 @@ pub fn get_chain_by_id(id: u32) -> Option<Box<dyn Chain>> {
     ChainRegistry::new().get_chain_by_id(id)
 }
 
+#[derive(Debug, Clone)]
 pub enum CustomChainType {
     NotCustom(u32),
     NotCustomBase(u32),
@@ -802,6 +803,12 @@ pub enum CustomChainType {
     CustomSubstrate(u32),
     CustomCosmos(String),
     CustomIcp(String),
+}
+
+impl Default for CustomChainType {
+    fn default() -> Self {
+        CustomChainType::NotCustomBase(0)
+    }
 }
 
 pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
