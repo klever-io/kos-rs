@@ -6,7 +6,7 @@ use crate::crypto::bip32 as bipin32;
 use crate::crypto::hash::sha256_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use alloc::format;
-use alloc::string::{String, ToString};
+use alloc::string::String;
 use alloc::vec::Vec;
 
 use sha2::digest::Update;
@@ -18,10 +18,6 @@ const ACCOUNT_DOMAIN_SEPARATOR: &[u8] = b"\x0Aaccount-id";
 pub struct ICP {}
 
 impl ICP {
-    pub fn new() -> Self {
-        ICP {}
-    }
-
     fn crc32_checksum(&self, bytes: &[u8]) -> u32 {
         let mut crc = 0xFFFFFFFF;
         for &byte in bytes {
@@ -145,7 +141,7 @@ impl Chain for ICP {
         Digest::update(&mut account_hasher, &principal_bytes);
 
         let subaccount_bytes = [0u8; 32];
-        Digest::update(&mut account_hasher, &subaccount_bytes);
+        Digest::update(&mut account_hasher, subaccount_bytes);
 
         let account_hash = account_hasher.finalize();
 
