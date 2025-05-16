@@ -2,22 +2,32 @@ use crate::chains::util::{
     byte_vectors_to_bytes, bytes_to_byte_vectors, private_key_from_vec, slice_from_vec,
 };
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
-use crate::crypto::bip32 as bipin32;
-use crate::crypto::hash::sha256_digest;
+use crate::crypto::bip32;
+use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
+use crate::crypto::hash::{sha224_digest, sha256_digest};
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
+use crate::KeyType;
 use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
-
 use sha2::digest::Update;
 use sha2::{Digest, Sha224};
 
 const ACCOUNT_DOMAIN_SEPARATOR: &[u8] = b"\x0Aaccount-id";
-
+const ASN1_ED25519_HEADER: [u8; 12] = [48u8, 42, 48, 5, 6, 3, 43, 101, 112, 3, 33, 0];
+const ACCOUNT_ID_BYTE: u8 = 0x0A;
+const ICP_TAIL: u8 = 2;
+const ACCOUNT_ID_STR: &str = "account-id";
 #[allow(clippy::upper_case_acronyms)]
-pub struct ICP {}
+pub struct ICP {
+    key_type: KeyType,
+}
 
 impl ICP {
+    pub fn new(key_type: KeyType) -> Self {
+        ICP { key_type }
+    }
+
     fn crc32_checksum(&self, bytes: &[u8]) -> u32 {
         let mut crc = 0xFFFFFFFF;
         for &byte in bytes {
@@ -103,20 +113,34 @@ impl Chain for ICP {
     }
 
     fn mnemonic_to_seed(&self, mnemonic: String, password: String) -> Result<Vec<u8>, ChainError> {
-        Ok(bipin32::mnemonic_to_seed(mnemonic, password)?)
+        Ok(bip32::mnemonic_to_seed(mnemonic, password)?)
     }
 
     fn derive(&self, seed: Vec<u8>, path: String) -> Result<Vec<u8>, ChainError> {
-        let result = bipin32::derive(&seed, path)?;
+        if self.key_type == KeyType::ED25519 {
+            let result = bip32::derive_ed25519(&seed, path)?;
+            return Ok(Vec::from(result));
+        }
+
+        let result = bip32::derive(&seed, path)?;
         Ok(Vec::from(result))
     }
 
     fn get_path(&self, index: u32, _is_legacy: bool) -> String {
+        if self.key_type == KeyType::ED25519 {
+            return format!("m/44'/223'/0'/0'/{}", index);
+        }
+
         format!("m/44'/223'/0'/0/{}", index)
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         let mut pvk_bytes = private_key_from_vec(&private_key)?;
+
+        if self.key_type == KeyType::ED25519 {
+            let pbk = Ed25519::public_from_private(&pvk_bytes)?;
+            return Ok(pbk);
+        }
 
         // First get the uncompressed public key (65 bytes total: 0x04 + X + Y)
         let raw_pubkey = Secp256K1::private_to_public_uncompressed(&pvk_bytes)?;
@@ -126,6 +150,30 @@ impl Chain for ICP {
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
+        if self.key_type == KeyType::ED25519 {
+            let mut der = Vec::new();
+            der.extend_from_slice(&ASN1_ED25519_HEADER);
+            der.extend_from_slice(&public_key);
+
+            let mut der_digest = sha224_digest(&der).to_vec();
+
+            let mut new_digest = vec![ACCOUNT_ID_BYTE];
+            new_digest.append(&mut ACCOUNT_ID_STR.as_bytes().to_vec());
+            new_digest.append(der_digest.as_mut());
+            new_digest.push(ICP_TAIL);
+            new_digest.append(&mut vec![0u8; 32]);
+
+            let out_digest = sha224_digest(&new_digest);
+            let crc_calc = crc_calc_singletable(&out_digest);
+
+            let mut addr_bytes: Vec<u8> = Vec::new();
+            addr_bytes.append(&mut crc_calc.to_be_bytes().to_vec());
+            addr_bytes.append(&mut out_digest.to_vec());
+
+            let addr = hex::encode(addr_bytes).to_string();
+            return Ok(addr);
+        }
+
         let public_key = encode_pubkey_to_der(&public_key);
 
         let mut hasher = Sha224::new();
@@ -162,9 +210,11 @@ impl Chain for ICP {
         let mut signatures = Vec::new();
 
         for hash in icp_hashes {
-            let digest = sha256_digest(&hash);
-
-            let signature = self.sign_raw(private_key.clone(), digest.to_vec())?;
+            let mut digest = hash.to_vec();
+            if self.key_type == KeyType::SECP256K1 {
+                digest = sha256_digest(&hash).to_vec();
+            }
+            let signature = self.sign_raw(private_key.clone(), digest)?;
             signatures.push(signature);
         }
 
@@ -185,7 +235,13 @@ impl Chain for ICP {
     ) -> Result<Vec<u8>, ChainError> {
         let public_key = self.get_pbk(private_key.clone())?;
 
-        let signature = self.sign_raw(private_key, message)?;
+        let mut payload = Vec::from(message.clone());
+
+        if self.key_type == KeyType::SECP256K1 {
+            payload = sha256_digest(&message).to_vec();
+        }
+
+        let signature = self.sign_raw(private_key, payload)?;
 
         let mut signature_bytes = Vec::new();
         signature_bytes.extend_from_slice(&signature);
@@ -196,8 +252,13 @@ impl Chain for ICP {
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         let pvk_bytes = private_key_from_vec(&private_key)?;
-        let payload_bytes = slice_from_vec(&payload)?;
 
+        if self.key_type == KeyType::ED25519 {
+            let sig = Ed25519::sign(&pvk_bytes, &payload)?;
+            return Ok(sig);
+        }
+
+        let payload_bytes = slice_from_vec(&payload)?;
         let sig = Secp256K1::sign(&payload_bytes, &pvk_bytes)?;
 
         // Remove last byte (0x01) from signature
@@ -265,8 +326,24 @@ pub fn crc_calc_singletable(buffer: &[u8]) -> u32 {
 mod test {
     use super::*;
     #[test]
-    fn test_icp_get_address() {
-        let icp = ICP {};
+    fn test_icp_get_address_ed25519() {
+        let icp = ICP::new(KeyType::ED25519);
+
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = icp.get_path(0, false);
+        let pvk = icp.derive(seed, path).unwrap();
+        let pbk = icp.get_pbk(pvk).unwrap();
+
+        let addr = icp.get_address(pbk).unwrap();
+        assert_eq!(
+            addr,
+            "11d238129427ef0e44d86bd27cb6d9da4d7e8934cb0306a93a540e657082d885"
+        );
+    }
+    #[test]
+    fn test_icp_get_address_secp256k1() {
+        let icp = ICP::new(KeyType::SECP256K1);
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
@@ -282,8 +359,8 @@ mod test {
     }
 
     #[test]
-    fn test_icp_sign_message() {
-        let icp = ICP {};
+    fn test_icp_sign_message_ed25519() {
+        let icp = ICP::new(KeyType::ED25519);
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
@@ -294,16 +371,56 @@ mod test {
         let message = "test message".as_bytes().to_vec();
         let signature = icp.sign_message(pvk, message, true).unwrap();
 
-        assert_eq!(signature.len(), 152, "Signature length should be 152");
-
         assert_eq!(
             hex::encode(signature),
-            "72aa053da358a05c4db3f9c082022274605f6736ceb29f15a8ebdb46f072f6c76bb5ff8f7c8c3e5f7ba32116af449bb0308171f88515798a0e4a9efc8f0a03ff3056301006072a8648ce3d020106052b8104000a03420004abdb60eb7c96408414d1e251d41ca0ecf89a4541768cba7eed8174c53246d58c56031b23388bc7d275b4b26bf29137bdc181ae4d6b6f64f30db8d4bfd9222c27"
+            "db41e41de474e2cb6d997ae5aa5de9aa81512a19d1337881363a3c481431935992a118ba863b6d00612c638b5caf7bac65cb2cf31a7d30f9c5473fcb97bf620bc006bf0760963c13c1c1478adbc326b96338060f03487ebd1c3b261dbccd8daf"
         );
     }
     #[test]
-    fn test_icp_sign_raw() {
-        let icp = ICP {};
+    fn test_icp_sign_message_secp256k1() {
+        let icp = ICP::new(KeyType::SECP256K1);
+
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = icp.get_path(0, false);
+
+        let pvk = icp.derive(seed, path).unwrap();
+
+        let message = "test message".as_bytes().to_vec();
+        let signature = icp.sign_message(pvk, message, true).unwrap();
+
+        assert_eq!(
+            hex::encode(signature),
+            "72aa053da358a05c4db3f9c082022274605f6736ceb29f15a8ebdb46f072f6c76bb5ff8f7c8c3e5f7ba32116af449bb0308171f88515798a0e4a9efc8f0a03ff04abdb60eb7c96408414d1e251d41ca0ecf89a4541768cba7eed8174c53246d58c56031b23388bc7d275b4b26bf29137bdc181ae4d6b6f64f30db8d4bfd9222c27"
+        );
+    }
+
+    #[test]
+    fn test_icp_sign_raw_ed25519() {
+        let icp = ICP::new(KeyType::ED25519);
+
+        let mnemonic =
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = icp.get_path(0, false);
+
+        let pvk = icp.derive(seed, path).unwrap();
+
+        let message = vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+            25, 26, 27, 28, 29, 30, 31, 32,
+        ];
+
+        let signature = icp.sign_raw(pvk, message).unwrap();
+
+        assert_eq!(
+            hex::encode(signature),
+            "71106543257919354ab03a2113a85fbfaffa9c0901b9333b9a0b9097927e68c7e2db2793a951a82dc8d9a4fd090ba97c7f7476a6db72a18c7c7e8a957f372707"
+        );
+    }
+    #[test]
+    fn test_icp_sign_raw_secp256k1() {
+        let icp = ICP::new(KeyType::SECP256K1);
 
         let mnemonic =
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();

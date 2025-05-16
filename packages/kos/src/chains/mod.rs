@@ -15,6 +15,7 @@ use crate::crypto::bip32::Bip32Err;
 use crate::crypto::ed25519::Ed25519Err;
 use crate::crypto::secp256k1::Secp256Err;
 use crate::crypto::sr25519::Sr25519Error;
+use crate::KeyType;
 use alloc::boxed::Box;
 use alloc::format;
 use alloc::string::{FromUtf8Error, String};
@@ -594,7 +595,7 @@ impl ChainRegistry {
             (
                 constants::ICP,
                 ChainInfo {
-                    factory: || Box::new(ICP {}),
+                    factory: || Box::new(ICP::new(KeyType::SECP256K1)),
                     supported: true,
                 },
             ),
