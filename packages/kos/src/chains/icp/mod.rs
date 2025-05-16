@@ -9,6 +9,7 @@ use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
 use crate::KeyType;
 use alloc::format;
 use alloc::string::String;
+use alloc::vec;
 use alloc::vec::Vec;
 use sha2::digest::Update;
 use sha2::{Digest, Sha224};
@@ -179,7 +180,7 @@ impl Chain for ICP {
             addr_bytes.append(&mut crc_calc.to_be_bytes().to_vec());
             addr_bytes.append(&mut out_digest.to_vec());
 
-            let addr = hex::encode(addr_bytes).to_string();
+            let addr = hex::encode(addr_bytes);
             return Ok(addr);
         }
 
