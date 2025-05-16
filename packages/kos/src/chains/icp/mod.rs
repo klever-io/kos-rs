@@ -245,7 +245,7 @@ impl Chain for ICP {
     ) -> Result<Vec<u8>, ChainError> {
         let public_key = self.get_pbk(private_key.clone())?;
 
-        let mut payload = Vec::from(message.clone());
+        let mut payload = message.clone();
 
         if self.key_type == KeyType::SECP256K1 {
             payload = sha256_digest(&message).to_vec();
