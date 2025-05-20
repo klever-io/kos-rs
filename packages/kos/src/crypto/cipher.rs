@@ -15,7 +15,8 @@ use crate::chains::ChainError;
 use alloc::format;
 use alloc::vec;
 use alloc::vec::Vec;
-use hmac::Hmac;
+use hmac::digest::KeyInit;
+use hmac::{Hmac, Mac};
 use pbkdf2::pbkdf2;
 use pbkdf2::{
     password_hash::{PasswordHash, PasswordHasher, SaltString},
@@ -30,7 +31,7 @@ const NONCE_SIZE: usize = 12; // NONCESIZE
 const IV_SIZE: usize = 16; // IVSIZE
 const BLOCK_SIZE: usize = 16; // BLOCKSIZE
 
-const ITERATIONS: u32 = 10000;
+const ITERATIONS: u32 = 600000;
 
 #[derive(Debug, Clone)]
 pub enum CipherAlgo {
@@ -169,7 +170,7 @@ type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     let iv: [u8; IV_SIZE] = rand::thread_rng().gen();
-    let derived_key = derive_key(&iv, password); //  KeySize [u8; 32]
+    let derived_key = derive_key(&iv, password); // KeySize [u8; 32]
     let key = GenericArray::from_slice(&derived_key);
 
     let padding_size = BLOCK_SIZE - data.len() % BLOCK_SIZE;
@@ -183,26 +184,60 @@ pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
         .encrypt_padded_mut::<Pkcs7>(&mut buf, data.len())
         .map_err(|e| ChainError::CipherError(format!("encryption failed: {}", e)))?;
 
-    // Create PEM
+    let mut hmac_input = Vec::new();
+    hmac_input.extend_from_slice(&iv);
+    hmac_input.extend_from_slice(ct);
+
+    let hmac_salt: [u8; 32] = rand::thread_rng().gen();
+    let hmac_key = derive_key(&hmac_salt, password);
+
+    let mut mac: Hmac<Sha256> = <Hmac<Sha256> as KeyInit>::new_from_slice(&hmac_key)
+        .map_err(|e| ChainError::CipherError(format!("HMAC creation failed: {}", e)))?;
+    mac.update(&hmac_input);
+    let hmac_result = mac.finalize().into_bytes();
+
     let mut result = CipherAlgo::CBC.to_vec();
+    result.extend_from_slice(&hmac_salt);
     result.extend_from_slice(&iv);
+    result.extend_from_slice(&hmac_result);
     result.extend_from_slice(ct);
 
     Ok(result)
 }
 
 pub fn cbc_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
-    if encrypted.len() < IV_SIZE {
-        return Err(ChainError::CipherError("Invalid PEM data".to_owned()));
+    let min_length = KEY_SIZE + IV_SIZE + 32; // 32 bytes for HMAC-SHA256
+    if encrypted.len() < min_length {
+        return Err(ChainError::CipherError("Invalid encrypted data".to_owned()));
     }
 
-    let iv = GenericArray::from_slice(&encrypted[..IV_SIZE]);
-    let encrypted_data = &encrypted[IV_SIZE..];
+    let hmac_salt = &encrypted[0..KEY_SIZE];
+    let iv = &encrypted[KEY_SIZE..KEY_SIZE + IV_SIZE];
+    let hmac = &encrypted[KEY_SIZE + IV_SIZE..KEY_SIZE + IV_SIZE + 32];
+    let ciphertext = &encrypted[KEY_SIZE + IV_SIZE + 32..];
+
+    let hmac_key = derive_key(hmac_salt, password);
+
+    let mut hmac_input = Vec::new();
+    hmac_input.extend_from_slice(iv);
+    hmac_input.extend_from_slice(ciphertext);
+
+    let mut mac: Hmac<Sha256> = <Hmac<Sha256> as KeyInit>::new_from_slice(&hmac_key)
+        .map_err(|e| ChainError::CipherError(format!("HMAC creation failed: {}", e)))?;
+    mac.update(&hmac_input);
+
+    mac.verify_slice(hmac).map_err(|_| {
+        ChainError::CipherError(
+            "Invalid authentication tag - data may have been tampered with".to_owned(),
+        )
+    })?;
+
     let derived_key = derive_key(iv, password);
     let key = GenericArray::from_slice(&derived_key);
+    let iv_array = GenericArray::from_slice(iv);
 
-    let mut buf = encrypted_data.to_vec();
-    let pt: &[u8] = Aes256CbcDec::new(key, iv)
+    let mut buf = ciphertext.to_vec();
+    let pt = Aes256CbcDec::new(key, iv_array)
         .decrypt_padded_mut::<Pkcs7>(&mut buf)
         .map_err(|e| ChainError::CipherError(format!("decryption failed: {}", e)))?;
 
@@ -316,5 +351,43 @@ mod tests {
         let password = "password";
         let checksum = create_checksum(password);
         assert!(check_checksum(password, checksum));
+    }
+
+    #[test]
+    fn test_cbc_bit_flipping_attack() {
+        // Given plaintext similar to the example
+        let plaintext = b"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"; // 32 bytes, exactly two blocks
+        let password = "supersecret"; // Password for key derivation
+
+        // Encrypt the username using CBC mode
+        let encrypted = cbc_encrypt(plaintext, password).unwrap();
+
+        // Simulate the server leaking the ciphertext
+        let leaked_ciphertext = encrypted.clone();
+
+        // Perform the bit-flipping attack
+        // We want to change one 'b' to 'a'
+        // This means we need to flip the first byte of the first ciphertext block
+
+        let xor_value = b'b' ^ b'a'; // XOR between 'b' and 'a'
+        let mut tampered_encrypted = leaked_ciphertext.clone();
+
+        // Modify the ciper text
+        tampered_encrypted[IV_SIZE + 1] ^= xor_value;
+
+        // Decrypt the tampered ciphertext
+        let result = cbc_decrypt(&tampered_encrypted[1..], password);
+
+        match result {
+            Ok(decrypted) => {
+                let original_plaintext = String::from_utf8_lossy(plaintext);
+                let decrypted_plaintext = String::from_utf8_lossy(&decrypted);
+                assert_eq!(original_plaintext, decrypted_plaintext);
+            }
+            Err(e) => {
+                assert!(e.to_string().contains("cipher error: Invalid authentication tag - data may have been tampered with"), 
+                "Decryption failed unexpectedly with error: {}", e);
+            }
+        }
     }
 }
