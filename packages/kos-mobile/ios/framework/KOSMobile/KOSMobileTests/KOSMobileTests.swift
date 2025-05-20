@@ -33,8 +33,8 @@ final class KOSMobileTests: XCTestCase {
         let mnemonic24 = try! generateMnemonic(size: 24)
         XCTAssertTrue(mnemonic24.split(separator: " ").count == 24)
         
-        let gmcEncryptedData = try! encryptWithGmc(data: dataToEncrypt, password: password)
-        XCTAssertTrue(!gmcEncryptedData.isEmpty)
+        let gcmEncryptedData = try! encryptWithGcm(data: dataToEncrypt, password: password)
+        XCTAssertTrue(!gcmEncryptedData.isEmpty)
         
         let cbcEncryptedData = try! encryptWithCbc(data: dataToEncrypt, password: password)
         XCTAssertTrue(!cbcEncryptedData.isEmpty)
@@ -42,8 +42,8 @@ final class KOSMobileTests: XCTestCase {
         let cfbEncryptedData = try! encryptWithCfb(data: dataToEncrypt, password: password)
         XCTAssertTrue(!cfbEncryptedData.isEmpty)
         
-        let gmcDecryptedData = try! decrypt(data: gmcEncryptedData, password: password)
-        XCTAssertEqual(dataToEncrypt, gmcDecryptedData)
+        let gcmDecryptedData = try! decrypt(data: gcmEncryptedData, password: password)
+        XCTAssertEqual(dataToEncrypt, gcmDecryptedData)
         
         let cbcDecryptedData = try! decrypt(data: cbcEncryptedData, password: password)
         XCTAssertEqual(dataToEncrypt, cbcDecryptedData)

@@ -84,12 +84,12 @@ func TestShouldFailToGetAccountFromPrivateKey(t *testing.T) {
 	assert.True(t, errors.Is(err, kos_mobile.ErrKosErrorKosDelegate), "Invalid error: expected KosErrorKosDelegate")
 }
 
-func TestShouldEncryptWithGmcAndDecryptData(t *testing.T) {
+func TestShouldEncryptWithGcmAndDecryptData(t *testing.T) {
 	originalData := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	password := "myPass"
 
-	encryptedData, err := kos_mobile.EncryptWithGmc(originalData, password)
-	assert.Nil(t, err, "Failed to encrypt data with GMC")
+	encryptedData, err := kos_mobile.EncryptWithGcm(originalData, password)
+	assert.Nil(t, err, "Failed to encrypt data with GCM")
 
 	decryptedData, err := kos_mobile.Decrypt(encryptedData, password)
 	assert.Nil(t, err, "Failed to decrypt data")
@@ -124,8 +124,8 @@ func TestShouldFailToDecryptWithWrongPassword(t *testing.T) {
 	originalData := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	password := "myPass"
 
-	encryptedData, err := kos_mobile.EncryptWithGmc(originalData, password)
-	assert.Nil(t, err, "Failed to encrypt data with GMC")
+	encryptedData, err := kos_mobile.EncryptWithGcm(originalData, password)
+	assert.Nil(t, err, "Failed to encrypt data with GCM")
 
 	decryptedData, err := kos_mobile.Decrypt(encryptedData, "wrong")
 	assert.Error(t, err, "An error was expected but found decrypted data")

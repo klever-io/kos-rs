@@ -504,9 +504,9 @@ RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_cbc(RustBuffer data, RustBuffe
 RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_cfb(RustBuffer data, RustBuffer password, RustCallStatus *out_status
 );
 #endif
-#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_GMC
-#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_GMC
-RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_gmc(RustBuffer data, RustBuffer password, RustCallStatus *out_status
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_GCM
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_GCM
+RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_gcm(RustBuffer data, RustBuffer password, RustCallStatus *out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_MNEMONIC
@@ -1035,9 +1035,9 @@ uint16_t uniffi_kos_mobile_checksum_func_encrypt_with_cfb(void
     
 );
 #endif
-#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_ENCRYPT_WITH_GMC
-#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_ENCRYPT_WITH_GMC
-uint16_t uniffi_kos_mobile_checksum_func_encrypt_with_gmc(void
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_ENCRYPT_WITH_GCM
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_ENCRYPT_WITH_GCM
+uint16_t uniffi_kos_mobile_checksum_func_encrypt_with_gcm(void
     
 );
 #endif

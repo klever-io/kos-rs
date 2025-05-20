@@ -34,7 +34,7 @@ const ITERATIONS: u32 = 10000;
 
 #[derive(Debug, Clone)]
 pub enum CipherAlgo {
-    GMC = 0,
+    GCM = 0,
     CBC = 1,
     CFB = 2,
 }
@@ -42,7 +42,7 @@ pub enum CipherAlgo {
 impl CipherAlgo {
     pub fn to_vec(&self) -> Vec<u8> {
         match self {
-            CipherAlgo::GMC => vec![0],
+            CipherAlgo::GCM => vec![0],
             CipherAlgo::CBC => vec![1],
             CipherAlgo::CFB => vec![2],
         }
@@ -50,7 +50,7 @@ impl CipherAlgo {
 
     pub fn from_u8(value: u8) -> Result<Self, ChainError> {
         match value {
-            0 => Ok(CipherAlgo::GMC),
+            0 => Ok(CipherAlgo::GCM),
             1 => Ok(CipherAlgo::CBC),
             2 => Ok(CipherAlgo::CFB),
             _ => Err(ChainError::CipherError(
@@ -61,7 +61,7 @@ impl CipherAlgo {
 
     pub fn encrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
         match self {
-            CipherAlgo::GMC => gcm_encrypt(data, password),
+            CipherAlgo::GCM => gcm_encrypt(data, password),
             CipherAlgo::CBC => cbc_encrypt(data, password),
             CipherAlgo::CFB => cfb_encrypt(data, password),
         }
@@ -69,7 +69,7 @@ impl CipherAlgo {
 
     pub fn decrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
         match self {
-            CipherAlgo::GMC => gcm_decrypt(data, password),
+            CipherAlgo::GCM => gcm_decrypt(data, password),
             CipherAlgo::CBC => cbc_decrypt(data, password),
             CipherAlgo::CFB => cfb_decrypt(data, password),
         }
@@ -142,7 +142,7 @@ pub fn gcm_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
         .map_err(|e| ChainError::CipherError(format!("encryption failed: {}", e)))?;
 
     // Create PEM
-    let mut result = CipherAlgo::GMC.to_vec();
+    let mut result = CipherAlgo::GCM.to_vec();
     result.extend_from_slice(&salt);
     result.extend_from_slice(&nonce);
     result.extend_from_slice(&ciphertext);
@@ -249,7 +249,7 @@ mod tests {
 
     #[test]
     fn test_encrypt_decrypt() {
-        for algo in vec![CipherAlgo::GMC, CipherAlgo::CBC, CipherAlgo::CFB] {
+        for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
             let data = b"hello world";
             let password = "password";
 
@@ -261,7 +261,7 @@ mod tests {
 
     #[test]
     fn test_encrypt_decrypt_invalid_password() {
-        for algo in vec![CipherAlgo::GMC, CipherAlgo::CBC, CipherAlgo::CFB] {
+        for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
             let data = b"hello world";
             let password = "password";
 
@@ -278,7 +278,7 @@ mod tests {
 
     #[test]
     fn test_encrypt_decrypt_invalid_data() {
-        for algo in vec![CipherAlgo::GMC, CipherAlgo::CBC, CipherAlgo::CFB] {
+        for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
             let data = b"hello world";
             let password = "password";
 

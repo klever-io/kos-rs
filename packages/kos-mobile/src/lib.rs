@@ -206,8 +206,8 @@ fn generate_wallet_from_private_key(
 }
 
 #[uniffi::export]
-fn encrypt_with_gmc(data: String, password: String) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::GMC.encrypt(data.as_bytes(), password.as_str())?;
+fn encrypt_with_gcm(data: String, password: String) -> Result<String, KOSError> {
+    let encrypted_data = CipherAlgo::GCM.encrypt(data.as_bytes(), password.as_str())?;
     Ok(encrypted_data.encode_hex())
 }
 
@@ -504,10 +504,10 @@ mod tests {
     }
 
     #[test]
-    fn should_encrypt_with_gmc_and_decrypt_data() {
+    fn should_encrypt_with_gcm_and_decrypt_data() {
         let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let password = "myPass".to_string();
-        let encrypted_data = encrypt_with_gmc(original_data.clone(), password.clone()).unwrap();
+        let encrypted_data = encrypt_with_gcm(original_data.clone(), password.clone()).unwrap();
         let decrypted_data = decrypt(encrypted_data, password.clone()).unwrap();
         assert_eq!(original_data, decrypted_data, "The data is not the same");
     }
@@ -534,7 +534,7 @@ mod tests {
     fn should_fail_to_decrypt_with_wrong_password() {
         let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let password = "myPass".to_string();
-        let encrypted_data = encrypt_with_gmc(original_data.clone(), password.clone()).unwrap();
+        let encrypted_data = encrypt_with_gcm(original_data.clone(), password.clone()).unwrap();
         match decrypt(encrypted_data, "wrong".to_string()) {
             Ok(_) => panic!("A error was expected but found a decrypted data"),
             Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), "Invalid error"),
