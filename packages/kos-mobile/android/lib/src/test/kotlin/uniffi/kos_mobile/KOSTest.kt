@@ -31,8 +31,8 @@ class KOSTest {
         val mnemonic24 = generateMnemonic(24)
         assertTrue(mnemonic24.split(" ").size == 24)
 
-        val gmcEncryptedData = encryptWithGmc(dataToEncrypt, password)
-        assertTrue(gmcEncryptedData.isNotEmpty())
+        val gcmEncryptedData = encryptWithGcm(dataToEncrypt, password)
+        assertTrue(gcmEncryptedData.isNotEmpty())
 
         val cbcEncryptedData = encryptWithCbc(dataToEncrypt, password)
         assertTrue(cbcEncryptedData.isNotEmpty())
@@ -40,8 +40,8 @@ class KOSTest {
         val cfbEncryptedData = encryptWithCfb(dataToEncrypt, password)
         assertTrue(cfbEncryptedData.isNotEmpty())
 
-        val gmcDecryptedData = decrypt(gmcEncryptedData, password)
-        assertEquals(dataToEncrypt, gmcDecryptedData)
+        val gcmDecryptedData = decrypt(gcmEncryptedData, password)
+        assertEquals(dataToEncrypt, gcmDecryptedData)
 
         val cbcDecryptedData = decrypt(cbcEncryptedData, password)
         assertEquals(dataToEncrypt, cbcDecryptedData)

@@ -399,7 +399,7 @@ impl ChainRegistry {
             (
                 constants::POLYGON,
                 ChainInfo {
-                    factory: || Box::new(ETH::new_eth_based(28, 137, "MATIC", "Polygon")),
+                    factory: || Box::new(ETH::new_eth_based(28, 137, "POL", "Polygon")),
                     supported: true,
                 },
             ),

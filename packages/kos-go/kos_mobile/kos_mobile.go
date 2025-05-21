@@ -571,11 +571,11 @@ func uniffiCheckChecksums() {
 	}
 	{
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
-			return C.uniffi_kos_mobile_checksum_func_encrypt_with_gmc()
+			return C.uniffi_kos_mobile_checksum_func_encrypt_with_gcm()
 		})
-		if checksum != 59809 {
+		if checksum != 25899 {
 			// If this happens try cleaning and rebuilding your project
-			panic("kos_mobile: uniffi_kos_mobile_checksum_func_encrypt_with_gmc: UniFFI API checksum mismatch")
+			panic("kos_mobile: uniffi_kos_mobile_checksum_func_encrypt_with_gcm: UniFFI API checksum mismatch")
 		}
 	}
 	{
@@ -2285,10 +2285,10 @@ func EncryptWithCfb(data string, password string) (string, *KosError) {
 	}
 }
 
-func EncryptWithGmc(data string, password string) (string, *KosError) {
+func EncryptWithGcm(data string, password string) (string, *KosError) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
-			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_gmc(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), _uniffiStatus),
+			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_gcm(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), _uniffiStatus),
 		}
 	})
 	if _uniffiErr != nil {
