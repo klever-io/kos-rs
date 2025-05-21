@@ -1,14 +1,15 @@
+pub mod models;
 pub mod number;
 pub mod signer;
 
+use crate::models::{
+    convert_tx_options, wallet_options_to_chain_type, TransactionChainOptions, WalletOptions,
+};
 use hex::FromHexError;
 use hex::ToHex;
-use kos::chains::util::hex_string_to_vec;
-use kos::chains::{
-    create_custom_evm, get_chain_by_base_id, Chain, ChainError, ChainOptions, Transaction,
-};
+use kos::chains::{get_chain_by_base_id, get_chain_by_params, Chain, ChainError, Transaction};
+use kos::crypto::cipher;
 use kos::crypto::cipher::CipherAlgo;
-use kos::crypto::{base64, cipher};
 use kos_codec::KosCodedAccount;
 use kos_codec::{encode_for_broadcast, encode_for_signing};
 
@@ -45,103 +46,14 @@ struct KOSAccount {
     pub public_key: String,
     pub address: String,
     pub path: String,
+    pub options: Option<WalletOptions>,
 }
-
 #[derive(uniffi::Record)]
 struct KOSTransaction {
     pub chain_id: u32,
     pub raw: String,
     pub sender: String,
     pub signature: String,
-}
-
-#[derive(uniffi::Enum)]
-enum TransactionChainOptions {
-    Evm {
-        chain_id: u32,
-    },
-    Btc {
-        prev_scripts: Vec<Vec<u8>>,
-        input_amounts: Vec<u64>,
-    },
-    Substrate {
-        call: Vec<u8>,
-        era: Vec<u8>,
-        nonce: u32,
-        tip: u8,
-        block_hash: Vec<u8>,
-        genesis_hash: Vec<u8>,
-        spec_version: u32,
-        transaction_version: u32,
-        app_id: Option<u32>,
-    },
-    Cosmos {
-        chain_id: String,
-        account_number: u64,
-    },
-}
-
-#[allow(clippy::too_many_arguments)]
-#[uniffi::export]
-fn new_substrate_transaction_options(
-    call: String,
-    era: String,
-    nonce: u32,
-    tip: u8,
-    block_hash: String,
-    genesis_hash: String,
-    spec_version: u32,
-    transaction_version: u32,
-    app_id: Option<u32>,
-) -> TransactionChainOptions {
-    let call = hex_string_to_vec(call.as_str()).unwrap_or_default();
-    let era = hex_string_to_vec(era.as_str()).unwrap_or_default();
-    let block_hash = hex_string_to_vec(block_hash.as_str()).unwrap_or_default();
-    let genesis_hash = hex_string_to_vec(genesis_hash.as_str()).unwrap_or_default();
-
-    TransactionChainOptions::Substrate {
-        call,
-        era,
-        nonce,
-        tip,
-        block_hash,
-        genesis_hash,
-        spec_version,
-        transaction_version,
-        app_id,
-    }
-}
-
-#[uniffi::export]
-fn new_bitcoin_transaction_options(
-    input_amounts: Vec<u64>,
-    prev_scripts: Vec<String>,
-) -> TransactionChainOptions {
-    let prev_scripts = prev_scripts
-        .iter()
-        .map(|s| base64::simple_base64_decode(s).unwrap_or_default())
-        .collect();
-
-    TransactionChainOptions::Btc {
-        prev_scripts,
-        input_amounts,
-    }
-}
-
-#[uniffi::export]
-fn new_evm_transaction_options(chain_id: u32) -> TransactionChainOptions {
-    TransactionChainOptions::Evm { chain_id }
-}
-
-#[uniffi::export]
-fn new_cosmos_transaction_options(
-    chain_id: String,
-    account_number: u64,
-) -> TransactionChainOptions {
-    TransactionChainOptions::Cosmos {
-        chain_id,
-        account_number,
-    }
 }
 
 #[uniffi::export]
@@ -166,16 +78,23 @@ fn generate_wallet_from_mnemonic(
     mnemonic: String,
     chain_id: u32,
     index: u32,
-    use_legacy_path: bool,
+    options: Option<WalletOptions>,
 ) -> Result<KOSAccount, KOSError> {
     if !validate_mnemonic(mnemonic.clone()) {
         return Err(KOSError::KOSDelegate("Invalid mnemonic".to_string()));
     }
-    let chain = get_chain_by(chain_id)?;
+
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
+
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: chain_id.to_string(),
+    })?;
+
+    let use_legacy_path = options.as_ref().map_or(false, |opt| opt.use_legacy_path);
+
     let seed = chain.mnemonic_to_seed(mnemonic, String::from(""))?;
     let path = chain.get_path(index, use_legacy_path);
     let private_key = chain.derive(seed, path.clone())?;
-
     let public_key = chain.get_pbk(private_key.clone())?;
 
     Ok(KOSAccount {
@@ -184,6 +103,7 @@ fn generate_wallet_from_mnemonic(
         public_key: hex::encode(public_key.clone()),
         address: chain.get_address(public_key)?,
         path,
+        options,
     })
 }
 
@@ -191,23 +111,30 @@ fn generate_wallet_from_mnemonic(
 fn generate_wallet_from_private_key(
     chain_id: u32,
     private_key: String,
+    options: Option<WalletOptions>,
 ) -> Result<KOSAccount, KOSError> {
-    let chain = get_chain_by(chain_id)?;
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
+
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: chain_id.to_string(),
+    })?;
 
     let public_key = chain.get_pbk(hex::decode(private_key.clone())?)?;
     let address = chain.get_address(public_key.clone())?;
+
     Ok(KOSAccount {
         chain_id,
         private_key: private_key.clone(),
         public_key: hex::encode(public_key.clone()),
         address,
         path: String::new(),
+        options,
     })
 }
 
 #[uniffi::export]
-fn encrypt_with_gmc(data: String, password: String) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::GMC.encrypt(data.as_bytes(), password.as_str())?;
+fn encrypt_with_gcm(data: String, password: String) -> Result<String, KOSError> {
+    let encrypted_data = CipherAlgo::GCM.encrypt(data.as_bytes(), password.as_str())?;
     Ok(encrypted_data.encode_hex())
 }
 
@@ -243,61 +170,18 @@ fn sign_transaction(
     raw: String,
     options: Option<TransactionChainOptions>,
 ) -> Result<KOSTransaction, KOSError> {
-    let options = match options {
-        Some(TransactionChainOptions::Evm { chain_id }) => Some(ChainOptions::EVM { chain_id }),
-        Some(TransactionChainOptions::Btc {
-            prev_scripts,
-            input_amounts,
-        }) => Some(ChainOptions::BTC {
-            prev_scripts,
-            input_amounts,
-        }),
-        Some(TransactionChainOptions::Substrate {
-            call,
-            era,
-            nonce,
-            tip,
-            block_hash,
-            genesis_hash,
-            spec_version,
-            transaction_version,
-            app_id,
-        }) => Some(ChainOptions::SUBSTRATE {
-            call,
-            era,
-            nonce,
-            tip,
-            block_hash,
-            genesis_hash,
-            spec_version,
-            transaction_version,
-            app_id,
-        }),
-        Some(TransactionChainOptions::Cosmos {
-            chain_id,
-            account_number,
-        }) => Some(ChainOptions::COSMOS {
-            chain_id,
-            account_number,
-        }),
-        None => None,
-    };
+    let chain_options = convert_tx_options(options);
 
-    let mut chain = get_chain_by(account.chain_id)?;
-
-    if let Some(ChainOptions::EVM { chain_id }) = options {
-        chain = create_custom_evm(chain_id).ok_or(KOSError::KOSDelegate(
-            "Failed to create custom evm chain".to_string(),
-        ))?;
-    }
-
-    let raw_tx_bytes = hex::decode(raw.clone())?;
+    let chain_params = wallet_options_to_chain_type(account.chain_id, &account.options);
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: account.chain_id.to_string(),
+    })?;
 
     let transaction = Transaction {
-        raw_data: raw_tx_bytes,
+        raw_data: hex::decode(raw.clone())?,
         signature: Vec::new(),
         tx_hash: Vec::new(),
-        options,
+        options: chain_options,
     };
 
     let kos_codec_acc = KosCodedAccount {
@@ -307,29 +191,37 @@ fn sign_transaction(
     };
 
     let encoded = encode_for_signing(kos_codec_acc.clone(), transaction)?;
-
-    let pk = hex::decode(account.private_key.clone())?;
-
-    let signed_transaction = chain.sign_tx(pk, encoded)?;
-
+    let signed_transaction = chain.sign_tx(hex::decode(account.private_key.clone())?, encoded)?;
     let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_transaction)?;
-
-    let signature = encoded_to_broadcast.signature.clone();
 
     Ok(KOSTransaction {
         chain_id: account.chain_id,
         raw: hex::encode(encoded_to_broadcast.raw_data),
         sender: account.address,
-        signature: hex::encode(signature),
+        signature: hex::encode(encoded_to_broadcast.signature),
     })
 }
-
 #[uniffi::export]
 fn sign_message(account: KOSAccount, hex: String, legacy: bool) -> Result<Vec<u8>, KOSError> {
-    let chain = get_chain_by(account.chain_id)?;
+    let chain_params = wallet_options_to_chain_type(account.chain_id, &account.options);
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: account.chain_id.to_string(),
+    })?;
     let message = hex::decode(hex)?;
-    let signature =
-        chain.sign_message(hex::decode(account.private_key).unwrap(), message, legacy)?;
+
+    let kos_codec_acc = KosCodedAccount {
+        chain_id: account.chain_id,
+        address: account.address.clone(),
+        public_key: account.public_key.clone(),
+    };
+
+    let message_encoded = kos_codec::encode_for_sign_message(kos_codec_acc, message)?;
+
+    let signature = chain.sign_message(
+        hex::decode(account.private_key).unwrap(),
+        message_encoded,
+        legacy,
+    )?;
     Ok(signature)
 }
 
@@ -345,6 +237,9 @@ fn get_supported_chains() -> Vec<u32> {
 
 #[cfg(test)]
 mod tests {
+    use crate::models::{
+        new_evm_transaction_options, new_icp_wallet_options, TransactionChainOptions,
+    };
     use crate::*;
     use kos::chains::get_chains;
 
@@ -385,7 +280,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 999;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
             Ok(_) => panic!("A error was expected but found a mnemonic"),
             Err(e) => {
                 if let KOSError::UnsupportedChain { id } = e {
@@ -402,7 +297,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 38;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
             Ok(account) => {
                 assert_eq!(
                     account.address,
@@ -425,7 +320,7 @@ mod tests {
         let mnemonic = "abandon abandon abandon abandon abandon klv abandon abandon abandon abandon abandon about".to_string();
         let index = 0;
         let chain_id = 38;
-        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, false) {
+        match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
             Ok(_) => panic!("A error was expected but found a account"),
             Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), " Invalid error"),
         }
@@ -437,7 +332,7 @@ mod tests {
         let index = 0;
 
         for chain_code in get_chains() {
-            match generate_wallet_from_mnemonic(mnemonic.clone(), chain_code, index, false) {
+            match generate_wallet_from_mnemonic(mnemonic.clone(), chain_code, index, None) {
                 Ok(account) => {
                     assert!(
                         !account.address.is_empty(),
@@ -460,7 +355,7 @@ mod tests {
         let private_key =
             "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d".to_string();
         let chain_id = 38;
-        match generate_wallet_from_private_key(chain_id, private_key) {
+        match generate_wallet_from_private_key(chain_id, private_key, None) {
             Ok(account) => {
                 assert_eq!(
                     account.address,
@@ -482,7 +377,7 @@ mod tests {
     fn should_fail_to_get_account_from_private_key() {
         let private_key = "".to_string();
         let chain_id = 38;
-        match generate_wallet_from_private_key(chain_id, private_key) {
+        match generate_wallet_from_private_key(chain_id, private_key, None) {
             Ok(account) => panic!(
                 "A error was expected but found a pk {}.",
                 account.private_key
@@ -492,10 +387,10 @@ mod tests {
     }
 
     #[test]
-    fn should_encrypt_with_gmc_and_decrypt_data() {
+    fn should_encrypt_with_gcm_and_decrypt_data() {
         let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let password = "myPass".to_string();
-        let encrypted_data = encrypt_with_gmc(original_data.clone(), password.clone()).unwrap();
+        let encrypted_data = encrypt_with_gcm(original_data.clone(), password.clone()).unwrap();
         let decrypted_data = decrypt(encrypted_data, password.clone()).unwrap();
         assert_eq!(original_data, decrypted_data, "The data is not the same");
     }
@@ -522,7 +417,7 @@ mod tests {
     fn should_fail_to_decrypt_with_wrong_password() {
         let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let password = "myPass".to_string();
-        let encrypted_data = encrypt_with_gmc(original_data.clone(), password.clone()).unwrap();
+        let encrypted_data = encrypt_with_gcm(original_data.clone(), password.clone()).unwrap();
         match decrypt(encrypted_data, "wrong".to_string()) {
             Ok(_) => panic!("A error was expected but found a decrypted data"),
             Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), "Invalid error"),
@@ -539,7 +434,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -570,7 +465,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -601,7 +496,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -627,7 +522,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -653,7 +548,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -677,7 +572,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -702,7 +597,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -729,7 +624,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -756,7 +651,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -783,7 +678,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -807,7 +702,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -831,7 +726,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
         .unwrap();
 
@@ -873,7 +768,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            Some(new_icp_wallet_options(false, "ed25519".to_string())),
         )
         .unwrap();
 
@@ -897,7 +792,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false,
+            None,
         )
             .unwrap();
 
@@ -916,7 +811,7 @@ mod tests {
             "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
             chain_id,
             0,
-            false
+            None
         ).unwrap();
 
         let signature = sign_message(account, message, true).unwrap();

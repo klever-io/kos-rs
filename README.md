@@ -20,7 +20,7 @@ it as a premier choice for constructing secure and high-performing blockchain so
 - [x] Ethereum (ETH)
 - [x] Tron (TRX)
 - [x] Klever (KLV)
-- [x] Polygon (Matic)
+- [x] Polygon (POL)
 - [x] Binance Smart Chain (BSC)
 - [x] Huobi Token (HT)
 - [x] Syscoin NEVM (SYS_NEVM)
