@@ -137,11 +137,10 @@ impl Chain for TRX {
 
 #[cfg(test)]
 mod test {
-    use crate::chains;
-    use crate::chains::trx::TRON_MESSAGE_PREFIX;
-    use crate::chains::{trx, Chain};
+    use crate::chains::{trx::TRON_MESSAGE_PREFIX, Chain};
     use crate::crypto::hash::keccak256_digest;
     use alloc::string::{String, ToString};
+    use alloc::vec::Vec;
 
     #[test]
     fn test_trx_derive() {
