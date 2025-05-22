@@ -2947,7 +2947,7 @@ dependencies = [
 
 [[package]]
 name = "kos"
-version = "0.2.19"
+version = "0.2.20"
 dependencies = [
  "aes 0.8.4",
  "aes-gcm",
@@ -2980,7 +2980,7 @@ dependencies = [
 
 [[package]]
 name = "kos-codec"
-version = "0.2.19"
+version = "0.2.20"
 dependencies = [
  "alloy-dyn-abi",
  "bitcoin",
@@ -3006,7 +3006,7 @@ dependencies = [
 
 [[package]]
 name = "kos-hardware"
-version = "0.2.19"
+version = "0.2.20"
 dependencies = [
  "kos",
  "tiny-json-rs",
@@ -3014,7 +3014,7 @@ dependencies = [
 
 [[package]]
 name = "kos-mobile"
-version = "0.2.19"
+version = "0.2.20"
 dependencies = [
  "anyhow",
  "bigdecimal",
@@ -3034,7 +3034,7 @@ dependencies = [
 
 [[package]]
 name = "kos-web"
-version = "0.2.19"
+version = "0.2.20"
 dependencies = [
  "enum_delegate",
  "enum_dispatch",
