@@ -51,14 +51,14 @@ final class KOSMobileTests: XCTestCase {
         let cfbDecryptedData = try! decrypt(data: cfbEncryptedData, password: password)
         XCTAssertEqual(dataToEncrypt, cfbDecryptedData)
         
-        let walletFromMnemonic = try! generateWalletFromMnemonic(mnemonic: mnemonic, chainId: UInt32(klvChainId), index: 0, useLegacyPath: false)
+        let walletFromMnemonic = try! generateWalletFromMnemonic(mnemonic: mnemonic, chainId: UInt32(klvChainId), index: 0, options: WalletOptions(useLegacyPath: false, specific: nil))
         XCTAssertEqual(UInt32(klvChainId), walletFromMnemonic.chainId)
         XCTAssertEqual(klvPk0, walletFromMnemonic.privateKey)
         XCTAssertEqual(klvAddr0, walletFromMnemonic.address)
         XCTAssertEqual(klvPath0, walletFromMnemonic.path)
         XCTAssertEqual(klvKey0, walletFromMnemonic.publicKey)
         
-        let walletFromPk = try! generateWalletFromPrivateKey(chainId: UInt32(klvChainId), privateKey: klvPk0)
+        let walletFromPk = try! generateWalletFromPrivateKey(chainId: UInt32(klvChainId), privateKey: klvPk0, options: WalletOptions(useLegacyPath: false, specific: nil))
         XCTAssertEqual(UInt32(klvChainId), walletFromPk.chainId)
         XCTAssertEqual(klvPk0, walletFromPk.privateKey)
         XCTAssertEqual(klvAddr0, walletFromPk.address)

@@ -53,7 +53,7 @@ generate_binds() {
   cd "$BUILD_HOME"
   log_status "generating android binds..."
   export OPENSSL_LIB_DIR="$OPENSSL_GENERATED_LIBS_PATH/$OS_TOOLCHAIN"
-  cargo run -q --bin uniffi-bindgen generate --library ../../target/"${ANDROID_TOOLCHAINS[0]}"/release/lib"${PACKAGE_NAME}".so --language kotlin --out-dir android_binds
+  cargo run -q --bin uniffi-bindgen generate --library ../../target/"${ANDROID_TOOLCHAINS[0]}"/mobile/lib"${PACKAGE_NAME}".so --language kotlin --out-dir android_binds
   mkdir -p "$ANDROID_GENERATED_BINDS_PATH"
   cp -f -r android_binds/* "$ANDROID_GENERATED_BINDS_PATH"
   rm -rf android_binds
