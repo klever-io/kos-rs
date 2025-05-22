@@ -39,3 +39,10 @@ unsafe fn my_panic(_info: &core::panic::PanicInfo) -> ! {
     HardFault_Handler();
     loop {}
 }
+
+#[derive(PartialEq, Eq)]
+pub enum KeyType {
+    ED25519,
+    SECP256K1,
+    SR25519,
+}

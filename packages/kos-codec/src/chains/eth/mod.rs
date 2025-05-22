@@ -1,6 +1,7 @@
 mod models;
 
 use crate::chains::eth::models::EthereumTransaction;
+use alloy_dyn_abi::TypedData;
 use kos::chains::{ChainError, ChainOptions, Transaction};
 use kos::crypto::hash::keccak256_digest;
 
@@ -40,6 +41,29 @@ pub fn encode_for_broadcast(transaction: Transaction) -> Result<Transaction, Cha
     eth_tx.signature = Some(signature_bytes);
 
     Ok(transaction)
+}
+
+pub fn encode_sign_typed(message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    if let Ok(data) = std::str::from_utf8(&message) {
+        if let Ok(typed_data) = serde_json::from_str::<TypedData>(data) {
+            let digest = typed_data
+                .eip712_signing_hash()
+                .map_err(|e| ChainError::InvalidData(format!("EIP-712 hash error: {e}")))?;
+            return Ok(digest.to_vec());
+        }
+    }
+
+    Err(ChainError::InvalidData("invalid typed data".to_string()))
+}
+
+pub fn encode_sign_message(message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+    let to_sign = [
+        kos::chains::eth::ETH_MESSAGE_PREFIX,
+        message.len().to_string().as_bytes(),
+        &message[..],
+    ]
+    .concat();
+    Ok(keccak256_digest(&to_sign[..]).to_vec())
 }
 
 #[cfg(test)]
@@ -112,6 +136,67 @@ mod test {
         assert_eq!(
             hex::encode(signed_tx.signature),
             "3045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54073045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54"
+        );
+    }
+
+    #[test]
+    fn test_sign_typed_data() {
+        let data = r#"{
+            "types": {
+                "EIP712Domain": [
+                    { "name": "name", "type": "string" },
+                    { "name": "version", "type": "string" },
+                    { "name": "chainId", "type": "uint256" },
+                    { "name": "verifyingContract", "type": "address" }
+                ],
+                "Person": [
+                    { "name": "name", "type": "string" },
+                    { "name": "wallet", "type": "address" }
+                ],
+                "Mail": [
+                    { "name": "from", "type": "Person" },
+                    { "name": "to", "type": "Person" },
+                    { "name": "contents", "type": "string" }
+                ]
+            },
+            "primaryType": "Mail",
+            "domain": {
+                "name": "Ether Mail",
+                "version": "1",
+                "chainId": 1,
+                "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+            },
+            "message": {
+                "from": {
+                    "name": "Cow",
+                    "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+                },
+                "to": {
+                    "name": "Bob",
+                    "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+                },
+                "contents": "Hello, Bob!"
+            }
+        }"#;
+
+        let message = data.as_bytes();
+
+        let signature = encode_sign_typed(message.to_vec()).unwrap();
+        assert_eq!(
+            hex::encode(signature),
+            "be609aee343fb3c4b28e1df9e632fca64fcfaede20f02e86244efddf30957bd2"
+        );
+    }
+
+    #[test]
+    fn test_encode_sign_message() {
+        let message_bytes = "test message".as_bytes().to_vec();
+
+        let signature = encode_sign_message(message_bytes).unwrap();
+
+        assert_eq!(
+            hex::encode(signature),
+            "3e2d111c8c52a5ef0ba64fe4d85e32a5153032367ec44aaae0a4e2d1bfb9bebd"
         );
     }
 }

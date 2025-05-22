@@ -41,7 +41,7 @@ pub fn decrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
 /// Data will have the algorithm tag prepended to it (1 byte).
 #[wasm_bindgen(js_name = "encrypt")]
 pub fn encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
-    cipher::encrypt(cipher::CipherAlgo::GMC, data, password)
+    cipher::encrypt(cipher::CipherAlgo::GCM, data, password)
         .map_err(|e| Error::Cipher(format!("{}", e)))
 }
 

@@ -136,70 +136,9 @@ impl Chain for Substrate {
 
 #[cfg(test)]
 mod test {
-    use crate::chains::{Chain, ChainOptions};
+    use crate::chains::Chain;
     use alloc::string::{String, ToString};
-    use alloc::vec::Vec;
     use schnorrkel;
-    use serde::Deserialize;
-    #[derive(Deserialize)]
-    struct TxBrowser {
-        #[serde(rename = "specVersion")]
-        pub spec_version: String,
-        #[serde(rename = "transactionVersion")]
-        pub transaction_version: String,
-        #[serde(rename = "address")]
-        pub _address: String,
-        #[serde(rename = "assetId")]
-        pub _asset_id: Option<String>,
-        #[serde(rename = "blockHash")]
-        pub block_hash: String,
-        #[serde(rename = "blockNumber")]
-        pub _block_number: String,
-        pub era: String,
-        #[serde(rename = "genesisHash")]
-        pub genesis_hash: String,
-        #[serde(rename = "metadataHash")]
-        pub _metadata_hash: Option<String>,
-        pub method: String,
-        #[serde(rename = "mode")]
-        pub _mode: i64,
-        pub nonce: String,
-        #[serde(rename = "signedExtensions")]
-        pub _signed_extensions: Vec<String>,
-        pub tip: String,
-        #[serde(rename = "version")]
-        pub _version: i64,
-        #[serde(rename = "withSignedTransaction")]
-        pub _with_signed_transaction: bool,
-    }
-
-    fn options_from_browser_json(tx: String) -> ChainOptions {
-        let tx_browser: TxBrowser = serde_json::from_str(&tx).unwrap();
-        let call = hex::decode(tx_browser.method.trim_start_matches("0x")).unwrap();
-        let era = hex::decode(tx_browser.era.trim_start_matches("0x")).unwrap();
-        let nonce = u32::from_str_radix(tx_browser.nonce.trim_start_matches("0x"), 16).unwrap();
-        let tip = u8::from_str_radix(tx_browser.tip.trim_start_matches("0x"), 16).unwrap();
-        let block_hash = hex::decode(tx_browser.block_hash.trim_start_matches("0x")).unwrap();
-        let genesis_hash = hex::decode(tx_browser.genesis_hash.trim_start_matches("0x")).unwrap();
-        let spec_version =
-            u32::from_str_radix(tx_browser.spec_version.trim_start_matches("0x"), 16).unwrap();
-        let transaction_version =
-            u32::from_str_radix(tx_browser.transaction_version.trim_start_matches("0x"), 16)
-                .unwrap();
-        let app_id = None;
-
-        ChainOptions::SUBSTRATE {
-            call,
-            era,
-            nonce,
-            tip,
-            block_hash,
-            genesis_hash,
-            spec_version,
-            transaction_version,
-            app_id,
-        }
-    }
 
     #[test]
     fn test_get_addr_1() {

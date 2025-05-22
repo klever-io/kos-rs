@@ -2,7 +2,9 @@ mod chains;
 mod protos;
 
 use crate::chains::{ada, apt, atom, bch, btc, eth, icp, klv, sol, substrate, trx, xrp};
-use kos::chains::{get_chain_by_base_id, ChainError, ChainType, Transaction};
+use kos::chains::{get_chain_by_base_id, ChainError, ChainType};
+
+pub use kos::chains::{ChainOptions, Transaction};
 
 #[derive(Clone, Debug)]
 pub struct KosCodedAccount {
@@ -33,6 +35,32 @@ pub fn encode_for_signing(
         ChainType::SUBSTRATE => substrate::encode_for_sign(transaction, account)?,
         ChainType::ICP => icp::encode_for_sign(transaction)?,
         _ => transaction,
+    })
+}
+
+pub fn encode_for_sign_message(
+    account: KosCodedAccount,
+    message: Vec<u8>,
+) -> Result<Vec<u8>, ChainError> {
+    let chain = match get_chain_by_base_id(account.chain_id) {
+        Some(chain) => chain,
+        None => return Err(ChainError::UnsupportedChain),
+    };
+
+    if let Ok(data) = std::str::from_utf8(&message) {
+        if serde_json::from_str::<crate::chains::trx::tip712::StructuredData>(data).is_ok() {
+            return Ok(match chain.get_chain_type() {
+                ChainType::ETH => eth::encode_sign_typed(message)?,
+                ChainType::TRX => trx::encode_sign_typed(message)?,
+                _ => message,
+            });
+        }
+    }
+
+    Ok(match chain.get_chain_type() {
+        ChainType::ETH => eth::encode_sign_message(message)?,
+        ChainType::TRX => trx::encode_sign_message(message)?,
+        _ => message,
     })
 }
 

@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Go: Test Package with Rust FFI",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}",
+      "env": {
+        "CGO_LDFLAGS": "-L${workspaceFolder}/target/debug -lkos_mobile",
+        "LD_LIBRARY_PATH": "${workspaceFolder}/target/debug"
+      }
+    }
+  ]
+}

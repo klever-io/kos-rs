@@ -15,6 +15,7 @@ use crate::crypto::bip32::Bip32Err;
 use crate::crypto::ed25519::Ed25519Err;
 use crate::crypto::secp256k1::Secp256Err;
 use crate::crypto::sr25519::Sr25519Error;
+use crate::KeyType;
 use alloc::boxed::Box;
 use alloc::format;
 use alloc::string::{FromUtf8Error, String};
@@ -398,7 +399,7 @@ impl ChainRegistry {
             (
                 constants::POLYGON,
                 ChainInfo {
-                    factory: || Box::new(ETH::new_eth_based(28, 137, "MATIC", "Polygon")),
+                    factory: || Box::new(ETH::new_eth_based(28, 137, "POL", "Polygon")),
                     supported: true,
                 },
             ),
@@ -594,7 +595,7 @@ impl ChainRegistry {
             (
                 constants::ICP,
                 ChainInfo {
-                    factory: || Box::new(ICP {}),
+                    factory: || Box::new(ICP::new(KeyType::SECP256K1)),
                     supported: true,
                 },
             ),
@@ -794,16 +795,26 @@ pub fn get_chain_by_id(id: u32) -> Option<Box<dyn Chain>> {
     ChainRegistry::new().get_chain_by_id(id)
 }
 
+#[derive(Debug, Clone)]
 pub enum CustomChainType {
     NotCustom(u32),
+    NotCustomBase(u32),
     CustomEth(u32),
     CustomSubstrate(u32),
     CustomCosmos(String),
+    CustomIcp(String),
+}
+
+impl Default for CustomChainType {
+    fn default() -> Self {
+        CustomChainType::NotCustomBase(0)
+    }
 }
 
 pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
     match params {
         CustomChainType::NotCustom(c) => get_chain_by_id(c),
+        CustomChainType::NotCustomBase(c) => get_chain_by_base_id(c),
         CustomChainType::CustomEth(chaincode) => Some(Box::new(eth::ETH::new_eth_based(
             0,
             chaincode,
@@ -812,6 +823,7 @@ pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
         ))),
         CustomChainType::CustomSubstrate(_) => None,
         CustomChainType::CustomCosmos(_) => None,
+        CustomChainType::CustomIcp(key_type) => Some(Box::new(ICP::new_from_string(key_type))),
     }
 }
 
