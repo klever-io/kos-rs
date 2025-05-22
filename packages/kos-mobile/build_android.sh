@@ -36,7 +36,7 @@ assemble_android_lib() {
   export CC=""
   mkdir -p "$ANDROID_JNI_LIBS_PATH"
   mkdir -p "$ANDROID_JNI_LIBS_PATH/$jni"
-  cp -f ../../target/"$rust_toolchain"/release/lib"$PACKAGE_NAME".so "$ANDROID_JNI_LIBS_PATH"/"$jni"
+  cp -f ../../target/"$rust_toolchain"/mobile/lib"$PACKAGE_NAME".so "$ANDROID_JNI_LIBS_PATH"/"$jni"
 }
 
 assemble_android_lib_unit_test() {
@@ -46,7 +46,7 @@ assemble_android_lib_unit_test() {
   export OPENSSL_LIB_DIR="$OPENSSL_GENERATED_LIBS_PATH/$OS_TOOLCHAIN"
   cargo build --profile mobile -q
   mkdir -p "$ANDROID_JNI_LIBS_PATH/$jni"
-  cp -f ../../target/release/lib"$PACKAGE_NAME"."$LIB_EXTENSION" "$ANDROID_JNI_LIBS_PATH"/"$jni"
+  cp -f ../../target/mobile/lib"$PACKAGE_NAME"."$LIB_EXTENSION" "$ANDROID_JNI_LIBS_PATH"/"$jni"
 }
 
 generate_binds() {

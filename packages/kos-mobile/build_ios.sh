@@ -17,7 +17,7 @@ assemble_ios_lib() {
   cd "$BUILD_HOME"
   log_status "assembling iOS lib to $arch..."
   cargo build --target "$arch" --profile mobile
-  cd ../../target/"$arch"/release
+  cd ../../target/"$arch"/mobile
   mv lib"$PACKAGE_NAME".a "$arch"-lib"$PACKAGE_NAME".a
 }
 
@@ -25,7 +25,7 @@ generate_binds() {
   cd "$BUILD_HOME/../.."
   log_status "generating iOS binds..."
   rm -rf ios/binds
-  cargo run -q --bin uniffi-bindgen generate --library target/"${IOS_ARCHS[0]}"/release/lib"$PACKAGE_NAME".dylib --language swift --out-dir packages/kos-mobile/ios/binds
+  cargo run -q --bin uniffi-bindgen generate --library target/"${IOS_ARCHS[0]}"/mobile/lib"$PACKAGE_NAME".dylib --language swift --out-dir packages/kos-mobile/ios/binds
 }
 
 generate_xcframework() {
@@ -34,7 +34,7 @@ generate_xcframework() {
   rm -f ./*.a
   cd "$BUILD_HOME"/../../
   for i in $(seq 0 $((${#IOS_ARCHS[@]} - 1))); do
-      cp target/"${IOS_ARCHS[i]}"/release/"${IOS_ARCHS[i]}"-lib"$PACKAGE_NAME".a packages/kos-mobile/ios
+      cp target/"${IOS_ARCHS[i]}"/mobile/"${IOS_ARCHS[i]}"-lib"$PACKAGE_NAME".a packages/kos-mobile/ios
   done
   cd "$BUILD_HOME"/ios
   lipo -create -output ios-sim-lib"$PACKAGE_NAME".a \
