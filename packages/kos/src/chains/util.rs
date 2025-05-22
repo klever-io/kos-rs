@@ -76,6 +76,7 @@ pub fn bytes_to_byte_vectors(bytes: Vec<u8>) -> Result<Vec<Vec<u8>>, ChainError>
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec;
 
     #[test]
     fn test_hex_string_to_vec() {

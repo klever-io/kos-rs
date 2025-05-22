@@ -12,7 +12,7 @@ configure_cargo() {
     if [ "$toolchain" = "armv7a-linux-androideabi" ]; then
       toolchain="armv7-linux-androideabi"
     fi
-    rustup target add $toolchain
+    rustup target add "$toolchain"
   done
   export AR="$ANDROID_NDK_PATH/toolchains/llvm/prebuilt/$OS/bin/llvm-ar"
   export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$ANDROID_NDK_PATH/toolchains/llvm/prebuilt/$OS/bin/aarch64-linux-android$ANDROID_MIN_API-clang"
@@ -32,11 +32,11 @@ assemble_android_lib() {
   export OPENSSL_LIB_DIR="$OPENSSL_GENERATED_LIBS_PATH/$toolchain"
   export CC="$ANDROID_NDK_PATH/toolchains/llvm/prebuilt/$OS/bin/$toolchain$ANDROID_MIN_API-clang"
   log_status "assembling android lib to $toolchain..."
-  cargo build --target $rust_toolchain --release -q
+  cargo build --target "$rust_toolchain" --profile mobile -q
   export CC=""
   mkdir -p "$ANDROID_JNI_LIBS_PATH"
   mkdir -p "$ANDROID_JNI_LIBS_PATH/$jni"
-  cp -f ../../target/$rust_toolchain/release/lib"$PACKAGE_NAME".so "$ANDROID_JNI_LIBS_PATH"/"$jni"
+  cp -f ../../target/"$rust_toolchain"/mobile/lib"$PACKAGE_NAME".so "$ANDROID_JNI_LIBS_PATH"/"$jni"
 }
 
 assemble_android_lib_unit_test() {
@@ -44,9 +44,9 @@ assemble_android_lib_unit_test() {
   jni="$JNI_PLATFORM"
   log_status "assembling android test lib..."
   export OPENSSL_LIB_DIR="$OPENSSL_GENERATED_LIBS_PATH/$OS_TOOLCHAIN"
-  cargo build --release -q
+  cargo build --profile mobile -q
   mkdir -p "$ANDROID_JNI_LIBS_PATH/$jni"
-  cp -f ../../target/release/lib"$PACKAGE_NAME"."$LIB_EXTENSION" "$ANDROID_JNI_LIBS_PATH"/$jni
+  cp -f ../../target/mobile/lib"$PACKAGE_NAME"."$LIB_EXTENSION" "$ANDROID_JNI_LIBS_PATH"/"$jni"
 }
 
 generate_binds() {
