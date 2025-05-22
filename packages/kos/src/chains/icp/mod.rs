@@ -335,6 +335,8 @@ pub fn crc_calc_singletable(buffer: &[u8]) -> u32 {
 #[cfg(test)]
 mod test {
     use super::*;
+    use alloc::string::ToString;
+
     #[test]
     fn test_icp_get_address_ed25519() {
         let icp = ICP::new(KeyType::ED25519);

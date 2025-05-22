@@ -99,6 +99,7 @@ kos-rs = "0.1"
   for web-based implementations.
 - `packages/kos-mobile/`: Package responsible for exporting kos functionality to mobile platforms, providing bindings
   for both iOS (Swift) and Android (Kotlin).
+- `packages/kos-hardware/`: Package responsible for integrating kos functionality with C
 
 ---
 
