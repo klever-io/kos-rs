@@ -49,14 +49,14 @@ class KOSTest {
         val cfbDecryptedData = decrypt(cfbEncryptedData, password)
         assertEquals(dataToEncrypt, cfbDecryptedData)
 
-        val walletFromMnemonic = generateWalletFromMnemonic(mnemonic, klvChainId, 0u, false)
+        val walletFromMnemonic = generateWalletFromMnemonic(mnemonic, klvChainId, 0u, WalletOptions(useLegacyPath = false, specific = null))
         assertEquals(klvChainId, walletFromMnemonic.chainId)
         assertEquals(klvPk0, walletFromMnemonic.privateKey)
         assertEquals(klvAddr0, walletFromMnemonic.address)
         assertEquals(klvPath0, walletFromMnemonic.path)
         assertEquals(klvKey0, walletFromMnemonic.publicKey)
 
-        val walletFromPk = generateWalletFromPrivateKey(klvChainId, klvPk0)
+        val walletFromPk = generateWalletFromPrivateKey(klvChainId, klvPk0, WalletOptions(useLegacyPath = false, specific = null))
         assertEquals(klvChainId, walletFromPk.chainId)
         assertEquals(klvPk0, walletFromPk.privateKey)
         assertEquals(klvAddr0, walletFromPk.address)
