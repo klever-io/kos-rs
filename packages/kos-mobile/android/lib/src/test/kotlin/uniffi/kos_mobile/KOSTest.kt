@@ -17,6 +17,7 @@ class KOSTest {
         val klvAddr0 = "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
         val klvPath0 = "m/44'/690'/0'/0'/0'"
         val klvKey0 = "e41b323a571fd955e09cd41660ff4465c3f44693c87f2faea4a0fc408727c8ea"
+        val iterations = 10000
 
         val isValidMnemonicValid = validateMnemonic(mnemonic)
         assertTrue(isValidMnemonicValid)
@@ -31,22 +32,22 @@ class KOSTest {
         val mnemonic24 = generateMnemonic(24)
         assertTrue(mnemonic24.split(" ").size == 24)
 
-        val gcmEncryptedData = encryptWithGcm(dataToEncrypt, password)
+        val gcmEncryptedData = encryptWithGcm(dataToEncrypt, password, iterations)
         assertTrue(gcmEncryptedData.isNotEmpty())
 
-        val cbcEncryptedData = encryptWithCbc(dataToEncrypt, password)
+        val cbcEncryptedData = encryptWithCbc(dataToEncrypt, password, iteartions)
         assertTrue(cbcEncryptedData.isNotEmpty())
 
-        val cfbEncryptedData = encryptWithCfb(dataToEncrypt, password)
+        val cfbEncryptedData = encryptWithCfb(dataToEncrypt, password, iterations)
         assertTrue(cfbEncryptedData.isNotEmpty())
 
-        val gcmDecryptedData = decrypt(gcmEncryptedData, password)
+        val gcmDecryptedData = decrypt(gcmEncryptedData, password, iterations)
         assertEquals(dataToEncrypt, gcmDecryptedData)
 
-        val cbcDecryptedData = decrypt(cbcEncryptedData, password)
+        val cbcDecryptedData = decrypt(cbcEncryptedData, password, iterations)
         assertEquals(dataToEncrypt, cbcDecryptedData)
 
-        val cfbDecryptedData = decrypt(cfbEncryptedData, password)
+        val cfbDecryptedData = decrypt(cfbEncryptedData, password, iterations)
         assertEquals(dataToEncrypt, cfbDecryptedData)
 
         val walletFromMnemonic = generateWalletFromMnemonic(mnemonic, klvChainId, 0u, WalletOptions(useLegacyPath = false, specific = null))

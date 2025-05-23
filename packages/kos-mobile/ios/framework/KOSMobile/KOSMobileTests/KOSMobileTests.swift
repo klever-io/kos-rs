@@ -20,6 +20,7 @@ final class KOSMobileTests: XCTestCase {
         let klvAddr0 = "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
         let klvPath0 = "m/44'/690'/0'/0'/0'"
         let klvKey0 = "e41b323a571fd955e09cd41660ff4465c3f44693c87f2faea4a0fc408727c8ea"
+        let iterations = 10000
         
         let isValidMnemonicValid = validateMnemonic(mnemonic: mnemonic)
         XCTAssertTrue(isValidMnemonicValid)
@@ -33,22 +34,22 @@ final class KOSMobileTests: XCTestCase {
         let mnemonic24 = try! generateMnemonic(size: 24)
         XCTAssertTrue(mnemonic24.split(separator: " ").count == 24)
         
-        let gcmEncryptedData = try! encryptWithGcm(data: dataToEncrypt, password: password)
+        let gcmEncryptedData = try! encryptWithGcm(data: dataToEncrypt, password: password, iterations)
         XCTAssertTrue(!gcmEncryptedData.isEmpty)
         
-        let cbcEncryptedData = try! encryptWithCbc(data: dataToEncrypt, password: password)
+        let cbcEncryptedData = try! encryptWithCbc(data: dataToEncrypt, password: password, iterations)
         XCTAssertTrue(!cbcEncryptedData.isEmpty)
         
-        let cfbEncryptedData = try! encryptWithCfb(data: dataToEncrypt, password: password)
+        let cfbEncryptedData = try! encryptWithCfb(data: dataToEncrypt, password: password, iterations)
         XCTAssertTrue(!cfbEncryptedData.isEmpty)
         
-        let gcmDecryptedData = try! decrypt(data: gcmEncryptedData, password: password)
+        let gcmDecryptedData = try! decrypt(data: gcmEncryptedData, password: password, iterations)
         XCTAssertEqual(dataToEncrypt, gcmDecryptedData)
         
-        let cbcDecryptedData = try! decrypt(data: cbcEncryptedData, password: password)
+        let cbcDecryptedData = try! decrypt(data: cbcEncryptedData, password: password, iteraitions)
         XCTAssertEqual(dataToEncrypt, cbcDecryptedData)
         
-        let cfbDecryptedData = try! decrypt(data: cfbEncryptedData, password: password)
+        let cfbDecryptedData = try! decrypt(data: cfbEncryptedData, password: password, iterations)
         XCTAssertEqual(dataToEncrypt, cfbDecryptedData)
         
         let walletFromMnemonic = try! generateWalletFromMnemonic(mnemonic: mnemonic, chainId: UInt32(klvChainId), index: 0, options: WalletOptions(useLegacyPath: false, specific: nil))

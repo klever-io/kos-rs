@@ -133,27 +133,27 @@ fn generate_wallet_from_private_key(
 }
 
 #[uniffi::export]
-fn encrypt_with_gcm(data: String, password: String) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::GCM.encrypt(data.as_bytes(), password.as_str())?;
+fn encrypt_with_gcm(data: String, password: String, iterations: u32) -> Result<String, KOSError> {
+    let encrypted_data = CipherAlgo::GCM.encrypt(data.as_bytes(), password.as_str(), iterations)?;
     Ok(encrypted_data.encode_hex())
 }
 
 #[uniffi::export]
-fn encrypt_with_cbc(data: String, password: String) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::CBC.encrypt(data.as_bytes(), password.as_str())?;
+fn encrypt_with_cbc(data: String, password: String, iterations: u32) -> Result<String, KOSError> {
+    let encrypted_data = CipherAlgo::CBC.encrypt(data.as_bytes(), password.as_str(), iterations)?;
     Ok(encrypted_data.encode_hex())
 }
 
 #[uniffi::export]
-fn encrypt_with_cfb(data: String, password: String) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::CFB.encrypt(data.as_bytes(), password.as_str())?;
+fn encrypt_with_cfb(data: String, password: String, iterations: u32) -> Result<String, KOSError> {
+    let encrypted_data = CipherAlgo::CFB.encrypt(data.as_bytes(), password.as_str(), iterations)?;
     Ok(encrypted_data.encode_hex())
 }
 
 #[uniffi::export]
-fn decrypt(data: String, password: String) -> Result<String, KOSError> {
+fn decrypt(data: String, password: String, iterarions: u32) -> Result<String, KOSError> {
     let data_in_byte = hex::decode(data)?;
-    let decrypted_data = cipher::decrypt(&data_in_byte, password.as_str())?;
+    let decrypted_data = cipher::decrypt(&data_in_byte, password.as_str(), iterarions)?;
     Ok(String::from_utf8_lossy(&decrypted_data).to_string())
 }
 
@@ -242,6 +242,8 @@ mod tests {
     };
     use crate::*;
     use kos::chains::get_chains;
+
+    const ITERATIONS: u32 = 10000;
 
     #[test]
     fn should_generate_mnemonic() {
@@ -390,8 +392,9 @@ mod tests {
     fn should_encrypt_with_gcm_and_decrypt_data() {
         let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let password = "myPass".to_string();
-        let encrypted_data = encrypt_with_gcm(original_data.clone(), password.clone()).unwrap();
-        let decrypted_data = decrypt(encrypted_data, password.clone()).unwrap();
+        let encrypted_data =
+            encrypt_with_gcm(original_data.clone(), password.clone(), ITERATIONS).unwrap();
+        let decrypted_data = decrypt(encrypted_data, password.clone(), ITERATIONS).unwrap();
         assert_eq!(original_data, decrypted_data, "The data is not the same");
     }
 
@@ -399,8 +402,9 @@ mod tests {
     fn should_encrypt_with_cbc_and_decrypt_data() {
         let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let password = "myPass".to_string();
-        let encrypted_data = encrypt_with_cbc(original_data.clone(), password.clone()).unwrap();
-        let decrypted_data = decrypt(encrypted_data, password.clone()).unwrap();
+        let encrypted_data =
+            encrypt_with_cbc(original_data.clone(), password.clone(), ITERATIONS).unwrap();
+        let decrypted_data = decrypt(encrypted_data, password.clone(), ITERATIONS).unwrap();
         assert_eq!(original_data, decrypted_data, "The data is not the same");
     }
 
@@ -408,8 +412,9 @@ mod tests {
     fn should_encrypt_with_cbf_and_decrypt_data() {
         let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let password = "myPass".to_string();
-        let encrypted_data = encrypt_with_cfb(original_data.clone(), password.clone()).unwrap();
-        let decrypted_data = decrypt(encrypted_data, password.clone()).unwrap();
+        let encrypted_data =
+            encrypt_with_cfb(original_data.clone(), password.clone(), ITERATIONS).unwrap();
+        let decrypted_data = decrypt(encrypted_data, password.clone(), ITERATIONS).unwrap();
         assert_eq!(original_data, decrypted_data, "The data is not the same");
     }
 
@@ -417,8 +422,9 @@ mod tests {
     fn should_fail_to_decrypt_with_wrong_password() {
         let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let password = "myPass".to_string();
-        let encrypted_data = encrypt_with_gcm(original_data.clone(), password.clone()).unwrap();
-        match decrypt(encrypted_data, "wrong".to_string()) {
+        let encrypted_data =
+            encrypt_with_gcm(original_data.clone(), password.clone(), ITERATIONS).unwrap();
+        match decrypt(encrypted_data, "wrong".to_string(), ITERATIONS) {
             Ok(_) => panic!("A error was expected but found a decrypted data"),
             Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), "Invalid error"),
         }
