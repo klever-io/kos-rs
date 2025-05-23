@@ -33,15 +33,15 @@ pub fn to_string(data: &[u8]) -> Result<String, Error> {
 /// Decrypts the given data with the given password.
 /// Data will have the algorithm tag prepended to it (1 byte).
 #[wasm_bindgen(js_name = "decrypt")]
-pub fn decrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
-    cipher::decrypt(data, password).map_err(|e| Error::Cipher(format!("{}", e)))
+pub fn decrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, Error> {
+    cipher::decrypt(data, password, iterations).map_err(|e| Error::Cipher(format!("{}", e)))
 }
 
 /// Encrypt for GCM the given data with the given password.
 /// Data will have the algorithm tag prepended to it (1 byte).
 #[wasm_bindgen(js_name = "encrypt")]
-pub fn encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, Error> {
-    cipher::encrypt(cipher::CipherAlgo::GCM, data, password)
+pub fn encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, Error> {
+    cipher::encrypt(cipher::CipherAlgo::GCM, data, password, iterations)
         .map_err(|e| Error::Cipher(format!("{}", e)))
 }
 
@@ -54,9 +54,9 @@ pub fn to_pem(tag: String, data: &[u8]) -> Result<String, Error> {
 
 /// Decrypt pem file to bytes
 #[wasm_bindgen(js_name = "fromPem")]
-pub fn from_pem(data: &str, password: &str) -> Result<Vec<u8>, Error> {
+pub fn from_pem(data: &str, password: &str, iterations: u32) -> Result<Vec<u8>, Error> {
     let pem = cipher::string_to_pem(data)?;
-    decrypt(pem.contents(), password)
+    decrypt(pem.contents(), password, iterations)
 }
 
 /// Create QRCode based on data
