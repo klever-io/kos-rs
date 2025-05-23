@@ -46,7 +46,7 @@ final class KOSMobileTests: XCTestCase {
         let gcmDecryptedData = try! decrypt(data: gcmEncryptedData, password: password, iterations)
         XCTAssertEqual(dataToEncrypt, gcmDecryptedData)
         
-        let cbcDecryptedData = try! decrypt(data: cbcEncryptedData, password: password, iteraitions)
+        let cbcDecryptedData = try! decrypt(data: cbcEncryptedData, password: password, iterations)
         XCTAssertEqual(dataToEncrypt, cbcDecryptedData)
         
         let cfbDecryptedData = try! decrypt(data: cfbEncryptedData, password: password, iterations)

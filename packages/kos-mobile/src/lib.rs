@@ -151,9 +151,9 @@ fn encrypt_with_cfb(data: String, password: String, iterations: u32) -> Result<S
 }
 
 #[uniffi::export]
-fn decrypt(data: String, password: String, iterarions: u32) -> Result<String, KOSError> {
+fn decrypt(data: String, password: String, iterations: u32) -> Result<String, KOSError> {
     let data_in_byte = hex::decode(data)?;
-    let decrypted_data = cipher::decrypt(&data_in_byte, password.as_str(), iterarions)?;
+    let decrypted_data = cipher::decrypt(&data_in_byte, password.as_str(), iterations)?;
     Ok(String::from_utf8_lossy(&decrypted_data).to_string())
 }
 

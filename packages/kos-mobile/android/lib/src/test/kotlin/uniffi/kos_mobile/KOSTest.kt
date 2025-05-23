@@ -35,7 +35,7 @@ class KOSTest {
         val gcmEncryptedData = encryptWithGcm(dataToEncrypt, password, iterations)
         assertTrue(gcmEncryptedData.isNotEmpty())
 
-        val cbcEncryptedData = encryptWithCbc(dataToEncrypt, password, iteartions)
+        val cbcEncryptedData = encryptWithCbc(dataToEncrypt, password, iterations)
         assertTrue(cbcEncryptedData.isNotEmpty())
 
         val cfbEncryptedData = encryptWithCfb(dataToEncrypt, password, iterations)
