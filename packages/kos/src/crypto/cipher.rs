@@ -31,8 +31,6 @@ const NONCE_SIZE: usize = 12; // NONCESIZE
 const IV_SIZE: usize = 16; // IVSIZE
 const BLOCK_SIZE: usize = 16; // BLOCKSIZE
 
-const ITERATIONS: u32 = 600000;
-
 #[derive(Debug, Clone)]
 pub enum CipherAlgo {
     GCM = 0,
@@ -60,19 +58,29 @@ impl CipherAlgo {
         }
     }
 
-    pub fn encrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
+    pub fn encrypt(
+        &self,
+        data: &[u8],
+        password: &str,
+        iterations: u32,
+    ) -> Result<Vec<u8>, ChainError> {
         match self {
-            CipherAlgo::GCM => gcm_encrypt(data, password),
-            CipherAlgo::CBC => cbc_encrypt(data, password),
-            CipherAlgo::CFB => cfb_encrypt(data, password),
+            CipherAlgo::GCM => gcm_encrypt(data, password, iterations),
+            CipherAlgo::CBC => cbc_encrypt(data, password, iterations),
+            CipherAlgo::CFB => cfb_encrypt(data, password, iterations),
         }
     }
 
-    pub fn decrypt(&self, data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
+    pub fn decrypt(
+        &self,
+        data: &[u8],
+        password: &str,
+        iterations: u32,
+    ) -> Result<Vec<u8>, ChainError> {
         match self {
-            CipherAlgo::GCM => gcm_decrypt(data, password),
-            CipherAlgo::CBC => cbc_decrypt(data, password),
-            CipherAlgo::CFB => cfb_decrypt(data, password),
+            CipherAlgo::GCM => gcm_decrypt(data, password, iterations),
+            CipherAlgo::CBC => cbc_decrypt(data, password, iterations),
+            CipherAlgo::CFB => cfb_decrypt(data, password, iterations),
         }
     }
 }
@@ -106,31 +114,36 @@ pub fn check_checksum(password: &str, checksum: String) -> bool {
     result.is_ok()
 }
 
-pub fn derive_key(salt: &[u8], password: &str) -> Vec<u8> {
+pub fn derive_key(salt: &[u8], password: &str, iterations: u32) -> Vec<u8> {
     let mut key = vec![0u8; KEY_SIZE];
-    pbkdf2::<Hmac<Sha256>>(password.as_bytes(), salt, ITERATIONS, &mut key)
+    pbkdf2::<Hmac<Sha256>>(password.as_bytes(), salt, iterations, &mut key)
         .expect("ChainError deriving key");
     key
 }
 
-pub fn encrypt(algo: CipherAlgo, data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
-    algo.encrypt(data, password)
+pub fn encrypt(
+    algo: CipherAlgo,
+    data: &[u8],
+    password: &str,
+    iterations: u32,
+) -> Result<Vec<u8>, ChainError> {
+    algo.encrypt(data, password, iterations)
 }
 
-pub fn decrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
+pub fn decrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
     if data.is_empty() {
         return Err(ChainError::CipherError("Invalid PEM data".to_owned()));
     }
 
     // get algo
     let algo = CipherAlgo::from_u8(data[0])?;
-    algo.decrypt(&data[1..], password)
+    algo.decrypt(&data[1..], password, iterations)
 }
 
-pub fn gcm_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
+pub fn gcm_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
     // Derive key from password
     let salt: [u8; 32] = rand::thread_rng().gen();
-    let derived_key = derive_key(&salt, password);
+    let derived_key = derive_key(&salt, password, iterations);
     let key = Key::<Aes256Gcm>::from_slice(&derived_key);
     let cipher = Aes256Gcm::new(key);
 
@@ -151,14 +164,18 @@ pub fn gcm_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     Ok(result)
 }
 
-pub fn gcm_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
+pub fn gcm_decrypt(
+    encrypted: &[u8],
+    password: &str,
+    iterations: u32,
+) -> Result<Vec<u8>, ChainError> {
     if encrypted.len() < KEY_SIZE + NONCE_SIZE {
         return Err(ChainError::CipherError("Invalid PEM data".to_owned()));
     }
     let salt = &encrypted[..KEY_SIZE];
     let nonce = &encrypted[KEY_SIZE..KEY_SIZE + NONCE_SIZE];
     let encrypted_data = &encrypted[KEY_SIZE + NONCE_SIZE..];
-    let derived_key = derive_key(salt, password);
+    let derived_key = derive_key(salt, password, iterations);
     let key = Key::<Aes256Gcm>::from_slice(&derived_key);
     let cipher = Aes256Gcm::new(key);
     cipher
@@ -168,9 +185,9 @@ pub fn gcm_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainErr
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
-pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
+pub fn cbc_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
     let iv: [u8; IV_SIZE] = rand::thread_rng().gen();
-    let derived_key = derive_key(&iv, password); // KeySize [u8; 32]
+    let derived_key = derive_key(&iv, password, iterations); // KeySize [u8; 32]
     let key = GenericArray::from_slice(&derived_key);
 
     let padding_size = BLOCK_SIZE - data.len() % BLOCK_SIZE;
@@ -189,7 +206,7 @@ pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     hmac_input.extend_from_slice(ct);
 
     let hmac_salt: [u8; 32] = rand::thread_rng().gen();
-    let hmac_key = derive_key(&hmac_salt, password);
+    let hmac_key = derive_key(&hmac_salt, password, iterations);
 
     let mut mac: Hmac<Sha256> = <Hmac<Sha256> as KeyInit>::new_from_slice(&hmac_key)
         .map_err(|e| ChainError::CipherError(format!("HMAC creation failed: {}", e)))?;
@@ -205,7 +222,11 @@ pub fn cbc_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     Ok(result)
 }
 
-pub fn cbc_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
+pub fn cbc_decrypt(
+    encrypted: &[u8],
+    password: &str,
+    iterations: u32,
+) -> Result<Vec<u8>, ChainError> {
     let min_length = KEY_SIZE + IV_SIZE + 32; // 32 bytes for HMAC-SHA256
     if encrypted.len() < min_length {
         return Err(ChainError::CipherError("Invalid encrypted data".to_owned()));
@@ -216,7 +237,7 @@ pub fn cbc_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainErr
     let hmac = &encrypted[KEY_SIZE + IV_SIZE..KEY_SIZE + IV_SIZE + 32];
     let ciphertext = &encrypted[KEY_SIZE + IV_SIZE + 32..];
 
-    let hmac_key = derive_key(hmac_salt, password);
+    let hmac_key = derive_key(hmac_salt, password, iterations);
 
     let mut hmac_input = Vec::new();
     hmac_input.extend_from_slice(iv);
@@ -232,7 +253,7 @@ pub fn cbc_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainErr
         )
     })?;
 
-    let derived_key = derive_key(iv, password);
+    let derived_key = derive_key(iv, password, iterations);
     let key = GenericArray::from_slice(&derived_key);
     let iv_array = GenericArray::from_slice(iv);
 
@@ -246,9 +267,9 @@ pub fn cbc_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainErr
 
 type Aes256CfbEnc = cfb_mode::Encryptor<aes::Aes256>;
 type Aes256CfbDec = cfb_mode::Decryptor<aes::Aes256>;
-pub fn cfb_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
+pub fn cfb_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
     let iv: [u8; IV_SIZE] = rand::thread_rng().gen();
-    let derived_key = derive_key(&iv, password); //  KeySize [u8; 32]
+    let derived_key = derive_key(&iv, password, iterations); //  KeySize [u8; 32]
     let key = GenericArray::from_slice(&derived_key);
 
     let mut buf = data.to_vec();
@@ -262,14 +283,18 @@ pub fn cfb_encrypt(data: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
     Ok(result)
 }
 
-pub fn cfb_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
+pub fn cfb_decrypt(
+    encrypted: &[u8],
+    password: &str,
+    iterations: u32,
+) -> Result<Vec<u8>, ChainError> {
     if encrypted.len() < IV_SIZE {
         return Err(ChainError::CipherError("Invalid PEM data".to_owned()));
     }
 
     let iv = GenericArray::from_slice(&encrypted[..IV_SIZE]);
     let encrypted_data = &encrypted[IV_SIZE..];
-    let derived_key = derive_key(iv, password);
+    let derived_key = derive_key(iv, password, iterations);
     let key = GenericArray::from_slice(&derived_key);
 
     let mut buf = encrypted_data.to_vec();
@@ -282,14 +307,16 @@ pub fn cfb_decrypt(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainErr
 mod tests {
     use super::*;
 
+    const ITERATIONS: u32 = 10000;
+
     #[test]
     fn test_encrypt_decrypt() {
         for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
             let data = b"hello world";
             let password = "password";
 
-            let encrypted = encrypt(algo.to_owned(), data, password).unwrap();
-            let decrypted = decrypt(&encrypted, password).unwrap();
+            let encrypted = encrypt(algo.to_owned(), data, password, ITERATIONS).unwrap();
+            let decrypted = decrypt(&encrypted, password, ITERATIONS).unwrap();
             assert_eq!(data, decrypted.as_slice());
         }
     }
@@ -300,8 +327,8 @@ mod tests {
             let data = b"hello world";
             let password = "password";
 
-            let encrypted = encrypt(algo, data, password).unwrap();
-            let decrypted = decrypt(&encrypted, "invalid password");
+            let encrypted = encrypt(algo, data, password, ITERATIONS).unwrap();
+            let decrypted = decrypt(&encrypted, "invalid password", ITERATIONS);
             match decrypted {
                 Ok(decrypted) => {
                     assert_ne!(data, decrypted.as_slice());
@@ -317,8 +344,8 @@ mod tests {
             let data = b"hello world";
             let password = "password";
 
-            let encrypted = encrypt(algo.clone(), data, password).unwrap();
-            let decrypted = decrypt(&encrypted[..encrypted.len() - 1], password);
+            let encrypted = encrypt(algo.clone(), data, password, ITERATIONS).unwrap();
+            let decrypted = decrypt(&encrypted[..encrypted.len() - 1], password, ITERATIONS);
             match decrypted {
                 Ok(decrypted) => {
                     assert_ne!(data, decrypted.as_slice());
@@ -360,7 +387,7 @@ mod tests {
         let password = "supersecret"; // Password for key derivation
 
         // Encrypt the username using CBC mode
-        let encrypted = cbc_encrypt(plaintext, password).unwrap();
+        let encrypted = cbc_encrypt(plaintext, password, ITERATIONS).unwrap();
 
         // Simulate the server leaking the ciphertext
         let leaked_ciphertext = encrypted.clone();
@@ -376,7 +403,7 @@ mod tests {
         tampered_encrypted[IV_SIZE + 1] ^= xor_value;
 
         // Decrypt the tampered ciphertext
-        let result = cbc_decrypt(&tampered_encrypted[1..], password);
+        let result = cbc_decrypt(&tampered_encrypted[1..], password, ITERATIONS);
 
         match result {
             Ok(decrypted) => {
