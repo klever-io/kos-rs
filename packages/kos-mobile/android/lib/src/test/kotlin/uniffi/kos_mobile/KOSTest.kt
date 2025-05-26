@@ -17,7 +17,7 @@ class KOSTest {
         val klvAddr0 = "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy"
         val klvPath0 = "m/44'/690'/0'/0'/0'"
         val klvKey0 = "e41b323a571fd955e09cd41660ff4465c3f44693c87f2faea4a0fc408727c8ea"
-        val iterations = 10000
+        val iterations: UInt = 10000u
 
         val isValidMnemonicValid = validateMnemonic(mnemonic)
         assertTrue(isValidMnemonicValid)
