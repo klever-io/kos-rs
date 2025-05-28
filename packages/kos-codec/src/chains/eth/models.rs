@@ -40,7 +40,7 @@ impl EthereumTransaction {
         self::EthereumTransaction::decode_eip155(rlp)
     }
 
-    pub fn encode_eip25519(&self) -> Result<RlpStream, DecoderError> {
+    pub fn encode_eip1559(&self) -> Result<RlpStream, DecoderError> {
         let mut rlp = RlpStream::new();
         let list_size = if self.signature.is_some() { 12 } else { 9 };
         rlp.begin_list(list_size);
@@ -123,7 +123,7 @@ impl EthereumTransaction {
             }
 
             TransactionType::Eip155 => {
-                let stream = self.encode_eip25519()?;
+                let stream = self.encode_eip1559()?;
                 Ok([&[2], stream.as_raw()].concat())
             }
         }
