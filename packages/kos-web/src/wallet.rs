@@ -265,8 +265,17 @@ impl Wallet {
                 let chain = get_chain_by_params(custom_chain_options.clone())
                     .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
 
+                let kos_codec_acc = KosCodedAccount {
+                    chain_id: chain.get_id(),
+                    address: self.public_address.clone(),
+                    public_key: self.public_key.clone(),
+                };
+
+                let message_encoded =
+                    kos_codec::encode_for_sign_message(kos_codec_acc, message.to_vec())?;
+
                 chain
-                    .sign_message(pk_bytes, message.to_vec(), legacy)
+                    .sign_message(pk_bytes, message_encoded, legacy)
                     .map_err(|e| Error::WalletManager(format!("sign message: {}", e)))
             }
             None => Err(Error::WalletManager("no keypair".to_string())),
