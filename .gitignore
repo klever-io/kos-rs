@@ -27,3 +27,5 @@ packages/.DS_Store
 packages/kos/target
 packages/kos/Cargo.lock
 packages/kos/.idea
+
+packages/kos-mobile/.build_cache

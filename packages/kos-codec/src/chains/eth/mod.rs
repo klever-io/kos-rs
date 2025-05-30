@@ -33,12 +33,14 @@ pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, Chai
     Ok(transaction)
 }
 
-pub fn encode_for_broadcast(transaction: Transaction) -> Result<Transaction, ChainError> {
+pub fn encode_for_broadcast(mut transaction: Transaction) -> Result<Transaction, ChainError> {
     let mut eth_tx = EthereumTransaction::decode(&transaction.raw_data)?;
 
     let mut signature_bytes: [u8; 65] = [0; 65];
     signature_bytes.copy_from_slice(&transaction.signature[..]);
     eth_tx.signature = Some(signature_bytes);
+
+    transaction.raw_data = eth_tx.encode()?;
 
     Ok(transaction)
 }
@@ -87,6 +89,7 @@ mod test {
             hex::encode(result.tx_hash),
             "5ed21ed1618c98b5b1814565d8d7a63ebc6425997c75b2b857d8692f0b73a64f"
         );
+        assert_eq!(hex::encode(result.raw_data), "b302f101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c0808080");
 
         tx.signature = vec![
             0x30, 0x45, 0x02, 0x21, 0x00, 0xd3, 0x8f, 0x71, 0x94, 0x7b, 0x2c, 0xf5, 0x43, 0x58,
@@ -98,7 +101,7 @@ mod test {
 
         let signed_tx = encode_for_broadcast(tx.clone()).unwrap();
 
-        assert_eq!(hex::encode(signed_tx.raw_data), "b302f101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c0808080");
+        assert_eq!(hex::encode(signed_tx.raw_data), "02f87101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c054a054ad49a590596b77452a01141de380dd50945843f52c7b94718fd30021024530a0ad49a590596b77452a01141de380dd50945843f52c7b94718fd3002102453007");
         assert_eq!(
             hex::encode(signed_tx.signature),
             "3045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54073045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54"
@@ -121,6 +124,7 @@ mod test {
             hex::encode(result.tx_hash),
             "8823151a6987f2625239f058e453f5850e3d800b31f1dd60951a7e36e0769c2e"
         );
+        assert_eq!(hex::encode(result.raw_data), "b87602f8730182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac0808080");
 
         tx.signature = vec![
             0x30, 0x45, 0x02, 0x21, 0x00, 0xd3, 0x8f, 0x71, 0x94, 0x7b, 0x2c, 0xf5, 0x43, 0x58,
@@ -132,7 +136,7 @@ mod test {
 
         let signed_tx = encode_for_broadcast(tx.clone()).unwrap();
 
-        assert_eq!(hex::encode(signed_tx.raw_data), "b87602f8730182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac0808080");
+        assert_eq!(hex::encode(signed_tx.raw_data), "02f8b30182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac054a054ad49a590596b77452a01141de380dd50945843f52c7b94718fd30021024530a0ad49a590596b77452a01141de380dd50945843f52c7b94718fd3002102453007");
         assert_eq!(
             hex::encode(signed_tx.signature),
             "3045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54073045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54"

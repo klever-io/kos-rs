@@ -40,7 +40,7 @@ impl EthereumTransaction {
         self::EthereumTransaction::decode_eip155(rlp)
     }
 
-    pub fn encode_eip25519(&self) -> Result<RlpStream, DecoderError> {
+    pub fn encode_eip1559(&self) -> Result<RlpStream, DecoderError> {
         let mut rlp = RlpStream::new();
         let list_size = if self.signature.is_some() { 12 } else { 9 };
         rlp.begin_list(list_size);
@@ -83,32 +83,59 @@ impl EthereumTransaction {
     pub fn encode_legacy(&self) -> Result<RlpStream, DecoderError> {
         let mut rlp = RlpStream::new();
         rlp.begin_list(9);
+
         rlp.append(&self.nonce);
         rlp.append(&self.gas_price.clone().unwrap_or(U256([0; 32])));
         rlp.append(&self.gas);
-        if self.to.is_some() {
-            rlp.append(&self.to.clone().unwrap().as_slice());
+
+        if let Some(to_addr) = &self.to {
+            rlp.append(&to_addr.as_slice());
         } else {
             rlp.append(&"");
         }
+
         rlp.append(&self.value);
         rlp.append(&self.data);
-        if self.chain_id.is_some() {
-            let cid = self.chain_id.unwrap_or(0);
-            if self.signature.is_some() {
-                let sig = self.signature.unwrap_or([0; 65]);
-                let mut r = U256([0; 32]);
-                r.0.copy_from_slice(&sig[..32]);
-                let mut s = U256([0; 32]);
-                s.0.copy_from_slice(&sig[32..64]);
-                let v = cid * 2 + 35 + (sig[64] as u64);
-                rlp.append(&v);
-                rlp.append(&r);
-                rlp.append(&s);
+
+        // Handle signature fields (v, r, s) - always present in legacy transactions
+        if let Some(sig) = &self.signature {
+            if sig.len() != 65 {
+                return Err(DecoderError::Custom("Invalid signature length"));
+            }
+
+            // Parse r and s from signature (first 32 bytes = r, next 32 bytes = s)
+            let mut r_bytes = [0u8; 32];
+            let mut s_bytes = [0u8; 32];
+            r_bytes.copy_from_slice(&sig[..32]);
+            s_bytes.copy_from_slice(&sig[32..64]);
+
+            let r = U256(r_bytes);
+            let s = U256(s_bytes);
+
+            // Calculate v based on chain_id (EIP-155) or legacy format
+            let v = if let Some(chain_id) = self.chain_id {
+                // EIP-155: v = chain_id * 2 + 35 + recovery_id
+                chain_id * 2 + 35 + (sig[64] as u64)
             } else {
-                rlp.append(&cid);
-                rlp.append(&0u8);
-                rlp.append(&0u8);
+                // Pre-EIP-155: v = 27 + recovery_id
+                27 + (sig[64] as u64)
+            };
+
+            rlp.append(&v);
+            rlp.append(&r);
+            rlp.append(&s);
+        } else {
+            // Unsigned transaction - used for signing
+            if let Some(chain_id) = self.chain_id {
+                // EIP-155 unsigned transaction
+                rlp.append(&chain_id);
+                rlp.append(&U256([0; 32]));
+                rlp.append(&U256([0; 32]));
+            } else {
+                // Pre-EIP-155 unsigned transaction
+                rlp.append(&U256([0; 32]));
+                rlp.append(&U256([0; 32]));
+                rlp.append(&U256([0; 32]));
             }
         }
 
@@ -123,7 +150,7 @@ impl EthereumTransaction {
             }
 
             TransactionType::Eip155 => {
-                let stream = self.encode_eip25519()?;
+                let stream = self.encode_eip1559()?;
                 Ok([&[2], stream.as_raw()].concat())
             }
         }
