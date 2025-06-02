@@ -1,3 +1,5 @@
+use alloc::string::String;
+
 // A very simple base64 encoder for demonstration purposes
 pub fn simple_base64_encode(input: &[u8]) -> alloc::string::String {
     const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -60,4 +62,24 @@ pub fn simple_base64_decode(input: &str) -> Result<alloc::vec::Vec<u8>, &'static
     }
 
     Ok(buffer)
+}
+
+pub fn wrap_base64(input: &str, line_length: usize) -> String {
+    if input.is_empty() {
+        return String::new();
+    }
+
+    let mut result = String::new();
+    let mut pos = 0;
+
+    while pos < input.len() {
+        let end = core::cmp::min(pos + line_length, input.len());
+        if pos > 0 {
+            result.push('\n');
+        }
+        result.push_str(&input[pos..end]);
+        pos = end;
+    }
+
+    result
 }

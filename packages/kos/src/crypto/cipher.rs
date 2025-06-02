@@ -26,6 +26,8 @@ use pem::{parse as parse_pem, Pem};
 use rand::Rng;
 use sha2::Sha256;
 
+use super::base64::{simple_base64_decode, simple_base64_encode, wrap_base64};
+
 const KEY_SIZE: usize = 32; // SALTSIZE
 const NONCE_SIZE: usize = 12; // NONCESIZE
 const IV_SIZE: usize = 16; // IVSIZE
@@ -85,6 +87,129 @@ impl CipherAlgo {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct EncryptedPem {
+    pub label: String,
+    pub is_encrypted: bool,
+    pub cipher_info: Option<String>,
+    pub data: Vec<u8>,
+}
+
+impl EncryptedPem {
+    pub fn new_encrypted(
+        label: String,
+        data: &[u8],
+        password: &str,
+        iterations: u32,
+        algo: CipherAlgo,
+    ) -> Result<Self, ChainError> {
+        let encrypted_data = encrypt(algo.clone(), data, password, iterations)?;
+
+        Ok(EncryptedPem {
+            label,
+            is_encrypted: true,
+            cipher_info: Some(format!(
+                "AES-256-{}",
+                match algo {
+                    CipherAlgo::GCM => "GCM",
+                    CipherAlgo::CBC => "CBC",
+                    CipherAlgo::CFB => "CFB",
+                }
+            )),
+            data: encrypted_data,
+        })
+    }
+
+    pub fn new_unencrypted(label: String, data: Vec<u8>) -> Self {
+        EncryptedPem {
+            label,
+            is_encrypted: false,
+            cipher_info: None,
+            data,
+        }
+    }
+
+    pub fn to_pem_string(&self) -> String {
+        let base64_data = wrap_base64(&simple_base64_encode(&self.data), 64);
+
+        if self.is_encrypted {
+            format!(
+                "-----BEGIN {}-----\n\
+                 Proc-Type: 4,ENCRYPTED\n\
+                 DEK-Info: {},\n\
+                 \n\
+                 {}\n\
+                 -----END {}-----",
+                self.label,
+                self.cipher_info
+                    .as_ref()
+                    .unwrap_or(&"AES-256-CBC".to_string()),
+                base64_data,
+                self.label
+            )
+        } else {
+            format!(
+                "-----BEGIN {}-----\n\
+                 {}\n\
+                 -----END {}-----",
+                self.label, base64_data, self.label
+            )
+        }
+    }
+
+    pub fn from_pem_string(pem_data: &str) -> Result<Self, ChainError> {
+        let lines: Vec<&str> = pem_data.lines().collect();
+        let mut label = String::new();
+        let mut is_encrypted = false;
+        let mut cipher_info = None;
+        let mut data_start = 0;
+        let mut data_end = lines.len();
+
+        for (i, line) in lines.iter().enumerate() {
+            if line.starts_with("-----BEGIN ") {
+                label = line
+                    .replace("-----BEGIN ", "")
+                    .replace("-----", "")
+                    .trim()
+                    .to_string();
+            } else if line.starts_with("Proc-Type: 4,ENCRYPTED") {
+                is_encrypted = true;
+            } else if line.starts_with("DEK-Info: ") {
+                cipher_info = Some(
+                    line.replace("DEK-Info: ", "")
+                        .replace(",", "")
+                        .trim()
+                        .to_string(),
+                );
+            } else if line.trim().is_empty() && data_start == 0 {
+                data_start = i + 1;
+            } else if line.starts_with("-----END") {
+                data_end = i;
+                break;
+            }
+        }
+
+        let base64_data = lines[data_start..data_end].join("");
+        let data = simple_base64_decode(&base64_data)
+            .map_err(|e| ChainError::CipherError(format!("Base64 decode error: {}", e)))?;
+
+        Ok(EncryptedPem {
+            label,
+            is_encrypted,
+            cipher_info,
+            data,
+        })
+    }
+
+    pub fn decrypt(&self, password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
+        if !self.is_encrypted {
+            return Ok(self.data.clone());
+        }
+
+        decrypt(&self.data, password, iterations)
+    }
+}
+
 pub fn to_pem(tag: String, data: &[u8]) -> Result<Pem, ChainError> {
     Ok(Pem::new(tag, data))
 }
@@ -95,6 +220,123 @@ pub fn from_pem(pem: Pem) -> Vec<u8> {
 
 pub fn string_to_pem(data: &str) -> Result<Pem, ChainError> {
     parse_pem(data.as_bytes()).map_err(|e| ChainError::CipherError(format!("{}", e)))
+}
+
+/// Encrypt data and wrap it in a password-protected PEM format
+pub fn encrypt_to_pem(
+    algo: CipherAlgo,
+    data: &[u8],
+    password: &str,
+    iterations: u32,
+    pem_label: &str,
+) -> Result<String, ChainError> {
+    let encrypted_data = encrypt(algo.clone(), data, password, iterations)?;
+
+    let pem_string = format!(
+        "-----BEGIN {}-----\n\
+         Proc-Type: 4,ENCRYPTED\n\
+         DEK-Info: AES-256-{},\n\
+         \n\
+         {}\n\
+         -----END {}-----",
+        pem_label,
+        match algo {
+            CipherAlgo::GCM => "GCM",
+            CipherAlgo::CBC => "CBC",
+            CipherAlgo::CFB => "CFB",
+        },
+        wrap_base64(&simple_base64_encode(&encrypted_data), 64),
+        pem_label
+    );
+
+    Ok(pem_string)
+}
+
+/// Decrypt data from a password-protected PEM format
+pub fn decrypt_from_pem(
+    pem_data: &str,
+    password: &str,
+    iterations: u32,
+) -> Result<Vec<u8>, ChainError> {
+    // Parse the PEM to check if it's password protected
+    let lines: Vec<&str> = pem_data.lines().collect();
+    let mut is_encrypted = false;
+    let mut data_start = 0;
+    let mut data_end = lines.len();
+
+    // Find the actual data bounds and check for encryption headers
+    for (i, line) in lines.iter().enumerate() {
+        if line.starts_with("-----BEGIN") {
+            continue;
+        } else if line.starts_with("Proc-Type: 4,ENCRYPTED") {
+            is_encrypted = true;
+        } else if line.starts_with("DEK-Info:") {
+            // Skip DEK-Info line
+            continue;
+        } else if line.trim().is_empty() {
+            // Empty line after headers, data starts next
+            if data_start == 0 {
+                data_start = i + 1;
+            }
+        } else if line.starts_with("-----END") {
+            data_end = i;
+            break;
+        }
+    }
+
+    if !is_encrypted {
+        // If not encrypted, use standard PEM parsing
+        let pem = string_to_pem(pem_data)?;
+        return Ok(from_pem(pem));
+    }
+
+    // Extract and decode the base64 data
+    let base64_data = lines[data_start..data_end].join("");
+    let encrypted_data = simple_base64_decode(&base64_data)
+        .map_err(|e| ChainError::CipherError(format!("Base64 decode error: {}", e)))?;
+
+    decrypt(&encrypted_data, password, iterations)
+}
+
+/// Create a password-protected PEM file for private keys
+pub fn create_encrypted_private_key_pem(
+    private_key_data: &[u8],
+    password: &str,
+    iterations: u32,
+    algo: CipherAlgo,
+) -> Result<String, ChainError> {
+    encrypt_to_pem(
+        algo,
+        private_key_data,
+        password,
+        iterations,
+        "ENCRYPTED PRIVATE KEY",
+    )
+}
+
+/// Load and decrypt a password-protected private key PEM
+pub fn load_encrypted_private_key_pem(
+    pem_data: &str,
+    password: &str,
+    iterations: u32,
+) -> Result<Vec<u8>, ChainError> {
+    decrypt_from_pem(pem_data, password, iterations)
+}
+
+/// Create a password-protected PEM file for certificates with custom data
+pub fn create_encrypted_certificate_pem(
+    cert_data: &[u8],
+    password: &str,
+    iterations: u32,
+    algo: CipherAlgo,
+) -> Result<String, ChainError> {
+    encrypt_to_pem(
+        algo,
+        cert_data,
+        password,
+        iterations,
+        "ENCRYPTED CERTIFICATE",
+    )
 }
 
 pub fn create_checksum(password: &str) -> String {
@@ -416,5 +658,76 @@ mod tests {
                 "Decryption failed unexpectedly with error: {}", e);
             }
         }
+    }
+
+    #[test]
+    fn test_encrypt_decrypt_pem() {
+        let data = b"This is test private key data";
+        let password = "test_password";
+
+        for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
+            let pem_string =
+                encrypt_to_pem(algo.clone(), data, password, ITERATIONS, "TEST PRIVATE KEY")
+                    .unwrap();
+
+            assert!(pem_string.contains("-----BEGIN TEST PRIVATE KEY-----"));
+            assert!(pem_string.contains("Proc-Type: 4,ENCRYPTED"));
+            assert!(pem_string.contains("DEK-Info: AES-256-"));
+
+            let decrypted = decrypt_from_pem(&pem_string, password, ITERATIONS).unwrap();
+            assert_eq!(data, decrypted.as_slice());
+        }
+    }
+
+    #[test]
+    fn test_encrypted_pem_structure() {
+        let data = b"Certificate data here";
+        let password = "secure_password";
+
+        let encrypted_pem = EncryptedPem::new_encrypted(
+            "CERTIFICATE".to_string(),
+            data,
+            password,
+            ITERATIONS,
+            CipherAlgo::GCM,
+        )
+        .unwrap();
+
+        let pem_string = encrypted_pem.to_pem_string();
+
+        let parsed_pem = EncryptedPem::from_pem_string(&pem_string).unwrap();
+        assert!(parsed_pem.is_encrypted);
+        assert_eq!(parsed_pem.label, "CERTIFICATE");
+
+        let decrypted = parsed_pem.decrypt(password, ITERATIONS).unwrap();
+        assert_eq!(data, decrypted.as_slice());
+    }
+
+    #[test]
+    fn test_private_key_pem_functions() {
+        let key_data = b"-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...";
+        let password = "key_password";
+
+        let pem_string =
+            create_encrypted_private_key_pem(key_data, password, ITERATIONS, CipherAlgo::CBC)
+                .unwrap();
+
+        let decrypted_key =
+            load_encrypted_private_key_pem(&pem_string, password, ITERATIONS).unwrap();
+
+        assert_eq!(key_data, decrypted_key.as_slice());
+    }
+
+    #[test]
+    fn test_wrong_password_pem() {
+        let data = b"sensitive data";
+        let password = "correct_password";
+        let wrong_password = "wrong_password";
+
+        let pem_string =
+            encrypt_to_pem(CipherAlgo::GCM, data, password, ITERATIONS, "SECRET DATA").unwrap();
+
+        let result = decrypt_from_pem(&pem_string, wrong_password, ITERATIONS);
+        assert!(result.is_err());
     }
 }

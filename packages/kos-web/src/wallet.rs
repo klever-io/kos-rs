@@ -3,14 +3,14 @@ use crate::models::{
     WalletChainOptions,
 };
 
-use pem::{parse as parse_pem, Pem};
-use serde::{Deserialize, Serialize};
-use strum::{EnumCount, IntoStaticStr};
-
+use crate::cipher::{decrypt_from_pem, encrypt_to_pem};
 use crate::error::Error;
 use crate::utils::unpack;
 use kos::chains::{get_chain_by_base_id, get_chain_by_params, Transaction as KosTransaction};
 use kos_codec::{encode_for_broadcast, encode_for_signing, KosCodedAccount};
+use pem::{parse as parse_pem, Pem};
+use serde::{Deserialize, Serialize};
+use strum::{EnumCount, IntoStaticStr};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -36,6 +36,24 @@ pub struct Wallet {
     private_key: Option<String>,
     path: Option<String>,
     options: Option<WalletChainOptions>,
+}
+
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy)]
+pub enum CipherAlgo {
+    GCM = 0,
+    CBC = 1,
+    CFB = 2,
+}
+
+impl From<CipherAlgo> for crate::cipher::CipherAlgo {
+    fn from(algo: CipherAlgo) -> Self {
+        match algo {
+            CipherAlgo::GCM => crate::cipher::CipherAlgo::GCM,
+            CipherAlgo::CBC => crate::cipher::CipherAlgo::CBC,
+            CipherAlgo::CFB => crate::cipher::CipherAlgo::CFB,
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -166,6 +184,32 @@ impl Wallet {
         Wallet::from_private_key(chain, pk_hex, options)
     }
 
+    #[wasm_bindgen(js_name = "fromKCPemEncrypted")]
+    /// restore wallet from Klever Chain encrypted PEM file
+    pub fn from_kc_pem_encrypted(
+        chain: u32,
+        data: &[u8],
+        password: &str,
+        iterations: u32,
+        options: Option<WalletChainOptions>,
+    ) -> Result<Wallet, Error> {
+        // convert bytes to string for PEM parsing
+        let pem_string = String::from_utf8(data.to_vec())
+            .map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
+
+        // decrypt the PEM file
+        let decrypted_data = decrypt_from_pem(&pem_string, password, iterations)
+            .map_err(|e| Error::Cipher(format!("decrypt PEM: {}", e)))?;
+
+        let content = String::from_utf8(decrypted_data)
+            .map_err(|_| Error::WalletManager("Invalid decrypted PEM data".to_string()))?;
+
+        let pk_hex = content.chars().take(64).collect::<String>();
+
+        // import from private key
+        Wallet::from_private_key(chain, pk_hex, options)
+    }
+
     #[wasm_bindgen(js_name = "fromPem")]
     pub fn from_pem(data: &[u8]) -> Result<Wallet, Error> {
         // parse pem
@@ -173,6 +217,84 @@ impl Wallet {
             parse_pem(data).map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
 
         Wallet::import(pem)
+    }
+
+    #[wasm_bindgen(js_name = "fromPemEncrypted")]
+    /// restore wallet from encrypted PEM file
+    pub fn from_pem_encrypted(
+        data: &[u8],
+        password: &str,
+        iterations: u32,
+    ) -> Result<Wallet, Error> {
+        let pem_string = String::from_utf8(data.to_vec())
+            .map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
+
+        let decrypted_data = decrypt_from_pem(&pem_string, password, iterations)
+            .map_err(|e| Error::Cipher(format!("decrypt PEM: {}", e)))?;
+
+        let wallet: Wallet = unpack(&decrypted_data)
+            .map_err(|e| Error::Cipher(format!("deserialize data: {}", e)))?;
+
+        Ok(wallet)
+    }
+
+    #[wasm_bindgen(js_name = "exportToPem")]
+    /// export wallet to unencrypted PEM format
+    pub fn export_to_pem(&self) -> Result<Vec<u8>, Error> {
+        let wallet_bytes = crate::utils::pack(self)
+            .map_err(|e| Error::Cipher(format!("serialize wallet: {}", e)))?;
+
+        let pem = Pem::new("KLEVER WALLET", wallet_bytes);
+
+        Ok(pem.to_string().into_bytes())
+    }
+
+    #[wasm_bindgen(js_name = "exportToPemEncrypted")]
+    /// export wallet to encrypted PEM format
+    pub fn export_to_pem_encrypted(
+        &self,
+        password: &str,
+        iterations: u32,
+        algo: CipherAlgo,
+    ) -> Result<Vec<u8>, Error> {
+        let wallet_bytes = crate::utils::pack(self)
+            .map_err(|e| Error::Cipher(format!("serialize wallet: {}", e)))?;
+
+        let encrypted_pem = encrypt_to_pem(
+            algo.into(),
+            &wallet_bytes,
+            password,
+            iterations,
+            "KLEVER WALLET",
+        )
+        .map_err(|e| Error::Cipher(format!("encrypt PEM: {}", e)))?;
+
+        Ok(encrypted_pem.into_bytes())
+    }
+
+    #[wasm_bindgen(js_name = "exportPrivateKeyToPemEncrypted")]
+    /// export only the private key to encrypted PEM format
+    pub fn export_private_key_to_pem_encrypted(
+        &self,
+        password: &str,
+        iterations: u32,
+        algo: CipherAlgo,
+    ) -> Result<Vec<u8>, Error> {
+        let private_key = self
+            .private_key
+            .as_ref()
+            .ok_or_else(|| Error::WalletManager("No private key available".to_string()))?;
+
+        let encrypted_pem = encrypt_to_pem(
+            algo.into(), // Convert to cipher::CipherAlgo
+            private_key.as_bytes(),
+            password,
+            iterations,
+            "ENCRYPTED PRIVATE KEY",
+        )
+        .map_err(|e| Error::Cipher(format!("encrypt PEM: {}", e)))?;
+
+        Ok(encrypted_pem.into_bytes())
     }
 }
 
@@ -248,6 +370,18 @@ impl Wallet {
             Some(ref mnemonic) => mnemonic.clone(),
             None => String::new(),
         }
+    }
+
+    #[wasm_bindgen(js_name = "hasPrivateKey")]
+    /// check if wallet has private key (for signing operations)
+    pub fn has_private_key(&self) -> bool {
+        self.private_key.is_some()
+    }
+
+    #[wasm_bindgen(js_name = "isEncrypted")]
+    /// check if wallet data is encrypted
+    pub fn is_encrypted(&self) -> bool {
+        self.encrypted_data.is_some()
     }
 }
 
@@ -342,6 +476,8 @@ mod tests {
         "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d";
     const TEST_PUBLIC_KEY: &str =
         "e41b323a571fd955e09cd41660ff4465c3f44693c87f2faea4a0fc408727c8ea";
+    const TEST_PASSWORD: &str = "test_password_123";
+    const TEST_ITERATIONS: u32 = 10000;
 
     #[test]
     fn test_wallet_from_mnemonic() {
@@ -367,6 +503,144 @@ mod tests {
         );
         assert_eq!(wallet.get_path(), path);
         assert_eq!(wallet.get_mnemonic(), TEST_MNEMONIC);
+    }
+
+    #[test]
+    fn test_wallet_export_import_pem_encrypted() {
+        let chain_id = 38;
+        let chain = get_chain_by_base_id(chain_id).unwrap();
+        let path = chain.get_path(0, false);
+
+        let original_wallet =
+            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None, None).unwrap();
+
+        let encrypted_pem = original_wallet
+            .export_to_pem_encrypted(TEST_PASSWORD, TEST_ITERATIONS, CipherAlgo::GCM)
+            .unwrap();
+
+        let imported_wallet =
+            Wallet::from_pem_encrypted(&encrypted_pem, TEST_PASSWORD, TEST_ITERATIONS).unwrap();
+
+        assert_eq!(original_wallet.get_chain(), imported_wallet.get_chain());
+        assert_eq!(
+            original_wallet.get_private_key(),
+            imported_wallet.get_private_key()
+        );
+        assert_eq!(
+            original_wallet.get_public_key(),
+            imported_wallet.get_public_key()
+        );
+        assert_eq!(original_wallet.get_address(), imported_wallet.get_address());
+        assert_eq!(
+            original_wallet.get_mnemonic(),
+            imported_wallet.get_mnemonic()
+        );
+    }
+
+    #[test]
+    fn test_private_key_export_encrypted() {
+        let chain_id = 38;
+        let wallet =
+            Wallet::from_private_key(chain_id, TEST_PRIVATE_KEY.to_string(), None).unwrap();
+
+        let encrypted_pem = wallet
+            .export_private_key_to_pem_encrypted(TEST_PASSWORD, TEST_ITERATIONS, CipherAlgo::CBC)
+            .unwrap();
+
+        let pem_string = String::from_utf8(encrypted_pem).unwrap();
+        assert!(pem_string.contains("-----BEGIN ENCRYPTED PRIVATE KEY-----"));
+        assert!(pem_string.contains("Proc-Type: 4,ENCRYPTED"));
+        assert!(pem_string.contains("DEK-Info: AES-256-CBC"));
+    }
+
+    #[test]
+    fn test_kc_pem_encrypted() {
+        let chain_id = 38;
+        let private_key_content = TEST_PRIVATE_KEY;
+
+        let encrypted_pem = encrypt_to_pem(
+            crate::cipher::CipherAlgo::GCM,
+            private_key_content.as_bytes(),
+            TEST_PASSWORD,
+            TEST_ITERATIONS,
+            "KLEVER PRIVATE KEY",
+        )
+        .unwrap();
+
+        let wallet = Wallet::from_kc_pem_encrypted(
+            chain_id,
+            encrypted_pem.as_bytes(),
+            TEST_PASSWORD,
+            TEST_ITERATIONS,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(wallet.get_chain(), chain_id);
+        assert_eq!(wallet.get_account_type(), AccountType::PrivateKey);
+        assert_eq!(wallet.get_private_key(), TEST_PRIVATE_KEY);
+    }
+
+    #[test]
+    fn test_wrong_password_fails() {
+        let chain_id = 38;
+        let chain = get_chain_by_base_id(chain_id).unwrap();
+        let path = chain.get_path(0, false);
+
+        let wallet =
+            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None, None).unwrap();
+
+        let encrypted_pem = wallet
+            .export_to_pem_encrypted(TEST_PASSWORD, TEST_ITERATIONS, CipherAlgo::GCM)
+            .unwrap();
+
+        let result = Wallet::from_pem_encrypted(&encrypted_pem, "wrong_password", TEST_ITERATIONS);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_wallet_properties() {
+        let chain_id = 38;
+        let wallet =
+            Wallet::from_private_key(chain_id, TEST_PRIVATE_KEY.to_string(), None).unwrap();
+
+        assert!(wallet.has_private_key());
+        assert!(!wallet.is_encrypted());
+
+        let readonly_wallet = Wallet {
+            chain: chain_id,
+            account_type: AccountType::ReadOnly,
+            public_address: "test_address".to_string(),
+            public_key: TEST_PUBLIC_KEY.to_string(),
+            index: None,
+            encrypted_data: None,
+            mnemonic: None,
+            private_key: None,
+            path: None,
+            options: None,
+        };
+
+        assert!(!readonly_wallet.has_private_key());
+        assert!(!readonly_wallet.is_encrypted());
+    }
+
+    #[test]
+    fn test_all_cipher_algorithms() {
+        let chain_id = 38;
+        let wallet =
+            Wallet::from_private_key(chain_id, TEST_PRIVATE_KEY.to_string(), None).unwrap();
+
+        for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
+            let encrypted_pem = wallet
+                .export_to_pem_encrypted(TEST_PASSWORD, TEST_ITERATIONS, algo)
+                .unwrap();
+
+            let imported_wallet =
+                Wallet::from_pem_encrypted(&encrypted_pem, TEST_PASSWORD, TEST_ITERATIONS).unwrap();
+
+            assert_eq!(wallet.get_private_key(), imported_wallet.get_private_key());
+            assert_eq!(wallet.get_public_key(), imported_wallet.get_public_key());
+        }
     }
 
     #[test]
