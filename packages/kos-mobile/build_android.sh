@@ -9,6 +9,13 @@ set -e
 USE_CACHE=${USE_CACHE:-false}
 CACHE_DIR="${BUILD_HOME}/.build_cache"
 
+init_cache() {
+  if [ "$USE_CACHE" = "true" ]; then
+    mkdir -p "$CACHE_DIR"/{checksums,cargo_target,openssl_libs,binds}
+    log_status "Cache directory initialized at $CACHE_DIR"
+  fi
+}
+
 if command -v nproc >/dev/null 2>&1; then
   CARGO_JOBS=$(nproc)
 elif command -v sysctl >/dev/null 2>&1; then
@@ -17,15 +24,10 @@ else
   CARGO_JOBS=4
 fi
 
-init_cache() {
-  if [ "$USE_CACHE" = "true" ]; then
-    mkdir -p "$CACHE_DIR"/{checksums,cargo_target,openssl_libs,binds}
-    log_status "Cache directory initialized at $CACHE_DIR"
-  fi
-}
-
 generate_source_checksum() {
   local checksum_file="$CACHE_DIR/checksums/source.sha256"
+  
+  mkdir -p "$CACHE_DIR/checksums"
 
   find "$BUILD_HOME" -name "Cargo.toml" -o -name "Cargo.lock" -o -name "*.rs" |
     sort | xargs cat | sha256sum >"$checksum_file.tmp"
