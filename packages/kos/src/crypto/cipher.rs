@@ -129,31 +129,31 @@ impl EncryptedPem {
         }
     }
 
-    pub fn to_pem_string(&self) -> String {
-        let base64_data = wrap_base64(&simple_base64_encode(&self.data), 64);
+    pub fn to_pem_string(&self) -> Result<String, ChainError> {
+        let base64_data = wrap_base64(&simple_base64_encode(&self.data), 64)?;
 
         if self.is_encrypted {
-            format!(
+            Ok(format!(
                 "-----BEGIN {}-----\n\
-                 Proc-Type: 4,ENCRYPTED\n\
-                 DEK-Info: {},\n\
-                 \n\
-                 {}\n\
-                 -----END {}-----",
+             Proc-Type: 4,ENCRYPTED\n\
+             DEK-Info: {},\n\
+             \n\
+             {}\n\
+             -----END {}-----",
                 self.label,
                 self.cipher_info
                     .as_ref()
                     .unwrap_or(&"AES-256-CBC".to_string()),
                 base64_data,
                 self.label
-            )
+            ))
         } else {
-            format!(
+            Ok(format!(
                 "-----BEGIN {}-----\n\
-                 {}\n\
-                 -----END {}-----",
+             {}\n\
+             -----END {}-----",
                 self.label, base64_data, self.label
-            )
+            ))
         }
     }
 
@@ -232,6 +232,8 @@ pub fn encrypt_to_pem(
 ) -> Result<String, ChainError> {
     let encrypted_data = encrypt(algo.clone(), data, password, iterations)?;
 
+    let wrapped_base64 = wrap_base64(&simple_base64_encode(&encrypted_data), 64)?;
+
     let pem_string = format!(
         "-----BEGIN {}-----\n\
          Proc-Type: 4,ENCRYPTED\n\
@@ -245,7 +247,7 @@ pub fn encrypt_to_pem(
             CipherAlgo::CBC => "CBC",
             CipherAlgo::CFB => "CFB",
         },
-        wrap_base64(&simple_base64_encode(&encrypted_data), 64),
+        wrapped_base64,
         pem_label
     );
 
@@ -693,7 +695,7 @@ mod tests {
         )
         .unwrap();
 
-        let pem_string = encrypted_pem.to_pem_string();
+        let pem_string = encrypted_pem.to_pem_string().unwrap();
 
         let parsed_pem = EncryptedPem::from_pem_string(&pem_string).unwrap();
         assert!(parsed_pem.is_encrypted);
