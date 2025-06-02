@@ -692,7 +692,7 @@ mod tests {
     const ITERATIONS: u32 = 600_000;
     const ARGON2_TEST_ITERATIONS: u32 = 100_000;
 
-    /*#[test]
+    #[test]
     fn test_encrypt_decrypt() {
         for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
             let data = b"hello world";
@@ -702,7 +702,7 @@ mod tests {
             let decrypted = decrypt(&encrypted, password, ITERATIONS).unwrap();
             assert_eq!(data, decrypted.as_slice());
         }
-    }*/
+    }
 
     #[test]
     fn test_encrypt_decrypt_invalid_password() {
