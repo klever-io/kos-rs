@@ -193,21 +193,53 @@ impl Wallet {
         iterations: u32,
         options: Option<WalletChainOptions>,
     ) -> Result<Wallet, Error> {
-        // convert bytes to string for PEM parsing
         let pem_string = String::from_utf8(data.to_vec())
-            .map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
+            .map_err(|_| Error::WalletManager("Invalid PEM data: not valid UTF-8".to_string()))?;
 
-        // decrypt the PEM file
         let decrypted_data = decrypt_from_pem(&pem_string, password, iterations)
-            .map_err(|e| Error::Cipher(format!("decrypt PEM: {}", e)))?;
+            .map_err(|e| Error::Cipher(format!("Failed to decrypt PEM: {}", e)))?;
 
-        let content = String::from_utf8(decrypted_data)
-            .map_err(|_| Error::WalletManager("Invalid decrypted PEM data".to_string()))?;
+        let content = String::from_utf8(decrypted_data).map_err(|_| {
+            Error::Cipher(
+                "Decrypted data is not valid UTF-8 - wrong password or corrupted PEM".to_string(),
+            )
+        })?;
+
+        let content = content.trim();
+
+        if content.len() < 64 {
+            return Err(Error::Cipher(format!(
+            "Invalid KC PEM content: expected at least 64 characters for private key, got {} - wrong password or corrupted data",
+            content.len()
+        )));
+        }
 
         let pk_hex = content.chars().take(64).collect::<String>();
 
-        // import from private key
+        if !pk_hex.chars().all(|c| c.is_ascii_hexdigit()) {
+            return Err(Error::Cipher(
+            "Invalid KC PEM content: private key contains non-hexadecimal characters - wrong password or corrupted data".to_string()
+        ));
+        }
+
+        let decoded_bytes = hex::decode(&pk_hex)
+        .map_err(|_| Error::Cipher("Invalid KC PEM content: private key hex decoding failed - wrong password or corrupted data".to_string()))?;
+
+        if decoded_bytes.len() != 32 {
+            return Err(Error::Cipher(format!(
+            "Invalid KC PEM content: private key should be 32 bytes when decoded, got {} bytes - wrong password or corrupted data",
+            decoded_bytes.len()
+        )));
+        }
+
+        if decoded_bytes.iter().all(|&b| b == 0) {
+            return Err(Error::Cipher(
+            "Invalid KC PEM content: private key is all zeros - wrong password or corrupted data".to_string()
+        ));
+        }
+
         Wallet::from_private_key(chain, pk_hex, options)
+            .map_err(|e| Error::Cipher(format!("KC PEM private key validation failed: {}", e)))
     }
 
     #[wasm_bindgen(js_name = "fromPem")]

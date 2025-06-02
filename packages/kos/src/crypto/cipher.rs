@@ -166,30 +166,38 @@ impl EncryptedPem {
         let mut data_end = lines.len();
 
         for (i, line) in lines.iter().enumerate() {
-            if line.starts_with("-----BEGIN ") {
-                label = line
+            let trimmed_line = line.trim_start();
+
+            if trimmed_line.starts_with("-----BEGIN ") {
+                label = trimmed_line
                     .replace("-----BEGIN ", "")
                     .replace("-----", "")
                     .trim()
                     .to_string();
-            } else if line.starts_with("Proc-Type: 4,ENCRYPTED") {
+            } else if trimmed_line.starts_with("Proc-Type: 4,ENCRYPTED") {
                 is_encrypted = true;
-            } else if line.starts_with("DEK-Info: ") {
+            } else if trimmed_line.starts_with("DEK-Info: ") {
                 cipher_info = Some(
-                    line.replace("DEK-Info: ", "")
+                    trimmed_line
+                        .replace("DEK-Info: ", "")
                         .replace(",", "")
                         .trim()
                         .to_string(),
                 );
-            } else if line.trim().is_empty() && data_start == 0 {
+            } else if trimmed_line.trim().is_empty() && data_start == 0 {
                 data_start = i + 1;
-            } else if line.starts_with("-----END") {
+            } else if trimmed_line.starts_with("-----END") {
                 data_end = i;
                 break;
             }
         }
 
-        let base64_data = lines[data_start..data_end].join("");
+        let base64_data = lines[data_start..data_end]
+            .iter()
+            .map(|line| line.trim())
+            .collect::<Vec<&str>>()
+            .join("");
+
         let data = simple_base64_decode(&base64_data)
             .map_err(|e| ChainError::CipherError(format!("Base64 decode error: {}", e)))?;
 
@@ -260,40 +268,43 @@ pub fn decrypt_from_pem(
     password: &str,
     iterations: u32,
 ) -> Result<Vec<u8>, ChainError> {
-    // Parse the PEM to check if it's password protected
     let lines: Vec<&str> = pem_data.lines().collect();
     let mut is_encrypted = false;
     let mut data_start = 0;
     let mut data_end = lines.len();
 
-    // Find the actual data bounds and check for encryption headers
     for (i, line) in lines.iter().enumerate() {
-        if line.starts_with("-----BEGIN") {
+        let trimmed_line = line.trim_start();
+
+        if trimmed_line.starts_with("-----BEGIN") {
             continue;
-        } else if line.starts_with("Proc-Type: 4,ENCRYPTED") {
+        } else if trimmed_line.starts_with("Proc-Type: 4,ENCRYPTED") {
             is_encrypted = true;
-        } else if line.starts_with("DEK-Info:") {
+        } else if trimmed_line.starts_with("DEK-Info:") {
             // Skip DEK-Info line
             continue;
-        } else if line.trim().is_empty() {
+        } else if trimmed_line.trim().is_empty() {
             // Empty line after headers, data starts next
             if data_start == 0 {
                 data_start = i + 1;
             }
-        } else if line.starts_with("-----END") {
+        } else if trimmed_line.starts_with("-----END") {
             data_end = i;
             break;
         }
     }
 
     if !is_encrypted {
-        // If not encrypted, use standard PEM parsing
         let pem = string_to_pem(pem_data)?;
         return Ok(from_pem(pem));
     }
 
-    // Extract and decode the base64 data
-    let base64_data = lines[data_start..data_end].join("");
+    let base64_data = lines[data_start..data_end]
+        .iter()
+        .map(|line| line.trim())
+        .collect::<Vec<&str>>()
+        .join("");
+
     let encrypted_data = simple_base64_decode(&base64_data)
         .map_err(|e| ChainError::CipherError(format!("Base64 decode error: {}", e)))?;
 
@@ -731,5 +742,108 @@ mod tests {
 
         let result = decrypt_from_pem(&pem_string, wrong_password, ITERATIONS);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_pem_with_leading_whitespace() {
+        let data = b"test data for encryption";
+        let password = "test_password";
+        let iterations = 10000;
+
+        let normal_pem =
+            encrypt_to_pem(CipherAlgo::GCM, data, password, iterations, "TEST KEY").unwrap();
+
+        let indented_pem = normal_pem
+            .lines()
+            .map(|line| format!("    {}", line)) // Add 4 spaces to each line
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        let normal_result = decrypt_from_pem(&normal_pem, password, iterations).unwrap();
+        let indented_result = decrypt_from_pem(&indented_pem, password, iterations).unwrap();
+
+        assert_eq!(normal_result, data);
+        assert_eq!(indented_result, data);
+        assert_eq!(normal_result, indented_result);
+    }
+
+    #[test]
+    fn test_pem_with_mixed_whitespace() {
+        let data = b"sensitive key data";
+        let password = "secure_password";
+        let iterations = 10000;
+
+        let normal_pem =
+            encrypt_to_pem(CipherAlgo::CBC, data, password, iterations, "PRIVATE KEY").unwrap();
+
+        let mixed_whitespace_pem = normal_pem
+            .lines()
+            .enumerate()
+            .map(|(i, line)| {
+                if i % 2 == 0 {
+                    format!("  {}", line) // Even lines: 2 spaces
+                } else {
+                    format!("\t{} ", line) // Odd lines: tab + trailing space
+                }
+            })
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        let result = decrypt_from_pem(&mixed_whitespace_pem, password, iterations).unwrap();
+        assert_eq!(result, data);
+    }
+
+    #[test]
+    fn test_encrypted_pem_with_whitespace() {
+        let data = b"certificate data";
+        let password = "cert_password";
+        let iterations = 10000;
+
+        let encrypted_pem = EncryptedPem::new_encrypted(
+            "CERTIFICATE".to_string(),
+            data,
+            password,
+            iterations,
+            CipherAlgo::GCM,
+        )
+        .unwrap();
+
+        let pem_string = encrypted_pem.to_pem_string().unwrap();
+
+        // Add indentation to simulate copy-paste from a config file
+        let indented_pem = pem_string
+            .lines()
+            .map(|line| format!("  {}", line))
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        let parsed_pem = EncryptedPem::from_pem_string(&indented_pem).unwrap();
+        assert!(parsed_pem.is_encrypted);
+        assert_eq!(parsed_pem.label, "CERTIFICATE");
+
+        let decrypted = parsed_pem.decrypt(password, iterations).unwrap();
+        assert_eq!(data, decrypted.as_slice());
+    }
+
+    #[test]
+    fn test_base64_lines_with_whitespace() {
+        // Test that base64 data lines with various whitespace are handled correctly
+        let test_pem = r#"    -----BEGIN TEST-----
+        Proc-Type: 4,ENCRYPTED
+        DEK-Info: AES-256-GCM,
+
+        SGVsbG9X
+        b3JsZEhl
+        bGxvV29y
+        bGQ=
+    -----END TEST-----"#;
+
+        // This should parse without error (even though decryption might fail due to test data)
+        let result = EncryptedPem::from_pem_string(test_pem);
+        assert!(result.is_ok());
+
+        let parsed = result.unwrap();
+        assert!(parsed.is_encrypted);
+        assert_eq!(parsed.label, "TEST");
     }
 }
