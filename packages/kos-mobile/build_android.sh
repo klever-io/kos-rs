@@ -257,4 +257,5 @@ assemble_openssl_lib_cached "$OS_ARCH" "$OS_TOOLCHAIN"
 assemble_android_lib_unit_test
 generate_binds
 
-echo -e "${ANDROID}ANDROID RUST BUILD FINISHED 🎉🎉🎉${NC}"
+echo -e "${ANDROID}ANDROID RUST BUILD FINISHED${NC}"
+echo "🎉🎉🎉"
