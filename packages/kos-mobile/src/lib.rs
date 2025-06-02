@@ -139,6 +139,17 @@ fn encrypt_with_gcm(data: String, password: String, iterations: u32) -> Result<S
 }
 
 #[uniffi::export]
+fn encrypt_with_gcm_argon2(
+    data: String,
+    password: String,
+    iterations: u32,
+) -> Result<String, KOSError> {
+    let encrypted_data =
+        CipherAlgo::GCMArgon2.encrypt(data.as_bytes(), password.as_str(), iterations)?;
+    Ok(encrypted_data.encode_hex())
+}
+
+#[uniffi::export]
 fn encrypt_with_cbc(data: String, password: String, iterations: u32) -> Result<String, KOSError> {
     let encrypted_data = CipherAlgo::CBC.encrypt(data.as_bytes(), password.as_str(), iterations)?;
     Ok(encrypted_data.encode_hex())
