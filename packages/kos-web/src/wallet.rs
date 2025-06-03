@@ -298,6 +298,7 @@ impl Wallet {
             password,
             iterations,
             "KLEVER WALLET",
+            None,
         )
         .map_err(|e| Error::Cipher(format!("encrypt PEM: {}", e)))?;
 
@@ -323,6 +324,7 @@ impl Wallet {
             password,
             iterations,
             "ENCRYPTED PRIVATE KEY",
+            None,
         )
         .map_err(|e| Error::Cipher(format!("encrypt PEM: {}", e)))?;
 
@@ -596,6 +598,7 @@ mod tests {
             TEST_PASSWORD,
             TEST_ITERATIONS,
             "KLEVER PRIVATE KEY",
+            None,
         )
         .unwrap();
 

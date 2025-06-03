@@ -41,8 +41,13 @@ pub fn decrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, 
 /// Data will have the algorithm tag prepended to it (1 byte).
 #[wasm_bindgen(js_name = "encrypt")]
 pub fn encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, Error> {
-    cipher::encrypt(cipher::CipherAlgo::GCM, data, password, iterations)
-        .map_err(|e| Error::Cipher(format!("{}", e)))
+    Ok(cipher::encrypt(
+        cipher::CipherAlgo::GCM,
+        data,
+        password,
+        iterations,
+        None,
+    )?)
 }
 
 /// Create pem file from tag and data

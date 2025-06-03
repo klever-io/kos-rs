@@ -9,6 +9,7 @@ use hex::FromHexError;
 use hex::ToHex;
 use kos::chains::{get_chain_by_base_id, get_chain_by_params, Chain, ChainError, Transaction};
 use kos::crypto::cipher;
+use kos::crypto::cipher::Argon2Config;
 use kos::crypto::cipher::CipherAlgo;
 use kos_codec::KosCodedAccount;
 use kos_codec::{encode_for_broadcast, encode_for_signing};
@@ -134,7 +135,8 @@ fn generate_wallet_from_private_key(
 
 #[uniffi::export]
 fn encrypt_with_gcm(data: String, password: String, iterations: u32) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::GCM.encrypt(data.as_bytes(), password.as_str(), iterations)?;
+    let encrypted_data =
+        CipherAlgo::GCM.encrypt(data.as_bytes(), password.as_str(), iterations, None)?;
     Ok(encrypted_data.encode_hex())
 }
 
@@ -143,21 +145,29 @@ fn encrypt_with_gcm_argon2(
     data: String,
     password: String,
     iterations: u32,
+    argon2_config: u32,
 ) -> Result<String, KOSError> {
-    let encrypted_data =
-        CipherAlgo::GCMArgon2.encrypt(data.as_bytes(), password.as_str(), iterations)?;
+    let argon2_cfg = Argon2Config::from_u8(argon2_config as u8)?;
+    let encrypted_data = CipherAlgo::GCMArgon2.encrypt(
+        data.as_bytes(),
+        password.as_str(),
+        iterations,
+        Some(argon2_cfg),
+    )?;
     Ok(encrypted_data.encode_hex())
 }
 
 #[uniffi::export]
 fn encrypt_with_cbc(data: String, password: String, iterations: u32) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::CBC.encrypt(data.as_bytes(), password.as_str(), iterations)?;
+    let encrypted_data =
+        CipherAlgo::CBC.encrypt(data.as_bytes(), password.as_str(), iterations, None)?;
     Ok(encrypted_data.encode_hex())
 }
 
 #[uniffi::export]
 fn encrypt_with_cfb(data: String, password: String, iterations: u32) -> Result<String, KOSError> {
-    let encrypted_data = CipherAlgo::CFB.encrypt(data.as_bytes(), password.as_str(), iterations)?;
+    let encrypted_data =
+        CipherAlgo::CFB.encrypt(data.as_bytes(), password.as_str(), iterations, None)?;
     Ok(encrypted_data.encode_hex())
 }
 

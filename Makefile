@@ -1,4 +1,4 @@
-.PHONY: all fmt clippy check webpack webpack-npm grcov
+.PHONY: all fmt clippy check webpack webpack-npm grcov test
 
 UNAME := $(shell uname)
 
@@ -15,6 +15,9 @@ check: fmt clippy
 	cargo deny check
 #	cargo outdated --exit-code 1
 	cargo pants
+
+test:
+	cargo test --workspace --exclude kos-hardware
 
 grcov:
 	cargo build
