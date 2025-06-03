@@ -45,6 +45,45 @@ pub enum CipherAlgo {
     CFB = 2,
 }
 
+/// Argon2id configuration presets based on OWASP recommendations
+#[derive(Clone, Copy)]
+#[repr(u8)]
+pub enum Argon2Config {
+    /// m=47104 (46 MiB), t=1, p=1 - Highest memory, lowest time
+    HighMemory,
+    /// m=19456 (19 MiB), t=2, p=1 - Balanced
+    Balanced,
+    /// m=12288 (12 MiB), t=3, p=1 - Medium memory
+    Medium,
+    /// m=9216 (9 MiB), t=4, p=1 - Lower memory
+    Low,
+    /// m=7168 (7 MiB), t=5, p=1 - Lowest memory, highest time
+    LowMemory,
+}
+
+impl Argon2Config {
+    pub fn params(&self) -> (u32, u32, u32) {
+        match self {
+            Self::HighMemory => (47104, 1, 1), // 46 MiB
+            Self::Balanced => (19456, 2, 1),   // 19 MiB
+            Self::Medium => (12288, 3, 1),     // 12 MiB
+            Self::Low => (9216, 4, 1),         // 9 MiB
+            Self::LowMemory => (7168, 5, 1),   // 7 MiB
+        }
+    }
+
+    pub fn from_u8(value: u8) -> Result<Self, ChainError> {
+        match value {
+            0 => Ok(Self::HighMemory),
+            1 => Ok(Self::Balanced),
+            2 => Ok(Self::Medium),
+            3 => Ok(Self::Low),
+            4 => Ok(Self::LowMemory),
+            _ => Err(ChainError::CipherError("Invalid Argon2 config".to_string())),
+        }
+    }
+}
+
 impl CipherAlgo {
     pub fn to_vec(&self) -> Vec<u8> {
         match self {
@@ -72,10 +111,14 @@ impl CipherAlgo {
         data: &[u8],
         password: &str,
         iterations: u32,
+        argon2_config: Option<Argon2Config>,
     ) -> Result<Vec<u8>, ChainError> {
         match self {
             CipherAlgo::GCM => gcm_encrypt(data, password, iterations),
-            CipherAlgo::GCMArgon2 => gcm_encrypt_argon2(data, password, iterations),
+            CipherAlgo::GCMArgon2 => {
+                let config = argon2_config.unwrap_or(Argon2Config::Balanced);
+                gcm_encrypt_argon2(data, password, config)
+            }
             CipherAlgo::CBC => cbc_encrypt(data, password, iterations),
             CipherAlgo::CFB => cfb_encrypt(data, password, iterations),
         }
@@ -89,7 +132,7 @@ impl CipherAlgo {
     ) -> Result<Vec<u8>, ChainError> {
         match self {
             CipherAlgo::GCM => gcm_decrypt(data, password, iterations),
-            CipherAlgo::GCMArgon2 => gcm_decrypt_argon2(data, password, iterations),
+            CipherAlgo::GCMArgon2 => gcm_decrypt_argon2(data, password),
             CipherAlgo::CBC => cbc_decrypt(data, password, iterations),
             CipherAlgo::CFB => cfb_decrypt(data, password, iterations),
         }
@@ -111,8 +154,9 @@ impl EncryptedPem {
         password: &str,
         iterations: u32,
         algo: CipherAlgo,
+        argon2_config: Option<Argon2Config>,
     ) -> Result<Self, ChainError> {
-        let encrypted_data = encrypt(algo.clone(), data, password, iterations)?;
+        let encrypted_data = encrypt(algo.clone(), data, password, iterations, argon2_config)?;
 
         Ok(EncryptedPem {
             label,
@@ -247,8 +291,9 @@ pub fn encrypt_to_pem(
     password: &str,
     iterations: u32,
     pem_label: &str,
+    argon2_config: Option<Argon2Config>,
 ) -> Result<String, ChainError> {
-    let encrypted_data = encrypt(algo.clone(), data, password, iterations)?;
+    let encrypted_data = encrypt(algo.clone(), data, password, iterations, argon2_config)?;
 
     let wrapped_base64 = wrap_base64(&simple_base64_encode(&encrypted_data), 64)?;
 
@@ -328,6 +373,7 @@ pub fn create_encrypted_private_key_pem(
     password: &str,
     iterations: u32,
     algo: CipherAlgo,
+    argon2_config: Option<Argon2Config>,
 ) -> Result<String, ChainError> {
     encrypt_to_pem(
         algo,
@@ -335,6 +381,7 @@ pub fn create_encrypted_private_key_pem(
         password,
         iterations,
         "ENCRYPTED PRIVATE KEY",
+        argon2_config,
     )
 }
 
@@ -353,6 +400,7 @@ pub fn create_encrypted_certificate_pem(
     password: &str,
     iterations: u32,
     algo: CipherAlgo,
+    argon2_config: Option<Argon2Config>,
 ) -> Result<String, ChainError> {
     encrypt_to_pem(
         algo,
@@ -360,6 +408,7 @@ pub fn create_encrypted_certificate_pem(
         password,
         iterations,
         "ENCRYPTED CERTIFICATE",
+        argon2_config,
     )
 }
 
@@ -411,34 +460,21 @@ pub fn derive_key(salt: &[u8], password: &str, iterations: u32) -> Vec<u8> {
 }
 
 /// Derive a key using Argon2id
-fn derive_key_argon2(salt: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
-    // 100k iterations ≈ time_cost=2, 600k iterations ≈ time_cost=6
-    let base_time_cost = iterations / 100_000;
-    let time_cost = if base_time_cost < 2 {
-        2
-    } else if base_time_cost > 10 {
-        10
-    } else {
-        base_time_cost
-    };
-
-    // For very high iteration counts, also increase memory cost
-    let memory_cost = if iterations >= 500_000 {
-        131072 // 128 MB for high security
-    } else if iterations >= 200_000 {
-        65536 // 64 MB for medium security
-    } else {
-        32768 // 32 MB for basic security
-    };
+fn derive_key_argon2(
+    salt: &[u8],
+    password: &str,
+    config: Argon2Config,
+) -> Result<Vec<u8>, ChainError> {
+    let (memory_cost, time_cost, parallelism) = config.params();
 
     let argon2 = Argon2::new(
-        argon2::Algorithm::Argon2id, // Most secure variant
-        argon2::Version::V0x13,      // Latest version
+        argon2::Algorithm::Argon2id,
+        argon2::Version::V0x13,
         argon2::Params::new(
-            memory_cost,    // memory cost (KB)
+            memory_cost,    // memory cost in KB
             time_cost,      // time cost (iterations)
-            1,              // parallelism (threads)
-            Some(KEY_SIZE), // output length (32 bytes)
+            parallelism,    // parallelism (threads)
+            Some(KEY_SIZE), // output length
         )
         .map_err(|e| ChainError::CipherError(format!("Argon2 params error: {}", e)))?,
     );
@@ -456,8 +492,9 @@ pub fn encrypt(
     data: &[u8],
     password: &str,
     iterations: u32,
+    argon2_config: Option<Argon2Config>,
 ) -> Result<Vec<u8>, ChainError> {
-    algo.encrypt(data, password, iterations)
+    algo.encrypt(data, password, iterations, argon2_config)
 }
 
 pub fn decrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
@@ -517,22 +554,21 @@ pub fn gcm_decrypt(
 pub fn gcm_encrypt_argon2(
     data: &[u8],
     password: &str,
-    iterations: u32,
+    config: Argon2Config,
 ) -> Result<Vec<u8>, ChainError> {
     let salt: [u8; ARGON2_SALT_SIZE] = rand::thread_rng().gen();
-
-    let derived_key = derive_key_argon2(&salt, password, iterations)?;
+    let derived_key = derive_key_argon2(&salt, password, config)?;
     let key = Key::<Aes256Gcm>::from_slice(&derived_key);
     let cipher = Aes256Gcm::new(key);
-
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
 
     let ciphertext = cipher
         .encrypt(&nonce, data)
         .map_err(|e| ChainError::CipherError(format!("GCM encryption failed: {}", e)))?;
 
-    // Format: [algorithm_id][salt][nonce][ciphertext]
+    // Format: [algorithm_id][config_id][salt][nonce][ciphertext]
     let mut result = CipherAlgo::GCMArgon2.to_vec();
+    result.push(config as u8);
     result.extend_from_slice(&salt);
     result.extend_from_slice(&nonce);
     result.extend_from_slice(&ciphertext);
@@ -541,22 +577,19 @@ pub fn gcm_encrypt_argon2(
 }
 
 /// Decrypt data using AES-256-GCM with Argon2 key derivation
-pub fn gcm_decrypt_argon2(
-    encrypted: &[u8],
-    password: &str,
-    iterations: u32,
-) -> Result<Vec<u8>, ChainError> {
-    if encrypted.len() < ARGON2_SALT_SIZE + NONCE_SIZE + 1 {
+pub fn gcm_decrypt_argon2(encrypted: &[u8], password: &str) -> Result<Vec<u8>, ChainError> {
+    if encrypted.len() < 1 + ARGON2_SALT_SIZE + NONCE_SIZE + 1 {
         return Err(ChainError::CipherError(
             "Invalid encrypted data: too short".to_string(),
         ));
     }
 
-    let salt = &encrypted[..ARGON2_SALT_SIZE];
-    let nonce = &encrypted[ARGON2_SALT_SIZE..ARGON2_SALT_SIZE + NONCE_SIZE];
-    let ciphertext = &encrypted[ARGON2_SALT_SIZE + NONCE_SIZE..];
+    let config = Argon2Config::from_u8(encrypted[0])?;
+    let salt = &encrypted[1..1 + ARGON2_SALT_SIZE];
+    let nonce = &encrypted[1 + ARGON2_SALT_SIZE..1 + ARGON2_SALT_SIZE + NONCE_SIZE];
+    let ciphertext = &encrypted[1 + ARGON2_SALT_SIZE + NONCE_SIZE..];
 
-    let derived_key = derive_key_argon2(salt, password, iterations)?;
+    let derived_key = derive_key_argon2(salt, password, config)?;
     let key = Key::<Aes256Gcm>::from_slice(&derived_key);
     let cipher = Aes256Gcm::new(key);
 
@@ -690,7 +723,7 @@ mod tests {
     use super::*;
 
     const ITERATIONS: u32 = 600_000;
-    const ARGON2_TEST_ITERATIONS: u32 = 100_000;
+    const ARGON2ID_CONFIG: Option<super::Argon2Config> = Some(super::Argon2Config::Balanced);
 
     #[test]
     fn test_encrypt_decrypt() {
@@ -698,10 +731,57 @@ mod tests {
             let data = b"hello world";
             let password = "password";
 
-            let encrypted = encrypt(algo.to_owned(), data, password, ITERATIONS).unwrap();
+            let encrypted = encrypt(algo.clone(), data, password, ITERATIONS, None).unwrap();
             let decrypted = decrypt(&encrypted, password, ITERATIONS).unwrap();
             assert_eq!(data, decrypted.as_slice());
         }
+    }
+
+    #[test]
+    fn test_encrypt_decrypt_argon2() {
+        let data = b"Hello, World! This is a test message for Argon2 encryption.";
+        let password = "test_password_123";
+
+        for config in [
+            Argon2Config::HighMemory,
+            Argon2Config::Balanced,
+            Argon2Config::Medium,
+            Argon2Config::Low,
+            Argon2Config::LowMemory,
+        ] {
+            let encrypted = encrypt(
+                CipherAlgo::GCMArgon2,
+                data,
+                password,
+                0, // iterations unused for Argon2
+                Some(config),
+            )
+            .unwrap();
+
+            let decrypted = decrypt(&encrypted, password, 0).unwrap();
+            assert_eq!(data, decrypted.as_slice());
+        }
+    }
+
+    #[test]
+    fn test_argon2_config_serialization() {
+        let test_cases = [
+            (Argon2Config::HighMemory, 0u8),
+            (Argon2Config::Balanced, 1u8),
+            (Argon2Config::Medium, 2u8),
+            (Argon2Config::Low, 3u8),
+            (Argon2Config::LowMemory, 4u8),
+        ];
+
+        for (config, expected_byte) in test_cases.iter() {
+            let config_byte = *config as u8;
+            assert_eq!(config_byte, *expected_byte);
+
+            let deserialized = Argon2Config::from_u8(config_byte).unwrap();
+            assert_eq!(*config as u8, deserialized as u8);
+        }
+
+        assert!(Argon2Config::from_u8(255).is_err());
     }
 
     #[test]
@@ -710,8 +790,44 @@ mod tests {
             let data = b"hello world";
             let password = "password";
 
-            let encrypted = encrypt(algo, data, password, ITERATIONS).unwrap();
+            let encrypted = encrypt(algo, data, password, ITERATIONS, None).unwrap();
             let decrypted = decrypt(&encrypted, "invalid password", ITERATIONS);
+            match decrypted {
+                Ok(decrypted) => {
+                    assert_ne!(data, decrypted.as_slice());
+                }
+                _ => {} // Expected failure
+            }
+        }
+    }
+
+    #[test]
+    fn test_encrypt_decrypt_argon2_invalid_password() {
+        let data = b"secret data";
+        let password = "correct_password";
+        let wrong_password = "wrong_password";
+
+        let encrypted = encrypt(
+            CipherAlgo::GCMArgon2,
+            data,
+            password,
+            0,
+            Some(Argon2Config::Balanced),
+        )
+        .unwrap();
+
+        let result = decrypt(&encrypted, wrong_password, 0);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_encrypt_decrypt_invalid_data() {
+        for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
+            let data = b"hello world";
+            let password = "password";
+
+            let encrypted = encrypt(algo.clone(), data, password, ITERATIONS, None).unwrap();
+            let decrypted = decrypt(&encrypted[..encrypted.len() - 1], password, ITERATIONS);
             match decrypted {
                 Ok(decrypted) => {
                     assert_ne!(data, decrypted.as_slice());
@@ -722,20 +838,21 @@ mod tests {
     }
 
     #[test]
-    fn test_encrypt_decrypt_invalid_data() {
-        for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
-            let data = b"hello world";
-            let password = "password";
+    fn test_encrypt_decrypt_argon2_invalid_data() {
+        let data = b"test data";
+        let password = "password";
 
-            let encrypted = encrypt(algo.clone(), data, password, ITERATIONS).unwrap();
-            let decrypted = decrypt(&encrypted[..encrypted.len() - 1], password, ITERATIONS);
-            match decrypted {
-                Ok(decrypted) => {
-                    assert_ne!(data, decrypted.as_slice());
-                }
-                _ => {}
-            }
-        }
+        let encrypted = encrypt(
+            CipherAlgo::GCMArgon2,
+            data,
+            password,
+            0,
+            Some(Argon2Config::Balanced),
+        )
+        .unwrap();
+
+        let result = decrypt(&encrypted[..encrypted.len() - 5], password, 0);
+        assert!(result.is_err());
     }
 
     #[test]
@@ -764,6 +881,15 @@ mod tests {
     }
 
     #[test]
+    fn test_create_checksum_argon2() {
+        let password = "test_password_123";
+        let checksum = create_checksum_argon2(password).unwrap();
+        assert!(check_checksum_argon2(password, &checksum).unwrap());
+
+        assert!(!check_checksum_argon2("wrong_password", &checksum).unwrap());
+    }
+
+    #[test]
     fn test_cbc_bit_flipping_attack() {
         // Given plaintext similar to the example
         let plaintext = b"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"; // 32 bytes, exactly two blocks
@@ -782,7 +908,7 @@ mod tests {
         let xor_value = b'b' ^ b'a'; // XOR between 'b' and 'a'
         let mut tampered_encrypted = leaked_ciphertext.clone();
 
-        // Modify the ciper text
+        // Modify the cipher text
         tampered_encrypted[IV_SIZE + 1] ^= xor_value;
 
         // Decrypt the tampered ciphertext
@@ -807,9 +933,15 @@ mod tests {
         let password = "test_password";
 
         for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
-            let pem_string =
-                encrypt_to_pem(algo.clone(), data, password, ITERATIONS, "TEST PRIVATE KEY")
-                    .unwrap();
+            let pem_string = encrypt_to_pem(
+                algo.clone(),
+                data,
+                password,
+                ITERATIONS,
+                "TEST PRIVATE KEY",
+                ARGON2ID_CONFIG,
+            )
+            .unwrap();
 
             assert!(pem_string.contains("-----BEGIN TEST PRIVATE KEY-----"));
             assert!(pem_string.contains("Proc-Type: 4,ENCRYPTED"));
@@ -831,6 +963,7 @@ mod tests {
             password,
             ITERATIONS,
             CipherAlgo::GCM,
+            ARGON2ID_CONFIG,
         )
         .unwrap();
 
@@ -849,9 +982,14 @@ mod tests {
         let key_data = b"-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...";
         let password = "key_password";
 
-        let pem_string =
-            create_encrypted_private_key_pem(key_data, password, ITERATIONS, CipherAlgo::CBC)
-                .unwrap();
+        let pem_string = create_encrypted_private_key_pem(
+            key_data,
+            password,
+            ITERATIONS,
+            CipherAlgo::CBC,
+            ARGON2ID_CONFIG,
+        )
+        .unwrap();
 
         let decrypted_key =
             load_encrypted_private_key_pem(&pem_string, password, ITERATIONS).unwrap();
@@ -865,8 +1003,15 @@ mod tests {
         let password = "correct_password";
         let wrong_password = "wrong_password";
 
-        let pem_string =
-            encrypt_to_pem(CipherAlgo::GCM, data, password, ITERATIONS, "SECRET DATA").unwrap();
+        let pem_string = encrypt_to_pem(
+            CipherAlgo::GCM,
+            data,
+            password,
+            ITERATIONS,
+            "SECRET DATA",
+            ARGON2ID_CONFIG,
+        )
+        .unwrap();
 
         let result = decrypt_from_pem(&pem_string, wrong_password, ITERATIONS);
         assert!(result.is_err());
@@ -878,8 +1023,15 @@ mod tests {
         let password = "test_password";
         let iterations = 10000;
 
-        let normal_pem =
-            encrypt_to_pem(CipherAlgo::GCM, data, password, iterations, "TEST KEY").unwrap();
+        let normal_pem = encrypt_to_pem(
+            CipherAlgo::GCM,
+            data,
+            password,
+            iterations,
+            "TEST KEY",
+            ARGON2ID_CONFIG,
+        )
+        .unwrap();
 
         let indented_pem = normal_pem
             .lines()
@@ -901,8 +1053,15 @@ mod tests {
         let password = "secure_password";
         let iterations = 10000;
 
-        let normal_pem =
-            encrypt_to_pem(CipherAlgo::CBC, data, password, iterations, "PRIVATE KEY").unwrap();
+        let normal_pem = encrypt_to_pem(
+            CipherAlgo::CBC,
+            data,
+            password,
+            iterations,
+            "PRIVATE KEY",
+            ARGON2ID_CONFIG,
+        )
+        .unwrap();
 
         let mixed_whitespace_pem = normal_pem
             .lines()
@@ -933,12 +1092,12 @@ mod tests {
             password,
             iterations,
             CipherAlgo::GCM,
+            ARGON2ID_CONFIG,
         )
         .unwrap();
 
         let pem_string = encrypted_pem.to_pem_string().unwrap();
 
-        // Add indentation to simulate copy-paste from a config file
         let indented_pem = pem_string
             .lines()
             .map(|line| format!("  {}", line))
@@ -955,7 +1114,6 @@ mod tests {
 
     #[test]
     fn test_base64_lines_with_whitespace() {
-        // Test that base64 data lines with various whitespace are handled correctly
         let test_pem = r#"    -----BEGIN TEST-----
         Proc-Type: 4,ENCRYPTED
         DEK-Info: AES-256-GCM,
@@ -966,7 +1124,6 @@ mod tests {
         bGQ=
     -----END TEST-----"#;
 
-        // This should parse without error (even though decryption might fail due to test data)
         let result = EncryptedPem::from_pem_string(test_pem);
         assert!(result.is_ok());
 
@@ -976,19 +1133,101 @@ mod tests {
     }
 
     #[test]
-    fn test_gcm_encrypt_decrypt_argon2() {
-        let data = b"Hello, World! This is a test message for Argon2 encryption.";
-        let password = "test_password_123";
+    fn test_cipher_algo_serialization() {
+        let test_cases = [
+            (CipherAlgo::GCM, 0u8),
+            (CipherAlgo::CBC, 1u8),
+            (CipherAlgo::CFB, 2u8),
+            (CipherAlgo::GCMArgon2, 3u8),
+        ];
 
-        let encrypted = encrypt(
+        for (algo, expected_byte) in test_cases.iter() {
+            let serialized = algo.to_vec();
+            assert_eq!(serialized, vec![*expected_byte]);
+
+            let deserialized = CipherAlgo::from_u8(*expected_byte).unwrap();
+            assert_eq!(algo.to_vec(), deserialized.to_vec());
+        }
+
+        assert!(CipherAlgo::from_u8(255).is_err());
+    }
+
+    #[test]
+    fn test_argon2_params() {
+        let test_cases = vec![
+            (Argon2Config::HighMemory, (47104, 1, 1)),
+            (Argon2Config::Balanced, (19456, 2, 1)),
+            (Argon2Config::Medium, (12288, 3, 1)),
+            (Argon2Config::Low, (9216, 4, 1)),
+            (Argon2Config::LowMemory, (7168, 5, 1)),
+        ];
+
+        for (config, expected_params) in test_cases {
+            assert_eq!(config.params(), expected_params);
+        }
+    }
+
+    #[test]
+    fn test_compatibility_between_algorithms() {
+        let data = b"test data for compatibility check";
+        let password = "test_password";
+
+        let gcm_encrypted = encrypt(CipherAlgo::GCM, data, password, ITERATIONS, None).unwrap();
+        let cbc_encrypted = encrypt(CipherAlgo::CBC, data, password, ITERATIONS, None).unwrap();
+        let cfb_encrypted = encrypt(CipherAlgo::CFB, data, password, ITERATIONS, None).unwrap();
+        let argon2_encrypted = encrypt(
             CipherAlgo::GCMArgon2,
             data,
             password,
-            ARGON2_TEST_ITERATIONS,
+            0,
+            Some(Argon2Config::Balanced),
         )
         .unwrap();
-        let decrypted = decrypt(&encrypted, password, ARGON2_TEST_ITERATIONS).unwrap();
 
-        assert_eq!(data, decrypted.as_slice());
+        assert_ne!(gcm_encrypted, cbc_encrypted);
+        assert_ne!(gcm_encrypted, cfb_encrypted);
+        assert_ne!(gcm_encrypted, argon2_encrypted);
+        assert_ne!(cbc_encrypted, cfb_encrypted);
+        assert_ne!(cbc_encrypted, argon2_encrypted);
+        assert_ne!(cfb_encrypted, argon2_encrypted);
+
+        assert_eq!(decrypt(&gcm_encrypted, password, ITERATIONS).unwrap(), data);
+        assert_eq!(decrypt(&cbc_encrypted, password, ITERATIONS).unwrap(), data);
+        assert_eq!(decrypt(&cfb_encrypted, password, ITERATIONS).unwrap(), data);
+        assert_eq!(decrypt(&argon2_encrypted, password, 0).unwrap(), data);
+    }
+
+    #[test]
+    fn test_empty_data_encryption() {
+        let empty_data = b"";
+        let password = "test_password";
+
+        for algo in [CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
+            let encrypted = encrypt(algo.clone(), empty_data, password, ITERATIONS, None).unwrap();
+            let decrypted = decrypt(&encrypted, password, ITERATIONS).unwrap();
+            assert_eq!(empty_data, decrypted.as_slice());
+        }
+
+        let encrypted = encrypt(
+            CipherAlgo::GCMArgon2,
+            empty_data,
+            password,
+            0,
+            Some(Argon2Config::Balanced),
+        )
+        .unwrap();
+        let decrypted = decrypt(&encrypted, password, 0).unwrap();
+        assert_eq!(empty_data, decrypted.as_slice());
+    }
+
+    #[test]
+    fn test_large_data_encryption() {
+        let large_data = vec![0x42u8; 1024 * 1024];
+        let password = "test_password";
+
+        let encrypted = encrypt(CipherAlgo::GCM, &large_data, password, 10000, None).unwrap();
+
+        let decrypted = decrypt(&encrypted, password, 10000).unwrap();
+        assert_eq!(large_data, decrypted);
     }
 }
