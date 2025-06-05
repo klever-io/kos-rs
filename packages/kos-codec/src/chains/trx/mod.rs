@@ -53,8 +53,14 @@ pub fn encode_sign_message(message: Vec<u8>) -> Result<Vec<u8>, ChainError> {
 
 pub fn decode_transaction(raw_tx: Vec<u8>) -> Result<protocol::Transaction, ChainError> {
     let tx = protocol::Transaction::decode(raw_tx.as_slice());
+    // Try to decode the transaction
     if let Ok(t) = tx {
-        return Ok(t);
+        // Check if raw_data exists
+        if let Some(ref raw_data) = t.raw_data {
+            if !raw_data.contract.is_empty() {
+                return Ok(t);
+            }
+        }
     }
 
     let raw_tx = protocol::transaction::Raw::decode(raw_tx.as_slice())?;
@@ -74,7 +80,7 @@ mod test {
     #[test]
     fn test_encode_for_sign() {
         let raw_tx = hex::decode(
-            "0a02487c22080608af18f6ec6c8340d8f8fae2e0315a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541e825d52582eec346c839b4875376117904a76cbc12154120ab1300cf70c048e4cf5d5b1b33f59653ed6626180a708fb1f7e2e031"
+            "0a0270592208dd5821dad87735a340f0e1b4b9f3325aae01081f12a9010a31747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e54726967676572536d617274436f6e747261637412740a1541da3a264b74539c2078206c60e025c673d35c04c0121541a614f803b6fd780986a42c78ec9c7f77e6ded13c2244a9059cbb00000000000000000000000079af4269d01fca9a32b476576ee384427a38b736000000000000000000000000000000000000000000000000000000000112a880709b90b1b9f332900180c2d72f"
         ).unwrap();
         let tx = Transaction {
             raw_data: raw_tx.clone(),
@@ -87,12 +93,33 @@ mod test {
 
         assert_eq!(
             hex::encode(result.tx_hash),
-            "96a09fd664f1a7abbbe8bca604ea40b80291119fed5283c71ba94882d5b3c8a5"
+            "bf9efe196a74dad03de5ebf46c07d17fe891549606c62f1a58edd3a58fc8712a"
+        );
+    }
+
+    #[test]
+    fn test_encode_for_sign_transaction() {
+        let raw_tx = hex::decode(
+            "0ad3010a0270592208dd5821dad87735a340f0e1b4b9f3325aae01081f12a9010a31747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e54726967676572536d617274436f6e747261637412740a1541da3a264b74539c2078206c60e025c673d35c04c0121541a614f803b6fd780986a42c78ec9c7f77e6ded13c2244a9059cbb00000000000000000000000079af4269d01fca9a32b476576ee384427a38b736000000000000000000000000000000000000000000000000000000000112a880709b90b1b9f332900180c2d72f"
+        ).unwrap();
+        let tx = Transaction {
+            raw_data: raw_tx.clone(),
+            tx_hash: vec![],
+            signature: vec![],
+            options: None,
+        };
+
+        let result = encode_for_sign(tx).unwrap();
+
+        assert_eq!(
+            hex::encode(result.tx_hash),
+            "bf9efe196a74dad03de5ebf46c07d17fe891549606c62f1a58edd3a58fc8712a"
         );
     }
 
     #[test]
     fn test_encode_for_broadcast() {
+        // this tranasction will be decoded using protocol::Transaction::decode
         let raw_tx = hex::decode(
             "0a02487c22080608af18f6ec6c8340d8f8fae2e0315a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541e825d52582eec346c839b4875376117904a76cbc12154120ab1300cf70c048e4cf5d5b1b33f59653ed6626180a708fb1f7e2e031"
         ).unwrap();
