@@ -28,6 +28,7 @@ use sha2::Sha256;
 
 use argon2::password_hash::{rand_core::OsRng as Argon2OsRng, SaltString as Argon2SaltString};
 use argon2::{Argon2, PasswordHash as Argon2PasswordHash, PasswordVerifier};
+use rand::RngCore;
 
 use super::base64::{simple_base64_decode, simple_base64_encode, wrap_base64};
 
@@ -508,18 +509,19 @@ pub fn decrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, 
 }
 
 pub fn gcm_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
-    // Derive key from password
-    let salt: [u8; 32] = rand::thread_rng().gen();
-    let derived_key = derive_key(&salt, password, iterations);
-    let key = Key::<Aes256Gcm>::from_slice(&derived_key);
-    let cipher = Aes256Gcm::new(key);
+    // Generate random values directly
+    let mut salt = [0u8; KEY_SIZE];
+    let mut nonce = [0u8; NONCE_SIZE];
+    OsRng.fill_bytes(&mut salt);
+    OsRng.fill_bytes(&mut nonce);
 
-    // Generate a unique nonce
-    let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+    // Derive key directly into stack array
+    let mut derived_key = [0u8; 32];
+    pbkdf2::pbkdf2_hmac::<sha2::Sha256>(password.as_bytes(), &salt, iterations, &mut derived_key);
 
-    // Encrypt data
-    let ciphertext = cipher
-        .encrypt(&nonce, data)
+    // Create cipher and encrypt in one go
+    let ciphertext = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&derived_key))
+        .encrypt(Nonce::from_slice(&nonce), data)
         .map_err(|e| ChainError::CipherError(format!("encryption failed: {}", e)))?;
 
     // Create PEM
@@ -527,7 +529,7 @@ pub fn gcm_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u
     result.extend_from_slice(&salt);
     result.extend_from_slice(&nonce);
     result.extend_from_slice(&ciphertext);
-
+    derived_key.fill(0);
     Ok(result)
 }
 
@@ -542,12 +544,89 @@ pub fn gcm_decrypt(
     let salt = &encrypted[..KEY_SIZE];
     let nonce = &encrypted[KEY_SIZE..KEY_SIZE + NONCE_SIZE];
     let encrypted_data = &encrypted[KEY_SIZE + NONCE_SIZE..];
-    let derived_key = derive_key(salt, password, iterations);
-    let key = Key::<Aes256Gcm>::from_slice(&derived_key);
-    let cipher = Aes256Gcm::new(key);
-    cipher
+
+    let mut derived_key = [0u8; 32];
+    pbkdf2::pbkdf2_hmac::<sha2::Sha256>(password.as_bytes(), salt, iterations, &mut derived_key);
+
+    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&derived_key));
+    let plaintext = cipher
         .decrypt(Nonce::from_slice(nonce), encrypted_data)
-        .map_err(|e| ChainError::CipherError(format!("decryption failed: {}", e)))
+        .map_err(|e| ChainError::CipherError(format!("decryption failed: {}", e)))?;
+
+    derived_key.fill(0);
+    Ok(plaintext)
+}
+
+pub struct CryptoContext {
+    derived_key: [u8; 32],
+    cipher: Aes256Gcm,
+}
+
+impl CryptoContext {
+    pub fn new(password: &str, salt: &[u8], iterations: u32) -> Self {
+        let mut derived_key = [0u8; 32];
+        pbkdf2::pbkdf2_hmac::<sha2::Sha256>(
+            password.as_bytes(),
+            salt,
+            iterations,
+            &mut derived_key,
+        );
+        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&derived_key));
+
+        Self {
+            derived_key,
+            cipher,
+        }
+    }
+
+    pub fn encrypt(&self, data: &[u8], nonce: &[u8; 12]) -> Result<Vec<u8>, ChainError> {
+        self.cipher
+            .encrypt(Nonce::from_slice(nonce), data)
+            .map_err(|e| ChainError::CipherError(format!("encryption failed: {}", e)))
+    }
+
+    pub fn decrypt(&self, ciphertext: &[u8], nonce: &[u8; 12]) -> Result<Vec<u8>, ChainError> {
+        self.cipher
+            .decrypt(Nonce::from_slice(nonce), ciphertext)
+            .map_err(|e| ChainError::CipherError(format!("decryption failed: {}", e)))
+    }
+}
+
+impl Drop for CryptoContext {
+    fn drop(&mut self) {
+        self.derived_key.fill(0);
+    }
+}
+
+// Batch encrypt multiple items with same password (amortizes key derivation cost)
+pub fn gcm_encrypt_batch(
+    items: &[&[u8]],
+    password: &str,
+    iterations: u32,
+) -> Result<Vec<Vec<u8>>, ChainError> {
+    // Generate shared salt
+    let mut salt = [0u8; KEY_SIZE];
+    OsRng.fill_bytes(&mut salt);
+
+    // Create context once
+    let ctx = CryptoContext::new(password, &salt, iterations);
+    let mut results = Vec::with_capacity(items.len());
+
+    for data in items {
+        let mut nonce = [0u8; NONCE_SIZE];
+        OsRng.fill_bytes(&mut nonce);
+
+        let ciphertext = ctx.encrypt(data, &nonce)?;
+
+        let mut result = CipherAlgo::GCM.to_vec();
+        result.extend_from_slice(&salt);
+        result.extend_from_slice(&nonce);
+        result.extend_from_slice(&ciphertext);
+
+        results.push(result);
+    }
+
+    Ok(results)
 }
 
 /// Encrypt data using AES-256-GCM with Argon2 key derivation
@@ -728,6 +807,18 @@ mod tests {
     #[test]
     fn test_encrypt_decrypt() {
         for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
+            let data = b"hello world";
+            let password = "password";
+
+            let encrypted = encrypt(algo.clone(), data, password, ITERATIONS, None).unwrap();
+            let decrypted = decrypt(&encrypted, password, ITERATIONS).unwrap();
+            assert_eq!(data, decrypted.as_slice());
+        }
+    }
+
+    #[test]
+    fn test_gcm_encrypt_decrypt() {
+        for algo in vec![CipherAlgo::GCM] {
             let data = b"hello world";
             let password = "password";
 
@@ -933,6 +1024,31 @@ mod tests {
         let password = "test_password";
 
         for algo in vec![CipherAlgo::GCM, CipherAlgo::CBC, CipherAlgo::CFB] {
+            let pem_string = encrypt_to_pem(
+                algo.clone(),
+                data,
+                password,
+                ITERATIONS,
+                "TEST PRIVATE KEY",
+                ARGON2ID_CONFIG,
+            )
+            .unwrap();
+
+            assert!(pem_string.contains("-----BEGIN TEST PRIVATE KEY-----"));
+            assert!(pem_string.contains("Proc-Type: 4,ENCRYPTED"));
+            assert!(pem_string.contains("DEK-Info: AES-256-"));
+
+            let decrypted = decrypt_from_pem(&pem_string, password, ITERATIONS).unwrap();
+            assert_eq!(data, decrypted.as_slice());
+        }
+    }
+
+    #[test]
+    fn test_gcm_encrypt_decrypt_pem() {
+        let data = b"This is test private key data";
+        let password = "test_password";
+
+        for algo in vec![CipherAlgo::GCM] {
             let pem_string = encrypt_to_pem(
                 algo.clone(),
                 data,
