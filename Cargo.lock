@@ -592,6 +592,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c7f02d4ea65f2c1853089ffd8d2787bdbc63de2f0d29dedbcf8ccdfa0ccd4cf"
 
 [[package]]
+name = "base32"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "022dfe9eb35f19ebbcb51e0b40a5ab759f46ad60cadf7297e0bd085afb50e076"
+
+[[package]]
 name = "base58"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2983,6 +2989,8 @@ name = "kos-codec"
 version = "0.2.25"
 dependencies = [
  "alloy-dyn-abi",
+ "base32",
+ "base64 0.22.1",
  "bitcoin",
  "bs58",
  "byteorder",
@@ -2990,6 +2998,7 @@ dependencies = [
  "cosmrs",
  "hex",
  "kos",
+ "leb128",
  "pallas-primitives",
  "parity-scale-codec",
  "prost",
@@ -2999,6 +3008,7 @@ dependencies = [
  "rlp",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "sha3",
  "tiny-json-rs",
  "xrpl-rust",
@@ -3059,6 +3069,12 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+
+[[package]]
+name = "leb128"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "884e2677b40cc8c339eaefcb701c32ef1fd2493d71118dc0ca4b6a736c93bd67"
 
 [[package]]
 name = "libc"
