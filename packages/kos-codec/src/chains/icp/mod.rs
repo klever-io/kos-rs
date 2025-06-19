@@ -2,7 +2,7 @@ use base32;
 use kos::chains::icp::crc_calc_singletable;
 use kos::chains::util::{byte_vectors_to_bytes, bytes_to_byte_vectors};
 use kos::chains::{ChainError, Transaction};
-use kos::crypto::base64::simple_base64_decode;
+use kos::crypto::base64::{simple_base64_decode, simple_base64_encode};
 use leb128;
 use serde::{Deserialize, Serialize};
 use serde_cbor::Value as CborValue;
@@ -48,10 +48,10 @@ pub struct DAppResponse {
 }
 
 #[derive(Debug, Serialize)]
-#[serde(untagged)]
-pub enum DAppResult {
-    CallResult(String),
-    Success(bool),
+pub struct DAppResult {
+    #[serde(rename = "contentMap")]
+    pub content_map: String,
+    pub certificate: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -219,14 +219,29 @@ fn encode_dapp_transaction_for_sign(
 fn encode_dapp_transaction_for_broadcast(
     mut transaction: Transaction,
 ) -> Result<Transaction, ChainError> {
-    // For DApp transactions, raw_data already contains the CBOR to send to IC
-    // The signature must be applied to the CBOR authentication envelope
+    // The raw_data already contains the CBOR content to send to IC
+    let content_map_base64 = simple_base64_encode(&transaction.raw_data);
 
-    // Create CBOR authentication envelope with signature
-    let auth_envelope = create_cbor_auth_envelope(&transaction)?;
+    // For DApp transactions, initially the certificate is empty
+    // The dApp will make the call to IC and receive the certificate
+    let certificate_base64 = String::new();
 
-    // The final result is the complete CBOR envelope ready to send to IC
-    transaction.signature = auth_envelope;
+    // Create response in the format expected by the dApp
+    let dapp_result = DAppResult {
+        content_map: content_map_base64,
+        certificate: certificate_base64,
+    };
+
+    let dapp_response = DAppResponse {
+        id: Some(1),
+        jsonrpc: "2.0".to_string(),
+        result: Some(dapp_result),
+        error: None,
+    };
+
+    // Store complete JSON response
+    transaction.signature = serde_json::to_vec(&dapp_response)
+        .map_err(|e| ChainError::InvalidData(format!("JSON encoding failed: {}", e)))?;
 
     Ok(transaction)
 }
@@ -778,6 +793,39 @@ mod tests {
 
         let result = validate_icrc49_request(invalid_request.as_bytes());
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_icrc49_request_hash() {
+        let valid_request = r#"{
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "icrc49_call_canister",
+            "params": {
+                "canisterId": "rrkah-fqaaa-aaaaa-aaaaq-cai",
+                "sender": "sgyks-q7tq3-tczsp-tytog-mxwxi-qxnym-sfoh6-ky4rj-dxhls-ryvy7-zae",
+                "method": "greet",
+                "arg": "RElETAABcQJtZQ=="
+            }
+        }"#;
+
+        let result = validate_icrc49_request(valid_request.as_bytes());
+        assert!(result.is_ok());
+
+        let request = result.unwrap();
+
+        let call_request = create_call_request_from_dapp(request.params).unwrap();
+
+        let request_hash = calculate_call_request_hash(&call_request);
+
+        assert!(request_hash.is_ok());
+
+        let hash = request_hash.unwrap();
+
+        assert_eq!(
+            hex::encode(hash),
+            "0a69632d726571756573748eee42bd6d0cc78e5a1397fd5d7d1b25447ae45947013b3d225a2f0f84c684e8"
+        );
     }
 
     #[test]
