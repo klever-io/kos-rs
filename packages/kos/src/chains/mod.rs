@@ -595,7 +595,7 @@ impl ChainRegistry {
             (
                 constants::ICP,
                 ChainInfo {
-                    factory: || Box::new(ICP::new(KeyType::SECP256K1)),
+                    factory: || Box::new(ICP::new(KeyType::ED25519)),
                     supported: true,
                 },
             ),
