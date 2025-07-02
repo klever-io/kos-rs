@@ -21,7 +21,9 @@ enum TransactionType {
 // Structure for DApp requests (ICRC-49)
 #[derive(Debug, Deserialize)]
 pub struct DAppRequest {
+    #[allow(dead_code)]
     pub id: Option<u64>,
+    #[allow(dead_code)]
     pub jsonrpc: String,
     pub method: String,
     pub params: ICRC49Params,
@@ -79,6 +81,7 @@ pub struct CallContentRequest {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum HashValue {
     String(String),
     Bytes(Vec<u8>),
@@ -107,7 +110,7 @@ fn detect_transaction_type(raw_data: &[u8]) -> TransactionType {
 
 // Main function for encoding transactions for signing
 // Automatically detects if it's a regular transaction or DApp ICRC-49
-pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, ChainError> {
+pub fn encode_for_sign(transaction: Transaction) -> Result<Transaction, ChainError> {
     let transaction_type = detect_transaction_type(&transaction.raw_data);
 
     match transaction_type {
@@ -124,7 +127,7 @@ pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, Chai
 
 // Main function for encoding transactions for broadcast
 // Automatically detects if it's a regular transaction or DApp ICRC-49
-pub fn encode_for_broadcast(mut transaction: Transaction) -> Result<Transaction, ChainError> {
+pub fn encode_for_broadcast(transaction: Transaction) -> Result<Transaction, ChainError> {
     let transaction_type = detect_transaction_type(&transaction.raw_data);
 
     match transaction_type {
@@ -200,7 +203,7 @@ fn encode_dapp_transaction_for_sign(
     // Convert to CallContentRequest (internal IC format)
     let call_request = create_call_request_from_dapp(dapp_request.params)?;
 
-    // **IMPORTANT: Encode in CBOR for IC communication**
+    // Encode in CBOR for IC communication
     let cbor_content = encode_call_content_to_cbor(&call_request)?;
 
     // Calculate request hash for signing
@@ -292,149 +295,6 @@ fn encode_call_content_to_cbor(call_request: &CallContentRequest) -> Result<Vec<
         .map_err(|e| ChainError::InvalidData(format!("CBOR encoding failed: {}", e)))?;
 
     Ok(cbor_bytes)
-}
-
-// Create CBOR authentication envelope with signature
-fn create_cbor_auth_envelope(transaction: &Transaction) -> Result<Vec<u8>, ChainError> {
-    use serde_cbor::Value as CborValue;
-    use std::collections::BTreeMap;
-
-    // Create authentication envelope according to IC spec
-    let mut envelope = BTreeMap::new();
-
-    // Call content (already in CBOR)
-    envelope.insert(
-        CborValue::Text("content".to_string()),
-        CborValue::Bytes(transaction.raw_data.clone()),
-    );
-
-    // Wallet signature
-    if !transaction.signature.is_empty() {
-        envelope.insert(
-            CborValue::Text("sender_sig".to_string()),
-            CborValue::Bytes(transaction.signature.clone()),
-        );
-    }
-
-    // Public key of sender (you can implement according to your wallet)
-    // envelope.insert("sender_pubkey", CborValue::Bytes(public_key));
-
-    let cbor_envelope = CborValue::Map(envelope);
-
-    // Encode complete envelope
-    let mut envelope_bytes = Vec::new();
-    serde_cbor::to_writer(&mut envelope_bytes, &cbor_envelope)
-        .map_err(|e| ChainError::InvalidData(format!("CBOR envelope encoding failed: {}", e)))?;
-
-    Ok(envelope_bytes)
-}
-
-// Decode CBOR response from IC
-pub fn decode_ic_response(cbor_data: &[u8]) -> Result<ICResponse, ChainError> {
-    use serde_cbor::Value as CborValue;
-
-    let cbor_value: CborValue = serde_cbor::from_slice(cbor_data)
-        .map_err(|e| ChainError::InvalidData(format!("CBOR decode failed: {}", e)))?;
-
-    match cbor_value {
-        CborValue::Map(map) => {
-            let status = map
-                .get(&CborValue::Text("status".to_string()))
-                .and_then(|v| match v {
-                    CborValue::Text(s) => Some(s.clone()),
-                    _ => None,
-                })
-                .unwrap_or_else(|| "unknown".to_string());
-
-            let reply = map
-                .get(&CborValue::Text("reply".to_string()))
-                .and_then(|v| match v {
-                    CborValue::Bytes(b) => Some(b.clone()),
-                    _ => None,
-                });
-
-            let reject_code = map
-                .get(&CborValue::Text("reject_code".to_string()))
-                .and_then(|v| match v {
-                    CborValue::Integer(i) => Some(*i as u64),
-                    _ => None,
-                });
-
-            let reject_message = map
-                .get(&CborValue::Text("reject_message".to_string()))
-                .and_then(|v| match v {
-                    CborValue::Text(s) => Some(s.clone()),
-                    _ => None,
-                });
-
-            Ok(ICResponse {
-                status,
-                reply,
-                reject_code,
-                reject_message,
-            })
-        }
-        _ => Err(ChainError::InvalidData(
-            "Invalid CBOR response format".to_string(),
-        )),
-    }
-}
-
-// IC response structure
-#[derive(Debug)]
-pub struct ICResponse {
-    pub status: String,
-    pub reply: Option<Vec<u8>>,
-    pub reject_code: Option<u64>,
-    pub reject_message: Option<String>,
-}
-
-// Create complete CBOR request for sending to IC
-pub fn create_ic_request_cbor(
-    call_request: &CallContentRequest,
-    signature: &[u8],
-    public_key: &[u8],
-) -> Result<Vec<u8>, ChainError> {
-    use serde_cbor::Value as CborValue;
-    use std::collections::BTreeMap;
-
-    // First, create the call content
-    let content_cbor = encode_call_content_to_cbor(call_request)?;
-
-    // Create complete authentication envelope
-    let mut envelope = BTreeMap::new();
-
-    // Request content
-    envelope.insert(
-        CborValue::Text("content".to_string()),
-        CborValue::Bytes(content_cbor),
-    );
-
-    // Authentication information
-    let mut sender_sig = BTreeMap::new();
-    sender_sig.insert(
-        CborValue::Text("signature".to_string()),
-        CborValue::Bytes(signature.to_vec()),
-    );
-    sender_sig.insert(
-        CborValue::Text("public_key".to_string()),
-        CborValue::Bytes(public_key.to_vec()),
-    );
-
-    envelope.insert(
-        CborValue::Text("sender_sig".to_string()),
-        CborValue::Map(sender_sig),
-    );
-
-    // Tag CBOR 55799 to identify as IC CBOR data
-    let tagged_envelope = CborValue::Tag(55799, Box::new(CborValue::Map(envelope)));
-
-    // Encode to bytes
-    let mut request_bytes = Vec::new();
-    serde_cbor::to_writer(&mut request_bytes, &tagged_envelope)
-        .map_err(|e| ChainError::InvalidData(format!("Final CBOR encoding failed: {}", e)))?;
-
-    Ok(request_bytes)
 }
 
 // Create a CallContentRequest from DApp parameters
@@ -537,7 +397,8 @@ fn principal_to_bytes(principal_str: &str) -> Result<Vec<u8>, ChainError> {
     Ok(data.to_vec())
 }
 
-fn sort_byte_arrays(src: &mut Vec<Vec<u8>>) {
+fn sort_byte_arrays(src: &mut [Vec<u8>]) {
+    #[allow(clippy::unnecessary_sort_by)]
     src.sort_by(|a, b| a.cmp(b));
 }
 
@@ -633,19 +494,8 @@ fn calculate_payload_hash(request: HashMap<String, HashValue>) -> Result<Vec<u8>
     Ok(result)
 }
 
-// Create ICRC-49 error response
-pub fn create_error_response(request_id: Option<u64>, code: i32, message: String) -> Vec<u8> {
-    let response = DAppResponse {
-        id: request_id,
-        jsonrpc: "2.0".to_string(),
-        result: None,
-        error: Some(DAppError { code, message }),
-    };
-
-    serde_json::to_vec(&response).unwrap_or_default()
-}
-
 // Validate if an ICRC-49 request is valid
+#[allow(dead_code)]
 pub fn validate_icrc49_request(raw_data: &[u8]) -> Result<DAppRequest, ChainError> {
     let request: DAppRequest = serde_json::from_slice(raw_data)
         .map_err(|e| ChainError::InvalidTransaction(format!("Invalid JSON: {}", e)))?;
@@ -730,15 +580,6 @@ mod tests {
 
         let signature = vec![0x11, 0x22, 0x33];
         let public_key = vec![0x44, 0x55, 0x66];
-
-        let ic_request = create_ic_request_cbor(&call_request, &signature, &public_key);
-        assert!(ic_request.is_ok(), "IC request creation should succeed");
-
-        let request_bytes = ic_request.unwrap();
-        assert!(
-            !request_bytes.is_empty(),
-            "Request bytes should not be empty"
-        );
     }
 
     #[test]
@@ -839,20 +680,6 @@ mod tests {
         let invalid_principal = "invalid-principal";
         let result = principal_to_bytes(invalid_principal);
         assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_error_response_creation() {
-        let error_response =
-            create_error_response(Some(1), 3000, "Permission not granted".to_string());
-
-        let response_json: serde_json::Value =
-            serde_json::from_slice(&error_response).expect("Error response should be valid JSON");
-
-        assert_eq!(response_json["id"], 1);
-        assert_eq!(response_json["jsonrpc"], "2.0");
-        assert_eq!(response_json["error"]["code"], 3000);
-        assert_eq!(response_json["error"]["message"], "Permission not granted");
     }
 
     #[test]
