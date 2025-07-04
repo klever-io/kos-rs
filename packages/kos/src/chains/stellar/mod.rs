@@ -1,5 +1,5 @@
 use crate::chains::util::private_key_from_vec;
-use crate::chains::{Chain, ChainType};
+use crate::chains::{Chain, ChainError, ChainType, Transaction};
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use alloc::format;
@@ -77,67 +77,73 @@ impl Chain for Stellar {
         &self,
         mnemonic: alloc::string::String,
         password: alloc::string::String,
-    ) -> Result<alloc::vec::Vec<u8>, super::ChainError> {
+    ) -> Result<Vec<u8>, super::ChainError> {
         Ok(bip32::mnemonic_to_seed(mnemonic, password)?)
     }
 
     fn derive(
         &self,
-        seed: alloc::vec::Vec<u8>,
+        seed: Vec<u8>,
         path: alloc::string::String,
-    ) -> Result<alloc::vec::Vec<u8>, super::ChainError> {
+    ) -> Result<Vec<u8>, super::ChainError> {
         let result = bip32::derive_ed25519(&seed, path)?;
         Ok(Vec::from(result))
     }
 
-    fn get_path(&self, index: u32, is_legacy: bool) -> alloc::string::String {
+    fn get_path(&self, index: u32, _is_legacy: bool) -> alloc::string::String {
         format!("m/44'/{}'/{}'", 148, index)
     }
 
-    fn get_pbk(
-        &self,
-        private_key: alloc::vec::Vec<u8>,
-    ) -> Result<alloc::vec::Vec<u8>, super::ChainError> {
+    fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, super::ChainError> {
         let mut pvk_bytes = private_key_from_vec(&private_key)?;
         let pbk = Ed25519::public_from_private(&pvk_bytes)?;
         pvk_bytes.fill(0);
         Ok(pbk)
     }
 
-    fn get_address(
-        &self,
-        public_key: alloc::vec::Vec<u8>,
-    ) -> Result<alloc::string::String, super::ChainError> {
+    fn get_address(&self, public_key: Vec<u8>) -> Result<alloc::string::String, super::ChainError> {
         stellar_encode(VERSION_BYTE_ACCOUNT_ID, &public_key)
     }
 
     fn sign_tx(
         &self,
-        private_key: alloc::vec::Vec<u8>,
-        tx: super::Transaction,
+        private_key: Vec<u8>,
+        mut tx: Transaction,
     ) -> Result<super::Transaction, super::ChainError> {
-        todo!()
+        let sig = self.sign_raw(private_key, tx.tx_hash.clone())?;
+
+        tx.signature = sig.as_slice().to_vec();
+        Ok(tx)
     }
 
     fn sign_message(
         &self,
-        private_key: alloc::vec::Vec<u8>,
-        message: alloc::vec::Vec<u8>,
-        legacy: bool,
-    ) -> Result<alloc::vec::Vec<u8>, super::ChainError> {
-        todo!()
+        private_key: Vec<u8>,
+        message: Vec<u8>,
+        _legacy: bool,
+    ) -> Result<Vec<u8>, super::ChainError> {
+        let sig = self.sign_raw(private_key.clone(), message.clone())?;
+
+        // public key is not recoverable from signature. So append it to the signature
+        let mut signature = sig;
+        signature.extend_from_slice(&private_key);
+
+        Ok(signature)
     }
 
     fn sign_raw(
         &self,
-        private_key: alloc::vec::Vec<u8>,
-        payload: alloc::vec::Vec<u8>,
-    ) -> Result<alloc::vec::Vec<u8>, super::ChainError> {
-        todo!()
+        private_key: Vec<u8>,
+        payload: Vec<u8>,
+    ) -> Result<Vec<u8>, super::ChainError> {
+        let mut pvk_bytes = private_key_from_vec(&private_key)?;
+        let signature = Ed25519::sign(&pvk_bytes, &payload)?;
+        pvk_bytes.fill(0);
+        Ok(signature)
     }
 
-    fn get_tx_info(&self, raw_tx: alloc::vec::Vec<u8>) -> Result<super::TxInfo, super::ChainError> {
-        todo!()
+    fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<super::TxInfo, super::ChainError> {
+        Err(ChainError::NotSupported)
     }
 
     fn get_chain_type(&self) -> super::ChainType {
