@@ -34,6 +34,7 @@ pub mod eth;
 pub mod icp;
 pub mod klv;
 pub mod sol;
+pub mod stellar;
 pub mod substrate;
 pub mod sui;
 pub mod trx;
@@ -862,4 +863,5 @@ pub enum ChainType {
     ATOM,
     BCH,
     BNB,
+    STELLAR,
 }

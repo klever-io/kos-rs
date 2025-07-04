@@ -2958,6 +2958,7 @@ dependencies = [
  "aes 0.8.4",
  "aes-gcm",
  "alloy-dyn-abi",
+ "base32",
  "bech32 0.9.1",
  "bip39-dict",
  "blake2b-ref",
