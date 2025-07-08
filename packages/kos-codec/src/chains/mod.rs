@@ -9,4 +9,5 @@ pub mod klv;
 pub mod sol;
 pub mod substrate;
 pub mod trx;
+pub mod xlm;
 pub mod xrp;
