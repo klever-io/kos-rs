@@ -382,7 +382,7 @@ struct ChainRegistry {
 }
 impl ChainRegistry {
     fn new() -> Self {
-        static REGISTRY: [(u32, ChainInfo); 47] = [
+        static REGISTRY: [(u32, ChainInfo); 48] = [
             (
                 constants::ETH,
                 ChainInfo {
@@ -723,6 +723,13 @@ impl ChainRegistry {
                 constants::STOLZ,
                 ChainInfo {
                     factory: || Box::new(ETH::new_eth_based(67, 2344, "STOLZ", "Stolz")),
+                    supported: true,
+                },
+            ),
+            (
+                constants::XLM,
+                ChainInfo {
+                    factory: || Box::new(stellar::Stellar {}),
                     supported: true,
                 },
             ),

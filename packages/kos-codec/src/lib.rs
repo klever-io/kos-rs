@@ -87,7 +87,7 @@ pub fn encode_for_broadcast(
         ChainType::ETH => eth::encode_for_broadcast(transaction)?,
         ChainType::SUBSTRATE => substrate::encode_for_broadcast(transaction, account)?,
         ChainType::ICP => icp::encode_for_broadcast(transaction)?,
-        ChainType::STELLAR => xlm::encode_for_broadcast(transaction)?,
+        ChainType::STELLAR => xlm::encode_for_broadcast(transaction, account.public_key)?,
         _ => transaction,
     })
 }
