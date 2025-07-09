@@ -34,7 +34,7 @@ pub fn encode_for_signing(
         ChainType::ETH => eth::encode_for_sign(transaction)?,
         ChainType::SUBSTRATE => substrate::encode_for_sign(transaction, account)?,
         ChainType::ICP => icp::encode_for_sign(transaction)?,
-        ChainType::STELLAR => xlm::encode_for_sign(transaction)?,
+        ChainType::XLM => xlm::encode_for_sign(transaction)?,
         _ => transaction,
     })
 }
@@ -87,7 +87,7 @@ pub fn encode_for_broadcast(
         ChainType::ETH => eth::encode_for_broadcast(transaction)?,
         ChainType::SUBSTRATE => substrate::encode_for_broadcast(transaction, account)?,
         ChainType::ICP => icp::encode_for_broadcast(transaction)?,
-        ChainType::STELLAR => xlm::encode_for_broadcast(transaction, account.public_key)?,
+        ChainType::XLM => xlm::encode_for_broadcast(transaction, account.public_key)?,
         _ => transaction,
     })
 }

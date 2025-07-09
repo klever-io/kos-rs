@@ -34,11 +34,11 @@ pub mod eth;
 pub mod icp;
 pub mod klv;
 pub mod sol;
-pub mod stellar;
 pub mod substrate;
 pub mod sui;
 pub mod trx;
 pub mod util;
+pub mod xlm;
 pub mod xrp;
 
 #[derive(Debug)]
@@ -729,7 +729,7 @@ impl ChainRegistry {
             (
                 constants::XLM,
                 ChainInfo {
-                    factory: || Box::new(stellar::Stellar {}),
+                    factory: || Box::new(xlm::XLM {}),
                     supported: true,
                 },
             ),
@@ -870,5 +870,5 @@ pub enum ChainType {
     ATOM,
     BCH,
     BNB,
-    STELLAR,
+    XLM,
 }

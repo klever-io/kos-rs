@@ -1,8 +1,5 @@
 use base64::{engine::general_purpose, Engine as _};
-use kos::{
-    chains::{ChainError, Transaction},
-    crypto::base64::simple_base64_decode,
-};
+use kos::chains::{ChainError, Transaction};
 use sha2::{Digest, Sha256};
 use stellar_xdr::curr::{
     BytesM, DecoratedSignature, EnvelopeType, Hash, Limits, ReadXdr, Signature, SignatureHint,
@@ -191,52 +188,58 @@ pub fn encode_for_broadcast_with_pubkey(
     Ok(transaction)
 }
 
-#[test]
-fn test_encode_for_sign() {
-    // Sample unsigned transaction XDR (base64)
-    let unsigned_tx_xdr = simple_base64_decode("AAAAAgAAAACn54ed9JVAQdXN6d0E5Q+QH/0BOFi5/jWw3LII81gdPgAAAGQDcl2eAAAAGQAAAAEAAAAAAAAAAAAAAABobmAtAAAAAAAAAAEAAAAAAAAAAQAAAAAvdBR3bp6jt7IkpRzKY3SZsapC3gFKYPBm3sN2Ss3C7QAAAAAAAAAAAAAAAQAAAAAAAAAA").unwrap();
+#[cfg(test)]
+mod test {
+    use super::*;
+    use kos::crypto::base64::simple_base64_decode;
 
-    let tx = Transaction {
-        raw_data: unsigned_tx_xdr,
-        tx_hash: vec![],
-        signature: vec![],
-        options: None,
-    };
+    #[test]
+    fn test_encode_for_sign() {
+        // Sample unsigned transaction XDR (base64)
+        let unsigned_tx_xdr = simple_base64_decode("AAAAAgAAAACn54ed9JVAQdXN6d0E5Q+QH/0BOFi5/jWw3LII81gdPgAAAGQDcl2eAAAAGQAAAAEAAAAAAAAAAAAAAABobmAtAAAAAAAAAAEAAAAAAAAAAQAAAAAvdBR3bp6jt7IkpRzKY3SZsapC3gFKYPBm3sN2Ss3C7QAAAAAAAAAAAAAAAQAAAAAAAAAA").unwrap();
 
-    // Test encode_for_sign
-    let result = encode_for_sign(tx).unwrap();
+        let tx = Transaction {
+            raw_data: unsigned_tx_xdr,
+            tx_hash: vec![],
+            signature: vec![],
+            options: None,
+        };
 
-    // Should have computed a transaction hash for signing
-    assert!(!result.tx_hash.is_empty());
-    assert_eq!(result.tx_hash.len(), 32); // Should be 32 bytes
-}
+        // Test encode_for_sign
+        let result = encode_for_sign(tx).unwrap();
 
-#[test]
-fn test_encode_for_broadcast() {
-    // Sample unsigned transaction XDR
-    let unsigned_tx_xdr = simple_base64_decode("AAAAAgAAAABpXkXR6vDcVWLtLrsJ1hp7lWvM+Ye0FtE+mOKbqNqUNgAAAGQAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAGlZcE6Gp11mqHJFzMGxydqvK2dVLuTjGsOFf4DHXS5BAAAAAAAAAAAAA4fkAAAAAAAAAAA=").unwrap();
+        // Should have computed a transaction hash for signing
+        assert!(!result.tx_hash.is_empty());
+        assert_eq!(result.tx_hash.len(), 32); // Should be 32 bytes
+    }
 
-    // Sample 64-byte signature (dummy for testing)
-    let dummy_signature = vec![
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e,
-        0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d,
-        0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c,
-        0x3d, 0x3e, 0x3f, 0x40,
-    ];
+    #[test]
+    fn test_encode_for_broadcast() {
+        // Sample unsigned transaction XDR
+        let unsigned_tx_xdr = simple_base64_decode("AAAAAgAAAABpXkXR6vDcVWLtLrsJ1hp7lWvM+Ye0FtE+mOKbqNqUNgAAAGQAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAGlZcE6Gp11mqHJFzMGxydqvK2dVLuTjGsOFf4DHXS5BAAAAAAAAAAAAA4fkAAAAAAAAAAA=").unwrap();
 
-    let tx = Transaction {
-        raw_data: unsigned_tx_xdr,
-        tx_hash: vec![],
-        signature: dummy_signature,
-        options: None,
-    };
+        // Sample 64-byte signature (dummy for testing)
+        let dummy_signature = vec![
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+            0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c,
+            0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a,
+            0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
+            0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40,
+        ];
 
-    // Test encode_for_broadcast with dummy public key
-    let dummy_public_key_hex =
-        "a79787f3a5511a41d5cde9dd04e50f901ffd010858b9fe35b0dcb208f3581d3e".to_string();
-    let result = encode_for_broadcast(tx, dummy_public_key_hex).unwrap();
+        let tx = Transaction {
+            raw_data: unsigned_tx_xdr,
+            tx_hash: vec![],
+            signature: dummy_signature,
+            options: None,
+        };
 
-    // Should have updated raw_data with signed transaction
-    assert!(!result.raw_data.is_empty());
+        // Test encode_for_broadcast with dummy public key
+        let dummy_public_key_hex =
+            "a79787f3a5511a41d5cde9dd04e50f901ffd010858b9fe35b0dcb208f3581d3e".to_string();
+        let result = encode_for_broadcast(tx, dummy_public_key_hex).unwrap();
+
+        // Should have updated raw_data with signed transaction
+        assert!(!result.raw_data.is_empty());
+    }
 }

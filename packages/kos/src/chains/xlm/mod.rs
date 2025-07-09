@@ -9,7 +9,7 @@ use alloc::vec::Vec;
 // Stellar address encoding constants
 const VERSION_BYTE_ACCOUNT_ID: u8 = 6 << 3; // 48 - Base32-encodes to 'G...'
 
-pub struct Stellar {}
+pub struct XLM {}
 
 // CRC16 implementation for Stellar StrKey encoding
 fn crc16_checksum(data: &[u8]) -> u16 {
@@ -56,7 +56,7 @@ fn stellar_encode(version: u8, src: &[u8]) -> Result<String, super::ChainError> 
     Ok(encoded)
 }
 
-impl Chain for Stellar {
+impl Chain for XLM {
     fn get_id(&self) -> u32 {
         6
     }
@@ -147,7 +147,7 @@ impl Chain for Stellar {
     }
 
     fn get_chain_type(&self) -> super::ChainType {
-        ChainType::STELLAR
+        ChainType::XLM
     }
 }
 
@@ -157,7 +157,7 @@ mod tests {
 
     #[test]
     fn test_get_address() {
-        let stellar = Stellar {};
+        let stellar = XLM {};
 
         let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
         let seed = stellar
