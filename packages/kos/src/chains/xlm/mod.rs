@@ -34,7 +34,7 @@ fn crc16_checksum(data: &[u8]) -> u16 {
 fn stellar_encode(version: u8, src: &[u8]) -> Result<String, super::ChainError> {
     let payload_size = src.len();
 
-    if payload_size > 32 {
+    if payload_size != 32 {
         return Err(super::ChainError::InvalidPublicKey);
     }
 
@@ -122,13 +122,17 @@ impl Chain for XLM {
         message: Vec<u8>,
         _legacy: bool,
     ) -> Result<Vec<u8>, super::ChainError> {
-        let sig = self.sign_raw(private_key.clone(), message.clone())?;
+        let sig = self.sign_raw(private_key.clone(), message)?;
+
+        let pbk = self.get_pbk(private_key)?;
 
         // public key is not recoverable from signature. So append it to the signature
-        let mut signature = sig;
-        signature.extend_from_slice(&private_key);
+        let mut sig_with_pbk = Vec::new();
 
-        Ok(signature)
+        sig_with_pbk.append(&mut sig.to_vec());
+        sig_with_pbk.append(&mut pbk.to_vec());
+
+        Ok(sig_with_pbk)
     }
 
     fn sign_raw(
@@ -154,6 +158,23 @@ impl Chain for XLM {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::chains::Transaction;
+    use alloc::vec;
+
+    #[test]
+    fn test_xlm_derive() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let seed = XLM {}.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
+        let path = XLM {}.get_path(0, false);
+        let pvk = XLM {}.derive(seed, path).unwrap();
+        assert_eq!(pvk.len(), 32);
+        let pbk = XLM {}.get_pbk(pvk).unwrap();
+        assert_eq!(pbk.len(), 32); // Ed25519 public keys are 32 bytes
+        let addr = XLM {}.get_address(pbk).unwrap();
+        assert!(addr.starts_with('G'));
+        assert_eq!(addr.len(), 56);
+    }
 
     #[test]
     fn test_get_address() {
@@ -183,5 +204,133 @@ mod tests {
             56,
             "Stellar address should be 56 characters long"
         );
+    }
+
+    #[test]
+    fn test_get_address_with_different_index() {
+        let stellar = XLM {};
+
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let seed = stellar
+            .mnemonic_to_seed(mnemonic, String::from(""))
+            .unwrap();
+
+        let path = stellar.get_path(1, false);
+        let pbk = stellar.derive(seed, path).unwrap();
+
+        let public_key = stellar.get_pbk(pbk).unwrap();
+
+        let result = stellar.get_address(public_key);
+        assert!(result.is_ok(), "get_address should succeed");
+
+        let address = result.unwrap();
+        assert!(
+            address.starts_with('G'),
+            "Stellar address should start with 'G'"
+        );
+        assert_eq!(
+            address.len(),
+            56,
+            "Stellar address should be 56 characters long"
+        );
+    }
+
+    #[test]
+    fn test_sign_message() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let chain = XLM {};
+        let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = chain.get_path(0, false);
+        let pvk = chain.derive(seed, path).unwrap();
+
+        let message = "test message".as_bytes().to_vec();
+
+        let signature = chain.sign_message(pvk, message, false).unwrap();
+
+        // Ed25519 signature is 64 bytes + 32 bytes public key = 96 bytes total
+        assert_eq!(signature.len(), 96);
+
+        // Verify the signature contains both signature and public key
+        let sig_part = &signature[..64];
+        let pubkey_part = &signature[64..];
+
+        assert_eq!(sig_part.len(), 64);
+        assert_eq!(pubkey_part.len(), 32);
+    }
+
+    #[test]
+    fn test_sign_raw() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let chain = XLM {};
+        let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = chain.get_path(0, false);
+        let pvk = chain.derive(seed, path).unwrap();
+
+        let payload = "test payload".as_bytes().to_vec();
+
+        let signature = chain.sign_raw(pvk, payload).unwrap();
+
+        // Ed25519 signature should be 64 bytes
+        assert_eq!(signature.len(), 64);
+    }
+
+    #[test]
+    fn test_sign_tx() {
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+
+        let chain = XLM {};
+        let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
+        let path = chain.get_path(0, false);
+        let pvk = chain.derive(seed, path).unwrap();
+
+        let tx_hash = vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+            25, 26, 27, 28, 29, 30, 31, 32,
+        ];
+        let tx = Transaction {
+            raw_data: vec![],
+            tx_hash,
+            signature: vec![],
+            options: None,
+        };
+
+        let signed_tx = chain.sign_tx(pvk, tx).unwrap();
+
+        // Ed25519 signature should be 64 bytes
+        assert_eq!(signed_tx.signature.len(), 64);
+    }
+
+    #[test]
+    fn test_get_path() {
+        let chain = XLM {};
+
+        let path0 = chain.get_path(0, false);
+        assert_eq!(path0, "m/44'/148'/0'");
+
+        let path1 = chain.get_path(1, false);
+        assert_eq!(path1, "m/44'/148'/1'");
+
+        let path10 = chain.get_path(10, false);
+        assert_eq!(path10, "m/44'/148'/10'");
+    }
+
+    #[test]
+    fn test_stellar_encode() {
+        // Test with valid public key
+        let valid_key = vec![1; 32]; // 32-byte public key
+        let result = stellar_encode(VERSION_BYTE_ACCOUNT_ID, &valid_key);
+        assert!(result.is_ok());
+
+        let encoded = result.unwrap();
+        assert!(encoded.starts_with('G'));
+        assert_eq!(encoded.len(), 56);
+
+        // Test with invalid public key (too long)
+        let invalid_key = vec![1; 33]; // 33-byte key (too long)
+        let result = stellar_encode(VERSION_BYTE_ACCOUNT_ID, &invalid_key);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), ChainError::InvalidPublicKey));
     }
 }

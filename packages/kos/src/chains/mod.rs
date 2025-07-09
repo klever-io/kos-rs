@@ -288,12 +288,14 @@ impl ChainError {
     }
 }
 
+#[derive(Debug)]
 pub enum TxType {
     Unknown,
     Transfer,
     TriggerContract,
 }
 
+#[derive(Debug)]
 pub struct TxInfo {
     pub sender: String,
     pub receiver: String,
@@ -855,6 +857,7 @@ pub fn create_custom_evm(chain_id: u32) -> Option<Box<dyn Chain>> {
     ChainRegistry::new().create_custom_evm(chain_id)
 }
 
+#[derive(Debug, PartialEq)]
 pub enum ChainType {
     ETH,
     BTC,
