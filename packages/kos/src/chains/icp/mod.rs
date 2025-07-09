@@ -138,10 +138,10 @@ impl Chain for ICP {
 
     fn get_path(&self, index: u32, _is_legacy: bool) -> String {
         if self.key_type == KeyType::ED25519 {
-            return format!("m/44'/223'/0'/0'/{}", index);
+            return format!("m/44'/223'/0'/0'/{index}");
         }
 
-        format!("m/44'/223'/0'/0/{}", index)
+        format!("m/44'/223'/0'/0/{index}")
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {

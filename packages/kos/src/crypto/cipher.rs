@@ -199,7 +199,7 @@ impl EncryptedPem {
             .join("");
 
         let data = simple_base64_decode(&base64_data)
-            .map_err(|e| ChainError::CipherError(format!("Base64 decode error: {}", e)))?;
+            .map_err(|e| ChainError::CipherError(format!("Base64 decode error: {e}")))?;
 
         Ok(EncryptedPem {
             label,
@@ -227,7 +227,7 @@ pub fn from_pem(pem: Pem) -> Vec<u8> {
 }
 
 pub fn string_to_pem(data: &str) -> Result<Pem, ChainError> {
-    parse_pem(data.as_bytes()).map_err(|e| ChainError::CipherError(format!("{}", e)))
+    parse_pem(data.as_bytes()).map_err(|e| ChainError::CipherError(format!("{e}")))
 }
 
 /// Encrypt data and wrap it in a password-protected PEM format
@@ -306,7 +306,7 @@ pub fn decrypt_from_pem(
         .join("");
 
     let encrypted_data = simple_base64_decode(&base64_data)
-        .map_err(|e| ChainError::CipherError(format!("Base64 decode error: {}", e)))?;
+        .map_err(|e| ChainError::CipherError(format!("Base64 decode error: {e}")))?;
 
     decrypt(&encrypted_data, password, iterations)
 }
@@ -408,7 +408,7 @@ pub fn gcm_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u
     // Encrypt data
     let ciphertext = cipher
         .encrypt(&nonce, data)
-        .map_err(|e| ChainError::CipherError(format!("encryption failed: {}", e)))?;
+        .map_err(|e| ChainError::CipherError(format!("encryption failed: {e}")))?;
 
     // Create PEM
     let mut result = CipherAlgo::GCM.to_vec();
@@ -435,7 +435,7 @@ pub fn gcm_decrypt(
     let cipher = Aes256Gcm::new(key);
     cipher
         .decrypt(Nonce::from_slice(nonce), encrypted_data)
-        .map_err(|e| ChainError::CipherError(format!("decryption failed: {}", e)))
+        .map_err(|e| ChainError::CipherError(format!("decryption failed: {e}")))
 }
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
@@ -454,7 +454,7 @@ pub fn cbc_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u
 
     let ct = Aes256CbcEnc::new(key, &iv.into())
         .encrypt_padded_mut::<Pkcs7>(&mut buf, data.len())
-        .map_err(|e| ChainError::CipherError(format!("encryption failed: {}", e)))?;
+        .map_err(|e| ChainError::CipherError(format!("encryption failed: {e}")))?;
 
     let mut hmac_input = Vec::new();
     hmac_input.extend_from_slice(&iv);
@@ -464,7 +464,7 @@ pub fn cbc_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u
     let hmac_key = derive_key(&hmac_salt, password, iterations);
 
     let mut mac: Hmac<Sha256> = <Hmac<Sha256> as KeyInit>::new_from_slice(&hmac_key)
-        .map_err(|e| ChainError::CipherError(format!("HMAC creation failed: {}", e)))?;
+        .map_err(|e| ChainError::CipherError(format!("HMAC creation failed: {e}")))?;
     mac.update(&hmac_input);
     let hmac_result = mac.finalize().into_bytes();
 
@@ -499,7 +499,7 @@ pub fn cbc_decrypt(
     hmac_input.extend_from_slice(ciphertext);
 
     let mut mac: Hmac<Sha256> = <Hmac<Sha256> as KeyInit>::new_from_slice(&hmac_key)
-        .map_err(|e| ChainError::CipherError(format!("HMAC creation failed: {}", e)))?;
+        .map_err(|e| ChainError::CipherError(format!("HMAC creation failed: {e}")))?;
     mac.update(&hmac_input);
 
     mac.verify_slice(hmac).map_err(|_| {
@@ -515,7 +515,7 @@ pub fn cbc_decrypt(
     let mut buf = ciphertext.to_vec();
     let pt = Aes256CbcDec::new(key, iv_array)
         .decrypt_padded_mut::<Pkcs7>(&mut buf)
-        .map_err(|e| ChainError::CipherError(format!("decryption failed: {}", e)))?;
+        .map_err(|e| ChainError::CipherError(format!("decryption failed: {e}")))?;
 
     Ok(pt.to_vec())
 }

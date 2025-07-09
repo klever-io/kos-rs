@@ -35,9 +35,9 @@ impl std::fmt::Display for LdError {
             LdError::MnemonicError => write!(f, "MnemonicError"),
             LdError::IntanceError => write!(f, "IntanceError"),
             LdError::SignerError => write!(f, "SignerError"),
-            LdError::Generic { err } => write!(f, "{}", err),
+            LdError::Generic { err } => write!(f, "{err}"),
             LdError::DerivationError => write!(f, "DerivationError"),
-            LdError::InvalidIndex(index) => write!(f, "InvalidIndex: {}", index),
+            LdError::InvalidIndex(index) => write!(f, "InvalidIndex: {index}"),
         }
     }
 }

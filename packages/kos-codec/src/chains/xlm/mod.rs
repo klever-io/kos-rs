@@ -33,7 +33,7 @@ pub fn encode_for_sign_with_passphrase(
     let xdr_bytes = transaction.raw_data.clone();
 
     let tx_envelope = TransactionEnvelope::from_xdr(&xdr_bytes, Limits::none())
-        .map_err(|e| ChainError::InvalidData(format!("Failed to parse XDR: {}", e)))?;
+        .map_err(|e| ChainError::InvalidData(format!("Failed to parse XDR: {e}")))?;
 
     // Compute the signature base following Stellar's protocol
     let signature_base = match &tx_envelope {
@@ -41,11 +41,11 @@ pub fn encode_for_sign_with_passphrase(
             // Para V0, usar ENVELOPE_TYPE_TX para backwards compatibility
             let envelope_type = EnvelopeType::Tx;
             let envelope_type_bytes = envelope_type.to_xdr(Limits::none()).map_err(|e| {
-                ChainError::InvalidData(format!("Failed to encode envelope type: {}", e))
+                ChainError::InvalidData(format!("Failed to encode envelope type: {e}"))
             })?;
 
             let tx_xdr = v0_env.tx.to_xdr(Limits::none()).map_err(|e| {
-                ChainError::InvalidData(format!("Failed to encode transaction: {}", e))
+                ChainError::InvalidData(format!("Failed to encode transaction: {e}"))
             })?;
 
             // Signature base = network_id + envelope_type_bytes + tx_xdr
@@ -65,7 +65,7 @@ pub fn encode_for_sign_with_passphrase(
             };
 
             let tx_xdr = payload.to_xdr(Limits::none()).map_err(|e| {
-                ChainError::InvalidData(format!("Failed to encode transaction: {}", e))
+                ChainError::InvalidData(format!("Failed to encode transaction: {e}"))
             })?;
 
             tx_xdr
@@ -73,11 +73,11 @@ pub fn encode_for_sign_with_passphrase(
         TransactionEnvelope::TxFeeBump(fee_bump_env) => {
             let envelope_type = EnvelopeType::TxFeeBump;
             let envelope_type_bytes = envelope_type.to_xdr(Limits::none()).map_err(|e| {
-                ChainError::InvalidData(format!("Failed to encode envelope type: {}", e))
+                ChainError::InvalidData(format!("Failed to encode envelope type: {e}"))
             })?;
 
             let tx_xdr = fee_bump_env.tx.to_xdr(Limits::none()).map_err(|e| {
-                ChainError::InvalidData(format!("Failed to encode transaction: {}", e))
+                ChainError::InvalidData(format!("Failed to encode transaction: {e}"))
             })?;
 
             let mut signature_base = Vec::new();
@@ -123,7 +123,7 @@ pub fn encode_for_broadcast_with_pubkey(
     let xdr_bytes = transaction.raw_data.clone();
 
     let mut tx_envelope = TransactionEnvelope::from_xdr(&xdr_bytes, Limits::none())
-        .map_err(|e| ChainError::InvalidData(format!("Failed to parse XDR: {}", e)))?;
+        .map_err(|e| ChainError::InvalidData(format!("Failed to parse XDR: {e}")))?;
 
     // Create a decorated signature from the signature bytes
     if transaction.signature.len() != 64 {
@@ -179,7 +179,7 @@ pub fn encode_for_broadcast_with_pubkey(
 
     // Encode the signed transaction back to XDR and then base64 for broadcast
     let signed_xdr_bytes = tx_envelope.to_xdr(Limits::none()).map_err(|e| {
-        ChainError::InvalidData(format!("Failed to encode signed transaction: {}", e))
+        ChainError::InvalidData(format!("Failed to encode signed transaction: {e}"))
     })?;
 
     let signed_xdr_base64 = general_purpose::STANDARD.encode(&signed_xdr_bytes);

@@ -148,7 +148,7 @@ fn encode_regular_transaction_for_sign(
     let hex = hex::decode(transaction.raw_data.clone()).map_err(|_| ChainError::DecodeRawTx)?;
     let raw_data_str = String::from_utf8(hex).map_err(|_| ChainError::DecodeRawTx)?;
 
-    let wrapped_data = format!("{{\"hashes\":{}}}", raw_data_str);
+    let wrapped_data = format!("{{\"hashes\":{raw_data_str}}}");
 
     #[derive(tiny_json_rs::Deserialize)]
     struct HashContainer {
@@ -189,7 +189,7 @@ fn encode_dapp_transaction_for_sign(
 ) -> Result<Transaction, ChainError> {
     // Parse DApp JSON request
     let dapp_request: DAppRequest = serde_json::from_slice(&transaction.raw_data).map_err(|e| {
-        ChainError::InvalidTransaction(format!("Failed to parse DApp request: {}", e))
+        ChainError::InvalidTransaction(format!("Failed to parse DApp request: {e}"))
     })?;
 
     // Check if it's an ICRC-49 request
@@ -244,7 +244,7 @@ fn encode_dapp_transaction_for_broadcast(
 
     // Store complete JSON response
     transaction.signature = serde_json::to_vec(&dapp_response)
-        .map_err(|e| ChainError::InvalidData(format!("JSON encoding failed: {}", e)))?;
+        .map_err(|e| ChainError::InvalidData(format!("JSON encoding failed: {e}")))?;
 
     Ok(transaction)
 }
@@ -292,7 +292,7 @@ fn encode_call_content_to_cbor(call_request: &CallContentRequest) -> Result<Vec<
     // Encode to CBOR bytes
     let mut cbor_bytes = Vec::new();
     serde_cbor::to_writer(&mut cbor_bytes, &cbor_content)
-        .map_err(|e| ChainError::InvalidData(format!("CBOR encoding failed: {}", e)))?;
+        .map_err(|e| ChainError::InvalidData(format!("CBOR encoding failed: {e}")))?;
 
     Ok(cbor_bytes)
 }
@@ -307,12 +307,12 @@ fn create_call_request_from_dapp(params: ICRC49Params) -> Result<CallContentRequ
 
     // Decode arguments from base64
     let arg_bytes = simple_base64_decode(&params.arg)
-        .map_err(|e| ChainError::InvalidData(format!("Failed to decode arg: {}", e)))?;
+        .map_err(|e| ChainError::InvalidData(format!("Failed to decode arg: {e}")))?;
 
     // Calculate expiration time (4 minutes)
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map_err(|e| ChainError::InvalidData(format!("Time error: {}", e)))?;
+        .map_err(|e| ChainError::InvalidData(format!("Time error: {e}")))?;
 
     let created_at = now.as_nanos() as i64;
     let expire_time: i64 = 240_000_000_000; // 4 minutes in nanoseconds
@@ -322,7 +322,7 @@ fn create_call_request_from_dapp(params: ICRC49Params) -> Result<CallContentRequ
     let nonce_bytes = if let Some(nonce_str) = params.nonce {
         Some(
             simple_base64_decode(&nonce_str)
-                .map_err(|e| ChainError::InvalidData(format!("Failed to decode nonce: {}", e)))?,
+                .map_err(|e| ChainError::InvalidData(format!("Failed to decode nonce: {e}")))?,
         )
     } else {
         None
@@ -498,7 +498,7 @@ fn calculate_payload_hash(request: HashMap<String, HashValue>) -> Result<Vec<u8>
 #[allow(dead_code)]
 pub fn validate_icrc49_request(raw_data: &[u8]) -> Result<DAppRequest, ChainError> {
     let request: DAppRequest = serde_json::from_slice(raw_data)
-        .map_err(|e| ChainError::InvalidTransaction(format!("Invalid JSON: {}", e)))?;
+        .map_err(|e| ChainError::InvalidTransaction(format!("Invalid JSON: {e}")))?;
 
     // Basic validations
     if request.jsonrpc != "2.0" {

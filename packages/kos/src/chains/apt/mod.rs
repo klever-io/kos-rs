@@ -39,7 +39,7 @@ impl Chain for APT {
     }
 
     fn get_path(&self, index: u32, _is_legacy: bool) -> String {
-        format!("m/44'/637'/0'/0'/{}'", index)
+        format!("m/44'/637'/0'/0'/{index}'")
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {

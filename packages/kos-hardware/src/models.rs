@@ -179,14 +179,14 @@ impl CTxInfo {
     pub fn to_tx_info(&self) -> TxInfo {
         let sender = String::from_utf8(self.read_sender()).unwrap_or_else(|e| {
             unsafe {
-                DebugErrorHandler(format!("Invalid UTF-8 in sender: {}\0", e).as_ptr());
+                DebugErrorHandler(format!("Invalid UTF-8 in sender: {e}\0").as_ptr());
             }
             String::new()
         });
 
         let receiver = String::from_utf8(self.read_receiver()).unwrap_or_else(|e| {
             unsafe {
-                DebugErrorHandler(format!("Invalid UTF-8 in receiver: {}\0", e).as_ptr());
+                DebugErrorHandler(format!("Invalid UTF-8 in receiver: {e}\0").as_ptr());
             }
             String::new()
         });

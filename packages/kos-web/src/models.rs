@@ -140,13 +140,13 @@ impl TransactionChainOptions {
         app_id: Option<u32>,
     ) -> Result<TransactionChainOptions, Error> {
         let call = hex_string_to_vec(call.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid call hex: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("Invalid call hex: {e}")))?;
         let era = hex_string_to_vec(era.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid era hex: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("Invalid era hex: {e}")))?;
         let block_hash = hex_string_to_vec(block_hash.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid block hash hex: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("Invalid block hash hex: {e}")))?;
         let genesis_hash = hex_string_to_vec(genesis_hash.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid genesis hash hex: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("Invalid genesis hash hex: {e}")))?;
 
         Ok(TransactionChainOptions {
             data: ChainOptions::SUBSTRATE {

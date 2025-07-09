@@ -57,9 +57,9 @@ impl Chain for TRX {
 
     fn get_path(&self, index: u32, is_legacy: bool) -> String {
         if is_legacy {
-            format!("m/44'/{}'/{}'", BIP44_PATH, index)
+            format!("m/44'/{BIP44_PATH}'/{index}'")
         } else {
-            format!("m/44'/{}'/0'/0/{}", BIP44_PATH, index)
+            format!("m/44'/{BIP44_PATH}'/0'/0/{index}")
         }
     }
 

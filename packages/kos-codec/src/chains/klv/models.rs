@@ -181,7 +181,7 @@ impl TryFrom<TxContract> for proto::TxContract {
             .strip_prefix("type.googleapis.com/proto.")
             .ok_or(ConversionError::InvalidData("Invalid contract name"))?;
         //Add Type at the end of str
-        let contract_name = format!("{}Type", contract_name);
+        let contract_name = format!("{contract_name}Type");
         let contract_type = ContractType::from_str_name(&contract_name)
             .ok_or(ConversionError::InvalidData("Invalid contract type"))?;
         let proto_contract = proto::TxContract {

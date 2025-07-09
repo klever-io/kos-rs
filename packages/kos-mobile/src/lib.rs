@@ -90,7 +90,7 @@ fn generate_wallet_from_mnemonic(
         id: chain_id.to_string(),
     })?;
 
-    let use_legacy_path = options.as_ref().map_or(false, |opt| opt.use_legacy_path);
+    let use_legacy_path = options.as_ref().is_some_and(|opt| opt.use_legacy_path);
 
     let seed = chain.mnemonic_to_seed(mnemonic, String::from(""))?;
     let path = chain.get_path(index, use_legacy_path);

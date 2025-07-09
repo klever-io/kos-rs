@@ -35,11 +35,11 @@ impl Display for Bip32Err {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
             Bip32Err::ConversionErr => write!(f, "Conversion error"),
-            Bip32Err::Secp256Err(v) => write!(f, "Curve error: {}", v),
+            Bip32Err::Secp256Err(v) => write!(f, "Curve error: {v}"),
             Bip32Err::PathError => write!(f, "Path error"),
             Bip32Err::DeriveError => write!(f, "Derive error"),
             Bip32Err::InvalidMnemonic => write!(f, "Invalid mnemonic"),
-            Bip32Err::Sr25519Error(v) => write!(f, "Sr25519 error: {}", v),
+            Bip32Err::Sr25519Error(v) => write!(f, "Sr25519 error: {v}"),
             Bip32Err::HmacError => write!(f, "Hmac error"),
         }
     }
