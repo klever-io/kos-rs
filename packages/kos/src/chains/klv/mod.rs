@@ -53,7 +53,7 @@ impl Chain for KLV {
     }
 
     fn get_path(&self, index: u32, _is_legacy: bool) -> String {
-        format!("m/44'/{}'/0'/0'/{}'", BIP44_PATH, index)
+        format!("m/44'/{BIP44_PATH}'/0'/0'/{index}'")
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {

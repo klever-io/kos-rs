@@ -51,26 +51,26 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::InvalidString(e) => write!(f, "Invalid string: {}", e),
-            Error::JSONSerde(e) => write!(f, "JSON serialization: {}", e),
-            Error::UnsupportedChain(e) => write!(f, "Unsupported chain: {}", e),
-            Error::InvalidMnemonic(e) => write!(f, "Invalid mnemonic: {}", e),
-            Error::InvalidPath(e) => write!(f, "Invalid path: {}", e),
-            Error::InvalidPrivateKey(e) => write!(f, "Invalid private key: {}", e),
-            Error::InvalidPublicKey(e) => write!(f, "Invalid public key: {}", e),
-            Error::InvalidAddress(e) => write!(f, "Invalid address: {}", e),
-            Error::InvalidChecksum(e) => write!(f, "Invalid checksum: {}", e),
-            Error::InvalidSignature(e) => write!(f, "Invalid signature: {}", e),
-            Error::InvalidMessage(e) => write!(f, "Invalid message: {}", e),
-            Error::NotEnoughMemory(e) => write!(f, "Not enough memory: {}", e),
-            Error::InvalidEnumVariant(e) => write!(f, "Invalid Enum Variant error: {}", e),
-            Error::InvalidLen(e) => write!(f, "Invalid Len: {}", e),
-            Error::InvalidNumberParse(e) => write!(f, "Invalid number parse: {}", e),
-            Error::InvalidTransaction(e) => write!(f, "Invalid transaction: {}", e),
-            Error::WalletManager(e) => write!(f, "WalletManager error: {}", e),
-            Error::Cipher(e) => write!(f, "Cipher error: {}", e),
-            Error::Transport(e) => write!(f, "Transport error: {}", e),
-            Error::Delegate(e) => write!(f, "Delegate error: {}", e),
+            Error::InvalidString(e) => write!(f, "Invalid string: {e}"),
+            Error::JSONSerde(e) => write!(f, "JSON serialization: {e}"),
+            Error::UnsupportedChain(e) => write!(f, "Unsupported chain: {e}"),
+            Error::InvalidMnemonic(e) => write!(f, "Invalid mnemonic: {e}"),
+            Error::InvalidPath(e) => write!(f, "Invalid path: {e}"),
+            Error::InvalidPrivateKey(e) => write!(f, "Invalid private key: {e}"),
+            Error::InvalidPublicKey(e) => write!(f, "Invalid public key: {e}"),
+            Error::InvalidAddress(e) => write!(f, "Invalid address: {e}"),
+            Error::InvalidChecksum(e) => write!(f, "Invalid checksum: {e}"),
+            Error::InvalidSignature(e) => write!(f, "Invalid signature: {e}"),
+            Error::InvalidMessage(e) => write!(f, "Invalid message: {e}"),
+            Error::NotEnoughMemory(e) => write!(f, "Not enough memory: {e}"),
+            Error::InvalidEnumVariant(e) => write!(f, "Invalid Enum Variant error: {e}"),
+            Error::InvalidLen(e) => write!(f, "Invalid Len: {e}"),
+            Error::InvalidNumberParse(e) => write!(f, "Invalid number parse: {e}"),
+            Error::InvalidTransaction(e) => write!(f, "Invalid transaction: {e}"),
+            Error::WalletManager(e) => write!(f, "WalletManager error: {e}"),
+            Error::Cipher(e) => write!(f, "Cipher error: {e}"),
+            Error::Transport(e) => write!(f, "Transport error: {e}"),
+            Error::Delegate(e) => write!(f, "Delegate error: {e}"),
         }
     }
 }
@@ -89,7 +89,7 @@ impl error::Error for Error {
 
 impl From<Error> for JsValue {
     fn from(e: Error) -> Self {
-        JsValue::from_str(&format!("{}", e))
+        JsValue::from_str(&format!("{e}"))
     }
 }
 

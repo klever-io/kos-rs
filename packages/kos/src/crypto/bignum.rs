@@ -98,7 +98,7 @@ impl U256 {
     pub fn to_string(&self) -> String {
         let mut hex_string = String::new();
         for byte in self.0.iter() {
-            write!(&mut hex_string, "{:02x}", byte).unwrap(); // Safely format bytes as hex.
+            write!(&mut hex_string, "{byte:02x}").unwrap(); // Safely format bytes as hex.
         }
 
         let trimmed = hex_string.trim_start_matches('0');
