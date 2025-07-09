@@ -45,7 +45,7 @@ fn stellar_encode(version: u8, src: &[u8]) -> Result<String, super::ChainError> 
 
     // Calculate CRC16 checksum
     let crc = crc16_checksum(&raw_data);
-    raw_data.extend_from_slice(&crc.to_le_bytes());
+    raw_data.extend_from_slice(&crc.to_be_bytes());
 
     // Base32 encode using our internal base32 implementation
     let encoded = base32::encode(base32::Alphabet::Rfc4648 { padding: true }, &raw_data);
