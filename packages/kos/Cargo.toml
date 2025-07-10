@@ -42,6 +42,7 @@ pem = { version = "3", optional = true }
 cfb-mode = { version = "0.8", optional = true }
 cbc = { version = "0.1", features = ["block-padding", "std"], optional = true }
 serde = { version = "1.0.215", features = ["derive"], optional = true }
+base32 = { version = "0.5.1" }
 
 
 

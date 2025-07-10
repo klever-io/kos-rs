@@ -20,11 +20,11 @@ pub enum StructuredDataError {
 impl fmt::Display for StructuredDataError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            StructuredDataError::InvalidType(msg) => write!(f, "Invalid type: {}", msg),
-            StructuredDataError::TypeNotFound(msg) => write!(f, "Type not found: {}", msg),
-            StructuredDataError::InvalidData(msg) => write!(f, "Invalid data: {}", msg),
-            StructuredDataError::ParseError(msg) => write!(f, "Parse error: {}", msg),
-            StructuredDataError::Other(msg) => write!(f, "Error: {}", msg),
+            StructuredDataError::InvalidType(msg) => write!(f, "Invalid type: {msg}"),
+            StructuredDataError::TypeNotFound(msg) => write!(f, "Type not found: {msg}"),
+            StructuredDataError::InvalidData(msg) => write!(f, "Invalid data: {msg}"),
+            StructuredDataError::ParseError(msg) => write!(f, "Parse error: {msg}"),
+            StructuredDataError::Other(msg) => write!(f, "Error: {msg}"),
         }
     }
 }
@@ -84,7 +84,7 @@ fn parse_type(type_str: &str, types_set: &HashSet<String>) -> Result<ParsedType>
             } else {
                 // Fixed-size array [N]
                 Some(length_str.as_str().parse::<usize>().map_err(|e| {
-                    StructuredDataError::ParseError(format!("Invalid array length: {}", e))
+                    StructuredDataError::ParseError(format!("Invalid array length: {e}"))
                 })?)
             }
         } else {
@@ -288,7 +288,7 @@ fn bs58_decode(input: &str) -> Result<Vec<u8>> {
     // This function should use a real library like bs58
     // Here is an example implementation using the bs58 library
     bs58::decode(input).into_vec().map_err(|e| {
-        StructuredDataError::InvalidData(format!("Failed to decode base58 string: {}", e))
+        StructuredDataError::InvalidData(format!("Failed to decode base58 string: {e}"))
     })
 }
 
@@ -425,8 +425,7 @@ fn encode_field(
         "address" => encode_address(value),
         // Add other types as needed
         _ => Err(StructuredDataError::InvalidType(format!(
-            "Unsupported type: {}",
-            field_type
+            "Unsupported type: {field_type}",
         ))),
     }
 }
@@ -454,8 +453,7 @@ fn encode_data(
             Some(v) => v,
             None => {
                 return Err(StructuredDataError::InvalidData(format!(
-                    "Field {} not found in data",
-                    field_name
+                    "Field {field_name} not found in data",
                 )))
             }
         };
@@ -536,7 +534,7 @@ fn hash_typed_data(data: &StructuredData) -> Result<[u8; 32]> {
 // High-level function for JSON to hash conversion
 pub fn hash_typed_data_json(json_data: &str) -> Result<[u8; 32]> {
     let mut typed_data: StructuredData = serde_json::from_str(json_data)
-        .map_err(|e| StructuredDataError::InvalidData(format!("Invalid JSON: {}", e)))?;
+        .map_err(|e| StructuredDataError::InvalidData(format!("Invalid JSON: {e}")))?;
 
     let eip712_domain_entries = vec![
         Entry {

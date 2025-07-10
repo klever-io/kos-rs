@@ -38,6 +38,7 @@ pub mod substrate;
 pub mod sui;
 pub mod trx;
 pub mod util;
+pub mod xlm;
 pub mod xrp;
 
 #[derive(Debug)]
@@ -85,15 +86,15 @@ impl Display for ChainError {
         match self {
             ChainError::ErrDerive => write!(f, "Derive error"),
             ChainError::InvalidPrivateKey => write!(f, "Invalid private key"),
-            ChainError::CurveError(e) => write!(f, "Curve error: {}", e),
+            ChainError::CurveError(e) => write!(f, "Curve error: {e}"),
             ChainError::ProtoDecodeError => {
                 write!(f, "Proto decode error")
             }
             ChainError::EncodeError(e) => {
-                write!(f, "encode error: {}", e)
+                write!(f, "encode error: {e}")
             }
             ChainError::DecodeError(e) => {
-                write!(f, "decode error: {}", e)
+                write!(f, "decode error: {e}")
             }
             ChainError::Ed25519Error => {
                 write!(f, "ed25519 error")
@@ -117,7 +118,7 @@ impl Display for ChainError {
                 write!(f, "invalid public key")
             }
             ChainError::CurveErrorSr(e) => {
-                write!(f, "curve error sr: {}", e)
+                write!(f, "curve error sr: {e}")
             }
             ChainError::InvalidSeed => {
                 write!(f, "invalid seed")
@@ -129,13 +130,13 @@ impl Display for ChainError {
                 write!(f, "invalid mnemonic")
             }
             ChainError::CipherError(e) => {
-                write!(f, "cipher error: {}", e)
+                write!(f, "cipher error: {e}")
             }
             ChainError::InvalidString(e) => {
-                write!(f, "invalid string: {}", e)
+                write!(f, "invalid string: {e}")
             }
             ChainError::InvalidData(e) => {
-                write!(f, "invalid data: {}", e)
+                write!(f, "invalid data: {e}")
             }
             ChainError::MissingOptions => {
                 write!(f, "missing option")
@@ -168,19 +169,19 @@ impl Display for ChainError {
                 write!(f, "unsupported script type")
             }
             ChainError::InvalidTransaction(e) => {
-                write!(f, "invalid transaction: {}", e)
+                write!(f, "invalid transaction: {e}")
             }
             ChainError::UnsupportedChain => {
                 write!(f, "unsupported chain")
             }
             ChainError::NonAsciiCharacter(e) => {
-                write!(f, "non ascii character: {}", e)
+                write!(f, "non ascii character: {e}")
             }
             ChainError::DuplicateCharacter => {
                 write!(f, "duplicate character")
             }
             ChainError::InvalidCharacter(e) => {
-                write!(f, "invalid character: {}", e)
+                write!(f, "invalid character: {e}")
             }
             ChainError::BufferTooSmall => {
                 write!(f, "buffer too small")
@@ -287,12 +288,14 @@ impl ChainError {
     }
 }
 
+#[derive(Debug)]
 pub enum TxType {
     Unknown,
     Transfer,
     TriggerContract,
 }
 
+#[derive(Debug)]
 pub struct TxInfo {
     pub sender: String,
     pub receiver: String,
@@ -381,7 +384,7 @@ struct ChainRegistry {
 }
 impl ChainRegistry {
     fn new() -> Self {
-        static REGISTRY: [(u32, ChainInfo); 47] = [
+        static REGISTRY: [(u32, ChainInfo); 48] = [
             (
                 constants::ETH,
                 ChainInfo {
@@ -725,6 +728,13 @@ impl ChainRegistry {
                     supported: true,
                 },
             ),
+            (
+                constants::XLM,
+                ChainInfo {
+                    factory: || Box::new(xlm::XLM {}),
+                    supported: true,
+                },
+            ),
         ];
 
         Self {
@@ -785,8 +795,8 @@ impl ChainRegistry {
         Some(Box::new(eth::ETH::new_eth_based(
             0,
             chain_id,
-            format!("ETH {}", chain_id).as_str(),
-            format!("Eth Based {}", chain_id).as_str(),
+            format!("ETH {chain_id}").as_str(),
+            format!("Eth Based {chain_id}").as_str(),
         )))
     }
 }
@@ -818,8 +828,8 @@ pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
         CustomChainType::CustomEth(chaincode) => Some(Box::new(eth::ETH::new_eth_based(
             0,
             chaincode,
-            format!("ETH {}", chaincode).as_str(),
-            format!("Eth Based {}", chaincode).as_str(),
+            format!("ETH {chaincode}").as_str(),
+            format!("Eth Based {chaincode}").as_str(),
         ))),
         CustomChainType::CustomSubstrate(_) => None,
         CustomChainType::CustomCosmos(_) => None,
@@ -847,6 +857,7 @@ pub fn create_custom_evm(chain_id: u32) -> Option<Box<dyn Chain>> {
     ChainRegistry::new().create_custom_evm(chain_id)
 }
 
+#[derive(Debug, PartialEq)]
 pub enum ChainType {
     ETH,
     BTC,
@@ -862,4 +873,5 @@ pub enum ChainType {
     ATOM,
     BCH,
     BNB,
+    XLM,
 }

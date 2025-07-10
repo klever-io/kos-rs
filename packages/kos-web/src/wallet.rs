@@ -77,17 +77,17 @@ impl Wallet {
 
         let seed = chain
             .mnemonic_to_seed(mnemonic.clone(), password.unwrap_or_default())
-            .map_err(|e| Error::WalletManager(format!("mnemonic to seed: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("mnemonic to seed: {e}")))?;
         let private_key = chain
             .derive(seed, path.clone())
-            .map_err(|e| Error::WalletManager(format!("derive keypair: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("derive keypair: {e}")))?;
 
         let public_key = chain
             .get_pbk(private_key.clone())
-            .map_err(|e| Error::WalletManager(format!("get public key: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("get public key: {e}")))?;
         let address = chain
             .get_address(public_key.clone())
-            .map_err(|e| Error::WalletManager(format!("get address: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("get address: {e}")))?;
 
         Ok(Wallet {
             chain: chain_id,
@@ -144,10 +144,10 @@ impl Wallet {
 
         let public_key = chain
             .get_pbk(private_key_bytes.clone())
-            .map_err(|e| Error::WalletManager(format!("get public key: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("get public key: {e}")))?;
         let address = chain
             .get_address(public_key.clone())
-            .map_err(|e| Error::WalletManager(format!("get address: {}", e)))?;
+            .map_err(|e| Error::WalletManager(format!("get address: {e}")))?;
 
         // create wallet from keypair
         Ok(Wallet {
@@ -197,7 +197,7 @@ impl Wallet {
             .map_err(|_| Error::WalletManager("Invalid PEM data: not valid UTF-8".to_string()))?;
 
         let decrypted_data = decrypt_from_pem(&pem_string, password, iterations)
-            .map_err(|e| Error::Cipher(format!("Failed to decrypt PEM: {}", e)))?;
+            .map_err(|e| Error::Cipher(format!("Failed to decrypt PEM: {e}")))?;
 
         let content = String::from_utf8(decrypted_data).map_err(|_| {
             Error::Cipher(
@@ -239,7 +239,7 @@ impl Wallet {
         }
 
         Wallet::from_private_key(chain, pk_hex, options)
-            .map_err(|e| Error::Cipher(format!("KC PEM private key validation failed: {}", e)))
+            .map_err(|e| Error::Cipher(format!("KC PEM private key validation failed: {e}")))
     }
 
     #[wasm_bindgen(js_name = "fromPem")]
@@ -262,10 +262,10 @@ impl Wallet {
             .map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
 
         let decrypted_data = decrypt_from_pem(&pem_string, password, iterations)
-            .map_err(|e| Error::Cipher(format!("decrypt PEM: {}", e)))?;
+            .map_err(|e| Error::Cipher(format!("decrypt PEM: {e}")))?;
 
-        let wallet: Wallet = unpack(&decrypted_data)
-            .map_err(|e| Error::Cipher(format!("deserialize data: {}", e)))?;
+        let wallet: Wallet =
+            unpack(&decrypted_data).map_err(|e| Error::Cipher(format!("deserialize data: {e}")))?;
 
         Ok(wallet)
     }
@@ -274,7 +274,7 @@ impl Wallet {
     /// export wallet to unencrypted PEM format
     pub fn export_to_pem(&self) -> Result<Vec<u8>, Error> {
         let wallet_bytes = crate::utils::pack(self)
-            .map_err(|e| Error::Cipher(format!("serialize wallet: {}", e)))?;
+            .map_err(|e| Error::Cipher(format!("serialize wallet: {e}")))?;
 
         let pem = Pem::new("KLEVER WALLET", wallet_bytes);
 
@@ -290,7 +290,7 @@ impl Wallet {
         algo: CipherAlgo,
     ) -> Result<Vec<u8>, Error> {
         let wallet_bytes = crate::utils::pack(self)
-            .map_err(|e| Error::Cipher(format!("serialize wallet: {}", e)))?;
+            .map_err(|e| Error::Cipher(format!("serialize wallet: {e}")))?;
 
         let encrypted_pem = encrypt_to_pem(
             algo.into(),
@@ -299,7 +299,7 @@ impl Wallet {
             iterations,
             "KLEVER WALLET",
         )
-        .map_err(|e| Error::Cipher(format!("encrypt PEM: {}", e)))?;
+        .map_err(|e| Error::Cipher(format!("encrypt PEM: {e}")))?;
 
         Ok(encrypted_pem.into_bytes())
     }
@@ -324,7 +324,7 @@ impl Wallet {
             iterations,
             "ENCRYPTED PRIVATE KEY",
         )
-        .map_err(|e| Error::Cipher(format!("encrypt PEM: {}", e)))?;
+        .map_err(|e| Error::Cipher(format!("encrypt PEM: {e}")))?;
 
         Ok(encrypted_pem.into_bytes())
     }
@@ -334,8 +334,8 @@ impl Wallet {
 impl Wallet {
     pub fn import(pem: Pem) -> Result<Wallet, Error> {
         // Deserialize decrypted bytes to WalletManager
-        let wallet: Wallet = unpack(pem.contents())
-            .map_err(|e| Error::Cipher(format!("deserialize data: {}", e)))?;
+        let wallet: Wallet =
+            unpack(pem.contents()).map_err(|e| Error::Cipher(format!("deserialize data: {e}")))?;
 
         Ok(wallet)
     }
@@ -442,7 +442,7 @@ impl Wallet {
 
                 chain
                     .sign_message(pk_bytes, message_encoded, legacy)
-                    .map_err(|e| Error::WalletManager(format!("sign message: {}", e)))
+                    .map_err(|e| Error::WalletManager(format!("sign message: {e}")))
             }
             None => Err(Error::WalletManager("no keypair".to_string())),
         }
@@ -483,7 +483,7 @@ impl Wallet {
 
                 let signed_tx = chain
                     .sign_tx(pk_bytes, encoded)
-                    .map_err(|e| Error::WalletManager(format!("sign transaction: {}", e)))?;
+                    .map_err(|e| Error::WalletManager(format!("sign transaction: {e}")))?;
 
                 let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_tx)?;
 
