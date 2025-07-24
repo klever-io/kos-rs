@@ -152,9 +152,20 @@ pub fn encode_for_broadcast(
         }
     }
 
-    let signed_tx = psbt
-        .extract_tx()
-        .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
+    // TODO: extract_tx is throwing an issue of high fee, so we are bypassing it for now
+    // let signed_tx = psbt
+    //     .extract_tx()
+    //     .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
+
+    let mut signed_tx = psbt.unsigned_tx.clone();
+    for (i, input) in signed_tx.input.iter_mut().enumerate() {
+        if let Some(script_sig) = &psbt.inputs[i].final_script_sig {
+            input.script_sig = script_sig.clone();
+        }
+        if let Some(witness) = &psbt.inputs[i].final_script_witness {
+            input.witness = witness.clone();
+        }
+    }
 
     transaction.raw_data = bitcoin::consensus::encode::serialize(&signed_tx);
 

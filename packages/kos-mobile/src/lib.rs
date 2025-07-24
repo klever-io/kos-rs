@@ -678,6 +678,35 @@ mod tests {
     }
 
     #[test]
+    fn should_sign_raw_transaction_doge() {
+        let chain_id = 12;
+
+        let account = generate_wallet_from_mnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            chain_id,
+            0,
+            None,
+        )
+        .unwrap();
+
+        let transaction = sign_transaction(
+            account,
+            "0100000001c4d32b8d271b3d4c7c269f2af31f87ad71315b72610744843bca92600c6c662d0300000000feffffff01f98b1acc0e0000001976a9146dc8f8d77f0d1ea8c42f2374e5b3abbb77fda44f88ac00000000".to_string(),
+            Some(TransactionChainOptions::Btc {
+                prev_scripts: vec![
+                    hex::decode("76a91479975a24fdab613e17cf184bc185071aad17441888ac").unwrap(),
+                ],
+                input_amounts: vec![
+                    63609889529, 
+                ],
+            }),
+        )
+        .unwrap();
+
+        assert_eq!(transaction.raw, "0100000001c4d32b8d271b3d4c7c269f2af31f87ad71315b72610744843bca92600c6c662d030000006a4730440220198e150a394004850b0ab50423ab583e7b4a7fdb12f6ff98849ed532a8b8f5fc02202cfea08c49254a1b245cf9f460d596812e0f4dd0d1ddb1f008fe01d52f3d74f7012102cc6b0dc33aabcf3a23643e5e2919a80c50fb3dd2129ce409bbc5f0d4643d05e0feffffff01f98b1acc0e0000001976a9146dc8f8d77f0d1ea8c42f2374e5b3abbb77fda44f88ac00000000", "The raw doesn't match");
+    }
+
+    #[test]
     fn should_sign_raw_transaction_eth() {
         let chain_id = 3;
 
