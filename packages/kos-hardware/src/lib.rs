@@ -384,7 +384,7 @@ pub extern "C" fn rs_tx_info_to_json(info: &mut CTxInfo, result: &mut CBuffer) -
     true
 }
 
-pub const VERSION: &str = "Library Version: 0.2.27";
+pub const VERSION: &str = concat!("\nLibrary Version: ", env!("CARGO_PKG_VERSION"), "\n");
 
 #[no_mangle]
 pub extern "C" fn get_version() -> *const u8 {
