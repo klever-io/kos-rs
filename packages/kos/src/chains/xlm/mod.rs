@@ -159,11 +159,12 @@ impl Chain for XLM {
 mod tests {
     use super::*;
     use crate::chains::Transaction;
+    use crate::test_utils::get_test_mnemonic;
     use alloc::vec;
 
     #[test]
     fn test_xlm_derive() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let seed = XLM {}.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let path = XLM {}.get_path(0, false);
@@ -180,7 +181,7 @@ mod tests {
     fn test_get_address() {
         let stellar = XLM {};
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
         let seed = stellar
             .mnemonic_to_seed(mnemonic, String::from(""))
             .unwrap();
@@ -210,7 +211,7 @@ mod tests {
     fn test_get_address_with_different_index() {
         let stellar = XLM {};
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
         let seed = stellar
             .mnemonic_to_seed(mnemonic, String::from(""))
             .unwrap();
@@ -237,7 +238,7 @@ mod tests {
 
     #[test]
     fn test_sign_message() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let chain = XLM {};
         let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
@@ -261,7 +262,7 @@ mod tests {
 
     #[test]
     fn test_sign_raw() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let chain = XLM {};
         let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
@@ -278,7 +279,7 @@ mod tests {
 
     #[test]
     fn test_sign_tx() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let chain = XLM {};
         let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();

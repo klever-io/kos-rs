@@ -167,11 +167,12 @@ impl Chain for ATOM {
 mod test {
     use super::*;
     use alloc::vec;
+    use crate::test_utils::get_test_mnemonic;
 
     #[test]
     fn test_get_addr() {
         let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+            get_test_mnemonic().to_string();
 
         let atom = ATOM::new();
         let seed = atom.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
@@ -186,7 +187,7 @@ mod test {
     #[test]
     fn test_sign_message() {
         let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+            get_test_mnemonic().to_string();
 
         let atom = ATOM::new();
         let seed = atom.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
@@ -206,7 +207,7 @@ mod test {
     #[test]
     fn test_sign_transaction() {
         let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+            get_test_mnemonic().to_string();
 
         let atom = ATOM::new();
         let seed = atom.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();

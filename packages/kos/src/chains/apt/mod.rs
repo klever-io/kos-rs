@@ -113,10 +113,11 @@ impl Chain for APT {
 mod test {
     use crate::chains::Chain;
     use alloc::string::{String, ToString};
+    use crate::test_utils::get_test_mnemonic;
 
     #[test]
     fn test_derive() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
 
         let apt = super::APT {};
         let seed = apt.mnemonic_to_seed(mnemonic, String::new()).unwrap();
@@ -134,7 +135,7 @@ mod test {
     #[test]
     fn test_sign_message() {
         let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+            get_test_mnemonic()
                 .to_string();
         let ada = super::APT {};
 

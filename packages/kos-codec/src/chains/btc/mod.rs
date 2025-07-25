@@ -212,6 +212,7 @@ mod test {
     use super::*;
     use kos::chains::btc::BTC;
     use kos::chains::Chain;
+    use kos::test_utils::get_test_mnemonic;
 
     #[test]
     fn test_encode_for_sign() {
@@ -239,7 +240,7 @@ mod test {
     fn test_encode_for_broadcast() {
         let raw_tx = hex::decode("0100000002badfa0606bc6a1738d8ddf951b1ebf9e87779934a5774b836668efb5a6d643970000000000fffffffffe60fbeb66791b10c765a207c900a08b2a9bd7ef21e1dd6e5b2ef1e9d686e5230000000000ffffffff028813000000000000160014e4132ab9175345e24b344f50e6d6764a651a89e6c21f000000000000160014546d5f8e86641e4d1eec5b9155a540d953245e4a00000000").unwrap();
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let btc = BTC::new();
         let seed = btc.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = btc.get_path(0, false);

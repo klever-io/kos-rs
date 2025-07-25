@@ -205,12 +205,13 @@ impl Chain for BCH {
 mod test {
     use super::*;
     use crate::chains::{Chain, ChainOptions};
+    use crate::test_utils::get_test_mnemonic;
     use alloc::string::ToString;
 
     #[test]
     fn test_bch_address() {
         let bch = super::BCH {};
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
 
         let seed = bch.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = bch.get_path(0, false);
@@ -224,7 +225,7 @@ mod test {
     #[test]
     fn test_bch_sign_tx() {
         let bch = super::BCH {};
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
 
         let seed = bch.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = bch.get_path(0, false);
@@ -255,7 +256,7 @@ mod test {
     #[test]
     fn test_bch_sign_message() {
         let bch = super::BCH {};
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
 
         let seed = bch.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = bch.get_path(0, false);

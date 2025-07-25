@@ -296,16 +296,16 @@ fn sign_ecdsa(
 
 #[cfg(test)]
 mod tests {
+    use kos::test_utils::get_test_mnemonic;
+
     use crate::signer::derive_xpub;
     use crate::signer::generate_xpub;
-
-    const MNEMONIC: &str = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
     #[test]
     fn should_generate_xpub() {
         let passphrase = "";
         let is_mainnet = true;
-        let xpub = generate_xpub(MNEMONIC, passphrase, is_mainnet, 0).unwrap();
+        let xpub = generate_xpub(get_test_mnemonic().as_str(), passphrase, is_mainnet, 0).unwrap();
         assert_eq!(xpub.len(), 78);
     }
 
@@ -314,8 +314,14 @@ mod tests {
         let passphrase = "";
         let is_mainnet = false;
         let derivation_path = "84'/1'/0'";
-        let derived_xpub =
-            derive_xpub(MNEMONIC, passphrase, is_mainnet, 0, derivation_path).unwrap();
+        let derived_xpub = derive_xpub(
+            get_test_mnemonic().as_str(),
+            passphrase,
+            is_mainnet,
+            0,
+            derivation_path,
+        )
+        .unwrap();
         print!("{:?}", derived_xpub);
         assert_eq!(derived_xpub.len(), 78);
     }

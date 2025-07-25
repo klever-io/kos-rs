@@ -93,10 +93,11 @@ impl Chain for SOL {
 mod test {
     use super::*;
     use alloc::string::ToString;
+    use crate::test_utils::get_test_mnemonic;
 
     #[test]
     fn test_derive() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
 
         let sol = SOL {};
         let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
@@ -110,7 +111,7 @@ mod test {
     #[test]
     fn test_sign_message() {
         let sol = SOL {};
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let seed = sol.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let pvk = sol.derive(seed, "m/44'/501'/0'/0'/0'".to_string()).unwrap();
 
