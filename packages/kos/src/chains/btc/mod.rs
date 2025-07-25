@@ -258,11 +258,12 @@ impl Chain for BTC {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::test_utils::get_test_mnemonic;
     use alloc::string::ToString;
 
     #[test]
     fn test_derive() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
         let expected =
             hex::decode("4604b4b710fe91f584fff084e1a9159fe4f8408fff380596a604948474ce4fa3")
                 .unwrap();
@@ -286,7 +287,7 @@ mod test {
 
     #[test]
     fn test_get_addr_btc() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let btc = BTC::new();
         let path = btc.get_path(0, true);
@@ -298,7 +299,7 @@ mod test {
     }
     #[test]
     fn test_get_addr_doge() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let doge = BTC::new_legacy_btc_based(12, 0x1E, 3, "DOGE", "Dogecoin");
         let path = doge.get_path(0, true);
@@ -311,7 +312,7 @@ mod test {
 
     #[test]
     fn test_get_addr_ltc() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let ltc = BTC::new_btc_based(5, "ltc", 2, "LTC", "Litecoin");
         let path = ltc.get_path(0, true);
@@ -323,7 +324,7 @@ mod test {
     }
     #[test]
     fn test_get_addr_dash() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let dash = BTC::new_legacy_btc_based(11, 0x4C, 5, "DASH", "Dash");
         let path = dash.get_path(0, true);
@@ -335,7 +336,7 @@ mod test {
     }
     #[test]
     fn test_get_addr_dgb() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let dgb = BTC::new_btc_based(16, "dgb", 20, "DGB", "Digibyte");
         let path = dgb.get_path(0, true);
@@ -347,7 +348,7 @@ mod test {
     }
     #[test]
     fn test_get_addr_sys() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let sys = BTC::new_btc_based(15, "sys", 57, "SYS", "Syscoin");
         let path = sys.get_path(0, true);
@@ -360,7 +361,7 @@ mod test {
 
     #[test]
     fn test_sign_message() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = "m/44'/0'/0'/0/0".to_string();
 
         let btc = BTC::new();

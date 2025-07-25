@@ -336,12 +336,13 @@ pub fn crc_calc_singletable(buffer: &[u8]) -> u32 {
 mod test {
     use super::*;
     use alloc::string::ToString;
+    use crate::test_utils::get_test_mnemonic;
 
     #[test]
     fn test_icp_get_address_ed25519() {
         let icp = ICP::new(KeyType::ED25519);
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = icp.get_path(0, false);
         let pvk = icp.derive(seed, path).unwrap();
@@ -357,7 +358,7 @@ mod test {
     fn test_icp_get_address_secp256k1() {
         let icp = ICP::new(KeyType::SECP256K1);
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = icp.get_path(0, false);
         let pvk = icp.derive(seed, path).unwrap();
@@ -374,7 +375,7 @@ mod test {
     fn test_icp_sign_message_ed25519() {
         let icp = ICP::new(KeyType::ED25519);
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = icp.get_path(0, false);
 
@@ -392,7 +393,7 @@ mod test {
     fn test_icp_sign_message_secp256k1() {
         let icp = ICP::new(KeyType::SECP256K1);
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = icp.get_path(0, false);
 
@@ -412,7 +413,7 @@ mod test {
         let icp = ICP::new(KeyType::ED25519);
 
         let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+            get_test_mnemonic().to_string();
         let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = icp.get_path(0, false);
 
@@ -435,7 +436,7 @@ mod test {
         let icp = ICP::new(KeyType::SECP256K1);
 
         let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+            get_test_mnemonic().to_string();
         let seed = icp.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = icp.get_path(0, false);
 

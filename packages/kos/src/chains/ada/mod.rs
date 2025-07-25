@@ -175,13 +175,12 @@ impl Chain for ADA {
 #[cfg(test)]
 mod test {
     use crate::chains::Chain;
+    use crate::test_utils::get_test_mnemonic;
     use alloc::string::ToString;
 
     #[test]
     fn test_address() {
-        let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-                .to_string();
+        let mnemonic = get_test_mnemonic();
         let ada = super::ADA {};
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
@@ -199,9 +198,7 @@ mod test {
 
     #[test]
     fn test_sign_message() {
-        let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-                .to_string();
+        let mnemonic = get_test_mnemonic();
         let ada = super::ADA {};
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();

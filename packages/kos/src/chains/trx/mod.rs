@@ -139,12 +139,13 @@ impl Chain for TRX {
 mod test {
     use crate::chains::{trx::TRON_MESSAGE_PREFIX, Chain};
     use crate::crypto::hash::keccak256_digest;
+    use crate::test_utils::get_test_mnemonic;
     use alloc::string::{String, ToString};
     use alloc::vec::Vec;
 
     #[test]
     fn test_trx_derive() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let seed = crate::chains::trx::TRX {}
             .mnemonic_to_seed(mnemonic, String::from(""))
@@ -160,8 +161,7 @@ mod test {
 
     #[test]
     fn test_sign_message() {
-        let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
 
         let chain = super::TRX {};
         let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
