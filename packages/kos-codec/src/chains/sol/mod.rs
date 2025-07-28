@@ -6,7 +6,7 @@ mod models;
 pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, ChainError> {
     let sol_tx = SolanaTransaction::decode(&transaction.raw_data)?;
 
-    if sol_tx.message.header.num_required_signatures as usize <= 1 {
+    if (sol_tx.message.header.num_required_signatures as usize) < 1 {
         return Err(ChainError::InvalidTransactionHeader);
     }
     if sol_tx.message.account_keys.is_empty() {
