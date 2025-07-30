@@ -106,17 +106,15 @@ pub fn encode_for_broadcast(
 #[cfg(test)]
 mod test {
     use crate::chains::ada::{encode_for_broadcast, encode_for_sign};
-    use kos::test_utils::get_test_mnemonic;
     use crate::KosCodedAccount;
     use kos::chains::ada::ADA;
     use kos::chains::{ada, Chain, Transaction};
     use kos::crypto::base64::simple_base64_decode;
+    use kos::test_utils::get_test_mnemonic;
 
     #[test]
     fn test_encode_for_sign() {
-        let mnemonic =
-            get_test_mnemonic()
-                .to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let ada = ADA::new();
 
         let seed = ada.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();

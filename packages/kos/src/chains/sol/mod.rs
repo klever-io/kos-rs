@@ -92,8 +92,8 @@ impl Chain for SOL {
 #[cfg(test)]
 mod test {
     use super::*;
-    use alloc::string::ToString;
     use crate::test_utils::get_test_mnemonic;
+    use alloc::string::ToString;
 
     #[test]
     fn test_derive() {

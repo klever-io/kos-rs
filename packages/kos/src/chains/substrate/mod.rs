@@ -137,8 +137,8 @@ impl Chain for Substrate {
 #[cfg(test)]
 mod test {
     use crate::chains::Chain;
-    use alloc::string::{String, ToString};
     use crate::test_utils::get_test_mnemonic;
+    use alloc::string::{String, ToString};
     use schnorrkel;
 
     #[test]
@@ -171,8 +171,7 @@ mod test {
     fn test_get_addr_3() {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
-        let mnemonic =
-            get_test_mnemonic().to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = dot.get_path(1, false);
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
