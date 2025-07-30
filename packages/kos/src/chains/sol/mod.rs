@@ -59,8 +59,22 @@ impl Chain for SOL {
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
         let signature = self.sign_raw(private_key, tx.tx_hash.clone())?;
+        let num_existing_signatures = tx.signature.len() / 64;
 
-        tx.signature = signature;
+        if num_existing_signatures > 1 {
+            let mut signatures = Vec::new();
+            signatures.push(signature);
+
+            for i in 0..num_existing_signatures {
+                let start = i * 64;
+                let end = start + 64;
+                signatures.push(tx.signature[start..end].to_vec());
+            }
+            tx.signature = signatures.into_iter().flatten().collect();
+        } else {
+            tx.signature = signature;
+        }
+
         Ok(tx)
     }
 
