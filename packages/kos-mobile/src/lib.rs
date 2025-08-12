@@ -696,9 +696,7 @@ mod tests {
                 prev_scripts: vec![
                     hex::decode("76a91479975a24fdab613e17cf184bc185071aad17441888ac").unwrap(),
                 ],
-                input_amounts: vec![
-                    63609889529, 
-                ],
+                input_amounts: vec![63609889529],
             }),
         )
         .unwrap();
