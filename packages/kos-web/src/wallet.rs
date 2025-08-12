@@ -481,12 +481,16 @@ impl Wallet {
 
                 let encoded = encode_for_signing(kos_codec_acc.clone(), tx)?;
 
+                unsafe { web_sys::console::log_1(&format!("Encoded transaction").into()) };
+
                 let signed_tx = chain
                     .sign_tx(pk_bytes, encoded)
                     .map_err(|e| Error::WalletManager(format!("sign transaction: {e}")))?;
 
+                unsafe { web_sys::console::log_1(&format!("Signed transaction").into()) };
                 let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_tx)?;
 
+                unsafe { web_sys::console::log_1(&format!("Encoded for broadcast").into()) };
                 Ok(Transaction {
                     raw_data: encoded_to_broadcast.raw_data,
                     tx_hash: encoded_to_broadcast.tx_hash,

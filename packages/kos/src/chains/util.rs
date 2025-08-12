@@ -77,6 +77,7 @@ pub fn bytes_to_byte_vectors(bytes: Vec<u8>) -> Result<Vec<Vec<u8>>, ChainError>
 mod tests {
     use super::*;
     use alloc::vec;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_hex_string_to_vec() {
@@ -91,6 +92,19 @@ mod tests {
         let result = byte_vectors_to_bytes(&hex_strings);
 
         let decoded = bytes_to_byte_vectors(result).unwrap();
+        assert_eq!(hex_strings, decoded);
+    }
+
+    #[test]
+    fn test_bytes_to_byte_vectors() {
+        let hex_strings = vec![
+            10, 105, 99, 45, 114, 101, 113, 117, 101, 115, 116, 153, 12, 251, 160, 104, 107, 80,
+            69, 248, 14, 128, 194, 24, 166, 170, 57, 174, 19, 98, 198, 28, 58, 144, 158, 97, 190,
+            98, 229, 120, 49, 17, 209,
+        ];
+        let result = bytes_to_byte_vectors(hex_strings.clone()).unwrap();
+
+        let decoded = byte_vectors_to_bytes(&result);
         assert_eq!(hex_strings, decoded);
     }
 }

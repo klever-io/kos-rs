@@ -27,8 +27,8 @@ pem = "3"
 postcard = { version = "1.0.6", features = ["use-std"] }
 lazy_static = { workspace = true }
 kos = { workspace = true, features = ["not-ksafe"] }
-wasm-bindgen = { workspace = true }
 num-bigint = "0.4"
 num-traits = "0.2"
 kos-codec = { path = "../kos-codec" }
-
+web-sys = {version = "0.3.77", features = ["console"]}
+wasm-bindgen.workspace = true

@@ -3006,6 +3006,8 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "sha3",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -3037,6 +3039,8 @@ dependencies = [
  "sha3",
  "stellar-xdr",
  "tiny-json-rs",
+ "wasm-bindgen",
+ "web-sys",
  "xrpl-rust",
 ]
 
@@ -3088,6 +3092,7 @@ dependencies = [
  "serde_json",
  "strum",
  "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

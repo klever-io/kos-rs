@@ -303,7 +303,7 @@ pub struct TxInfo {
     pub tx_type: TxType,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Transaction {
     pub raw_data: Vec<u8>,
     pub tx_hash: Vec<u8>,
@@ -311,7 +311,7 @@ pub struct Transaction {
     pub options: Option<ChainOptions>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum ChainOptions {
     EVM {
         chain_id: u32,

@@ -9,7 +9,7 @@ use serde_cbor::Value as CborValue;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tiny_json_rs::serializer;
 
 #[derive(Debug, Clone)]
@@ -187,10 +187,14 @@ fn encode_regular_transaction_for_broadcast(
 fn encode_dapp_transaction_for_sign(
     mut transaction: Transaction,
 ) -> Result<Transaction, ChainError> {
+    unsafe { web_sys::console::log_1(&"Encoding DApp transaction for signing".into()) };
+
     // Parse DApp JSON request
     let dapp_request: DAppRequest = serde_json::from_slice(&transaction.raw_data).map_err(|e| {
         ChainError::InvalidTransaction(format!("Failed to parse DApp request: {e}"))
     })?;
+
+    unsafe { web_sys::console::log_1(&format!("DApp request: {:?}", dapp_request).into()) };
 
     // Check if it's an ICRC-49 request
     if dapp_request.method != "icrc49_call_canister" {
@@ -199,15 +203,30 @@ fn encode_dapp_transaction_for_sign(
             dapp_request.method
         )));
     }
+    unsafe { web_sys::console::log_1(&"DApp request is valid".into()) };
+
+    unsafe {
+        web_sys::console::log_1(
+            &format!(
+                "Creating call request from DApp params {:?}",
+                dapp_request.params
+            )
+            .into(),
+        )
+    };
 
     // Convert to CallContentRequest (internal IC format)
     let call_request = create_call_request_from_dapp(dapp_request.params)?;
 
+    unsafe { web_sys::console::log_1(&format!("Call request: {:?}", call_request).into()) };
     // Encode in CBOR for IC communication
     let cbor_content = encode_call_content_to_cbor(&call_request)?;
 
+    unsafe { web_sys::console::log_1(&"CBOR content encoded".into()) };
     // Calculate request hash for signing
     let request_hash = calculate_call_request_hash(&call_request)?;
+
+    unsafe { web_sys::console::log_1(&format!("Request hash: {:?}", request_hash).into()) };
 
     // Store the hash that will be signed
     transaction.tx_hash = request_hash;
@@ -215,6 +234,7 @@ fn encode_dapp_transaction_for_sign(
     // Store the CBOR request for later sending to IC
     transaction.raw_data = cbor_content;
 
+    unsafe { web_sys::console::log_1(&"DApp transaction encoded for signing".into()) };
     Ok(transaction)
 }
 
@@ -302,18 +322,22 @@ fn create_call_request_from_dapp(params: ICRC49Params) -> Result<CallContentRequ
     // Convert canister_id from string to bytes
     let canister_bytes = principal_to_bytes(&params.canister_id)?;
 
+    unsafe { web_sys::console::log_1(&format!("Canister bytes: {:?}", canister_bytes).into()) };
+
     // Convert sender from string to bytes
     let sender_bytes = principal_to_bytes(&params.sender)?;
+
+    unsafe { web_sys::console::log_1(&format!("Sender bytes: {:?}", sender_bytes).into()) };
 
     // Decode arguments from base64
     let arg_bytes = simple_base64_decode(&params.arg)
         .map_err(|e| ChainError::InvalidData(format!("Failed to decode arg: {e}")))?;
 
+    unsafe { web_sys::console::log_1(&format!("Arg bytes: {:?}", arg_bytes).into()) };
     // Calculate expiration time (4 minutes)
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_err(|e| ChainError::InvalidData(format!("Time error: {e}")))?;
+    let now = Duration::new(5, 8);
 
+    unsafe { web_sys::console::log_1(&format!("Current time: {:?}", now).into()) };
     let created_at = now.as_nanos() as i64;
     let expire_time: i64 = 240_000_000_000; // 4 minutes in nanoseconds
     let ingress_expiry = (created_at + expire_time) as u64;
@@ -327,6 +351,8 @@ fn create_call_request_from_dapp(params: ICRC49Params) -> Result<CallContentRequ
     } else {
         None
     };
+
+    unsafe { web_sys::console::log_1(&format!("Nonce bytes: {:?}", nonce_bytes).into()) };
 
     Ok(CallContentRequest {
         request_type: "call".to_string(),
@@ -593,17 +619,12 @@ mod tests {
     #[test]
     fn test_icrc49_request_validation() {
         // Test for valid request
-        let valid_request = r#"{
-            "id": 1,
-            "jsonrpc": "2.0",
-            "method": "icrc49_call_canister",
-            "params": {
-                "canisterId": "rrkah-fqaaa-aaaaa-aaaaq-cai",
-                "sender": "sgyks-q7tq3-tczsp-tytog-mxwxi-qxnym-sfoh6-ky4rj-dxhls-ryvy7-zae",
-                "method": "greet",
-                "arg": "RElETAABcQJtZQ=="
-            }
-        }"#;
+        let valid_request = r#"{"id": 1,"jsonrpc": "2.0","method": "icrc49_call_canister",
+"params": {"canisterId":"rrkah-fqaaa-aaaaa-aaaaq-cai","sender":"wejdv-lxe5w-n5hvc-xg2kq-our5i-dst4c-qncuk-n3u6j-q52dg-hisze-bqe","method":"manage_neuron","arg":"RElETA1ueGwAbAGNw7KzA3lsAciOytUKeGsEsJubpAcB0PuHrwcBkPKa/gcCw6L2yQ4DbgRsAaeIgoIKBWsBxrO7kQYGbgdte2sCzY6OuQQJzr7h0wh4bgpsA9u3AQDL4rWLCAjxu4uIDQsBDAEAIFs4LIOpxgEAAQABAQAgWzgsg6nG"}}"#;
+
+        let valid_request_bytes = valid_request.as_bytes();
+
+        println!("Valid request: {}", valid_request_bytes.len());
 
         let result = validate_icrc49_request(valid_request.as_bytes());
         assert!(result.is_ok());
@@ -626,12 +647,7 @@ mod tests {
             "id": 1,
             "jsonrpc": "2.0",
             "method": "icrc49_call_canister",
-            "params": {
-                "canisterId": "rrkah-fqaaa-aaaaa-aaaaq-cai",
-                "sender": "sgyks-q7tq3-tczsp-tytog-mxwxi-qxnym-sfoh6-ky4rj-dxhls-ryvy7-zae",
-                "method": "greet",
-                "arg": "RElETAABcQJtZQ=="
-            }
+            "params": {"canisterId":"rrkah-fqaaa-aaaaa-aaaaq-cai","sender":"wejdv-lxe5w-n5hvc-xg2kq-our5i-dst4c-qncuk-n3u6j-q52dg-hisze-bqe","method":"manage_neuron","arg":"RElETA1ueGwAbAGNw7KzA3lsAciOytUKeGsEsJubpAcB0PuHrwcBkPKa/gcCw6L2yQ4DbgRsAaeIgoIKBWsBxrO7kQYGbgdte2sCzY6OuQQJzr7h0wh4bgpsA9u3AQDL4rWLCAjxu4uIDQsBDAEAIFs4LIOpxgEAAQABAQAgWzgsg6nG"}
         }"#;
 
         let result = validate_icrc49_request(valid_request.as_bytes());
