@@ -96,15 +96,18 @@ mod tests {
     }
 
     #[test]
-    fn test_bytes_to_byte_vectors() {
-        let hex_strings = vec![
+    fn test_bytes_to_byte_vectors_single_vector() {
+        // Test with your specific data as a single vector
+        let original_data = vec![
             10, 105, 99, 45, 114, 101, 113, 117, 101, 115, 116, 153, 12, 251, 160, 104, 107, 80,
             69, 248, 14, 128, 194, 24, 166, 170, 57, 174, 19, 98, 198, 28, 58, 144, 158, 97, 190,
             98, 229, 120, 49, 17, 209,
         ];
-        let result = bytes_to_byte_vectors(hex_strings.clone()).unwrap();
 
-        let decoded = byte_vectors_to_bytes(&result);
-        assert_eq!(hex_strings, decoded);
+        let vectors = vec![original_data.clone()];
+        let bytes = byte_vectors_to_bytes(&vectors);
+        let result = bytes_to_byte_vectors(bytes).unwrap();
+
+        assert_eq!(result, vec![original_data]);
     }
 }

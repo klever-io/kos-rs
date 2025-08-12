@@ -187,14 +187,10 @@ fn encode_regular_transaction_for_broadcast(
 fn encode_dapp_transaction_for_sign(
     mut transaction: Transaction,
 ) -> Result<Transaction, ChainError> {
-    unsafe { web_sys::console::log_1(&"Encoding DApp transaction for signing".into()) };
-
     // Parse DApp JSON request
     let dapp_request: DAppRequest = serde_json::from_slice(&transaction.raw_data).map_err(|e| {
         ChainError::InvalidTransaction(format!("Failed to parse DApp request: {e}"))
     })?;
-
-    unsafe { web_sys::console::log_1(&format!("DApp request: {:?}", dapp_request).into()) };
 
     // Check if it's an ICRC-49 request
     if dapp_request.method != "icrc49_call_canister" {
@@ -203,7 +199,6 @@ fn encode_dapp_transaction_for_sign(
             dapp_request.method
         )));
     }
-    unsafe { web_sys::console::log_1(&"DApp request is valid".into()) };
 
     unsafe {
         web_sys::console::log_1(
@@ -218,15 +213,11 @@ fn encode_dapp_transaction_for_sign(
     // Convert to CallContentRequest (internal IC format)
     let call_request = create_call_request_from_dapp(dapp_request.params)?;
 
-    unsafe { web_sys::console::log_1(&format!("Call request: {:?}", call_request).into()) };
     // Encode in CBOR for IC communication
     let cbor_content = encode_call_content_to_cbor(&call_request)?;
 
-    unsafe { web_sys::console::log_1(&"CBOR content encoded".into()) };
     // Calculate request hash for signing
     let request_hash = calculate_call_request_hash(&call_request)?;
-
-    unsafe { web_sys::console::log_1(&format!("Request hash: {:?}", request_hash).into()) };
 
     // Store the hash that will be signed
     transaction.tx_hash = request_hash;
@@ -234,7 +225,6 @@ fn encode_dapp_transaction_for_sign(
     // Store the CBOR request for later sending to IC
     transaction.raw_data = cbor_content;
 
-    unsafe { web_sys::console::log_1(&"DApp transaction encoded for signing".into()) };
     Ok(transaction)
 }
 
@@ -322,22 +312,16 @@ fn create_call_request_from_dapp(params: ICRC49Params) -> Result<CallContentRequ
     // Convert canister_id from string to bytes
     let canister_bytes = principal_to_bytes(&params.canister_id)?;
 
-    unsafe { web_sys::console::log_1(&format!("Canister bytes: {:?}", canister_bytes).into()) };
-
     // Convert sender from string to bytes
     let sender_bytes = principal_to_bytes(&params.sender)?;
-
-    unsafe { web_sys::console::log_1(&format!("Sender bytes: {:?}", sender_bytes).into()) };
 
     // Decode arguments from base64
     let arg_bytes = simple_base64_decode(&params.arg)
         .map_err(|e| ChainError::InvalidData(format!("Failed to decode arg: {e}")))?;
 
-    unsafe { web_sys::console::log_1(&format!("Arg bytes: {:?}", arg_bytes).into()) };
     // Calculate expiration time (4 minutes)
     let now = Duration::new(5, 8);
 
-    unsafe { web_sys::console::log_1(&format!("Current time: {:?}", now).into()) };
     let created_at = now.as_nanos() as i64;
     let expire_time: i64 = 240_000_000_000; // 4 minutes in nanoseconds
     let ingress_expiry = (created_at + expire_time) as u64;
@@ -351,8 +335,6 @@ fn create_call_request_from_dapp(params: ICRC49Params) -> Result<CallContentRequ
     } else {
         None
     };
-
-    unsafe { web_sys::console::log_1(&format!("Nonce bytes: {:?}", nonce_bytes).into()) };
 
     Ok(CallContentRequest {
         request_type: "call".to_string(),

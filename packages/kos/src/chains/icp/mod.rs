@@ -216,26 +216,21 @@ impl Chain for ICP {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        unsafe { web_sys::console::log_1(&format!("Signing transaction: {:?}", tx).into()) };
-        let icp_hashes = bytes_to_byte_vectors(tx.tx_hash.clone())?;
+        let tx_hash = tx.tx_hash.clone();
         let mut signatures = Vec::new();
 
         unsafe {
             web_sys::console::log_1(
-                &format!("Signing transaction with {} hashes", icp_hashes.len()).into(),
+                &format!("Signing transaction with {} hashes", tx_hash.len()).into(),
             )
         };
 
-        for hash in icp_hashes {
-            let mut digest = hash.to_vec();
-            if self.key_type == KeyType::SECP256K1 {
-                digest = sha256_digest(&hash).to_vec();
-            }
-            let signature = self.sign_raw(private_key.clone(), digest)?;
-            signatures.push(signature);
+        let mut digest = tx_hash.to_vec();
+        if self.key_type == KeyType::SECP256K1 {
+            digest = sha256_digest(&tx_hash).to_vec();
         }
-
-        unsafe { web_sys::console::log_1(&format!("Signatures: {:?}", signatures).into()) };
+        let signature = self.sign_raw(private_key.clone(), digest)?;
+        signatures.push(signature);
 
         tx.signature = byte_vectors_to_bytes(&signatures);
 
