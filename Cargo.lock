@@ -3016,6 +3016,7 @@ dependencies = [
  "base32",
  "base64 0.22.1",
  "bitcoin",
+ "blake2b-ref",
  "bs58",
  "byteorder",
  "ciborium",

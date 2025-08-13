@@ -39,6 +39,7 @@ base32 = "0.5.1"
 leb128 = "0.2.5"
 serde_cbor = "0.11.2"
 stellar-xdr = { version = "22.2.0", features = ["base64"], default-features = true }
+blake2b-ref = "0.3.1"
 
 
 
