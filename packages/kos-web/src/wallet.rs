@@ -855,13 +855,28 @@ mod tests {
         let chain = get_chain_by_base_id(chain_id).unwrap();
         let path = chain.get_path(0, false);
 
+        let avail_options = crate::models::TransactionChainOptions::new_substrate_sign_options(
+            String::from("0x240017000010632d5ec76b0505000000"),
+            String::from("0x1401"),
+            27,
+            0,
+            String::from("0xa922aeb9240ebc85f9fdaac4bbb46cf32a4854c55cc9fcbf61e77cee3ac9ffbe"),
+            String::from("0xb91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a"),
+            48,
+            1,
+            None,
+        )
+        .unwrap();
+
         let wallet =
             Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None, None).unwrap();
 
         let tx_raw = r#"{"appId":0,"specVersion":"0x00000030","transactionVersion":"0x00000001","address":"5GZ2rfYZLSvAXBiEuT8FuNve6KwHNRL6XQuB768H2JnmM4Xx","assetId":null,"blockHash":"0xa922aeb9240ebc85f9fdaac4bbb46cf32a4854c55cc9fcbf61e77cee3ac9ffbe","blockNumber":"0x001ab671","era":"0x1401","genesisHash":"0xb91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a","metadataHash":null,"method":"0x240017000010632d5ec76b0505000000","mode":0,"nonce":"0x0000001b","signedExtensions":["CheckNonZeroSender","CheckSpecVersion","CheckTxVersion","CheckGenesis","CheckMortality","CheckNonce","CheckWeight","ChargeTransactionPayment","CheckAppId"],"tip":"0x00000000000000000000000000000000","version":4,"withSignedTransaction":false}"#;
 
-        let signed_tx = wallet.sign(tx_raw.as_bytes(), None).unwrap();
+        let signed_tx = wallet.sign(tx_raw.as_bytes(), Some(avail_options)).unwrap();
 
+        println!("Sig AVAIL TX: {:?}", signed_tx.signature.clone());
+        println!("Sig TX HASH: {:?}", signed_tx.tx_hash.clone());
         assert!(!signed_tx.signature.is_empty());
         assert!(!signed_tx.tx_hash.is_empty());
     }
