@@ -1,3 +1,4 @@
+use blake2b_ref::Blake2bBuilder;
 use parity_scale_codec::{Compact, Encode};
 
 const SIGNED_FLAG: u8 = 0b1000_0000;
@@ -24,7 +25,8 @@ pub struct ExtrinsicPayload {
 
 impl ExtrinsicPayload {
     /// Encodes the payload using the Substrate transaction format.
-    /// The format is: version + era + nonce + tip + call + params
+    /// The format is: call + era + nonce + tip + [app_id|mode] + spec_version + transaction_version + genesis_hash + block_hash + [metadata_hash]
+    /// If the payload exceeds 256 bytes, it is Blake2b hashed before signing.
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut encoded = Vec::new();
         encoded.extend(self.call.clone());
@@ -51,7 +53,12 @@ impl ExtrinsicPayload {
             }
         }
 
-        encoded
+        // If payload > 256 bytes, hash it before signing
+        if encoded.len() > 256 {
+            blake2b_digest(&encoded).to_vec()
+        } else {
+            encoded
+        }
     }
 
     /// Encodes the payload with a signature using the Substrate transaction format.
@@ -88,4 +95,13 @@ impl ExtrinsicPayload {
 
         complete_encoded
     }
+}
+
+pub fn blake2b_digest(data: &[u8]) -> [u8; 32] {
+    let mut hasher = Blake2bBuilder::new(32).build();
+    hasher.update(data);
+
+    let mut result_buffer: [u8; 32] = [0; 32];
+    hasher.finalize(result_buffer.as_mut_slice());
+    result_buffer
 }
