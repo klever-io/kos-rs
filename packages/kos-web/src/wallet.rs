@@ -848,4 +848,21 @@ mod tests {
         assert!(!signed_tx.signature.is_empty());
         assert!(!signed_tx.tx_hash.is_empty());
     }
+
+    #[test]
+    fn test_sign_avail_transaction() {
+        let chain_id = 62;
+        let chain = get_chain_by_base_id(chain_id).unwrap();
+        let path = chain.get_path(0, false);
+
+        let wallet =
+            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None, None).unwrap();
+
+        let tx_raw = r#"{"appId":0,"specVersion":"0x00000030","transactionVersion":"0x00000001","address":"5GZ2rfYZLSvAXBiEuT8FuNve6KwHNRL6XQuB768H2JnmM4Xx","assetId":null,"blockHash":"0xa922aeb9240ebc85f9fdaac4bbb46cf32a4854c55cc9fcbf61e77cee3ac9ffbe","blockNumber":"0x001ab671","era":"0x1401","genesisHash":"0xb91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a","metadataHash":null,"method":"0x240017000010632d5ec76b0505000000","mode":0,"nonce":"0x0000001b","signedExtensions":["CheckNonZeroSender","CheckSpecVersion","CheckTxVersion","CheckGenesis","CheckMortality","CheckNonce","CheckWeight","ChargeTransactionPayment","CheckAppId"],"tip":"0x00000000000000000000000000000000","version":4,"withSignedTransaction":false}"#;
+
+        let signed_tx = wallet.sign(tx_raw.as_bytes(), None).unwrap();
+
+        assert!(!signed_tx.signature.is_empty());
+        assert!(!signed_tx.tx_hash.is_empty());
+    }
 }
