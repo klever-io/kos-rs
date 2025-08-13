@@ -25,6 +25,9 @@ fn main() {
     // Specify the output directory where the generated Rust code should be placed.
     config.out_dir("src/protos/generated/trx");
 
+    // Add attribute to allow dead code for generated protobuf structs
+    config.type_attribute(".", "#[allow(dead_code)]");
+
     config
         .compile_protos(&protos, &["src/protos/tron"])
         .unwrap();
