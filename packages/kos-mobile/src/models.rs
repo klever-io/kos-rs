@@ -15,7 +15,7 @@ pub enum TransactionChainOptions {
         call: Vec<u8>,
         era: Vec<u8>,
         nonce: u32,
-        tip: u8,
+        tip: String, // Changed to String to represent u128 as hex string
         block_hash: Vec<u8>,
         genesis_hash: Vec<u8>,
         spec_version: u32,
@@ -34,7 +34,7 @@ pub fn new_substrate_transaction_options(
     call: String,
     era: String,
     nonce: u32,
-    tip: u8,
+    tip: String, // Changed to String to represent u128 as hex string
     block_hash: String,
     genesis_hash: String,
     spec_version: u32,
@@ -167,17 +167,26 @@ pub fn convert_tx_options(options: Option<TransactionChainOptions>) -> Option<Ch
             spec_version,
             transaction_version,
             app_id,
-        }) => Some(ChainOptions::SUBSTRATE {
-            call,
-            era,
-            nonce,
-            tip,
-            block_hash,
-            genesis_hash,
-            spec_version,
-            transaction_version,
-            app_id,
-        }),
+        }) => {
+            // Parse tip from hex string to u128, default to 0 if parsing fails
+            let tip_u128 = if tip.starts_with("0x") {
+                u128::from_str_radix(&tip[2..], 16).unwrap_or(0)
+            } else {
+                tip.parse::<u128>().unwrap_or(0)
+            };
+
+            Some(ChainOptions::SUBSTRATE {
+                call,
+                era,
+                nonce,
+                tip: tip_u128,
+                block_hash,
+                genesis_hash,
+                spec_version,
+                transaction_version,
+                app_id,
+            })
+        }
         Some(TransactionChainOptions::Cosmos {
             chain_id,
             account_number,

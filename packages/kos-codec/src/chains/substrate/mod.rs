@@ -73,10 +73,15 @@ fn unwrap_extrinsic(
                 .try_into()
                 .map_err(|_| ChainError::InvalidOptions)?;
 
-            // Other chains may have different requirements for mode and metadata_hash
-            let (mode, metadata_hash) = match account.chain_id {
-                29 => (None, None),
-                _ => (Some(0u8), Some(0u8)),
+            // Different chains have different requirements for mode and metadata_hash
+            // AVAIL and other chains with app_id should not include mode and metadata_hash
+            let (mode, metadata_hash) = if app_id.is_some() {
+                (None, None)
+            } else {
+                match account.chain_id {
+                    29 => (None, None),          // Reef
+                    _ => (Some(0u8), Some(0u8)), // Other Substrate chains
+                }
             };
 
             Ok(ExtrinsicPayload {
@@ -116,7 +121,7 @@ mod test {
                 .unwrap(),
                 era: hex::decode("d501").unwrap(),
                 nonce: 27,
-                tip: 0,
+                tip: 0u128,
                 block_hash: hex::decode(
                     "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
                 )
@@ -177,7 +182,7 @@ mod test {
                 .unwrap(),
                 era: hex::decode("4502").unwrap(),
                 nonce: 87,
-                tip: 0,
+                tip: 0u128,
                 block_hash: hex::decode(
                     "b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe",
                 )
@@ -241,7 +246,7 @@ mod test {
                 .unwrap(),
                 era: hex::decode("b501").unwrap(),
                 nonce,
-                tip: 0,
+                tip: 0u128,
                 block_hash: hex::decode(
                     "0e15fed86501da447cae3b7361fc14a087f309aeb751085d71a988aa4bb4a811",
                 )
@@ -305,7 +310,7 @@ mod test {
                 .unwrap(),
                 era: hex::decode("1503").unwrap(),
                 nonce,
-                tip: 0,
+                tip: 0u128,
                 block_hash: hex::decode(
                     "567c2424bbef73128c80b319cec4fc6140e122b23ef22096f2be41a651cad76b",
                 )
@@ -369,7 +374,7 @@ mod test {
                 .unwrap(),
                 era: hex::decode("f502").unwrap(),
                 nonce,
-                tip: 0,
+                tip: 0u128,
                 block_hash: hex::decode(
                     "4e29888d26fcdbdc19016d7d9ea2aa4f98e4a53a3cd1602008ba82def26eeb27",
                 )
