@@ -132,7 +132,7 @@ impl TransactionChainOptions {
         call: String,
         era: String,
         nonce: u32,
-        tip: u8,
+        tip: u128,
         block_hash: String,
         genesis_hash: String,
         spec_version: u32,
