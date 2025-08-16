@@ -179,13 +179,14 @@ impl Chain for XRP {
 mod test {
     use super::*;
     use crate::crypto::base64::simple_base64_decode;
-    use alloc::string::{String, ToString};
+    use crate::test_utils::get_test_mnemonic;
+    use alloc::string::String;
 
     #[test]
     fn test_get_addr() {
         let xrp = super::XRP::new();
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
         let path = xrp.get_path(0, false);
 
         let seed = xrp.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
@@ -200,7 +201,7 @@ mod test {
     fn test_sig_message() {
         let xrp = super::XRP::new();
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
         let path = xrp.get_path(0, false);
         let seed = xrp.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = xrp.derive(seed, path).unwrap();
@@ -221,7 +222,7 @@ mod test {
     fn test_sig_transaction() {
         let xrp = super::XRP::new();
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
         let path = xrp.get_path(0, false);
         let seed = xrp.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
         let pvk = xrp.derive(seed, path).unwrap();
