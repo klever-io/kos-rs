@@ -1,4 +1,6 @@
+mod parse_browser_transaction;
 mod models;
+mod metadata;
 
 use crate::chains::substrate::models::ExtrinsicPayload;
 use crate::KosCodedAccount;
