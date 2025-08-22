@@ -200,16 +200,6 @@ fn encode_dapp_transaction_for_sign(
         )));
     }
 
-    unsafe {
-        web_sys::console::log_1(
-            &format!(
-                "Creating call request from DApp params {:?}",
-                dapp_request.params
-            )
-            .into(),
-        )
-    };
-
     // Convert to CallContentRequest (internal IC format)
     let call_request = create_call_request_from_dapp(dapp_request.params)?;
 

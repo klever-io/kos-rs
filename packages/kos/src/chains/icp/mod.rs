@@ -219,12 +219,6 @@ impl Chain for ICP {
         let tx_hash = tx.tx_hash.clone();
         let mut signatures = Vec::new();
 
-        unsafe {
-            web_sys::console::log_1(
-                &format!("Signing transaction with {} hashes", tx_hash.len()).into(),
-            )
-        };
-
         let mut digest = tx_hash.to_vec();
         if self.key_type == KeyType::SECP256K1 {
             digest = sha256_digest(&tx_hash).to_vec();
