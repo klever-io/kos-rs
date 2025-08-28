@@ -324,7 +324,7 @@ pub enum ChainOptions {
         call: Vec<u8>,
         era: Vec<u8>,
         nonce: u32,
-        tip: u8,
+        tip: u64,
         block_hash: Vec<u8>,
         genesis_hash: Vec<u8>,
         spec_version: u32,
