@@ -12,7 +12,7 @@ pub struct ExtrinsicPayload {
     pub call: Vec<u8>,
     pub era: Vec<u8>,
     pub nonce: u32,
-    pub tip: u8,
+    pub tip: u64,
     pub mode: Option<u8>,
     pub spec_version: u32,
     pub transaction_version: u32,
