@@ -36,7 +36,7 @@ homepage = "https://klever.org/"
 license = "Apache-2.0"
 repository = "https://github.com/kleverio/kos-rs"
 rust-version = "1.74.0"
-version = "0.2.31"
+version = "0.2.32"
 
 [workspace.dependencies]
 bech32 = "0.9.1"
