@@ -501,9 +501,8 @@ impl Wallet {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use kos::chains::get_chain_by_base_id;
+    use kos::{chains::get_chain_by_base_id, test_utils::get_test_mnemonic};
 
-    const TEST_MNEMONIC: &str = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
     const TEST_PRIVATE_KEY: &str =
         "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d";
     const TEST_PUBLIC_KEY: &str =
@@ -517,14 +516,8 @@ mod tests {
         let chain = get_chain_by_base_id(chain_id).unwrap();
         let path = chain.get_path(0, false);
 
-        let wallet = Wallet::from_mnemonic(
-            chain_id,
-            TEST_MNEMONIC.to_string(),
-            path.clone(),
-            None,
-            None,
-        )
-        .unwrap();
+        let wallet =
+            Wallet::from_mnemonic(chain_id, get_test_mnemonic(), path.clone(), None, None).unwrap();
 
         assert_eq!(wallet.get_chain(), chain_id);
         assert_eq!(wallet.get_account_type(), AccountType::Mnemonic);
@@ -534,7 +527,7 @@ mod tests {
             "e41b323a571fd955e09cd41660ff4465c3f44693c87f2faea4a0fc408727c8ea"
         );
         assert_eq!(wallet.get_path(), path);
-        assert_eq!(wallet.get_mnemonic(), TEST_MNEMONIC);
+        assert_eq!(wallet.get_mnemonic(), get_test_mnemonic());
     }
 
     #[test]
@@ -544,7 +537,7 @@ mod tests {
         let path = chain.get_path(0, false);
 
         let original_wallet =
-            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None, None).unwrap();
+            Wallet::from_mnemonic(chain_id, get_test_mnemonic(), path, None, None).unwrap();
 
         let encrypted_pem = original_wallet
             .export_to_pem_encrypted(TEST_PASSWORD, TEST_ITERATIONS, CipherAlgo::GCM)
@@ -620,7 +613,7 @@ mod tests {
         let path = chain.get_path(0, false);
 
         let wallet =
-            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None, None).unwrap();
+            Wallet::from_mnemonic(chain_id, get_test_mnemonic(), path, None, None).unwrap();
 
         let encrypted_pem = wallet
             .export_to_pem_encrypted(TEST_PASSWORD, TEST_ITERATIONS, CipherAlgo::GCM)
@@ -682,9 +675,14 @@ mod tests {
         let path = chain.get_path(0, false);
         let password = Some("mysecretpassword".to_string());
 
-        let wallet =
-            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, password, None)
-                .unwrap();
+        let wallet = Wallet::from_mnemonic(
+            chain_id,
+            get_test_mnemonic().to_string(),
+            path,
+            password,
+            None,
+        )
+        .unwrap();
 
         assert_eq!(wallet.get_account_type(), AccountType::Mnemonic);
         assert_eq!(wallet.get_private_key().len(), 64); // Should be valid hex
@@ -700,14 +698,9 @@ mod tests {
             is_legacy: Some(false),
         };
 
-        let wallet = Wallet::from_mnemonic_index(
-            chain_id,
-            TEST_MNEMONIC.to_string(),
-            &path_options,
-            None,
-            None,
-        )
-        .unwrap();
+        let wallet =
+            Wallet::from_mnemonic_index(chain_id, get_test_mnemonic(), &path_options, None, None)
+                .unwrap();
 
         assert_eq!(wallet.get_index().unwrap(), index);
         assert_eq!(wallet.get_account_type(), AccountType::Mnemonic);
@@ -767,8 +760,7 @@ mod tests {
             let path = chain.get_path(0, false);
 
             let wallet =
-                Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None, None)
-                    .unwrap();
+                Wallet::from_mnemonic(chain_id, get_test_mnemonic(), path, None, None).unwrap();
 
             assert_eq!(wallet.get_chain(), chain_id);
             assert!(!wallet.get_address().is_empty());
@@ -781,13 +773,7 @@ mod tests {
         let chain = get_chain_by_base_id(2).unwrap();
         let path = chain.get_path(0, false);
 
-        let result = Wallet::from_mnemonic(
-            invalid_chain_id,
-            TEST_MNEMONIC.to_string(),
-            path,
-            None,
-            None,
-        );
+        let result = Wallet::from_mnemonic(invalid_chain_id, get_test_mnemonic(), path, None, None);
 
         assert!(result.is_err());
     }
@@ -839,7 +825,7 @@ mod tests {
         let path = chain.get_path(0, false);
 
         let wallet =
-            Wallet::from_mnemonic(chain_id, TEST_MNEMONIC.to_string(), path, None, None).unwrap();
+            Wallet::from_mnemonic(chain_id, get_test_mnemonic(), path, None, None).unwrap();
 
         let tx_raw = r#"{"RawData":{"Sender":"UMjR49Dkn+HleedQY88TSjXXJhtbDpX7f7QVF/Dcqos=","Contract":[{"Type":63,"Parameter":{"type_url":"type.googleapis.com/proto.SmartContract","value":"EiAAAAAAAAAAAAUAIPnuq04LIuz1ew83LbqEVgLiyNyybBoRCghGUkctMlZCVRIFCIDh6xc="}}],"Data":["c3Rha2VGYXJt"],"KAppFee":2000000,"BandwidthFee":4622449,"Version":1,"ChainID":"MTAwMDAx"}}"#;
 

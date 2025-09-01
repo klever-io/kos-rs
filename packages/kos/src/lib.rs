@@ -2,6 +2,7 @@
 extern crate alloc;
 pub mod chains;
 pub mod crypto;
+pub mod test_utils;
 
 #[cfg(feature = "ksafe")]
 use core::alloc::{GlobalAlloc, Layout};

@@ -137,6 +137,7 @@ impl Chain for Substrate {
 #[cfg(test)]
 mod test {
     use crate::chains::Chain;
+    use crate::test_utils::get_test_mnemonic;
     use alloc::string::{String, ToString};
     use schnorrkel;
 
@@ -144,7 +145,7 @@ mod test {
     fn test_get_addr_1() {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = dot.get_path(0, false);
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
@@ -157,7 +158,7 @@ mod test {
     fn test_get_addr_2() {
         let dot = super::Substrate::new(62, 42, "AVAIL", "Avail");
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = dot.get_path(1, false);
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
@@ -170,8 +171,7 @@ mod test {
     fn test_get_addr_3() {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
-        let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = dot.get_path(1, false);
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
@@ -185,7 +185,7 @@ mod test {
     fn test_sign_raw() {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = String::from("");
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
@@ -199,7 +199,7 @@ mod test {
     #[test]
     fn test_sign_message() {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let seed = dot.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = dot.get_path(0, false);
         let pvk = dot.derive(seed, path).unwrap();
