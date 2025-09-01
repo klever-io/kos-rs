@@ -1,6 +1,5 @@
-use alloc::string::{String, ToString};
+use alloc::string::String;
 
-#[cfg(feature = "std")]
-pub fn get_test_mnemonic() -> alloc::string::String {
-    std::env::var("KOS_MNEMONIC_FOR_TEST").expect("KOS_MNEMONIC_FOR_TEST must be set");
+pub fn get_test_mnemonic() -> String {
+    String::from("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about")
 }
