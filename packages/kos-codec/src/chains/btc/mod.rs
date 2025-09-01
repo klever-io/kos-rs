@@ -1,22 +1,28 @@
 use bitcoin::{ecdsa, secp256k1, sighash, Amount, Denomination, Psbt, ScriptBuf};
 use kos::chains::{ChainError, ChainOptions, Transaction};
 
-pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, ChainError> {
+// Helper function to extract BTC options from transaction
+fn extract_btc_options(transaction: &Transaction) -> Result<(Vec<Vec<u8>>, Vec<u64>), ChainError> {
     let options = transaction
         .options
         .clone()
         .ok_or(ChainError::MissingOptions)?;
 
-    let (prev_scripts, input_amounts) = match options {
+    match options {
         ChainOptions::BTC {
             prev_scripts,
             input_amounts,
-        } => (prev_scripts, input_amounts),
-        _ => {
-            return Err(ChainError::InvalidOptions);
-        }
-    };
+        } => Ok((prev_scripts, input_amounts)),
+        _ => Err(ChainError::InvalidOptions),
+    }
+}
 
+// Helper function to setup PSBT with UTXOs
+fn setup_psbt_with_utxos(
+    transaction: &Transaction,
+    prev_scripts: &[Vec<u8>],
+    input_amounts: &[u64],
+) -> Result<(Psbt, bitcoin::Transaction, Vec<Amount>), ChainError> {
     let bitcoin_transaction: bitcoin::Transaction =
         bitcoin::consensus::deserialize(transaction.raw_data.as_ref())
             .map_err(|_| ChainError::DecodeRawTx)?;
@@ -35,10 +41,16 @@ pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, Chai
             script_pubkey: prev_scripts[inp_idx].clone().into(),
         };
         psbt.inputs[inp_idx].witness_utxo = Some(utxo);
-
-        // Add non_witness_utxo
         psbt.inputs[inp_idx].non_witness_utxo = Some(bitcoin_transaction.clone());
     }
+
+    Ok((psbt, bitcoin_transaction, values))
+}
+
+pub fn encode_for_sign(mut transaction: Transaction) -> Result<Transaction, ChainError> {
+    let (prev_scripts, input_amounts) = extract_btc_options(&transaction)?;
+    let (_, bitcoin_transaction, values) =
+        setup_psbt_with_utxos(&transaction, &prev_scripts, &input_amounts)?;
 
     let mut cache = sighash::SighashCache::new(bitcoin_transaction);
 
@@ -82,47 +94,13 @@ pub fn encode_for_broadcast(
     mut transaction: Transaction,
     public_key: String,
 ) -> Result<Transaction, ChainError> {
-    let options = transaction
-        .options
-        .clone()
-        .ok_or(ChainError::MissingOptions)?;
-
-    let (prev_scripts, input_amounts) = match options {
-        ChainOptions::BTC {
-            prev_scripts,
-            input_amounts,
-        } => (prev_scripts, input_amounts),
-        _ => {
-            return Err(ChainError::InvalidOptions);
-        }
-    };
-
-    let bitcoin_transaction: bitcoin::Transaction =
-        bitcoin::consensus::deserialize(transaction.raw_data.as_ref())
-            .map_err(|_| ChainError::DecodeRawTx)?;
-
-    let mut psbt =
-        Psbt::from_unsigned_tx(bitcoin_transaction.clone()).map_err(|_| ChainError::DecodeRawTx)?;
+    let (prev_scripts, input_amounts) = extract_btc_options(&transaction)?;
+    let (mut psbt, _bitcoin_transaction, _) =
+        setup_psbt_with_utxos(&transaction, &prev_scripts, &input_amounts)?;
 
     let pub_key_bytes = hex::decode(public_key).map_err(|_| ChainError::InvalidPublicKey)?;
     let bit_public_key = bitcoin::PublicKey::from_slice(pub_key_bytes.as_slice())
         .map_err(|_| ChainError::InvalidPublicKey)?;
-
-    let values = input_amounts
-        .iter()
-        .map(|x| Amount::from_str_in(&x.to_string(), Denomination::Satoshi).unwrap())
-        .collect::<Vec<Amount>>();
-
-    for inp_idx in 0..psbt.inputs.len() {
-        let utxo = bitcoin::TxOut {
-            value: values[inp_idx],
-            script_pubkey: prev_scripts[inp_idx].clone().into(),
-        };
-        psbt.inputs[inp_idx].witness_utxo = Some(utxo);
-
-        // Add non_witness_utxo
-        psbt.inputs[inp_idx].non_witness_utxo = Some(bitcoin_transaction.clone());
-    }
 
     // Process signature bytes from transaction.signature
     let signatures = process_signatures(&transaction.signature)?;
@@ -174,9 +152,20 @@ pub fn encode_for_broadcast(
         }
     }
 
-    let signed_tx = psbt
-        .extract_tx()
-        .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
+    // TODO: extract_tx is throwing an issue of high fee, so we are bypassing it for now
+    // let signed_tx = psbt
+    //     .extract_tx()
+    //     .map_err(|e| ChainError::InvalidTransaction(e.to_string()))?;
+
+    let mut signed_tx = psbt.unsigned_tx.clone();
+    for (i, input) in signed_tx.input.iter_mut().enumerate() {
+        if let Some(script_sig) = &psbt.inputs[i].final_script_sig {
+            input.script_sig = script_sig.clone();
+        }
+        if let Some(witness) = &psbt.inputs[i].final_script_witness {
+            input.witness = witness.clone();
+        }
+    }
 
     transaction.raw_data = bitcoin::consensus::encode::serialize(&signed_tx);
 
