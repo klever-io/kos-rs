@@ -243,6 +243,7 @@ mod tests {
     use crate::*;
     use kos::chains::get_chains;
     use kos::crypto::base64::simple_base64_decode;
+    use kos::test_utils::get_test_mnemonic;
 
     const ITERATIONS: u32 = 10000;
 
@@ -266,7 +267,7 @@ mod tests {
 
     #[test]
     fn should_validate_mnemonic_with_success() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
         let result = validate_mnemonic(mnemonic);
         assert!(result, "The mnemonic should be valid")
     }
@@ -280,7 +281,7 @@ mod tests {
 
     #[test]
     fn should_fail_to_get_account_from_mnemonic_with_invalid_chain() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
         let index = 0;
         let chain_id = 999;
         match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
@@ -297,7 +298,7 @@ mod tests {
 
     #[test]
     fn should_get_account_from_mnemonic() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
         let index = 0;
         let chain_id = 38;
         match generate_wallet_from_mnemonic(mnemonic, chain_id, index, None) {
@@ -331,7 +332,7 @@ mod tests {
 
     #[test]
     fn should_get_all_supported_chains_account_from_mnemonic() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic();
         let index = 0;
 
         for chain_code in get_chains() {
@@ -391,7 +392,7 @@ mod tests {
 
     #[test]
     fn should_encrypt_with_gcm_and_decrypt_data() {
-        let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let original_data = get_test_mnemonic();
         let password = "myPass".to_string();
         let encrypted_data =
             encrypt_with_gcm(original_data.clone(), password.clone(), ITERATIONS).unwrap();
@@ -401,7 +402,7 @@ mod tests {
 
     #[test]
     fn should_encrypt_with_cbc_and_decrypt_data() {
-        let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let original_data = get_test_mnemonic();
         let password = "myPass".to_string();
         let encrypted_data =
             encrypt_with_cbc(original_data.clone(), password.clone(), ITERATIONS).unwrap();
@@ -411,7 +412,7 @@ mod tests {
 
     #[test]
     fn should_encrypt_with_cbf_and_decrypt_data() {
-        let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let original_data = get_test_mnemonic();
         let password = "myPass".to_string();
         let encrypted_data =
             encrypt_with_cfb(original_data.clone(), password.clone(), ITERATIONS).unwrap();
@@ -421,7 +422,7 @@ mod tests {
 
     #[test]
     fn should_fail_to_decrypt_with_wrong_password() {
-        let original_data = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let original_data = get_test_mnemonic();
         let password = "myPass".to_string();
         let encrypted_data =
             encrypt_with_gcm(original_data.clone(), password.clone(), ITERATIONS).unwrap();
@@ -437,13 +438,8 @@ mod tests {
 
         let raw = hex::encode("{\"RawData\":{\"BandwidthFee\":1000000,\"ChainID\":\"MTAwNDIw\",\"Contract\":[{\"Parameter\":{\"type_url\":\"type.googleapis.com/proto.TransferContract\",\"value\":\"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK\"}}],\"KAppFee\":500000,\"Nonce\":39,\"Sender\":\"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=\",\"Version\":1}}".as_bytes());
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-            .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
 
         let transaction = sign_transaction(account, raw.to_string(), None).unwrap();
 
@@ -468,13 +464,9 @@ mod tests {
         let raw =
             "0a02487c22080608af18f6ec6c8340d8f8fae2e0315a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541e825d52582eec346c839b4875376117904a76cbc12154120ab1300cf70c048e4cf5d5b1b33f59653ed6626180a708fb1f7e2e031";
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-            .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic().to_string(), chain_id, 0, None)
+                .unwrap();
 
         let transaction = sign_transaction(account, raw.to_string(), None).unwrap();
 
@@ -499,13 +491,9 @@ mod tests {
         let raw =
             "00010000030101010101010101010101010101010101010101010101010101010101010101020202020202020202020202020202020202020202020202020202020202020203030303030303030303030303030303030303030303030303030303030303032a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a01020200010c020000006400000000000000";
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-            .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic().to_string(), chain_id, 0, None)
+                .unwrap();
 
         let transaction = sign_transaction(account, raw.to_string(), None).unwrap();
 
@@ -525,13 +513,9 @@ mod tests {
         let raw =
             "0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010002049a3c6870aeb9068f2bf9eddc8fb19b3d579da42c31f83099279ed3c377cc3747b97530182dceb9d42c01c0581af062c94ecae225cfc500fdc695b85f1063a27400000000000000000000000000000000000000000000000000000000000000000306466fe5211732ffecadba72c39be7bc8ce5bbc5f7126b2c439b3a40000000a0daf9b9fa585f46e77f3ca63a84432074a910f08ee3b69c4316392720a457190303000502490200000300090380969800000000000202000114020000000100000000000000b2607248be872c18";
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-            .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic().to_string(), chain_id, 0, None)
+                .unwrap();
 
         let transaction = sign_transaction(account, raw.to_string(), None).unwrap();
 
@@ -551,13 +535,9 @@ mod tests {
         let raw =
             "0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800100060a9a3c6870aeb9068f2bf9eddc8fb19b3d579da42c31f83099279ed3c377cc374758ef677fb5635e6473724b70e16b640554034ea47a1c7b3fcd88853c415d325476b8050abc2986a13e443af9bf4ea4d310daf4ce761c12c5ac5622ae757c36d2b19942026d00b891714c2544c4f6919b7c4116ef7246443c88b215ee7ddf6eaf0000000000000000000000000000000000000000000000000000000000000000ac1f83fdb9ce550de95d558cdc795461ccf4374ac688ec13a98400220a78da060306466fe5211732ffecadba72c39be7bc8ce5bbc5f7126b2c439b3a40000000b43ffa27f5d7f64a74c09b1f295879de4b09ab36dfc9dd514b321aa7b38ce5e80479d55bf231c06eee74c56ece681507fdb1b2dea3f48e5102b1cda256bc138f06ddf6e1d765a193d9cbe146ceeb79ac1cb485ed5f5b37913a8cf5857eff00a985e5e847a818aa8ed7e1a03d4b1dbf41ca5fe93a7317a75d56e8fbef5b3979640506000502e6be0100060009034491060000000000080503001309040993f17b64f484ae76ff08180900020308130107080f110b0002030e0a0d0c091212100523e517cb977ae3ad2a0100000019640001f82e010000000000c1ad0900000000002b000509030300000109010fe5dfa171f7e49e10a3d6a91b55bb5714a643b5e94e1e5af2fe8b34d5be4fb205e2e1e3e8c905e7e4e0e545";
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-            .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic().to_string(), chain_id, 0, None)
+                .unwrap();
 
         let transaction = sign_transaction(account, raw.to_string(), None).unwrap();
 
@@ -575,13 +555,9 @@ mod tests {
     fn should_sign_raw_transaction_cosmos() {
         let chain_id = 48;
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-        .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic().to_string(), chain_id, 0, None)
+                .unwrap();
 
         let transaction = sign_transaction(
             account,
@@ -600,13 +576,8 @@ mod tests {
     fn should_sign_raw_transaction_bch() {
         let chain_id = 18;
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-        .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
 
         let transaction = sign_transaction(
             account,
@@ -627,13 +598,8 @@ mod tests {
     fn should_sign_raw_transaction_btc() {
         let chain_id = kos::chains::btc::ID;
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-        .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
 
         let transaction = sign_transaction(
             account,
@@ -654,13 +620,8 @@ mod tests {
     fn should_sign_raw_transaction_dash() {
         let chain_id = 11;
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-        .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
 
         let transaction = sign_transaction(
             account,
@@ -708,13 +669,8 @@ mod tests {
     fn should_sign_raw_transaction_eth() {
         let chain_id = 3;
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-        .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
 
         let transaction = sign_transaction(
             account,
@@ -732,13 +688,8 @@ mod tests {
     fn should_sign_raw_transaction_eth_based_legacy() {
         let chain_id = 3;
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-        .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
 
         let transaction = sign_transaction(
             account,
@@ -756,13 +707,8 @@ mod tests {
     fn should_sign_raw_transaction_dot() {
         let chain_id = 21;
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-        .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
 
         let options = TransactionChainOptions::Substrate {
             call: hex::decode(
@@ -799,7 +745,7 @@ mod tests {
         let chain_id = 31;
 
         let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+            get_test_mnemonic(),
             chain_id,
             0,
             Some(new_icp_wallet_options(false, "ed25519".to_string())),
@@ -819,13 +765,9 @@ mod tests {
     fn should_sign_raw_transaction_xlm() {
         let chain_id = 6;
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None
-        )
-        .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic().to_string(), chain_id, 0, None)
+                .unwrap();
 
         let hex_raw = simple_base64_decode("AAAAAgAAAACn54ed9JVAQdXN6d0E5Q+QH/0BOFi5/jWw3LII81gdPgAAAGQDcl2eAAAAGQAAAAEAAAAAAAAAAAAAAABobmAtAAAAAAAAAAEAAAAAAAAAAQAAAAAvdBR3bp6jt7IkpRzKY3SZsapC3gFKYPBm3sN2Ss3C7QAAAAAAAAAAAAAAAQAAAAAAAAAA").unwrap();
 
@@ -840,13 +782,8 @@ mod tests {
         let raw =
             "b302f101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c0808080";
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None,
-        )
-            .unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
 
         let options = new_evm_transaction_options(88888);
         let transaction = sign_transaction(account, raw.to_string(), Some(options)).unwrap();
@@ -859,12 +796,8 @@ mod tests {
         let chain_id = 38;
         let message = hex::encode("Hello World".as_bytes());
 
-        let account = generate_wallet_from_mnemonic(
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-            chain_id,
-            0,
-            None
-        ).unwrap();
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
 
         let signature = sign_message(account, message, true).unwrap();
         assert_eq!(signature.len(), 64, "The signature length doesn't match");
