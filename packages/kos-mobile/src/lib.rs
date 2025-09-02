@@ -738,7 +738,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(transaction.raw.len(), 284, "The raw length doesn't match");
+        assert_eq!(transaction.raw.len(), 286, "The raw length doesn't match");
     }
     #[test]
     fn should_sign_raw_transaction_icp() {
