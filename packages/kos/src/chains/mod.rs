@@ -833,7 +833,10 @@ pub fn get_chain_by_params(params: CustomChainType) -> Option<Box<dyn Chain>> {
         ))),
         CustomChainType::CustomSubstrate(_) => None,
         CustomChainType::CustomCosmos(_) => None,
-        CustomChainType::CustomIcp(key_type) => Some(Box::new(ICP::new_from_string(key_type))),
+        CustomChainType::CustomIcp(key_type) => match ICP::new_from_string(key_type) {
+            Ok(icp) => Some(Box::new(icp)),
+            Err(_) => None,
+        },
     }
 }
 

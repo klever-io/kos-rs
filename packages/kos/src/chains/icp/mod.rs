@@ -29,13 +29,18 @@ impl ICP {
         ICP { key_type }
     }
 
-    pub fn new_from_string(key_type: String) -> Self {
+    pub fn new_from_string(key_type: String) -> Result<Self, ChainError> {
         let key_type = match key_type.as_str() {
             "ed25519" => KeyType::ED25519,
             "secp256k1" => KeyType::SECP256K1,
-            _ => panic!("Invalid key type"),
+            _ => {
+                return Err(ChainError::InvalidData(format!(
+                    "Invalid key type: {}",
+                    key_type
+                )))
+            }
         };
-        ICP { key_type }
+        Ok(ICP { key_type })
     }
 
     fn crc32_checksum(&self, bytes: &[u8]) -> u32 {
