@@ -1,10 +1,8 @@
 [bans]
 multiple-versions = "deny"
-deny = [
-    { name = "libssh2-sys" },
-]
+deny = [{ name = "libssh2-sys" }]
 skip = [
-    { name = "base64", version = "<=0.22" }, # openssl
+    { name = "base64", version = "<=0.22" },    # openssl
     { name = "secp256k1", version = "0.29.1" }, # bitcoin locked at this version
     { name = "hash32", version = "0.2.1" },
     { name = "heapless", version = "0.7.17" },
@@ -13,7 +11,7 @@ skip = [
 skip-tree = [
     { crate = "lwk_common@0.9.0", reason = "third party integration" },
     { crate = "lwk_signer@0.8.0", reason = "third party integration" },
-    { crate = "lwk_wollet@0.8.0", reason = "third party integration" } 
+    { crate = "lwk_wollet@0.8.0", reason = "third party integration" },
 ]
 
 [sources]
@@ -53,10 +51,11 @@ license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }]
 
 [advisories]
 ignore = [
-    "RUSTSEC-2024-0436", # paste unmaintained, but still used by uniffy
-    "RUSTSEC-2021-0127", # this libs is a sub-dependency of lwk_common/serde_cbol
-    "RUSTSEC-2024-0384", # this libs is a sub-dependency of lwk_common/serde_cbol
+    "RUSTSEC-2024-0436",                                                                                                                                                                                                                                                                   # paste unmaintained, but still used by uniffy
+    "RUSTSEC-2021-0127",                                                                                                                                                                                                                                                                   # this libs is a sub-dependency of lwk_common/serde_cbol
+    "RUSTSEC-2024-0384",                                                                                                                                                                                                                                                                   # this libs is a sub-dependency of lwk_common/serde_cbol
     "RUSTSEC-2024-0370",
     "RUSTSEC-2024-0421",
-    { id = "RUSTSEC-2023-0089", reason = "this is a deprecation warning for a dependency of a dependency. https://github.com/jamesmunns/postcard/issues/223 tracks fixing the dependency; until that's resolved, we can accept the deprecated code as it has no known vulnerabilities."}
+    { id = "RUSTSEC-2023-0089", reason = "this is a deprecation warning for a dependency of a dependency. https://github.com/jamesmunns/postcard/issues/223 tracks fixing the dependency; until that's resolved, we can accept the deprecated code as it has no known vulnerabilities." },
+    "RUSTSEC-2025-0057",                                                                                                                                                                                                                                                                   # fxhash unmaintained - from lwk_wollet dependency
 ]

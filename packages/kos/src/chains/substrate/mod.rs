@@ -15,10 +15,10 @@ const IDENTIFIER_LOWER_PREFIX: u8 = 0x40;
 const SUBSTRATE_NETWORK_PREFIX: &str = "SS58PRE";
 
 #[allow(dead_code)]
-const MULTISIG_ED25519: u8 = 0x00;
-const MULTISIG_SR25519: u8 = 0x01;
+const SIG_ED25519: u8 = 0x00;
+const SIG_SR25519: u8 = 0x01;
 #[allow(dead_code)]
-const MULTISIG_ECDSA: u8 = 0x02;
+const SIG_ECDSA: u8 = 0x02;
 
 pub struct Substrate {
     id: u32,
@@ -129,12 +129,12 @@ impl Chain for Substrate {
         let sig = sr25519::Sr25519::sign(&payload, &private_key_bytes)?;
         private_key_bytes.fill(0);
 
-        // Return MultiSignature format: type byte (0x01 for sr25519) + signature (64 bytes)
-        let mut multisig = Vec::with_capacity(65);
-        multisig.push(MULTISIG_SR25519);
-        multisig.extend_from_slice(&sig);
+        // format: type byte (0x01 for sr25519) + signature (64 bytes)
+        let mut signature = Vec::with_capacity(65);
+        signature.push(SIG_SR25519);
+        signature.extend_from_slice(&sig);
 
-        Ok(multisig)
+        Ok(signature)
     }
 
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
