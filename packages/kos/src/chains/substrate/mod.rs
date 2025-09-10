@@ -14,6 +14,12 @@ const IDENTIFIER_UPPER_MASK: u16 = 0x0003;
 const IDENTIFIER_LOWER_PREFIX: u8 = 0x40;
 const SUBSTRATE_NETWORK_PREFIX: &str = "SS58PRE";
 
+#[allow(dead_code)]
+const SIG_ED25519: u8 = 0x00;
+const SIG_SR25519: u8 = 0x01;
+#[allow(dead_code)]
+const SIG_ECDSA: u8 = 0x02;
+
 pub struct Substrate {
     id: u32,
     network_id: u16,
@@ -122,7 +128,13 @@ impl Chain for Substrate {
         let mut private_key_bytes = private_key_from_vec(&private_key)?;
         let sig = sr25519::Sr25519::sign(&payload, &private_key_bytes)?;
         private_key_bytes.fill(0);
-        Ok(sig)
+
+        // format: type byte (0x01 for sr25519) + signature (64 bytes)
+        let mut signature = Vec::with_capacity(65);
+        signature.push(SIG_SR25519);
+        signature.extend_from_slice(&sig);
+
+        Ok(signature)
     }
 
     fn get_tx_info(&self, _raw_tx: Vec<u8>) -> Result<TxInfo, ChainError> {
@@ -137,6 +149,7 @@ impl Chain for Substrate {
 #[cfg(test)]
 mod test {
     use crate::chains::Chain;
+    use crate::test_utils::get_test_mnemonic;
     use alloc::string::{String, ToString};
     use schnorrkel;
 
@@ -144,7 +157,7 @@ mod test {
     fn test_get_addr_1() {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = dot.get_path(0, false);
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
@@ -157,7 +170,7 @@ mod test {
     fn test_get_addr_2() {
         let dot = super::Substrate::new(62, 42, "AVAIL", "Avail");
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = dot.get_path(1, false);
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
@@ -170,8 +183,7 @@ mod test {
     fn test_get_addr_3() {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
-        let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = dot.get_path(1, false);
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
@@ -185,7 +197,7 @@ mod test {
     fn test_sign_raw() {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
 
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = String::from("");
 
         let seed = dot.mnemonic_to_seed(mnemonic, String::from("")).unwrap();
@@ -193,13 +205,16 @@ mod test {
         let payload = [0; 32].to_vec();
         let sig = dot.sign_raw(pvk, payload).unwrap();
 
-        assert_eq!(sig.len(), 64);
+        // MultiSignature format: 1 byte type + 64 bytes signature = 65 bytes total
+        assert_eq!(sig.len(), 65);
+        // First byte should be 0x01 for sr25519
+        assert_eq!(sig[0], 0x01);
     }
 
     #[test]
     fn test_sign_message() {
         let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let seed = dot.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();
         let path = dot.get_path(0, false);
         let pvk = dot.derive(seed, path).unwrap();
@@ -210,6 +225,10 @@ mod test {
             .sign_message(pvk.clone(), message.clone(), false)
             .unwrap();
 
+        // Verify the result is in MultiSignature format
+        assert_eq!(result.len(), 65);
+        assert_eq!(result[0], 0x01); // sr25519 type
+
         let secret_key = schnorrkel::SecretKey::from_bytes(&pvk).unwrap();
         let public_key = schnorrkel::PublicKey::from_bytes(&pbk).unwrap();
 
@@ -218,7 +237,9 @@ mod test {
             public: public_key,
         };
 
-        let signature = schnorrkel::Signature::from_bytes(&result).unwrap();
+        // Extract the raw signature bytes (skip the first type byte)
+        let raw_signature = &result[1..];
+        let signature = schnorrkel::Signature::from_bytes(raw_signature).unwrap();
 
         let substrate_ctx: &[u8; 9] = b"substrate";
 

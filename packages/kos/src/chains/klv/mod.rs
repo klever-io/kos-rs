@@ -114,11 +114,12 @@ impl Chain for KLV {
 #[cfg(test)]
 mod test {
     use crate::chains::Chain;
+    use crate::test_utils::get_test_mnemonic;
     use alloc::string::{String, ToString};
 
     #[test]
     fn test_derive() {
-        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = crate::chains::klv::KLV {}.get_path(0, false);
 
         let seed = crate::chains::klv::KLV {}
@@ -167,9 +168,7 @@ mod test {
 
     #[test]
     fn test_sign_raw() {
-        let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-                .to_string();
+        let mnemonic = get_test_mnemonic().to_string();
         let path = String::from("m/44'/690'/0'/0'/0'");
 
         let seed = crate::chains::klv::KLV {}
@@ -187,8 +186,7 @@ mod test {
 
     #[test]
     fn test_sign_message() {
-        let mnemonic =
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string();
+        let mnemonic = get_test_mnemonic().to_string();
 
         let chain = super::KLV {};
         let seed = chain.mnemonic_to_seed(mnemonic, "".to_string()).unwrap();

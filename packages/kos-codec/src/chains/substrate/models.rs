@@ -3,7 +3,6 @@ use parity_scale_codec::{Compact, Encode};
 const SIGNED_FLAG: u8 = 0b1000_0000;
 const TRANSACTION_VERSION: u8 = 4;
 const PUBLIC_KEY_TYPE: u8 = 0x00;
-const SIGNATURE_TYPE: u8 = 0x01;
 
 /// Represents the payload of a Substrate extrinsic (transaction) that will be signed.
 /// This structure contains all the necessary fields required for transaction signing.
@@ -63,8 +62,6 @@ impl ExtrinsicPayload {
 
         encoded.push(PUBLIC_KEY_TYPE);
         encoded.extend_from_slice(public_key);
-
-        encoded.push(SIGNATURE_TYPE);
 
         encoded.extend_from_slice(signature);
 
