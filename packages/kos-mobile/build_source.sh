@@ -36,6 +36,10 @@ OPENSSL_GENERATED_LIBS_PATH="$OPENSSL_PATH-libs"
 export IOS_ARCHS=("aarch64-apple-ios" "aarch64-apple-ios-sim" "x86_64-apple-ios")
 export PACKAGE_NAME="kos_mobile"
 
+export TARGET_ARCH_INDEX=0  # Default to arm64-v8a
+export BINDING_GENERATION_ARCH="${ANDROID_TOOLCHAINS[TARGET_ARCH_INDEX]}"
+export BINDING_GENERATION_JNI="${ANDROID_JNI[TARGET_ARCH_INDEX]}"
+
 # colors
 export ANDROID='\033[0;92m'
 export IOS='\033[0;97m'
@@ -70,6 +74,31 @@ log_status() {
 
 log_error() {
   echo -e "${RED}$1${NC}"
+}
+
+set_target_architecture() {
+  local arch_name=$1
+  case "$arch_name" in
+    "arm64"|"aarch64")
+      export TARGET_ARCH_INDEX=0
+      ;;
+    "arm"|"armv7")
+      export TARGET_ARCH_INDEX=1
+      ;;
+    "x86")
+      export TARGET_ARCH_INDEX=2
+      ;;
+    "x86_64")
+      export TARGET_ARCH_INDEX=3
+      ;;
+    *)
+      log_warning "Unknown architecture: $arch_name. Using default arm64."
+      export TARGET_ARCH_INDEX=0
+      ;;
+  esac
+  export BINDING_GENERATION_ARCH="${ANDROID_TOOLCHAINS[TARGET_ARCH_INDEX]}"
+  export BINDING_GENERATION_JNI="${ANDROID_JNI[TARGET_ARCH_INDEX]}"
+  log_status "Target architecture set to: ${ANDROID_JNI[TARGET_ARCH_INDEX]} (${BINDING_GENERATION_ARCH})"
 }
 
 configure_android_ndk() {
@@ -145,6 +174,9 @@ assemble_openssl_lib() {
   if ! dir_exists "$OPENSSL_GENERATED_LIBS_PATH/$toolchain"; then
     cd "$OPENSSL_PATH" || exit
     log_status "configuring openssl to $toolchain..."
+    
+    unset CC CXX CXXFLAGS CPPFLAGS
+    
     if [ "$arch" = "$OS_ARCH" ]; then
       ./Configure "$arch" no-asm no-shared
     else
@@ -153,19 +185,43 @@ assemble_openssl_lib() {
       export CXXFLAGS="-fPIC"
       export CPPFLAGS="-DANDROID -fPIC"
 
-      ./Configure "$arch" no-asm no-shared
+      export LDFLAGS="-static"
+      
+      ./Configure "$arch" no-asm no-shared no-stdio
     fi
     log_status "assembling openssl to $toolchain..."
     make clean -s
-    make -s
+    if ! make -s; then
+      log_error "Failed to build OpenSSL for $toolchain"
+      return 1
+    fi
     mkdir -p "$OPENSSL_GENERATED_LIBS_PATH"/"$toolchain"
     cp -f libcrypto.a "$OPENSSL_GENERATED_LIBS_PATH"/"$toolchain"
     cp -f libssl.a "$OPENSSL_GENERATED_LIBS_PATH"/"$toolchain"
+    
+    if ! file_exists "$OPENSSL_GENERATED_LIBS_PATH/$toolchain/libcrypto.a" || ! file_exists "$OPENSSL_GENERATED_LIBS_PATH/$toolchain/libssl.a"; then
+      log_error "Failed to create OpenSSL libraries for $toolchain"
+      return 1
+    fi
+    
+    log_status "✓ OpenSSL libraries created for $toolchain"
   else
     log_status "skipping assemble openssl to $toolchain..."
   fi
-  export CC=""
-  export CXX=""
-  export CXXFLAGS=""
-  export CPPFLAGS=""
+  
+  unset CC CXX CXXFLAGS CPPFLAGS LDFLAGS
+}
+
+validate_library_arch() {
+  local lib_path=$1
+  local expected_arch=$2
+  
+  if file_exists "$lib_path"; then
+    local arch_info=$(file "$lib_path")
+    log_status "Library info: $arch_info"
+    return 0
+  else
+    log_error "Library not found: $lib_path"
+    return 1
+  fi
 }
