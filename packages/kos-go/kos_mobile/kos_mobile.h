@@ -476,7 +476,7 @@ RustBuffer uniffi_kos_mobile_fn_func_big_number_subtract(RustBuffer lhs, RustBuf
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_DECRYPT
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_DECRYPT
-RustBuffer uniffi_kos_mobile_fn_func_decrypt(RustBuffer data, RustBuffer password, RustCallStatus *out_status
+RustBuffer uniffi_kos_mobile_fn_func_decrypt(RustBuffer data, RustBuffer password, uint32_t iterations, RustCallStatus *out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_DERIVE_XPUB
@@ -496,17 +496,17 @@ RustBuffer uniffi_kos_mobile_fn_func_ecies_encrypt(RustBuffer mnemonic, RustBuff
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_CBC
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_CBC
-RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_cbc(RustBuffer data, RustBuffer password, RustCallStatus *out_status
+RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_cbc(RustBuffer data, RustBuffer password, uint32_t iterations, RustCallStatus *out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_CFB
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_CFB
-RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_cfb(RustBuffer data, RustBuffer password, RustCallStatus *out_status
+RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_cfb(RustBuffer data, RustBuffer password, uint32_t iterations, RustCallStatus *out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_GCM
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_GCM
-RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_gcm(RustBuffer data, RustBuffer password, RustCallStatus *out_status
+RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_gcm(RustBuffer data, RustBuffer password, uint32_t iterations, RustCallStatus *out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_MNEMONIC
@@ -516,12 +516,12 @@ RustBuffer uniffi_kos_mobile_fn_func_generate_mnemonic(int32_t size, RustCallSta
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_WALLET_FROM_MNEMONIC
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_WALLET_FROM_MNEMONIC
-RustBuffer uniffi_kos_mobile_fn_func_generate_wallet_from_mnemonic(RustBuffer mnemonic, uint32_t chain_id, uint32_t index, int8_t use_legacy_path, RustCallStatus *out_status
+RustBuffer uniffi_kos_mobile_fn_func_generate_wallet_from_mnemonic(RustBuffer mnemonic, uint32_t chain_id, uint32_t index, RustBuffer options, RustCallStatus *out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_WALLET_FROM_PRIVATE_KEY
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_WALLET_FROM_PRIVATE_KEY
-RustBuffer uniffi_kos_mobile_fn_func_generate_wallet_from_private_key(uint32_t chain_id, RustBuffer private_key, RustCallStatus *out_status
+RustBuffer uniffi_kos_mobile_fn_func_generate_wallet_from_private_key(uint32_t chain_id, RustBuffer private_key, RustBuffer options, RustCallStatus *out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_XPUB
@@ -565,14 +565,29 @@ RustBuffer uniffi_kos_mobile_fn_func_new_bitcoin_transaction_options(RustBuffer 
 RustBuffer uniffi_kos_mobile_fn_func_new_cosmos_transaction_options(RustBuffer chain_id, uint64_t account_number, RustCallStatus *out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_ETH_WALLET_OPTIONS
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_ETH_WALLET_OPTIONS
+RustBuffer uniffi_kos_mobile_fn_func_new_eth_wallet_options(int8_t use_legacy_path, uint32_t chain_id, RustCallStatus *out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_EVM_TRANSACTION_OPTIONS
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_EVM_TRANSACTION_OPTIONS
 RustBuffer uniffi_kos_mobile_fn_func_new_evm_transaction_options(uint32_t chain_id, RustCallStatus *out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_ICP_WALLET_OPTIONS
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_ICP_WALLET_OPTIONS
+RustBuffer uniffi_kos_mobile_fn_func_new_icp_wallet_options(int8_t use_legacy_path, RustBuffer key_type, RustCallStatus *out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_SUBSTRATE_TRANSACTION_OPTIONS
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_SUBSTRATE_TRANSACTION_OPTIONS
-RustBuffer uniffi_kos_mobile_fn_func_new_substrate_transaction_options(RustBuffer call, RustBuffer era, uint32_t nonce, uint8_t tip, RustBuffer block_hash, RustBuffer genesis_hash, uint32_t spec_version, uint32_t transaction_version, RustBuffer app_id, RustCallStatus *out_status
+RustBuffer uniffi_kos_mobile_fn_func_new_substrate_transaction_options(RustBuffer call, RustBuffer era, uint32_t nonce, uint64_t tip, RustBuffer block_hash, RustBuffer genesis_hash, uint32_t spec_version, uint32_t transaction_version, RustBuffer app_id, RustCallStatus *out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_WALLET_OPTIONS
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_WALLET_OPTIONS
+RustBuffer uniffi_kos_mobile_fn_func_new_wallet_options(int8_t use_legacy_path, RustCallStatus *out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_SIGN_ECDSA
@@ -1107,15 +1122,33 @@ uint16_t uniffi_kos_mobile_checksum_func_new_cosmos_transaction_options(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_NEW_ETH_WALLET_OPTIONS
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_NEW_ETH_WALLET_OPTIONS
+uint16_t uniffi_kos_mobile_checksum_func_new_eth_wallet_options(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_NEW_EVM_TRANSACTION_OPTIONS
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_NEW_EVM_TRANSACTION_OPTIONS
 uint16_t uniffi_kos_mobile_checksum_func_new_evm_transaction_options(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_NEW_ICP_WALLET_OPTIONS
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_NEW_ICP_WALLET_OPTIONS
+uint16_t uniffi_kos_mobile_checksum_func_new_icp_wallet_options(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_NEW_SUBSTRATE_TRANSACTION_OPTIONS
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_NEW_SUBSTRATE_TRANSACTION_OPTIONS
 uint16_t uniffi_kos_mobile_checksum_func_new_substrate_transaction_options(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_NEW_WALLET_OPTIONS
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_NEW_WALLET_OPTIONS
+uint16_t uniffi_kos_mobile_checksum_func_new_wallet_options(void
     
 );
 #endif
