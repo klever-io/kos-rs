@@ -42,7 +42,11 @@ func TestShouldFailToGetAccountFromMnemonicWithInvalidChain(t *testing.T) {
 	index := uint32(0)
 	chainID := uint32(999)
 
-	wallet, err := kos_mobile.GenerateWalletFromMnemonic(mnemonic, chainID, index, false)
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
+	wallet, err := kos_mobile.GenerateWalletFromMnemonic(mnemonic, chainID, index, &walletOptions)
 
 	assert.Error(t, err, "An error was expected but found a mnemonic")
 	assert.Empty(t, wallet)
@@ -56,7 +60,11 @@ func TestShouldGetAccountFromMnemonic(t *testing.T) {
 	index := uint32(0)
 	chainID := uint32(38)
 
-	account, err := kos_mobile.GenerateWalletFromMnemonic(mnemonic, chainID, index, false)
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
+	account, err := kos_mobile.GenerateWalletFromMnemonic(mnemonic, chainID, index, &walletOptions)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 	assert.Equal(t, "klv1usdnywjhrlv4tcyu6stxpl6yvhplg35nepljlt4y5r7yppe8er4qujlazy", account.Address, "The address doesn't match")
 	assert.Equal(t, "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d", account.PrivateKey, "The private_key doesn't match")
@@ -68,7 +76,7 @@ func TestShouldFailToGetAccountFromMnemonicWithInvalidMnemonic(t *testing.T) {
 	index := uint32(0)
 	chainID := uint32(38)
 
-	account, err := kos_mobile.GenerateWalletFromMnemonic(mnemonic, chainID, index, false)
+	account, err := kos_mobile.GenerateWalletFromMnemonic(mnemonic, chainID, index, nil)
 
 	assert.Error(t, err, "An error was expected but found an account")
 	assert.Empty(t, account, "Account should be empty when there's an error")
@@ -79,7 +87,11 @@ func TestShouldFailToGetAccountFromPrivateKey(t *testing.T) {
 	privateKey := ""
 	chainID := uint32(38)
 
-	account, err := kos_mobile.GenerateWalletFromPrivateKey(chainID, privateKey)
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
+	account, err := kos_mobile.GenerateWalletFromPrivateKey(chainID, privateKey, &walletOptions)
 	assert.Error(t, err, "An error was expected but found a pk %s", account.PrivateKey)
 	assert.True(t, errors.Is(err, kos_mobile.ErrKosErrorKosDelegate), "Invalid error: expected KosErrorKosDelegate")
 }
@@ -88,10 +100,10 @@ func TestShouldEncryptWithGcmAndDecryptData(t *testing.T) {
 	originalData := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	password := "myPass"
 
-	encryptedData, err := kos_mobile.EncryptWithGcm(originalData, password)
+	encryptedData, err := kos_mobile.EncryptWithGcm(originalData, password, 1000)
 	assert.Nil(t, err, "Failed to encrypt data with GCM")
 
-	decryptedData, err := kos_mobile.Decrypt(encryptedData, password)
+	decryptedData, err := kos_mobile.Decrypt(encryptedData, password, 1000)
 	assert.Nil(t, err, "Failed to decrypt data")
 	assert.Equal(t, originalData, decryptedData, "The data is not the same")
 }
@@ -100,10 +112,10 @@ func TestShouldEncryptWithCbcAndDecryptData(t *testing.T) {
 	originalData := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	password := "myPass"
 
-	encryptedData, err := kos_mobile.EncryptWithCbc(originalData, password)
+	encryptedData, err := kos_mobile.EncryptWithCbc(originalData, password, 1000)
 	assert.Nil(t, err, "Failed to encrypt data with CBC")
 
-	decryptedData, err := kos_mobile.Decrypt(encryptedData, password)
+	decryptedData, err := kos_mobile.Decrypt(encryptedData, password, 1000)
 	assert.Nil(t, err, "Failed to decrypt data")
 	assert.Equal(t, originalData, decryptedData, "The data is not the same")
 }
@@ -112,10 +124,10 @@ func TestShouldEncryptWithCbfAndDecryptData(t *testing.T) {
 	originalData := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	password := "myPass"
 
-	encryptedData, err := kos_mobile.EncryptWithCfb(originalData, password)
+	encryptedData, err := kos_mobile.EncryptWithCfb(originalData, password, 1000)
 	assert.Nil(t, err, "Failed to encrypt data with CFB")
 
-	decryptedData, err := kos_mobile.Decrypt(encryptedData, password)
+	decryptedData, err := kos_mobile.Decrypt(encryptedData, password, 1000)
 	assert.Nil(t, err, "Failed to decrypt data")
 	assert.Equal(t, originalData, decryptedData, "The data is not the same")
 }
@@ -124,10 +136,10 @@ func TestShouldFailToDecryptWithWrongPassword(t *testing.T) {
 	originalData := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	password := "myPass"
 
-	encryptedData, err := kos_mobile.EncryptWithGcm(originalData, password)
+	encryptedData, err := kos_mobile.EncryptWithGcm(originalData, password, 1000)
 	assert.Nil(t, err, "Failed to encrypt data with GCM")
 
-	decryptedData, err := kos_mobile.Decrypt(encryptedData, "wrong")
+	decryptedData, err := kos_mobile.Decrypt(encryptedData, "wrong", 1000)
 	assert.Error(t, err, "An error was expected but found decrypted data")
 	assert.Empty(t, decryptedData)
 	assert.True(t, errors.Is(err, kos_mobile.ErrKosErrorKosDelegate), "Invalid error: expected KosErrorKosDelegate")
@@ -137,11 +149,15 @@ func TestShouldSignRawTransactionKlv(t *testing.T) {
 	chainID := uint32(38)
 	raw := hex.EncodeToString([]byte(`{"RawData":{"BandwidthFee":1000000,"ChainID":"MTAwNDIw","Contract":[{"Parameter":{"type_url":"type.googleapis.com/proto.TransferContract","value":"CiAysyg0Aj8xj/rr5XGU6iJ+ATI29mnRHS0W0BrC1vz0CBgK"}}],"KAppFee":500000,"Nonce":39,"Sender":"5BsyOlcf2VXgnNQWYP9EZcP0RpPIfy+upKD8QIcnyOo=","Version":1}}`))
 
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
 	account, err := kos_mobile.GenerateWalletFromMnemonic(
 		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
 		chainID,
 		0,
-		false,
+		&walletOptions,
 	)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
@@ -158,11 +174,15 @@ func TestShouldSignRawTransactionTrx(t *testing.T) {
 	chainID := uint32(1)
 	raw := "0a02487c22080608af18f6ec6c8340d8f8fae2e0315a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541e825d52582eec346c839b4875376117904a76cbc12154120ab1300cf70c048e4cf5d5b1b33f59653ed6626180a708fb1f7e2e031"
 
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
 	account, err := kos_mobile.GenerateWalletFromMnemonic(
 		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
 		chainID,
 		0,
-		false,
+		&walletOptions,
 	)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
@@ -180,11 +200,15 @@ func TestShouldSignRawTransactionSol(t *testing.T) {
 
 	raw := "00010000030101010101010101010101010101010101010101010101010101010101010101020202020202020202020202020202020202020202020202020202020202020203030303030303030303030303030303030303030303030303030303030303032a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a01020200010c020000006400000000000000"
 
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
 	account, err := kos_mobile.GenerateWalletFromMnemonic(
 		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
 		chainID,
 		0,
-		false,
+		&walletOptions,
 	)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
@@ -208,11 +232,15 @@ func TestShouldSignRawLegacyTransactionSol(t *testing.T) {
 
 	raw := "0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010002049a3c6870aeb9068f2bf9eddc8fb19b3d579da42c31f83099279ed3c377cc3747b97530182dceb9d42c01c0581af062c94ecae225cfc500fdc695b85f1063a27400000000000000000000000000000000000000000000000000000000000000000306466fe5211732ffecadba72c39be7bc8ce5bbc5f7126b2c439b3a40000000a0daf9b9fa585f46e77f3ca63a84432074a910f08ee3b69c4316392720a457190303000502490200000300090380969800000000000202000114020000000100000000000000b2607248be872c18"
 
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
 	account, err := kos_mobile.GenerateWalletFromMnemonic(
 		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
 		chainID,
 		0,
-		false,
+		&walletOptions,
 	)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
@@ -236,11 +264,15 @@ func TestShouldSignRawV0TransactionSol(t *testing.T) {
 
 	raw := "0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800100060a9a3c6870aeb9068f2bf9eddc8fb19b3d579da42c31f83099279ed3c377cc374758ef677fb5635e6473724b70e16b640554034ea47a1c7b3fcd88853c415d325476b8050abc2986a13e443af9bf4ea4d310daf4ce761c12c5ac5622ae757c36d2b19942026d00b891714c2544c4f6919b7c4116ef7246443c88b215ee7ddf6eaf0000000000000000000000000000000000000000000000000000000000000000ac1f83fdb9ce550de95d558cdc795461ccf4374ac688ec13a98400220a78da060306466fe5211732ffecadba72c39be7bc8ce5bbc5f7126b2c439b3a40000000b43ffa27f5d7f64a74c09b1f295879de4b09ab36dfc9dd514b321aa7b38ce5e80479d55bf231c06eee74c56ece681507fdb1b2dea3f48e5102b1cda256bc138f06ddf6e1d765a193d9cbe146ceeb79ac1cb485ed5f5b37913a8cf5857eff00a985e5e847a818aa8ed7e1a03d4b1dbf41ca5fe93a7317a75d56e8fbef5b3979640506000502e6be0100060009034491060000000000080503001309040993f17b64f484ae76ff08180900020308130107080f110b0002030e0a0d0c091212100523e517cb977ae3ad2a0100000019640001f82e010000000000c1ad0900000000002b000509030300000109010fe5dfa171f7e49e10a3d6a91b55bb5714a643b5e94e1e5af2fe8b34d5be4fb205e2e1e3e8c905e7e4e0e545"
 
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
 	account, err := kos_mobile.GenerateWalletFromMnemonic(
 		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
 		chainID,
 		0,
-		false,
+		&walletOptions,
 	)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
@@ -262,11 +294,15 @@ func TestShouldSignRawV0TransactionSol(t *testing.T) {
 func TestShouldSignRawTransactionCosmos(t *testing.T) {
 	chainID := uint32(48)
 
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
 	account, err := kos_mobile.GenerateWalletFromMnemonic(
 		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
 		chainID,
 		0,
-		false,
+		&walletOptions,
 	)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
@@ -287,67 +323,65 @@ func TestShouldSignRawTransactionCosmos(t *testing.T) {
 }
 
 func TestShouldSignRawTransactionEth(t *testing.T) {
-	chainID := uint32(3)
+	chainId := uint32(3)
 
-	account, err := kos_mobile.GenerateWalletFromMnemonic(
-		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
-		chainID,
-		0,
-		false,
-	)
-	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
+	account, err := kos_mobile.GenerateWalletFromMnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", chainId, 0, nil)
+	if err != nil {
+		t.Fatalf("Failed to generate wallet from mnemonic: %v", err)
+	}
+
+	raw := "b87602f8730182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac0808080"
 
 	options := kos_mobile.NewEvmTransactionOptions(1)
 
-	transaction, err := kos_mobile.SignTransaction(
-		account,
-		"b87602f8730182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac0808080",
-		&options,
-	)
-	assert.Nil(t, err, "Failed to sign transaction")
+	transaction, err := kos_mobile.SignTransaction(account, raw, &options)
+	if err != nil {
+		t.Fatalf("Failed to sign transaction: %v", err)
+	}
 
-	assert.Equal(t,
-		"b87602f8730182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac0808080",
-		transaction.Raw,
-		"The raw doesn't match",
-	)
+	expectedRaw := "02f8b30182014f84147b7eeb85084ec9f83f8301450994dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb0000000000000000000000004cbeee256240c92a9ad920ea6f4d7df6466d2cdc000000000000000000000000000000000000000000000000000000000000000ac001a0ac17a21525645e7bdf653b2e46b4fb7b33668b0cb42ce38bf8fbb752e527fb63a0e56f5ff3e3eb15441eeaf144237204b0435ed31d0e009153512074fa56b2cc62"
+
+	if transaction.Raw != expectedRaw {
+		t.Errorf("The raw doesn't match.\nExpected: %s\nGot: %s", expectedRaw, transaction.Raw)
+	}
 }
 
 func TestShouldSignRawTransactionEthBasedLegacy(t *testing.T) {
-	chainID := uint32(3)
+	chainId := uint32(3)
 
-	account, err := kos_mobile.GenerateWalletFromMnemonic(
-		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
-		chainID,
-		0,
-		false,
-	)
-	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
+	account, err := kos_mobile.GenerateWalletFromMnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", chainId, 0, nil)
+	if err != nil {
+		t.Fatalf("Failed to generate wallet from mnemonic: %v", err)
+	}
+
+	raw := "ea13840afab0ab82520894f1eea5c58414264171cf40592c3468adb6af1b3387038d7ea4c6800080808080"
 
 	options := kos_mobile.NewEvmTransactionOptions(43114)
 
-	transaction, err := kos_mobile.SignTransaction(
-		account,
-		"ea13840afab0ab82520894f1eea5c58414264171cf40592c3468adb6af1b3387038d7ea4c6800080808080",
-		&options,
-	)
-	assert.Nil(t, err, "Failed to sign transaction")
+	transaction, err := kos_mobile.SignTransaction(account, raw, &options)
+	if err != nil {
+		t.Fatalf("Failed to sign transaction: %v", err)
+	}
 
-	assert.Equal(t,
-		"ea13840afab0ab82520894f1eea5c58414264171cf40592c3468adb6af1b3387038d7ea4c6800080808080",
-		transaction.Raw,
-		"The raw doesn't match",
-	)
+	expectedRaw := "f86a13840afab0ab82520894f1eea5c58414264171cf40592c3468adb6af1b3387038d7ea4c68000801ca0735e6e6f62302109f60750189a1c3e8d16990beb5e3036963c9e069d6e0c39c3a075ab2a97863ec9e3be9cae77637af453fb94bea06c67d637e79d98ec77b74e4e"
+
+	if transaction.Raw != expectedRaw {
+		t.Errorf("The raw doesn't match.\nExpected: %s\nGot: %s", expectedRaw, transaction.Raw)
+	}
 }
 
 func TestShouldSignRawTransactionIcp(t *testing.T) {
 	chainID := uint32(31)
 
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
 	account, err := kos_mobile.GenerateWalletFromMnemonic(
 		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
 		chainID,
 		0,
-		false,
+		&walletOptions,
 	)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
@@ -366,37 +400,41 @@ func TestShouldSignRawTransactionIcp(t *testing.T) {
 }
 
 func TestShouldSignTransactionWithOptions(t *testing.T) {
-	chainID := uint32(61)
+	chainId := uint32(61)
 	raw := "b302f101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c0808080"
 
-	account, err := kos_mobile.GenerateWalletFromMnemonic(
-		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
-		chainID,
-		0,
-		false,
-	)
-	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
+	account, err := kos_mobile.GenerateWalletFromMnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", chainId, 0, nil)
+	if err != nil {
+		t.Fatalf("Failed to generate wallet from mnemonic: %v", err)
+	}
 
 	options := kos_mobile.NewEvmTransactionOptions(88888)
-	transaction, err := kos_mobile.SignTransaction(account, raw, &options)
-	assert.Nil(t, err, "Failed to sign transaction")
 
-	assert.Equal(t,
-		"b302f101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c0808080",
-		transaction.Raw,
-		"The raw doesn't match",
-	)
+	transaction, err := kos_mobile.SignTransaction(account, raw, &options)
+	if err != nil {
+		t.Fatalf("Failed to sign transaction: %v", err)
+	}
+
+	expectedRaw := "02f87101819e84ae7937b285035f6cccc58252089498de4c83810b87f0e2cd92d80c9fac28c4ded4818568c696991f80c001a044c69f41bf47ad50dc98c74af68811384c9172055b01fcaa39e70f53df69b632a05e071cf1f9e12500b525f03a29f567520e1ea49a97e6a29d1fd432dc6303353e"
+
+	if transaction.Raw != expectedRaw {
+		t.Errorf("The raw doesn't match.\nExpected: %s\nGot: %s", expectedRaw, transaction.Raw)
+	}
 }
 
 func TestShouldSignMessage(t *testing.T) {
 	chainID := uint32(38)
 	message := hex.EncodeToString([]byte("Hello World"))
 
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
 	account, err := kos_mobile.GenerateWalletFromMnemonic(
 		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
 		chainID,
 		0,
-		false,
+		&walletOptions,
 	)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
