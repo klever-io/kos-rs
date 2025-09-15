@@ -87,14 +87,13 @@ runs:
     ###############################
     # PROTOBUF CACHE && INSTALL   #
     ###############################
-    - name: Setup protobuf
+    - name: Setup protobuf for Linux
+      if: runner.os == 'Linux'
       shell: bash
       run: |
-        if [[ "$RUNNER_OS" == "Linux" ]]; then
-          sudo apt-get update && sudo apt-get -y install protobuf-compiler
-        elif [[ "$RUNNER_OS" == "macOS" ]]; then
-          brew install protobuf
-        else
-          echo "Unsupported OS: $RUNNER_OS"
-          exit 1
-        fi
+        sudo apt-get update && sudo apt-get -y install protobuf-compiler
+
+    - name: Setup protobuf for macOS
+      if: runner.os == 'macOS'
+      run: |
+        brew install protobuf

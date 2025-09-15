@@ -115,10 +115,6 @@ test-all:
 		echo "Testing Linux AMD64..."; \
 		$(MAKE) test-linux-amd64; \
 	fi
-	@if [ -d "kos_mobile/lib/darwin-amd64" ]; then \
-		echo "Testing Darwin AMD64..."; \
-		$(MAKE) test-darwin-amd64; \
-	fi
 	@if [ -d "kos_mobile/lib/darwin-aarch64" ]; then \
 		echo "Testing Darwin ARM64..."; \
 		$(MAKE) test-darwin-arm64; \
@@ -149,7 +145,6 @@ help:
 	@echo "Cross-platform targets:"
 	@echo "  build-all           - Build for all platforms"
 	@echo "  build-linux-amd64   - Build for Linux AMD64"
-	@echo "  build-darwin-amd64  - Build for macOS AMD64"
 	@echo "  build-darwin-arm64  - Build for macOS ARM64"
 	@echo "  test-all            - Test all available platforms"
 	@echo "  test-linux-amd64    - Test Linux AMD64"
