@@ -9,7 +9,7 @@ ifeq ($(UNAME_S),Linux)
 endif
 ifeq ($(UNAME_S),Darwin)
 	GOOS := darwin
-	LIB_EXT := .so
+	LIB_EXT := .dylib
 	LIB_PATH_VAR := DYLD_LIBRARY_PATH
 endif
 
@@ -80,14 +80,6 @@ build-linux-amd64:
 	GOARCH=amd64 \
 	go build $(BUILD_FLAGS) -o bin/kos-linux-amd64 ./...
 
-.PHONY: build-darwin-amd64
-build-darwin-amd64:
-	DYLD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/darwin-amd64 \
-	CGO_ENABLED=1 \
-	GOOS=darwin \
-	GOARCH=amd64 \
-	go build $(BUILD_FLAGS) -o bin/kos-darwin-amd64 ./...
-
 .PHONY: build-darwin-arm64
 build-darwin-arm64:
 	DYLD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/darwin-aarch64 \
@@ -104,14 +96,6 @@ test-linux-amd64:
 	GOARCH=amd64 \
 	go test $(TEST_FLAGS) ./...
 
-.PHONY: test-darwin-amd64
-test-darwin-amd64:
-	DYLD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/darwin-amd64 \
-	CGO_ENABLED=1 \
-	GOOS=darwin \
-	GOARCH=amd64 \
-	go test $(TEST_FLAGS) ./...
-
 .PHONY: test-darwin-arm64
 test-darwin-arm64:
 	DYLD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/darwin-aarch64 \
@@ -121,7 +105,7 @@ test-darwin-arm64:
 	go test $(TEST_FLAGS) ./...
 
 .PHONY: build-all
-build-all: build-linux-amd64 build-darwin-amd64 build-darwin-arm64
+build-all: build-linux-amd64 build-darwin-arm64
 	@echo "Built all platforms"
 
 .PHONY: test-all

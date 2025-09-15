@@ -10,6 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	pbkdfIter = uint32(1000)
+)
+
 func TestShouldGenerateMnemonic(t *testing.T) {
 	size := int32(12)
 	mnemonic, err := kos_mobile.GenerateMnemonic(size)
@@ -20,7 +24,7 @@ func TestShouldGenerateMnemonic(t *testing.T) {
 func TestShouldFailToGenerateMnemonic(t *testing.T) {
 	size := int32(-1)
 	mnemonic, err := kos_mobile.GenerateMnemonic(size)
-	assert.Error(t, err, "A error was expected but found a mnemonic")
+	assert.Error(t, err, "An error was expected but found a mnemonic")
 	assert.Empty(t, mnemonic)
 	assert.True(t, errors.Is(err, kos_mobile.ErrKosErrorKosDelegate), "Invalid error: expected KosErrorKosDelegate")
 }
@@ -91,55 +95,53 @@ func TestShouldFailToGetAccountFromPrivateKey(t *testing.T) {
 		UseLegacyPath: false,
 		Specific:      nil,
 	}
-	account, err := kos_mobile.GenerateWalletFromPrivateKey(chainID, privateKey, &walletOptions)
-	assert.Error(t, err, "An error was expected but found a pk %s", account.PrivateKey)
+	_, err := kos_mobile.GenerateWalletFromPrivateKey(chainID, privateKey, &walletOptions)
+	assert.Error(t, err, "An error was expected but found: %v", err)
 	assert.True(t, errors.Is(err, kos_mobile.ErrKosErrorKosDelegate), "Invalid error: expected KosErrorKosDelegate")
 }
 
-func TestShouldEncryptWithGcmAndDecryptData(t *testing.T) {
+func TestShouldEncryptAndDecryptData(t *testing.T) {
 	originalData := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	password := "myPass"
 
-	encryptedData, err := kos_mobile.EncryptWithGcm(originalData, password, 1000)
-	assert.Nil(t, err, "Failed to encrypt data with GCM")
+	testCases := []struct {
+		name      string
+		encryptFn func(string, string, uint32) (string, error)
+	}{
+		{
+			name:      "GCM",
+			encryptFn: kos_mobile.EncryptWithGcm,
+		},
+		{
+			name:      "CBC",
+			encryptFn: kos_mobile.EncryptWithCbc,
+		},
+		{
+			name:      "CFB",
+			encryptFn: kos_mobile.EncryptWithCfb,
+		},
+	}
 
-	decryptedData, err := kos_mobile.Decrypt(encryptedData, password, 1000)
-	assert.Nil(t, err, "Failed to decrypt data")
-	assert.Equal(t, originalData, decryptedData, "The data is not the same")
-}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			encryptedData, err := tc.encryptFn(originalData, password, pbkdfIter)
+			assert.Nil(t, err, "Failed to encrypt data with %s", tc.name)
 
-func TestShouldEncryptWithCbcAndDecryptData(t *testing.T) {
-	originalData := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-	password := "myPass"
-
-	encryptedData, err := kos_mobile.EncryptWithCbc(originalData, password, 1000)
-	assert.Nil(t, err, "Failed to encrypt data with CBC")
-
-	decryptedData, err := kos_mobile.Decrypt(encryptedData, password, 1000)
-	assert.Nil(t, err, "Failed to decrypt data")
-	assert.Equal(t, originalData, decryptedData, "The data is not the same")
-}
-
-func TestShouldEncryptWithCbfAndDecryptData(t *testing.T) {
-	originalData := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-	password := "myPass"
-
-	encryptedData, err := kos_mobile.EncryptWithCfb(originalData, password, 1000)
-	assert.Nil(t, err, "Failed to encrypt data with CFB")
-
-	decryptedData, err := kos_mobile.Decrypt(encryptedData, password, 1000)
-	assert.Nil(t, err, "Failed to decrypt data")
-	assert.Equal(t, originalData, decryptedData, "The data is not the same")
+			decryptedData, err := kos_mobile.Decrypt(encryptedData, password, pbkdfIter)
+			assert.Nil(t, err, "Failed to decrypt data")
+			assert.Equal(t, originalData, decryptedData, "The data is not the same")
+		})
+	}
 }
 
 func TestShouldFailToDecryptWithWrongPassword(t *testing.T) {
 	originalData := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	password := "myPass"
 
-	encryptedData, err := kos_mobile.EncryptWithGcm(originalData, password, 1000)
+	encryptedData, err := kos_mobile.EncryptWithGcm(originalData, password, pbkdfIter)
 	assert.Nil(t, err, "Failed to encrypt data with GCM")
 
-	decryptedData, err := kos_mobile.Decrypt(encryptedData, "wrong", 1000)
+	decryptedData, err := kos_mobile.Decrypt(encryptedData, "wrong", pbkdfIter)
 	assert.Error(t, err, "An error was expected but found decrypted data")
 	assert.Empty(t, decryptedData)
 	assert.True(t, errors.Is(err, kos_mobile.ErrKosErrorKosDelegate), "Invalid error: expected KosErrorKosDelegate")

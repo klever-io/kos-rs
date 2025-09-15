@@ -20,7 +20,7 @@ func main() {
 		&walletOptions,
 	)
 	if err != nil {
-		fmt.Println("Failed to generate wallet from mnemonic")
+		fmt.Println("Failed to generate wallet from mnemonic: ", err)
 		return
 	}
 
@@ -32,7 +32,7 @@ func main() {
 		&options,
 	)
 	if err != nil {
-		fmt.Println("Failed to sign transaction")
+		fmt.Println("Failed to sign transaction: ", err)
 		return
 	}
 
