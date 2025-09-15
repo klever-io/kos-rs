@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB_DIR="$SCRIPT_DIR/../../target/debug"
+LIB_DIR="$SCRIPT_DIR/../../target/release"
 
 export CGO_LDFLAGS="-L$LIB_DIR -lkos_mobile"
 
