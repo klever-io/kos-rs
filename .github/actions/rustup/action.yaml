@@ -33,7 +33,7 @@ runs:
         cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
     ###############################
-    # CARGO CACHE && INSTALL     #
+    # CARGO CACHE && INSTALL      #
     ###############################
     - id: cache-rustup
       name: Cache Rust toolchain
@@ -67,7 +67,6 @@ runs:
         cargo install --locked cargo-audit || true
         cargo install --locked cargo-pants || true 
 
-
     - name: Cache registry
       uses: actions/cache@v3
       id: cache-cargo-registry
@@ -90,4 +89,12 @@ runs:
     ###############################
     - name: Setup protobuf
       shell: bash
-      run: sudo apt-get update && sudo apt-get -y install protobuf-compiler
+      run: |
+        if [[ "$RUNNER_OS" == "Linux" ]]; then
+          sudo apt-get update && sudo apt-get -y install protobuf-compiler
+        elif [[ "$RUNNER_OS" == "macOS" ]]; then
+          brew install protobuf
+        else
+          echo "Unsupported OS: $RUNNER_OS"
+          exit 1
+        fi
