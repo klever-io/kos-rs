@@ -33,7 +33,7 @@ runs:
         cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
     ###############################
-    # CARGO CACHE && INSTALL     #
+    # CARGO CACHE && INSTALL      #
     ###############################
     - id: cache-rustup
       name: Cache Rust toolchain
@@ -66,7 +66,6 @@ runs:
         cargo install --locked cargo-udeps || true
         cargo install --locked cargo-audit || true
         cargo install --locked cargo-pants || true 
-
 
     - name: Cache registry
       uses: actions/cache@v3

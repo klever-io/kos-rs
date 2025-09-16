@@ -519,7 +519,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_decrypt()
 		})
-		if checksum != 10805 {
+		if checksum != 30595 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_decrypt: UniFFI API checksum mismatch")
 		}
@@ -555,7 +555,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_encrypt_with_cbc()
 		})
-		if checksum != 57617 {
+		if checksum != 16918 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_encrypt_with_cbc: UniFFI API checksum mismatch")
 		}
@@ -564,7 +564,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_encrypt_with_cfb()
 		})
-		if checksum != 24918 {
+		if checksum != 50604 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_encrypt_with_cfb: UniFFI API checksum mismatch")
 		}
@@ -573,7 +573,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_encrypt_with_gcm()
 		})
-		if checksum != 25899 {
+		if checksum != 63693 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_encrypt_with_gcm: UniFFI API checksum mismatch")
 		}
@@ -591,7 +591,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_generate_wallet_from_mnemonic()
 		})
-		if checksum != 26789 {
+		if checksum != 30857 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_generate_wallet_from_mnemonic: UniFFI API checksum mismatch")
 		}
@@ -600,7 +600,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_generate_wallet_from_private_key()
 		})
-		if checksum != 52798 {
+		if checksum != 1902 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_generate_wallet_from_private_key: UniFFI API checksum mismatch")
 		}
@@ -679,6 +679,15 @@ func uniffiCheckChecksums() {
 	}
 	{
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
+			return C.uniffi_kos_mobile_checksum_func_new_eth_wallet_options()
+		})
+		if checksum != 48102 {
+			// If this happens try cleaning and rebuilding your project
+			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_eth_wallet_options: UniFFI API checksum mismatch")
+		}
+	}
+	{
+		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_evm_transaction_options()
 		})
 		if checksum != 53286 {
@@ -688,11 +697,29 @@ func uniffiCheckChecksums() {
 	}
 	{
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
+			return C.uniffi_kos_mobile_checksum_func_new_icp_wallet_options()
+		})
+		if checksum != 63536 {
+			// If this happens try cleaning and rebuilding your project
+			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_icp_wallet_options: UniFFI API checksum mismatch")
+		}
+	}
+	{
+		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_substrate_transaction_options()
 		})
-		if checksum != 57603 {
+		if checksum != 22686 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_substrate_transaction_options: UniFFI API checksum mismatch")
+		}
+	}
+	{
+		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
+			return C.uniffi_kos_mobile_checksum_func_new_wallet_options()
+		})
+		if checksum != 7184 {
+			// If this happens try cleaning and rebuilding your project
+			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_wallet_options: UniFFI API checksum mismatch")
 		}
 	}
 	{
@@ -750,30 +777,6 @@ func uniffiCheckChecksums() {
 		}
 	}
 }
-
-type FfiConverterUint8 struct{}
-
-var FfiConverterUint8INSTANCE = FfiConverterUint8{}
-
-func (FfiConverterUint8) Lower(value uint8) C.uint8_t {
-	return C.uint8_t(value)
-}
-
-func (FfiConverterUint8) Write(writer io.Writer, value uint8) {
-	writeUint8(writer, value)
-}
-
-func (FfiConverterUint8) Lift(value C.uint8_t) uint8 {
-	return uint8(value)
-}
-
-func (FfiConverterUint8) Read(reader io.Reader) uint8 {
-	return readUint8(reader)
-}
-
-type FfiDestroyerUint8 struct{}
-
-func (FfiDestroyerUint8) Destroy(_ uint8) {}
 
 type FfiConverterUint32 struct{}
 
@@ -920,7 +923,7 @@ func (FfiConverterString) Read(reader io.Reader) string {
 	length := readInt32(reader)
 	buffer := make([]byte, length)
 	read_length, err := reader.Read(buffer)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		panic(err)
 	}
 	if read_length != int(length) {
@@ -983,7 +986,7 @@ func (c FfiConverterBytes) Read(reader io.Reader) []byte {
 	length := readInt32(reader)
 	buffer := make([]byte, length)
 	read_length, err := reader.Read(buffer)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		panic(err)
 	}
 	if read_length != int(length) {
@@ -1046,6 +1049,7 @@ type KosAccount struct {
 	PublicKey  string
 	Address    string
 	Path       string
+	Options    *WalletOptions
 }
 
 func (r *KosAccount) Destroy() {
@@ -1054,6 +1058,7 @@ func (r *KosAccount) Destroy() {
 	FfiDestroyerString{}.Destroy(r.PublicKey)
 	FfiDestroyerString{}.Destroy(r.Address)
 	FfiDestroyerString{}.Destroy(r.Path)
+	FfiDestroyerOptionalWalletOptions{}.Destroy(r.Options)
 }
 
 type FfiConverterKosAccount struct{}
@@ -1071,6 +1076,7 @@ func (c FfiConverterKosAccount) Read(reader io.Reader) KosAccount {
 		FfiConverterStringINSTANCE.Read(reader),
 		FfiConverterStringINSTANCE.Read(reader),
 		FfiConverterStringINSTANCE.Read(reader),
+		FfiConverterOptionalWalletOptionsINSTANCE.Read(reader),
 	}
 }
 
@@ -1084,6 +1090,7 @@ func (c FfiConverterKosAccount) Write(writer io.Writer, value KosAccount) {
 	FfiConverterStringINSTANCE.Write(writer, value.PublicKey)
 	FfiConverterStringINSTANCE.Write(writer, value.Address)
 	FfiConverterStringINSTANCE.Write(writer, value.Path)
+	FfiConverterOptionalWalletOptionsINSTANCE.Write(writer, value.Options)
 }
 
 type FfiDestroyerKosAccount struct{}
@@ -1137,6 +1144,46 @@ func (c FfiConverterKosTransaction) Write(writer io.Writer, value KosTransaction
 type FfiDestroyerKosTransaction struct{}
 
 func (_ FfiDestroyerKosTransaction) Destroy(value KosTransaction) {
+	value.Destroy()
+}
+
+type WalletOptions struct {
+	UseLegacyPath bool
+	Specific      *WalletChainOptions
+}
+
+func (r *WalletOptions) Destroy() {
+	FfiDestroyerBool{}.Destroy(r.UseLegacyPath)
+	FfiDestroyerOptionalWalletChainOptions{}.Destroy(r.Specific)
+}
+
+type FfiConverterWalletOptions struct{}
+
+var FfiConverterWalletOptionsINSTANCE = FfiConverterWalletOptions{}
+
+func (c FfiConverterWalletOptions) Lift(rb RustBufferI) WalletOptions {
+	return LiftFromRustBuffer[WalletOptions](c, rb)
+}
+
+func (c FfiConverterWalletOptions) Read(reader io.Reader) WalletOptions {
+	return WalletOptions{
+		FfiConverterBoolINSTANCE.Read(reader),
+		FfiConverterOptionalWalletChainOptionsINSTANCE.Read(reader),
+	}
+}
+
+func (c FfiConverterWalletOptions) Lower(value WalletOptions) C.RustBuffer {
+	return LowerIntoRustBuffer[WalletOptions](c, value)
+}
+
+func (c FfiConverterWalletOptions) Write(writer io.Writer, value WalletOptions) {
+	FfiConverterBoolINSTANCE.Write(writer, value.UseLegacyPath)
+	FfiConverterOptionalWalletChainOptionsINSTANCE.Write(writer, value.Specific)
+}
+
+type FfiDestroyerWalletOptions struct{}
+
+func (_ FfiDestroyerWalletOptions) Destroy(value WalletOptions) {
 	value.Destroy()
 }
 
@@ -1654,7 +1701,7 @@ type TransactionChainOptionsSubstrate struct {
 	Call               []byte
 	Era                []byte
 	Nonce              uint32
-	Tip                uint8
+	Tip                uint64
 	BlockHash          []byte
 	GenesisHash        []byte
 	SpecVersion        uint32
@@ -1666,7 +1713,7 @@ func (e TransactionChainOptionsSubstrate) Destroy() {
 	FfiDestroyerBytes{}.Destroy(e.Call)
 	FfiDestroyerBytes{}.Destroy(e.Era)
 	FfiDestroyerUint32{}.Destroy(e.Nonce)
-	FfiDestroyerUint8{}.Destroy(e.Tip)
+	FfiDestroyerUint64{}.Destroy(e.Tip)
 	FfiDestroyerBytes{}.Destroy(e.BlockHash)
 	FfiDestroyerBytes{}.Destroy(e.GenesisHash)
 	FfiDestroyerUint32{}.Destroy(e.SpecVersion)
@@ -1712,7 +1759,7 @@ func (FfiConverterTransactionChainOptions) Read(reader io.Reader) TransactionCha
 			FfiConverterBytesINSTANCE.Read(reader),
 			FfiConverterBytesINSTANCE.Read(reader),
 			FfiConverterUint32INSTANCE.Read(reader),
-			FfiConverterUint8INSTANCE.Read(reader),
+			FfiConverterUint64INSTANCE.Read(reader),
 			FfiConverterBytesINSTANCE.Read(reader),
 			FfiConverterBytesINSTANCE.Read(reader),
 			FfiConverterUint32INSTANCE.Read(reader),
@@ -1743,7 +1790,7 @@ func (FfiConverterTransactionChainOptions) Write(writer io.Writer, value Transac
 		FfiConverterBytesINSTANCE.Write(writer, variant_value.Call)
 		FfiConverterBytesINSTANCE.Write(writer, variant_value.Era)
 		FfiConverterUint32INSTANCE.Write(writer, variant_value.Nonce)
-		FfiConverterUint8INSTANCE.Write(writer, variant_value.Tip)
+		FfiConverterUint64INSTANCE.Write(writer, variant_value.Tip)
 		FfiConverterBytesINSTANCE.Write(writer, variant_value.BlockHash)
 		FfiConverterBytesINSTANCE.Write(writer, variant_value.GenesisHash)
 		FfiConverterUint32INSTANCE.Write(writer, variant_value.SpecVersion)
@@ -1762,6 +1809,72 @@ func (FfiConverterTransactionChainOptions) Write(writer io.Writer, value Transac
 type FfiDestroyerTransactionChainOptions struct{}
 
 func (_ FfiDestroyerTransactionChainOptions) Destroy(value TransactionChainOptions) {
+	value.Destroy()
+}
+
+type WalletChainOptions interface {
+	Destroy()
+}
+type WalletChainOptionsCustomEth struct {
+	ChainId uint32
+}
+
+func (e WalletChainOptionsCustomEth) Destroy() {
+	FfiDestroyerUint32{}.Destroy(e.ChainId)
+}
+
+type WalletChainOptionsCustomIcp struct {
+	KeyType string
+}
+
+func (e WalletChainOptionsCustomIcp) Destroy() {
+	FfiDestroyerString{}.Destroy(e.KeyType)
+}
+
+type FfiConverterWalletChainOptions struct{}
+
+var FfiConverterWalletChainOptionsINSTANCE = FfiConverterWalletChainOptions{}
+
+func (c FfiConverterWalletChainOptions) Lift(rb RustBufferI) WalletChainOptions {
+	return LiftFromRustBuffer[WalletChainOptions](c, rb)
+}
+
+func (c FfiConverterWalletChainOptions) Lower(value WalletChainOptions) C.RustBuffer {
+	return LowerIntoRustBuffer[WalletChainOptions](c, value)
+}
+func (FfiConverterWalletChainOptions) Read(reader io.Reader) WalletChainOptions {
+	id := readInt32(reader)
+	switch id {
+	case 1:
+		return WalletChainOptionsCustomEth{
+			FfiConverterUint32INSTANCE.Read(reader),
+		}
+	case 2:
+		return WalletChainOptionsCustomIcp{
+			FfiConverterStringINSTANCE.Read(reader),
+		}
+	default:
+		panic(fmt.Sprintf("invalid enum value %v in FfiConverterWalletChainOptions.Read()", id))
+	}
+}
+
+func (FfiConverterWalletChainOptions) Write(writer io.Writer, value WalletChainOptions) {
+	switch variant_value := value.(type) {
+	case WalletChainOptionsCustomEth:
+		writeInt32(writer, 1)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.ChainId)
+	case WalletChainOptionsCustomIcp:
+		writeInt32(writer, 2)
+		FfiConverterStringINSTANCE.Write(writer, variant_value.KeyType)
+	default:
+		_ = variant_value
+		panic(fmt.Sprintf("invalid enum value `%v` in FfiConverterWalletChainOptions.Write", value))
+	}
+}
+
+type FfiDestroyerWalletChainOptions struct{}
+
+func (_ FfiDestroyerWalletChainOptions) Destroy(value WalletChainOptions) {
 	value.Destroy()
 }
 
@@ -1802,6 +1915,43 @@ func (_ FfiDestroyerOptionalUint32) Destroy(value *uint32) {
 	}
 }
 
+type FfiConverterOptionalWalletOptions struct{}
+
+var FfiConverterOptionalWalletOptionsINSTANCE = FfiConverterOptionalWalletOptions{}
+
+func (c FfiConverterOptionalWalletOptions) Lift(rb RustBufferI) *WalletOptions {
+	return LiftFromRustBuffer[*WalletOptions](c, rb)
+}
+
+func (_ FfiConverterOptionalWalletOptions) Read(reader io.Reader) *WalletOptions {
+	if readInt8(reader) == 0 {
+		return nil
+	}
+	temp := FfiConverterWalletOptionsINSTANCE.Read(reader)
+	return &temp
+}
+
+func (c FfiConverterOptionalWalletOptions) Lower(value *WalletOptions) C.RustBuffer {
+	return LowerIntoRustBuffer[*WalletOptions](c, value)
+}
+
+func (_ FfiConverterOptionalWalletOptions) Write(writer io.Writer, value *WalletOptions) {
+	if value == nil {
+		writeInt8(writer, 0)
+	} else {
+		writeInt8(writer, 1)
+		FfiConverterWalletOptionsINSTANCE.Write(writer, *value)
+	}
+}
+
+type FfiDestroyerOptionalWalletOptions struct{}
+
+func (_ FfiDestroyerOptionalWalletOptions) Destroy(value *WalletOptions) {
+	if value != nil {
+		FfiDestroyerWalletOptions{}.Destroy(*value)
+	}
+}
+
 type FfiConverterOptionalTransactionChainOptions struct{}
 
 var FfiConverterOptionalTransactionChainOptionsINSTANCE = FfiConverterOptionalTransactionChainOptions{}
@@ -1836,6 +1986,43 @@ type FfiDestroyerOptionalTransactionChainOptions struct{}
 func (_ FfiDestroyerOptionalTransactionChainOptions) Destroy(value *TransactionChainOptions) {
 	if value != nil {
 		FfiDestroyerTransactionChainOptions{}.Destroy(*value)
+	}
+}
+
+type FfiConverterOptionalWalletChainOptions struct{}
+
+var FfiConverterOptionalWalletChainOptionsINSTANCE = FfiConverterOptionalWalletChainOptions{}
+
+func (c FfiConverterOptionalWalletChainOptions) Lift(rb RustBufferI) *WalletChainOptions {
+	return LiftFromRustBuffer[*WalletChainOptions](c, rb)
+}
+
+func (_ FfiConverterOptionalWalletChainOptions) Read(reader io.Reader) *WalletChainOptions {
+	if readInt8(reader) == 0 {
+		return nil
+	}
+	temp := FfiConverterWalletChainOptionsINSTANCE.Read(reader)
+	return &temp
+}
+
+func (c FfiConverterOptionalWalletChainOptions) Lower(value *WalletChainOptions) C.RustBuffer {
+	return LowerIntoRustBuffer[*WalletChainOptions](c, value)
+}
+
+func (_ FfiConverterOptionalWalletChainOptions) Write(writer io.Writer, value *WalletChainOptions) {
+	if value == nil {
+		writeInt8(writer, 0)
+	} else {
+		writeInt8(writer, 1)
+		FfiConverterWalletChainOptionsINSTANCE.Write(writer, *value)
+	}
+}
+
+type FfiDestroyerOptionalWalletChainOptions struct{}
+
+func (_ FfiDestroyerOptionalWalletChainOptions) Destroy(value *WalletChainOptions) {
+	if value != nil {
+		FfiDestroyerWalletChainOptions{}.Destroy(*value)
 	}
 }
 
@@ -2011,7 +2198,7 @@ func (FfiDestroyerSequenceBytes) Destroy(sequence [][]byte) {
 	}
 }
 
-func BigNumberAbsolute(value BigNumber) (BigNumber, *KosError) {
+func BigNumberAbsolute(value BigNumber) (BigNumber, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_absolute(FfiConverterBigNumberINSTANCE.Lower(value), _uniffiStatus),
@@ -2021,11 +2208,11 @@ func BigNumberAbsolute(value BigNumber) (BigNumber, *KosError) {
 		var _uniffiDefaultValue BigNumber
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func BigNumberAdd(lhs BigNumber, rhs BigNumber) (BigNumber, *KosError) {
+func BigNumberAdd(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_add(FfiConverterBigNumberINSTANCE.Lower(lhs), FfiConverterBigNumberINSTANCE.Lower(rhs), _uniffiStatus),
@@ -2035,11 +2222,11 @@ func BigNumberAdd(lhs BigNumber, rhs BigNumber) (BigNumber, *KosError) {
 		var _uniffiDefaultValue BigNumber
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func BigNumberDecrement(value BigNumber) (BigNumber, *KosError) {
+func BigNumberDecrement(value BigNumber) (BigNumber, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_decrement(FfiConverterBigNumberINSTANCE.Lower(value), _uniffiStatus),
@@ -2049,11 +2236,11 @@ func BigNumberDecrement(value BigNumber) (BigNumber, *KosError) {
 		var _uniffiDefaultValue BigNumber
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func BigNumberDivide(lhs BigNumber, rhs BigNumber) (BigNumber, *KosError) {
+func BigNumberDivide(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_divide(FfiConverterBigNumberINSTANCE.Lower(lhs), FfiConverterBigNumberINSTANCE.Lower(rhs), _uniffiStatus),
@@ -2063,11 +2250,11 @@ func BigNumberDivide(lhs BigNumber, rhs BigNumber) (BigNumber, *KosError) {
 		var _uniffiDefaultValue BigNumber
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func BigNumberIncrement(value BigNumber) (BigNumber, *KosError) {
+func BigNumberIncrement(value BigNumber) (BigNumber, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_increment(FfiConverterBigNumberINSTANCE.Lower(value), _uniffiStatus),
@@ -2077,7 +2264,7 @@ func BigNumberIncrement(value BigNumber) (BigNumber, *KosError) {
 		var _uniffiDefaultValue BigNumber
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
@@ -2129,7 +2316,7 @@ func BigNumberIsZero(value BigNumber) bool {
 	}))
 }
 
-func BigNumberMultiply(lhs BigNumber, rhs BigNumber) (BigNumber, *KosError) {
+func BigNumberMultiply(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_multiply(FfiConverterBigNumberINSTANCE.Lower(lhs), FfiConverterBigNumberINSTANCE.Lower(rhs), _uniffiStatus),
@@ -2139,11 +2326,11 @@ func BigNumberMultiply(lhs BigNumber, rhs BigNumber) (BigNumber, *KosError) {
 		var _uniffiDefaultValue BigNumber
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func BigNumberNew(value string) (BigNumber, *KosError) {
+func BigNumberNew(value string) (BigNumber, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_new(FfiConverterStringINSTANCE.Lower(value), _uniffiStatus),
@@ -2153,7 +2340,7 @@ func BigNumberNew(value string) (BigNumber, *KosError) {
 		var _uniffiDefaultValue BigNumber
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
@@ -2165,7 +2352,7 @@ func BigNumberNewZero() BigNumber {
 	}))
 }
 
-func BigNumberPow(base BigNumber, exponent BigNumber) (BigNumber, *KosError) {
+func BigNumberPow(base BigNumber, exponent BigNumber) (BigNumber, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_pow(FfiConverterBigNumberINSTANCE.Lower(base), FfiConverterBigNumberINSTANCE.Lower(exponent), _uniffiStatus),
@@ -2175,7 +2362,7 @@ func BigNumberPow(base BigNumber, exponent BigNumber) (BigNumber, *KosError) {
 		var _uniffiDefaultValue BigNumber
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
@@ -2187,7 +2374,7 @@ func BigNumberString(value BigNumber) string {
 	}))
 }
 
-func BigNumberSubtract(lhs BigNumber, rhs BigNumber) (BigNumber, *KosError) {
+func BigNumberSubtract(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_subtract(FfiConverterBigNumberINSTANCE.Lower(lhs), FfiConverterBigNumberINSTANCE.Lower(rhs), _uniffiStatus),
@@ -2197,25 +2384,25 @@ func BigNumberSubtract(lhs BigNumber, rhs BigNumber) (BigNumber, *KosError) {
 		var _uniffiDefaultValue BigNumber
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBigNumberINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func Decrypt(data string, password string) (string, *KosError) {
+func Decrypt(data string, password string, iterations uint32) (string, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
-			inner: C.uniffi_kos_mobile_fn_func_decrypt(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), _uniffiStatus),
+			inner: C.uniffi_kos_mobile_fn_func_decrypt(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), FfiConverterUint32INSTANCE.Lower(iterations), _uniffiStatus),
 		}
 	})
 	if _uniffiErr != nil {
 		var _uniffiDefaultValue string
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterStringINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterStringINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func DeriveXpub(mnemonic string, passphrase string, isMainnet bool, index uint32, derivationPath string) ([]byte, *LdError) {
+func DeriveXpub(mnemonic string, passphrase string, isMainnet bool, index uint32, derivationPath string) ([]byte, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_derive_xpub(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterStringINSTANCE.Lower(derivationPath), _uniffiStatus),
@@ -2225,11 +2412,11 @@ func DeriveXpub(mnemonic string, passphrase string, isMainnet bool, index uint32
 		var _uniffiDefaultValue []byte
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func EciesDecrypt(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte) ([]byte, *LdError) {
+func EciesDecrypt(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte) ([]byte, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_ecies_decrypt(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBytesINSTANCE.Lower(msg), _uniffiStatus),
@@ -2239,11 +2426,11 @@ func EciesDecrypt(mnemonic string, passphrase string, isMainnet bool, index uint
 		var _uniffiDefaultValue []byte
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func EciesEncrypt(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte) ([]byte, *LdError) {
+func EciesEncrypt(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte) ([]byte, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_ecies_encrypt(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBytesINSTANCE.Lower(msg), _uniffiStatus),
@@ -2253,53 +2440,53 @@ func EciesEncrypt(mnemonic string, passphrase string, isMainnet bool, index uint
 		var _uniffiDefaultValue []byte
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func EncryptWithCbc(data string, password string) (string, *KosError) {
+func EncryptWithCbc(data string, password string, iterations uint32) (string, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
-			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_cbc(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), _uniffiStatus),
+			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_cbc(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), FfiConverterUint32INSTANCE.Lower(iterations), _uniffiStatus),
 		}
 	})
 	if _uniffiErr != nil {
 		var _uniffiDefaultValue string
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterStringINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterStringINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func EncryptWithCfb(data string, password string) (string, *KosError) {
+func EncryptWithCfb(data string, password string, iterations uint32) (string, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
-			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_cfb(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), _uniffiStatus),
+			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_cfb(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), FfiConverterUint32INSTANCE.Lower(iterations), _uniffiStatus),
 		}
 	})
 	if _uniffiErr != nil {
 		var _uniffiDefaultValue string
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterStringINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterStringINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func EncryptWithGcm(data string, password string) (string, *KosError) {
+func EncryptWithGcm(data string, password string, iterations uint32) (string, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
-			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_gcm(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), _uniffiStatus),
+			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_gcm(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), FfiConverterUint32INSTANCE.Lower(iterations), _uniffiStatus),
 		}
 	})
 	if _uniffiErr != nil {
 		var _uniffiDefaultValue string
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterStringINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterStringINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func GenerateMnemonic(size int32) (string, *KosError) {
+func GenerateMnemonic(size int32) (string, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_generate_mnemonic(FfiConverterInt32INSTANCE.Lower(size), _uniffiStatus),
@@ -2309,39 +2496,39 @@ func GenerateMnemonic(size int32) (string, *KosError) {
 		var _uniffiDefaultValue string
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterStringINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterStringINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func GenerateWalletFromMnemonic(mnemonic string, chainId uint32, index uint32, useLegacyPath bool) (KosAccount, *KosError) {
+func GenerateWalletFromMnemonic(mnemonic string, chainId uint32, index uint32, options *WalletOptions) (KosAccount, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
-			inner: C.uniffi_kos_mobile_fn_func_generate_wallet_from_mnemonic(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBoolINSTANCE.Lower(useLegacyPath), _uniffiStatus),
+			inner: C.uniffi_kos_mobile_fn_func_generate_wallet_from_mnemonic(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterUint32INSTANCE.Lower(index), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
 	})
 	if _uniffiErr != nil {
 		var _uniffiDefaultValue KosAccount
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterKosAccountINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterKosAccountINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func GenerateWalletFromPrivateKey(chainId uint32, privateKey string) (KosAccount, *KosError) {
+func GenerateWalletFromPrivateKey(chainId uint32, privateKey string, options *WalletOptions) (KosAccount, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
-			inner: C.uniffi_kos_mobile_fn_func_generate_wallet_from_private_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterStringINSTANCE.Lower(privateKey), _uniffiStatus),
+			inner: C.uniffi_kos_mobile_fn_func_generate_wallet_from_private_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterStringINSTANCE.Lower(privateKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
 	})
 	if _uniffiErr != nil {
 		var _uniffiDefaultValue KosAccount
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterKosAccountINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterKosAccountINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func GenerateXpub(mnemonic string, passphrase string, isMainnet bool, index uint32) ([]byte, *LdError) {
+func GenerateXpub(mnemonic string, passphrase string, isMainnet bool, index uint32) ([]byte, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_generate_xpub(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), _uniffiStatus),
@@ -2351,11 +2538,11 @@ func GenerateXpub(mnemonic string, passphrase string, isMainnet bool, index uint
 		var _uniffiDefaultValue []byte
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func GetPathByChain(chainId uint32, index uint32, useLegacyPath bool) (string, *KosError) {
+func GetPathByChain(chainId uint32, index uint32, useLegacyPath bool) (string, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_get_path_by_chain(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBoolINSTANCE.Lower(useLegacyPath), _uniffiStatus),
@@ -2365,7 +2552,7 @@ func GetPathByChain(chainId uint32, index uint32, useLegacyPath bool) (string, *
 		var _uniffiDefaultValue string
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterStringINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterStringINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
@@ -2377,7 +2564,7 @@ func GetSupportedChains() []uint32 {
 	}))
 }
 
-func GetXpubAsString(mnemonic string, passphrase string, isMainnet bool, index uint32) (string, *LdError) {
+func GetXpubAsString(mnemonic string, passphrase string, isMainnet bool, index uint32) (string, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_get_xpub_as_string(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), _uniffiStatus),
@@ -2387,11 +2574,11 @@ func GetXpubAsString(mnemonic string, passphrase string, isMainnet bool, index u
 		var _uniffiDefaultValue string
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterStringINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterStringINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func HmacSha256(mnemonic string, passphrase string, isMainnet bool, index uint32, derivationPath string, msg []byte) ([]byte, *LdError) {
+func HmacSha256(mnemonic string, passphrase string, isMainnet bool, index uint32, derivationPath string, msg []byte) ([]byte, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_hmac_sha256(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterStringINSTANCE.Lower(derivationPath), FfiConverterBytesINSTANCE.Lower(msg), _uniffiStatus),
@@ -2401,7 +2588,7 @@ func HmacSha256(mnemonic string, passphrase string, isMainnet bool, index uint32
 		var _uniffiDefaultValue []byte
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
@@ -2427,6 +2614,14 @@ func NewCosmosTransactionOptions(chainId string, accountNumber uint64) Transacti
 	}))
 }
 
+func NewEthWalletOptions(useLegacyPath bool, chainId uint32) WalletOptions {
+	return FfiConverterWalletOptionsINSTANCE.Lift(rustCall(func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+		return GoRustBuffer{
+			inner: C.uniffi_kos_mobile_fn_func_new_eth_wallet_options(FfiConverterBoolINSTANCE.Lower(useLegacyPath), FfiConverterUint32INSTANCE.Lower(chainId), _uniffiStatus),
+		}
+	}))
+}
+
 func NewEvmTransactionOptions(chainId uint32) TransactionChainOptions {
 	return FfiConverterTransactionChainOptionsINSTANCE.Lift(rustCall(func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
@@ -2435,15 +2630,31 @@ func NewEvmTransactionOptions(chainId uint32) TransactionChainOptions {
 	}))
 }
 
-func NewSubstrateTransactionOptions(call string, era string, nonce uint32, tip uint8, blockHash string, genesisHash string, specVersion uint32, transactionVersion uint32, appId *uint32) TransactionChainOptions {
-	return FfiConverterTransactionChainOptionsINSTANCE.Lift(rustCall(func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+func NewIcpWalletOptions(useLegacyPath bool, keyType string) WalletOptions {
+	return FfiConverterWalletOptionsINSTANCE.Lift(rustCall(func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
-			inner: C.uniffi_kos_mobile_fn_func_new_substrate_transaction_options(FfiConverterStringINSTANCE.Lower(call), FfiConverterStringINSTANCE.Lower(era), FfiConverterUint32INSTANCE.Lower(nonce), FfiConverterUint8INSTANCE.Lower(tip), FfiConverterStringINSTANCE.Lower(blockHash), FfiConverterStringINSTANCE.Lower(genesisHash), FfiConverterUint32INSTANCE.Lower(specVersion), FfiConverterUint32INSTANCE.Lower(transactionVersion), FfiConverterOptionalUint32INSTANCE.Lower(appId), _uniffiStatus),
+			inner: C.uniffi_kos_mobile_fn_func_new_icp_wallet_options(FfiConverterBoolINSTANCE.Lower(useLegacyPath), FfiConverterStringINSTANCE.Lower(keyType), _uniffiStatus),
 		}
 	}))
 }
 
-func SignEcdsa(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte, derivationPath string) ([]byte, *LdError) {
+func NewSubstrateTransactionOptions(call string, era string, nonce uint32, tip uint64, blockHash string, genesisHash string, specVersion uint32, transactionVersion uint32, appId *uint32) TransactionChainOptions {
+	return FfiConverterTransactionChainOptionsINSTANCE.Lift(rustCall(func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+		return GoRustBuffer{
+			inner: C.uniffi_kos_mobile_fn_func_new_substrate_transaction_options(FfiConverterStringINSTANCE.Lower(call), FfiConverterStringINSTANCE.Lower(era), FfiConverterUint32INSTANCE.Lower(nonce), FfiConverterUint64INSTANCE.Lower(tip), FfiConverterStringINSTANCE.Lower(blockHash), FfiConverterStringINSTANCE.Lower(genesisHash), FfiConverterUint32INSTANCE.Lower(specVersion), FfiConverterUint32INSTANCE.Lower(transactionVersion), FfiConverterOptionalUint32INSTANCE.Lower(appId), _uniffiStatus),
+		}
+	}))
+}
+
+func NewWalletOptions(useLegacyPath bool) WalletOptions {
+	return FfiConverterWalletOptionsINSTANCE.Lift(rustCall(func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+		return GoRustBuffer{
+			inner: C.uniffi_kos_mobile_fn_func_new_wallet_options(FfiConverterBoolINSTANCE.Lower(useLegacyPath), _uniffiStatus),
+		}
+	}))
+}
+
+func SignEcdsa(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte, derivationPath string) ([]byte, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_sign_ecdsa(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBytesINSTANCE.Lower(msg), FfiConverterStringINSTANCE.Lower(derivationPath), _uniffiStatus),
@@ -2453,11 +2664,11 @@ func SignEcdsa(mnemonic string, passphrase string, isMainnet bool, index uint32,
 		var _uniffiDefaultValue []byte
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func SignEcdsaRecoverable(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte) ([]byte, *LdError) {
+func SignEcdsaRecoverable(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte) ([]byte, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_sign_ecdsa_recoverable(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBytesINSTANCE.Lower(msg), _uniffiStatus),
@@ -2467,11 +2678,11 @@ func SignEcdsaRecoverable(mnemonic string, passphrase string, isMainnet bool, in
 		var _uniffiDefaultValue []byte
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func SignMessage(account KosAccount, hex string, legacy bool) ([]byte, *KosError) {
+func SignMessage(account KosAccount, hex string, legacy bool) ([]byte, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_sign_message(FfiConverterKosAccountINSTANCE.Lower(account), FfiConverterStringINSTANCE.Lower(hex), FfiConverterBoolINSTANCE.Lower(legacy), _uniffiStatus),
@@ -2481,11 +2692,11 @@ func SignMessage(account KosAccount, hex string, legacy bool) ([]byte, *KosError
 		var _uniffiDefaultValue []byte
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func SignTransaction(account KosAccount, raw string, options *TransactionChainOptions) (KosTransaction, *KosError) {
+func SignTransaction(account KosAccount, raw string, options *TransactionChainOptions) (KosTransaction, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_sign_transaction(FfiConverterKosAccountINSTANCE.Lower(account), FfiConverterStringINSTANCE.Lower(raw), FfiConverterOptionalTransactionChainOptionsINSTANCE.Lower(options), _uniffiStatus),
@@ -2495,11 +2706,11 @@ func SignTransaction(account KosAccount, raw string, options *TransactionChainOp
 		var _uniffiDefaultValue KosTransaction
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterKosTransactionINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterKosTransactionINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
-func Slip77MasterBlindingKey(mnemonic string, passphrase string, isMainnet bool, index uint32) ([]byte, *LdError) {
+func Slip77MasterBlindingKey(mnemonic string, passphrase string, isMainnet bool, index uint32) ([]byte, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_slip77_master_blinding_key(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), _uniffiStatus),
@@ -2509,7 +2720,7 @@ func Slip77MasterBlindingKey(mnemonic string, passphrase string, isMainnet bool,
 		var _uniffiDefaultValue []byte
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
-		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), _uniffiErr
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
