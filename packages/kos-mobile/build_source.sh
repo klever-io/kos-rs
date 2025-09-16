@@ -78,7 +78,7 @@ configure_android_ndk() {
     if [ "$IS_MACOS" = true ]; then
       rm -f ndk.dmg
       log_status "starting ndk download for macOS..."
-      if ! curl -L https://dl.google.com/android/repository/android-ndk-r28b-darwin.dmg --output "$BUILD_HOME"/ndk.dmg; then
+      if ! curl -L https://dl.google.com/android/repository/android-ndk-r28c-darwin.dmg --output "$BUILD_HOME"/ndk.dmg; then
         log_error "Failed to download Android NDK for macOS"
         return 1
       fi
@@ -90,9 +90,9 @@ configure_android_ndk() {
       
       mkdir -p "$ANDROID_NDK_PATH"
       log_status "copying ndk files..."
-      cp -r /Volumes/Android\ NDK\ r28b/AndroidNDK13356709.app/Contents/NDK/* "$ANDROID_NDK_PATH"
+      cp -r /Volumes/Android\ NDK\ r28c/AndroidNDK13676358.app/Contents/NDK/* "$ANDROID_NDK_PATH"
       
-      if ! hdiutil detach -quiet /Volumes/Android\ NDK\ r28b/; then
+      if ! hdiutil detach -quiet /Volumes/Android\ NDK\ r28c/; then
         log_warning "Failed to detach NDK disk image"
       fi
       
@@ -100,7 +100,7 @@ configure_android_ndk() {
     else
       rm -f ndk.zip
       log_status "starting ndk download for Linux..."
-      if ! curl -L https://dl.google.com/android/repository/android-ndk-r28b-linux.zip --output "$BUILD_HOME"/ndk.zip; then
+      if ! curl -L https://dl.google.com/android/repository/android-ndk-r28c-linux.zip --output "$BUILD_HOME"/ndk.zip; then
         log_error "Failed to download Android NDK for Linux"
         return 1
       fi
@@ -112,8 +112,8 @@ configure_android_ndk() {
         return 1
       fi
       
-      cp -r "$BUILD_HOME"/android/android-ndk-r28b/* "$ANDROID_NDK_PATH"
-      rm -rf "$BUILD_HOME"/android/android-ndk-r28b
+      cp -r "$BUILD_HOME"/android/android-ndk-r28c/* "$ANDROID_NDK_PATH"
+      rm -rf "$BUILD_HOME"/android/android-ndk-r28c
       rm ndk.zip
     fi
   fi
