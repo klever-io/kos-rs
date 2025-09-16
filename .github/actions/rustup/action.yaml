@@ -88,12 +88,12 @@ runs:
     # PROTOBUF CACHE && INSTALL   #
     ###############################
     - name: Setup protobuf for Linux
-      if: ${{ runner_os == 'Linux' }}
+      if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: |
         sudo apt-get update && sudo apt-get -y install protobuf-compiler
 
     - name: Setup protobuf for macOS
-      if: ${{ runner_os == 'macOS' }}
+      if: ${{ runner.os == 'macOS' }}
       run: |
         brew install protobuf
