@@ -1,4 +1,4 @@
-name: KOS-RS Checks
+name: KOS-Go Checks
 
 on:
   push:
