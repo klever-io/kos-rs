@@ -13,6 +13,8 @@ on:
 jobs:
   build-go-linux:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,6 +53,8 @@ jobs:
 
   build-go-linux-musl:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -91,6 +95,8 @@ jobs:
 
   build-go-mac:
     runs-on: [ "macos-14" ]
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
