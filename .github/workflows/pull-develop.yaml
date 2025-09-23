@@ -94,6 +94,12 @@ jobs:
           mkdir -p packages/kos-go/kos_mobile/lib/linux-amd64
           cp target/release/libkos_mobile.so packages/kos-go/kos_mobile/lib/linux-amd64/
 
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Update Linux Go bindings library"
+          file_pattern: "packages/kos-go/kos_mobile/lib/linux-amd64/libkos_mobile.so"
+
       - name: Run Go tests
         run: |
           cd packages/kos-go
@@ -130,6 +136,12 @@ jobs:
         run: |
           mkdir -p packages/kos-go/kos_mobile/lib/darwin-aarch64
           cp target/release/libkos_mobile.dylib packages/kos-go/kos_mobile/lib/darwin-aarch64/
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Update macOS Go bindings library"
+          file_pattern: "packages/kos-go/kos_mobile/lib/darwin-aarch64/libkos_mobile.dylib"
 
       - name: Run Go tests
         run: |
