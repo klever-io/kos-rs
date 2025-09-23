@@ -17,6 +17,7 @@ on:
       - '**/*.md'
       - '.gitignore'
       - '.github/**'
+      - 'packages/kos-go/kos_mobile/lib/**'
 
 jobs:
   format:
