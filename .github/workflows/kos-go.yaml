@@ -31,21 +31,6 @@ jobs:
         with:
           with_cache: true
 
-      - name: Build Linux Go bindings
-        run: make build-go
-
-      - name: Copy .so to Go package
-        run: |
-          mkdir -p packages/kos-go/kos_mobile/lib/linux-amd64
-          cp target/release/libkos_mobile.so packages/kos-go/kos_mobile/lib/linux-amd64/
-
-      - name: Commit and push changes
-        if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
-        uses: stefanzweifel/git-auto-commit-action@v6
-        with:
-          commit_message: "update Linux Go bindings library"
-          file_pattern: "packages/kos-go/kos_mobile/lib/linux-amd64/libkos_mobile.so"
-
       - name: Run Go tests
         run: |
           cd packages/kos-go
@@ -73,16 +58,6 @@ jobs:
   
       - name: Install musl tools
         run: sudo apt-get update && sudo apt-get install -y musl-tools
-
-      - name: Build Linux musl Go bindings
-        run: |
-          rustup target add x86_64-unknown-linux-musl
-          make build-go-musl
-
-      - name: Copy .a to Go package
-        run: |
-          mkdir -p packages/kos-go/kos_mobile/lib/linux-musl-amd64
-          cp target/x86_64-unknown-linux-musl/release/libkos_mobile.so packages/kos-go/kos_mobile/lib/linux-musl-amd64/
 
       - name: Run Go tests
         run: |
@@ -113,21 +88,6 @@ jobs:
 
       - name: Setup protobuf
         run: brew install protobuf
-
-      - name: Build Mac Go bindings
-        run: make build-go
-
-      - name: Copy dylib to Go package
-        run: |
-          mkdir -p packages/kos-go/kos_mobile/lib/darwin-aarch64
-          cp target/release/libkos_mobile.dylib packages/kos-go/kos_mobile/lib/darwin-aarch64/
-
-      - name: Commit and push changes
-        if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
-        uses: stefanzweifel/git-auto-commit-action@v6
-        with:
-          commit_message: "update macOS Go bindings library"
-          file_pattern: "packages/kos-go/kos_mobile/lib/darwin-aarch64/libkos_mobile.dylib"
 
       - name: Run Go tests
         run: |
