@@ -39,6 +39,15 @@ jobs:
           mkdir -p packages/kos-go/kos_mobile/lib/linux-amd64
           cp target/release/libkos_mobile.so packages/kos-go/kos_mobile/lib/linux-amd64/
 
+      - name: "Import GPG key"
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          
       - name: Commit and push changes
         if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
         uses: stefanzweifel/git-auto-commit-action@v6
@@ -79,11 +88,6 @@ jobs:
           rustup target add x86_64-unknown-linux-musl
           make build-go-musl
 
-      - name: Copy .a to Go package
-        run: |
-          mkdir -p packages/kos-go/kos_mobile/lib/linux-musl-amd64
-          cp target/x86_64-unknown-linux-musl/release/libkos_mobile.so packages/kos-go/kos_mobile/lib/linux-musl-amd64/
-
       - name: Run Go tests
         run: |
           cd packages/kos-go
@@ -121,6 +125,15 @@ jobs:
         run: |
           mkdir -p packages/kos-go/kos_mobile/lib/darwin-aarch64
           cp target/release/libkos_mobile.dylib packages/kos-go/kos_mobile/lib/darwin-aarch64/
+
+      - name: "Import GPG key"
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
 
       - name: Commit and push changes
         if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
