@@ -29,6 +29,17 @@ codegen-units = 1 # Reduce Parallel Code Generation Units to Increase Optimizati
 panic = "abort"   # Abort on panic, as unwinding code does require extra binary size
 rpath = true
 
+[profile.min-size]
+inherits = "release"
+opt-level = "s"         # Optimize for size (s is often better for libs than z)
+strip = "symbols"       # Strip symbols from binary
+panic = "abort"         # Abort on panic
+codegen-units = 1       # More aggressive code merging
+lto = false             # LTO can increase static lib size
+overflow-checks = false # Disable overflow checks for size
+debug = 0               # No debug info
+incremental = false     # Disable incremental compilation
+
 [workspace.package]
 authors = ["Klever <kos@klever.io>"]
 edition = "2021"
