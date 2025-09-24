@@ -1,5 +1,5 @@
 module github.com/klever-io/kos-rs/packages/kos-go/demo
 
-go 1.25.1
+go 1.24.7
 
-require github.com/klever-io/kos-rs/packages/kos-go v0.0.0-20250916152821-89eb244cb45c
+require github.com/klever-io/kos-rs/packages/kos-go v0.2.35

@@ -19,22 +19,22 @@ name = "uniffi-bindgen"
 path = "src/bin/uniffi-bindgen.rs"
 
 [dependencies]
-kos = { workspace = true, default-features = true }
-kos-codec = { path = "../kos-codec" }
+kos = { workspace = true, default-features = false }
+kos-codec = { path = "../kos-codec", default-features = false }
 
 hex = { workspace = true }
 thiserror = { workspace = true }
 
 uniffi = { workspace = true, features = ["cli"] }
 serde = { workspace = true, features = ["derive"], optional = true }
-num-bigint = "0.4"
-num-traits = "0.2"
+num-bigint = { version = "0.4", default-features = false }
+num-traits = { version = "0.2", default-features = false }
 lwk_common = { workspace = true }
 lwk_signer = { workspace = true }
 lwk_wollet = { workspace = true }
-anyhow = "1.0.96"
+anyhow = { version = "1.0.96", default-features = false }
 ecies = { workspace = true }
-bigdecimal = "0.4.7"
+bigdecimal = { version = "0.4.7", default-features = false }
 
 
 [build-dependencies]
