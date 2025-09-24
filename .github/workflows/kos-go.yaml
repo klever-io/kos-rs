@@ -41,9 +41,9 @@ jobs:
 
       - name: Commit and push changes
         if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
-          commit_message: "Update Linux Go bindings library"
+          commit_message: "update Linux Go bindings library"
           file_pattern: "packages/kos-go/kos_mobile/lib/linux-amd64/libkos_mobile.so"
 
       - name: Run Go tests
@@ -79,17 +79,10 @@ jobs:
           rustup target add x86_64-unknown-linux-musl
           make build-go-musl
 
-      - name: Copy .so to Go package
+      - name: Copy .a to Go package
         run: |
-          mkdir -p packages/kos-go/kos_mobile/lib/linux-amd64
+          mkdir -p packages/kos-go/kos_mobile/lib/linux-musl-amd64
           cp target/x86_64-unknown-linux-musl/release/libkos_mobile.so packages/kos-go/kos_mobile/lib/linux-musl-amd64/
-
-      - name: Commit and push changes
-        if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "Update Linux musl Go bindings library"
-          file_pattern: "packages/kos-go/kos_mobile/lib/linux-musl-amd64/libkos_mobile.so"
 
       - name: Run Go tests
         run: |
@@ -131,9 +124,9 @@ jobs:
 
       - name: Commit and push changes
         if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
-          commit_message: "Update macOS Go bindings library"
+          commit_message: "update macOS Go bindings library"
           file_pattern: "packages/kos-go/kos_mobile/lib/darwin-aarch64/libkos_mobile.dylib"
 
       - name: Run Go tests
