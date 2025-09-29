@@ -10,7 +10,6 @@ use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tiny_json_rs::serializer;
 
 #[derive(Debug, Clone)]
 enum TransactionType {
@@ -150,13 +149,13 @@ fn encode_regular_transaction_for_sign(
 
     let wrapped_data = format!("{{\"hashes\":{raw_data_str}}}");
 
-    #[derive(tiny_json_rs::Deserialize)]
+    #[derive(serde::Deserialize)]
     struct HashContainer {
         hashes: Vec<String>,
     }
 
     let container: HashContainer =
-        tiny_json_rs::decode(wrapped_data).map_err(|_| ChainError::DecodeHash)?;
+        serde_json::from_str(&wrapped_data).map_err(|_| ChainError::DecodeHash)?;
 
     let icp_hashes = container.hashes;
     let mut hashes = Vec::new();
@@ -179,7 +178,8 @@ fn encode_regular_transaction_for_broadcast(
         signatures_vec.push(hex::encode(signature));
     }
 
-    let signatures_json = tiny_json_rs::encode(signatures_vec);
+    let signatures_json =
+        serde_json::to_string(&signatures_vec).map_err(|_| ChainError::InvalidSignature)?;
     transaction.signature = signatures_json.into_bytes();
     Ok(transaction)
 }
