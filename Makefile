@@ -49,7 +49,6 @@ build-go:
 
 build-go-musl:	
 	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.4.0+v0.28.3 && \
-# 	cargo build --release --target x86_64-unknown-linux-musl --package kos-mobile && \
 	cargo build --profile min-size --target x86_64-unknown-linux-musl --package kos-mobile && \
 	uniffi-bindgen-go --library target/x86_64-unknown-linux-musl/min-size/libkos_mobile.a --out-dir ./packages/kos-go
 
