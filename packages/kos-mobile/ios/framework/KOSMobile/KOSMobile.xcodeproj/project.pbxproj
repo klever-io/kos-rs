@@ -12,8 +12,6 @@
 		6561E0BF2C76772200907790 /* KOSMobile.h in Headers */ = {isa = PBXBuildFile; fileRef = 6561E0B32C76772200907790 /* KOSMobile.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6561E0CB2C76782000907790 /* kos_mobile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6561E0C82C76782000907790 /* kos_mobile.swift */; };
 		6561E0CC2C76782000907790 /* kos_mobileFFI.h in Headers */ = {isa = PBXBuildFile; fileRef = 6561E0CA2C76782000907790 /* kos_mobileFFI.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		65972EF22C874E9C00011338 /* ios-sim-libkos_mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 65972EF02C874E9C00011338 /* ios-sim-libkos_mobile.a */; };
-		65972EF32C874E9C00011338 /* ios-libkos_mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 65972EF12C874E9C00011338 /* ios-libkos_mobile.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,8 +32,6 @@
 		6561E0C82C76782000907790 /* kos_mobile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = kos_mobile.swift; path = ../../../binds/kos_mobile.swift; sourceTree = "<group>"; };
 		6561E0C92C76782000907790 /* kos_mobileFFI.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; name = kos_mobileFFI.modulemap; path = ../../../binds/kos_mobileFFI.modulemap; sourceTree = "<group>"; };
 		6561E0CA2C76782000907790 /* kos_mobileFFI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kos_mobileFFI.h; path = ../../../binds/kos_mobileFFI.h; sourceTree = "<group>"; };
-		65972EF02C874E9C00011338 /* ios-sim-libkos_mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "ios-sim-libkos_mobile.a"; path = "../../ios-sim-libkos_mobile.a"; sourceTree = "<group>"; };
-		65972EF12C874E9C00011338 /* ios-libkos_mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "ios-libkos_mobile.a"; path = "../../ios-libkos_mobile.a"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,8 +96,6 @@
 		6561E0CD2C76784A00907790 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				65972EF12C874E9C00011338 /* ios-libkos_mobile.a */,
-				65972EF02C874E9C00011338 /* ios-sim-libkos_mobile.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
