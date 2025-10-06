@@ -41,7 +41,9 @@ publish-android:
 	cd packages/kos-mobile/android && ./gradlew lib:publishKOSPublicationToGithubPackagesRepository
 
 build-ios:
-	cd packages/kos-mobile && ./build_ios.sh
+	cd packages/kos-mobile && ./build_ios.sh && cd ../kos-go && \
+	install_name_tool -id @rpath/libkos_mobile.dylib kos_mobile/lib/darwin-aarch64/libkos_mobile.dylib && \
+	otool -D kos_mobile/lib/darwin-aarch64/libkos_mobile.dylib
 
 build-go:
 	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.4.0+v0.28.3 && \
