@@ -8,6 +8,7 @@ use crate::error::Error;
 use crate::utils::unpack;
 use kos::chains::{get_chain_by_base_id, get_chain_by_params, Transaction as KosTransaction};
 use kos_codec::{encode_for_broadcast, encode_for_signing, KosCodedAccount};
+// use kos_mpc;
 use pem::{parse as parse_pem, Pem};
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, IntoStaticStr};
@@ -55,6 +56,27 @@ impl From<CipherAlgo> for crate::cipher::CipherAlgo {
         }
     }
 }
+
+// /// Derivate address from secret share and path
+// #[wasm_bindgen(js_name = "deriveAddressFromShare")]
+// pub async fn derive_address_from_share(
+//     chain: u32,
+//     share: &str,
+//     path: &str,
+// ) -> Result<String, Error> {
+//     let custom_chain_options = wallet_options_to_chain_type(chain, &None);
+
+//     let chain = get_chain_by_params(custom_chain_options.clone())
+//         .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
+
+//     let public_key = kos_mpc::derive_public_key(share, path).await?;
+
+//     let address = chain
+//         .get_address(public_key)
+//         .map_err(|e| Error::WalletManager(format!("get address: {e}")))?;
+
+//     Ok(address)
+// }
 
 #[wasm_bindgen]
 impl Wallet {

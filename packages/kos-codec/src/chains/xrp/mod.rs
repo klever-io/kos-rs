@@ -2,13 +2,30 @@ mod constants;
 mod transactions;
 
 use kos::chains::{ChainError, Transaction};
+use kos::crypto::hash::sha512_digest;
 use xrpl::core::binarycodec::types::{blob::Blob, XRPLType};
+
+/// Unsigned single signer transactions prefix <https://xrpl.org/basic-data-types.html#hash-prefixes>
+pub const HASH_PREFIX_UNSIGNED_TRANSACTION_SINGLE: [u8; 4] = [0x53, 0x54, 0x58, 0x00];
+
+fn prepare_transaction(message: Vec<u8>) -> [u8; 32] {
+    let mut buffer: Vec<u8> = Vec::new();
+    buffer.extend_from_slice(&HASH_PREFIX_UNSIGNED_TRANSACTION_SINGLE);
+    buffer.extend_from_slice(message.as_ref());
+
+    let sha512_hash: [u8; 64] = sha512_digest(&buffer);
+
+    let mut sha512_half: [u8; 32] = [0; 32];
+    sha512_half.copy_from_slice(&sha512_hash[..32]);
+
+    sha512_half
+}
 
 pub fn encode_for_sign(
     mut transaction: Transaction,
     public_key: String,
 ) -> Result<Transaction, ChainError> {
-    let mut decoded_transaction = transactions::decode_factory(transaction.raw_data)?;
+    let mut decoded_transaction = transactions::decode_factory(transaction.raw_data.clone())?;
 
     let pbk = hex::decode(public_key).map_err(|_| ChainError::InvalidPublicKey)?;
 
@@ -16,7 +33,8 @@ pub fn encode_for_sign(
 
     let buff = decoded_transaction.serialize()?;
 
-    transaction.raw_data = buff;
+    transaction.raw_data = buff.clone();
+    transaction.tx_hash = prepare_transaction(buff).to_vec();
 
     Ok(transaction)
 }

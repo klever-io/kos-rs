@@ -28,7 +28,10 @@ postcard = { version = "1.0.6", features = ["use-std"] }
 lazy_static = { workspace = true }
 kos = { workspace = true, features = ["not-ksafe"] }
 wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+js-sys = "0.3.51"
 num-bigint = "0.4"
 num-traits = "0.2"
 kos-codec = { path = "../kos-codec" }
+# kos-mpc = { path = "../kos-mpc" }
 

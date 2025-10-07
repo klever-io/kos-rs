@@ -1,5 +1,6 @@
 pub mod models;
 pub mod number;
+pub mod runtime;
 pub mod signer;
 
 use crate::models::{
@@ -7,11 +8,15 @@ use crate::models::{
 };
 use hex::FromHexError;
 use hex::ToHex;
+use kos::chains::CustomChainType;
 use kos::chains::{get_chain_by_base_id, get_chain_by_params, Chain, ChainError, Transaction};
 use kos::crypto::cipher;
 use kos::crypto::cipher::CipherAlgo;
 use kos_codec::KosCodedAccount;
 use kos_codec::{encode_for_broadcast, encode_for_signing};
+use kos_mpc;
+use lwk_wollet::bitcoin::key;
+use runtime::rt;
 
 uniffi::setup_scaffolding!();
 
@@ -190,7 +195,12 @@ fn sign_transaction(
         public_key: account.public_key.clone(),
     };
 
-    let encoded = encode_for_signing(kos_codec_acc.clone(), transaction)?;
+    let encoded = encode_for_signing(kos_codec_acc.clone(), transaction.clone())?;
+    println!(
+        "Encoded for signing: {:?}",
+        hex::encode(encoded.clone().tx_hash)
+    );
+
     let signed_transaction = chain.sign_tx(hex::decode(account.private_key.clone())?, encoded)?;
     let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_transaction)?;
 
@@ -201,6 +211,7 @@ fn sign_transaction(
         signature: hex::encode(encoded_to_broadcast.signature),
     })
 }
+
 #[uniffi::export]
 fn sign_message(account: KOSAccount, hex: String, legacy: bool) -> Result<Vec<u8>, KOSError> {
     let chain_params = wallet_options_to_chain_type(account.chain_id, &account.options);
@@ -233,6 +244,342 @@ fn is_chain_supported(chain_id: u32) -> bool {
 #[uniffi::export]
 fn get_supported_chains() -> Vec<u32> {
     kos::chains::get_supported_chains()
+}
+
+// Derivate address from secret share and path
+#[uniffi::export]
+async fn derive_address_from_share(
+    chain_id: u32,
+    share: &str,
+    path: &str,
+    options: Option<WalletOptions>,
+) -> Result<KOSAccount, KOSError> {
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
+
+    let chain =
+        get_chain_by_params(chain_params.clone()).ok_or_else(|| KOSError::UnsupportedChain {
+            id: chain_id.to_string(),
+        })?;
+
+    let mut public_key: Vec<u8> = vec![];
+
+    match chain.get_chain_type() {
+        kos::chains::ChainType::KLV
+        | kos::chains::ChainType::ADA
+        | kos::chains::ChainType::APT
+        | kos::chains::ChainType::SOL
+        | kos::chains::ChainType::SUI
+        | kos::chains::ChainType::XLM => {
+            public_key = rt().block_on(async {
+                kos_mpc::derive_public_key(share, path, "ed25519", false).await
+            })?;
+        }
+        kos::chains::ChainType::XRP
+        | kos::chains::ChainType::ATOM
+        | kos::chains::ChainType::BCH
+        | kos::chains::ChainType::BNB
+        | kos::chains::ChainType::BTC => {
+            public_key = rt()
+                .block_on(async { kos_mpc::derive_public_key(share, path, "ecdsa", true).await })?;
+        }
+        kos::chains::ChainType::TRX | kos::chains::ChainType::ETH => {
+            public_key = rt().block_on(async {
+                kos_mpc::derive_public_key(share, path, "ecdsa", false).await
+            })?;
+        }
+        kos::chains::ChainType::ICP => match &chain_params.clone() {
+            CustomChainType::CustomEth(_chain_id) => {}
+            CustomChainType::CustomIcp(key_type) => {
+                if key_type == "ed25519" {
+                    public_key = rt().block_on(async {
+                        kos_mpc::derive_public_key(share, path, key_type, false).await
+                    })?;
+                }
+
+                if key_type == "secp256k1" {
+                    public_key = rt().block_on(async {
+                        kos_mpc::derive_public_key(share, path, "ecdsa", false).await
+                    })?;
+                }
+            }
+            _ => {}
+        },
+        kos::chains::ChainType::SUBSTRATE => {
+            return Err(KOSError::KOSDelegate(
+                "derive_address_from_share is only supported for EVM and KLV chains".to_string(),
+            ))
+        }
+    }
+
+    let address = chain
+        .get_address(public_key.clone())
+        .map_err(|e| KOSError::KOSDelegate(format!("get address: {e}")))?;
+
+    Ok(KOSAccount {
+        chain_id,
+        private_key: "".to_string(),
+        public_key: hex::encode(public_key),
+        address: address,
+        path: path.to_string(),
+        options,
+    })
+}
+
+#[uniffi::export]
+async fn sign_transaction_mpc(
+    account: KOSAccount,
+    secret_share: &str,
+    key_id: &str,
+    raw: String,
+    options: Option<TransactionChainOptions>,
+) -> Result<KOSTransaction, KOSError> {
+    let chain_options = convert_tx_options(options);
+
+    let chain_params = wallet_options_to_chain_type(account.chain_id, &account.options);
+    let chain =
+        get_chain_by_params(chain_params.clone()).ok_or_else(|| KOSError::UnsupportedChain {
+            id: account.chain_id.to_string(),
+        })?;
+
+    let transaction = Transaction {
+        raw_data: hex::decode(raw.clone())?,
+        signature: Vec::new(),
+        tx_hash: Vec::new(),
+        options: chain_options,
+    };
+
+    let kos_codec_acc = KosCodedAccount {
+        chain_id: account.chain_id,
+        address: account.address.clone(),
+        public_key: account.public_key.clone(),
+    };
+
+    let encoded = encode_for_signing(kos_codec_acc.clone(), transaction.clone())?;
+
+    let mut signature = vec![];
+
+    match chain.get_chain_type() {
+        kos::chains::ChainType::KLV
+        | kos::chains::ChainType::ADA
+        | kos::chains::ChainType::APT
+        | kos::chains::ChainType::SOL
+        | kos::chains::ChainType::SUI
+        | kos::chains::ChainType::XLM => {
+            signature = rt().block_on(async {
+                kos_mpc::sign(
+                    secret_share,
+                    key_id,
+                    &account.path,
+                    &encoded.tx_hash,
+                    "ed25519",
+                )
+                .await
+            })?;
+        }
+        kos::chains::ChainType::XRP | kos::chains::ChainType::BCH => {
+            signature = rt().block_on(async {
+                kos_mpc::sign_der(secret_share, key_id, &account.path, &encoded.tx_hash).await
+            })?;
+        }
+        kos::chains::ChainType::ETH
+        | kos::chains::ChainType::ATOM
+        | kos::chains::ChainType::BNB
+        | kos::chains::ChainType::TRX => {
+            signature = rt().block_on(async {
+                kos_mpc::sign(
+                    secret_share,
+                    key_id,
+                    &account.path,
+                    &encoded.tx_hash,
+                    "ecdsa",
+                )
+                .await
+            })?;
+        }
+        kos::chains::ChainType::BTC => {
+            let mut signatures = Vec::new();
+
+            // Each hash in the transaction is 32 bytes long
+            for hash in encoded.tx_hash.chunks(32) {
+                if hash.len() != 32 {
+                    return Err(KOSError::KOSDelegate("Invalid hash length".to_string()));
+                }
+
+                let mut hash_array = [0u8; 32];
+                hash_array.copy_from_slice(hash);
+
+                // Sign hash
+                let sig = rt().block_on(async {
+                    kos_mpc::sign(
+                        secret_share,
+                        key_id,
+                        &account.path,
+                        &hash_array.to_vec(),
+                        "ecdsa",
+                    )
+                    .await
+                })?;
+
+                // The first 64 bytes are the signature, and the last byte is the recovery id
+                // We just need the first 64 bytes
+
+                signatures.extend_from_slice(&sig[0..64]);
+            }
+
+            signature = signatures;
+        }
+        kos::chains::ChainType::ICP => match &chain_params.clone() {
+            CustomChainType::CustomEth(_chain_id) => {}
+            CustomChainType::CustomIcp(key_type) => {
+                if key_type == "ed25519" {
+                    signature = rt().block_on(async {
+                        kos_mpc::sign(
+                            secret_share,
+                            key_id,
+                            &account.path,
+                            &encoded.tx_hash,
+                            "ed25519",
+                        )
+                        .await
+                    })?;
+                }
+
+                if key_type == "secp256k1" {
+                    signature = rt().block_on(async {
+                        kos_mpc::sign(
+                            secret_share,
+                            key_id,
+                            &account.path,
+                            &encoded.tx_hash,
+                            "ecdsa",
+                        )
+                        .await
+                    })?;
+                }
+            }
+            _ => {}
+        },
+        kos::chains::ChainType::SUBSTRATE => {
+            return Err(KOSError::KOSDelegate(
+                "derive_address_from_share is only supported for EVM and KLV chains".to_string(),
+            ))
+        }
+    }
+
+    let mut signed_transaction = encoded.clone();
+    signed_transaction.signature = signature;
+
+    let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_transaction)?;
+
+    Ok(KOSTransaction {
+        chain_id: account.chain_id,
+        raw: hex::encode(encoded_to_broadcast.raw_data),
+        sender: account.address,
+        signature: hex::encode(encoded_to_broadcast.signature),
+    })
+}
+
+#[uniffi::export]
+async fn sign_message_mpc(
+    account: KOSAccount,
+    secret_share: &str,
+    key_id: &str,
+    hex: String,
+    legacy: bool,
+) -> Result<Vec<u8>, KOSError> {
+    let chain_params = wallet_options_to_chain_type(account.chain_id, &account.options);
+
+    let chain =
+        get_chain_by_params(chain_params.clone()).ok_or_else(|| KOSError::UnsupportedChain {
+            id: account.chain_id.to_string(),
+        })?;
+    let message = hex::decode(hex)?;
+
+    let kos_codec_acc = KosCodedAccount {
+        chain_id: account.chain_id,
+        address: account.address.clone(),
+        public_key: account.public_key.clone(),
+    };
+
+    let message_encoded = kos_codec::encode_for_sign_message(kos_codec_acc, message)?;
+
+    let mut signature = vec![];
+
+    match chain.get_chain_type() {
+        kos::chains::ChainType::KLV
+        | kos::chains::ChainType::ADA
+        | kos::chains::ChainType::APT
+        | kos::chains::ChainType::SOL
+        | kos::chains::ChainType::SUI
+        | kos::chains::ChainType::XLM => {
+            signature = rt().block_on(async {
+                kos_mpc::sign(
+                    secret_share,
+                    key_id,
+                    &account.path,
+                    &message_encoded,
+                    "ed25519",
+                )
+                .await
+            })?;
+        }
+        kos::chains::ChainType::XRP
+        | kos::chains::ChainType::ETH
+        | kos::chains::ChainType::ATOM
+        | kos::chains::ChainType::BCH
+        | kos::chains::ChainType::BNB
+        | kos::chains::ChainType::BTC
+        | kos::chains::ChainType::TRX => {
+            signature = rt().block_on(async {
+                kos_mpc::sign(
+                    secret_share,
+                    key_id,
+                    &account.path,
+                    &message_encoded,
+                    "ecdsa",
+                )
+                .await
+            })?;
+        }
+        kos::chains::ChainType::ICP => match &chain_params.clone() {
+            CustomChainType::CustomEth(_chain_id) => {}
+            CustomChainType::CustomIcp(key_type) => {
+                if key_type == "ed25519" {
+                    signature = rt().block_on(async {
+                        kos_mpc::sign(
+                            secret_share,
+                            key_id,
+                            &account.path,
+                            &message_encoded,
+                            "ed25519",
+                        )
+                        .await
+                    })?;
+                }
+
+                if key_type == "secp256k1" {
+                    signature = rt().block_on(async {
+                        kos_mpc::sign(
+                            secret_share,
+                            key_id,
+                            &account.path,
+                            &message_encoded,
+                            "ecdsa",
+                        )
+                        .await
+                    })?;
+                }
+            }
+            _ => {}
+        },
+        kos::chains::ChainType::SUBSTRATE => {
+            return Err(KOSError::KOSDelegate(
+                "derive_address_from_share is only supported for EVM and KLV chains".to_string(),
+            ))
+        }
+    }
+
+    Ok(signature)
 }
 
 #[cfg(test)]
@@ -468,7 +815,10 @@ mod tests {
             generate_wallet_from_mnemonic(get_test_mnemonic().to_string(), chain_id, 0, None)
                 .unwrap();
 
+        println!("Account: {:?}", account.public_key);
         let transaction = sign_transaction(account, raw.to_string(), None).unwrap();
+
+        println!("Transaction: {:?}", transaction.signature);
 
         assert_eq!(transaction.chain_id, chain_id, "The chain_id doesn't match");
         assert_eq!(
@@ -836,5 +1186,76 @@ mod tests {
 
         let path = get_path_by_chain(27, 1, false).unwrap();
         assert_eq!(path, "//0///");
+    }
+
+    fn get_ecdsa_secret_share() -> String {
+        std::env::var("ECDSA_SECRET_SHARE").unwrap()
+    }
+
+    fn get_ecdsa_key_id() -> String {
+        std::env::var("ECDSA_KEY_ID").unwrap()
+    }
+
+    fn get_ed25519_secret_share() -> String {
+        std::env::var("ED25519_SECRET_SHARE").unwrap()
+    }
+
+    fn get_ed25519_key_id() -> String {
+        std::env::var("ED25519_KEY_ID").unwrap()
+    }
+
+    #[tokio::test]
+    async fn should_sign_raw_transaction_mpc() {
+        let chain_id = 1;
+        let index = 1;
+        let secret_share = get_ecdsa_secret_share();
+
+        let path = get_path_by_chain(chain_id, index, true).unwrap();
+        let account = derive_address_from_share(chain_id, &secret_share, &path, None)
+            .await
+            .unwrap();
+
+        println!("Account: {:?}", account.address);
+
+        let transaction = sign_transaction_mpc(
+            account,
+            &secret_share,
+            &get_ecdsa_key_id(),
+            "0a02805222089016dbaa026eb24840e08affa99a335a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15413cb875812f5539c355f81e0f8ad11d07ed92f81d121541c43903446f10397864b1bf92b3f7db1941586b1218c0843d70e4bafba99a33".to_string(),
+            None
+        )
+        .await
+        .unwrap();
+
+        println!("Transaction Raw: {:?}", transaction.raw);
+        println!("Transaction Signature: {:?}", transaction.signature);
+    }
+
+    #[tokio::test]
+    async fn should_sign_raw_transaction_xrp_mpc() {
+        let chain_id = 4;
+        let index = 1;
+        let secret_share = get_ed25519_secret_share();
+
+        let path = get_path_by_chain(chain_id, index, true).unwrap();
+        let account = derive_address_from_share(chain_id, &secret_share, &path, None)
+            .await
+            .unwrap();
+
+        println!("Account Address: {:?}", account.address.clone());
+        println!("Account PubKey: {:?}", account.public_key);
+
+        let transaction = sign_transaction_mpc(
+            account,
+            &secret_share,
+            &get_ecdsa_key_id(),
+            "1200002405ea7dc16140000000000186a168400000000000000a81142d923804be41b8b5011991a1079890525a54fd4883144f7571cee107970f36b12285cc17e44c121ca0ae".to_string(),
+            None
+        )
+        .await
+        .unwrap();
+
+        println!("Transaction Raw: {:?}", transaction.raw);
+        println!("Transaction Signature: {:?}", transaction.signature);
     }
 }

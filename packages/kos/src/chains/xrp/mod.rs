@@ -14,7 +14,7 @@ pub const HASH_PREFIX_UNSIGNED_TRANSACTION_SINGLE: [u8; 4] = [0x53, 0x54, 0x58, 
 pub const XRP_ALPHA: &[u8; 58] = b"rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
 
 #[allow(clippy::upper_case_acronyms)]
-pub(crate) struct XRP {}
+pub struct XRP {}
 
 impl XRP {
     pub fn new() -> Self {
@@ -139,8 +139,7 @@ impl Chain for XRP {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        let msg_to_sign = XRP::prepare_transaction(tx.raw_data.clone()).to_vec();
-        tx.signature = self.sign_raw(private_key, msg_to_sign.clone())?;
+        tx.signature = self.sign_raw(private_key, tx.tx_hash.clone())?;
         Ok(tx)
     }
 
