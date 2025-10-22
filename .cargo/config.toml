@@ -1,8 +1,22 @@
 [target.x86_64-apple-darwin]
-rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
+rustflags = [
+    "-C",
+    "link-arg=-undefined",
+    "-C",
+    "link-arg=dynamic_lookup",
+    "-C",
+    "link-arg=-Wl,-install_name,@loader_path/libkos_mobile.dylib",
+]
 
 [target.aarch64-apple-darwin]
-rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
+rustflags = [
+    "-C",
+    "link-arg=-undefined",
+    "-C",
+    "link-arg=dynamic_lookup",
+    "-C",
+    "link-arg=-Wl,-install_name,@loader_path/libkos_mobile.dylib",
+]
 
 [target.aarch64-apple-ios]
 rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
