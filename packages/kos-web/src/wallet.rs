@@ -834,4 +834,41 @@ mod tests {
         assert!(!signed_tx.signature.is_empty());
         assert!(!signed_tx.tx_hash.is_empty());
     }
+
+    #[test]
+    fn test_sign_transaction_avail() {
+        let chain_id = 62;
+        let chain = get_chain_by_base_id(chain_id).unwrap();
+        let path = chain.get_path(0, false);
+
+        let wallet =
+            Wallet::from_mnemonic(chain_id, get_test_mnemonic(), path, None, None).unwrap();
+
+        let options = TransactionChainOptions {
+            data: kos_codec::ChainOptions::SUBSTRATE {
+                call: hex::decode("060300e09a2af0eb7f9adcc71e489111ff691cf8430e6f1d86969156a8222182174115070010a5d4e8").unwrap(),
+                era: hex::decode("f500").unwrap(),
+                nonce: 31u32,
+                tip: 0u64,
+                block_hash: hex::decode(
+                    "0666e266f4114c7ad8df7ec5271f336418096c532c8e36c2407631900a3aac31",
+                )
+                .unwrap(),
+                genesis_hash: hex::decode(
+                    "b91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a",
+                )
+                .unwrap(),
+                spec_version: 49u32,
+                transaction_version: 1u32,
+                app_id: Some(0),
+            },
+        };
+        let tx_raw = "BgMA4Joq8Ot/mtzHHkiREf9pHPhDDm8dhpaRVqgiIYIXQRUCCT0AZQOMAAAxAAAAAQAAALkXRrReA0bML4FaUgucbLTVwJAq+EjbCoD4WTLS6CdqtAlHmxoXTft03So61uXHTubmwxNr1obVwnGfhN0XlmA=";
+
+        let signed_tx = wallet.sign(tx_raw.as_bytes(), Some(options)).unwrap();
+
+        assert!(!signed_tx.signature.is_empty());
+        assert!(!signed_tx.tx_hash.is_empty());
+        assert_eq!(signed_tx.raw_data.len(), 147);
+    }
 }
