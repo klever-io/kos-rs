@@ -372,6 +372,48 @@ func TestShouldSignRawTransactionEthBasedLegacy(t *testing.T) {
 	}
 }
 
+func TestShouldSignRawTransactionDot(t *testing.T) {
+	chainID := uint32(21)
+
+	walletOptions := kos_mobile.WalletOptions{
+		UseLegacyPath: false,
+		Specific:      nil,
+	}
+	account, err := kos_mobile.GenerateWalletFromMnemonic(
+		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+		chainID,
+		0,
+		&walletOptions,
+	)
+	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
+
+	call := "0503000c2441b8cedbfc7a2edc0968b9a535819969d3e9e0998680babb5827287fc07004"
+	era := "d501"
+	blockHash := "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3"
+	genesisHash := "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3"
+
+	options := kos_mobile.NewSubstrateTransactionOptions(
+		call,
+		era,
+		27,
+		0,
+		blockHash,
+		genesisHash,
+		1003004,
+		26,
+		nil,
+	)
+
+	transaction, err := kos_mobile.SignTransaction(
+		account,
+		"0503000c2441b8cedbfc7a2edc0968b9a535819969d3e9e0998680babb5827287fc07004d5016c0000fc4d0f001a00000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c347ee1c48ed396721e74df1c81e95b2aab3e13763e8a2dec7ed5a8b94af4c808d00",
+		&options,
+	)
+	assert.Nil(t, err, "Failed to sign transaction")
+
+	assert.Equal(t, 284, len(transaction.Raw), "The raw length doesn't match")
+}
+
 func TestShouldSignRawTransactionIcp(t *testing.T) {
 	chainID := uint32(31)
 
