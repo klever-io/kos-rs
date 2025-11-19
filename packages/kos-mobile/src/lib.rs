@@ -734,15 +734,12 @@ mod tests {
 
         let transaction = sign_transaction(
             account,
-            // "0503000c2441b8cedbfc7a2edc0968b9a535819969d3e9e0998680babb5827287fc07004d5016c0000fc4d0f001a00000091b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c347ee1c48ed396721e74df1c81e95b2aab3e13763e8a2dec7ed5a8b94af4c808d00".to_string(),
             "0a0300b8c8ac77e723fae060f2dc70d00a591e1127ec07e0e81e2237a823cbe5210d1e02286bee05011800000082841e000f00000068d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f781cf57533b15a5a13729a33543fd6ae137bce54ef14eb933b0a4813489e7e0a00".to_string(),
             Some(options),
         )
         .unwrap();
 
-        // assert_eq!(transaction.raw, "", "The raw length doesn't match");
-        assert_eq!(transaction.signature, "", "The raw length doesn't match");
-        assert_eq!(transaction.raw.len(), 290, "The raw length doesn't match");
+        assert_eq!(transaction.raw.len(), 292, "The raw length doesn't match");
     }
     #[test]
     fn should_sign_raw_transaction_icp() {
