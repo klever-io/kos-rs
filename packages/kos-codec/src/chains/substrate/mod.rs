@@ -77,6 +77,7 @@ fn unwrap_extrinsic(
             // Other chains may have different requirements for mode and metadata_hash
             let (mode, metadata_hash) = match account.chain_id {
                 29 => (None, None),
+                62 => (None, None),
                 _ => (Some(0u8), Some(0u8)),
             };
 
