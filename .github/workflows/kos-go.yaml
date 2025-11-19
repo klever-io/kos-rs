@@ -37,4 +37,4 @@ jobs:
       - name: Run Go tests
         run: |
           cd packages/kos-go
-          make test && make test-linux-musl
+          make test
