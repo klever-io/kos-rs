@@ -12,7 +12,11 @@ pub struct ExtrinsicPayload {
     pub era: Vec<u8>,
     pub nonce: u32,
     pub tip: u64,
+
+    /// Optional asset ID for Asset Hub transactions. When set, the asset ID is encoded
+    /// as part of the transaction payload for asset-specific operations.
     pub asset_id: Option<u32>,
+
     pub mode: Option<u8>,
     pub spec_version: u32,
     pub transaction_version: u32,

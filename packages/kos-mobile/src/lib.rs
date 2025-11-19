@@ -741,6 +741,7 @@ mod tests {
 
         assert_eq!(transaction.raw.len(), 292, "The raw length doesn't match");
     }
+
     #[test]
     fn should_sign_raw_transaction_icp() {
         let chain_id = 31;
