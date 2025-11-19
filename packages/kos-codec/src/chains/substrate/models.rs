@@ -48,9 +48,10 @@ impl ExtrinsicPayload {
         encoded.extend(&self.genesis_hash);
         encoded.extend(&self.block_hash);
 
-        // Use the metadata_hash if it is not set for AVAIL transactions
-        if let Some(metadata_hash) = self.metadata_hash {
-            encoded.push(metadata_hash);
+        if self.app_id.is_none() {
+            if let Some(metadata_hash) = self.metadata_hash {
+                encoded.push(metadata_hash);
+            }
         }
 
         encoded
