@@ -325,6 +325,7 @@ pub enum ChainOptions {
         era: Vec<u8>,
         nonce: u32,
         tip: u64,
+        asset_id: Option<u32>,
         block_hash: Vec<u8>,
         genesis_hash: Vec<u8>,
         spec_version: u32,
