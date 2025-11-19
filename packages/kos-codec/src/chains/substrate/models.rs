@@ -12,6 +12,7 @@ pub struct ExtrinsicPayload {
     pub era: Vec<u8>,
     pub nonce: u32,
     pub tip: u64,
+    pub asset_id: Option<u32>,
     pub mode: Option<u8>,
     pub spec_version: u32,
     pub transaction_version: u32,
@@ -31,12 +32,14 @@ impl ExtrinsicPayload {
         encoded.extend(Compact(self.nonce).encode());
         encoded.extend(Compact(self.tip).encode());
 
+        if let Some(asset_id) = self.asset_id {
+            encoded.extend(Compact(asset_id).encode());
+        }
+
         // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
         if let Some(app_id) = self.app_id {
             encoded.extend(Compact(app_id).encode());
-        }
-
-        if let Some(mode) = self.mode {
+        } else if let Some(mode) = self.mode {
             encoded.extend(mode.encode());
         }
 
@@ -69,12 +72,13 @@ impl ExtrinsicPayload {
         encoded.extend_from_slice(&Compact(self.nonce).encode());
         encoded.extend_from_slice(&Compact(self.tip).encode());
 
+        if let Some(asset_id) = self.asset_id {
+            encoded.extend(Compact(asset_id).encode());
+        }
         // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
         if let Some(app_id) = self.app_id {
             encoded.extend_from_slice(Compact(app_id).encode().as_slice());
-        }
-
-        if let Some(mode) = self.mode {
+        } else if let Some(mode) = self.mode {
             encoded.push(mode);
         }
 

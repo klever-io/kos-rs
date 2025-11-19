@@ -850,6 +850,7 @@ mod tests {
                 era: hex::decode("f500").unwrap(),
                 nonce: 31u32,
                 tip: 0u64,
+                asset_id: None,
                 block_hash: hex::decode(
                     "0666e266f4114c7ad8df7ec5271f336418096c532c8e36c2407631900a3aac31",
                 )
