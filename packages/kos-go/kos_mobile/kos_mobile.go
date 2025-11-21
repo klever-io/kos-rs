@@ -708,7 +708,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_substrate_transaction_options()
 		})
-		if checksum != 22686 {
+		if checksum != 59821 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_substrate_transaction_options: UniFFI API checksum mismatch")
 		}
@@ -1702,6 +1702,7 @@ type TransactionChainOptionsSubstrate struct {
 	Era                []byte
 	Nonce              uint32
 	Tip                uint64
+	AssetId            *uint32
 	BlockHash          []byte
 	GenesisHash        []byte
 	SpecVersion        uint32
@@ -1714,6 +1715,7 @@ func (e TransactionChainOptionsSubstrate) Destroy() {
 	FfiDestroyerBytes{}.Destroy(e.Era)
 	FfiDestroyerUint32{}.Destroy(e.Nonce)
 	FfiDestroyerUint64{}.Destroy(e.Tip)
+	FfiDestroyerOptionalUint32{}.Destroy(e.AssetId)
 	FfiDestroyerBytes{}.Destroy(e.BlockHash)
 	FfiDestroyerBytes{}.Destroy(e.GenesisHash)
 	FfiDestroyerUint32{}.Destroy(e.SpecVersion)
@@ -1760,6 +1762,7 @@ func (FfiConverterTransactionChainOptions) Read(reader io.Reader) TransactionCha
 			FfiConverterBytesINSTANCE.Read(reader),
 			FfiConverterUint32INSTANCE.Read(reader),
 			FfiConverterUint64INSTANCE.Read(reader),
+			FfiConverterOptionalUint32INSTANCE.Read(reader),
 			FfiConverterBytesINSTANCE.Read(reader),
 			FfiConverterBytesINSTANCE.Read(reader),
 			FfiConverterUint32INSTANCE.Read(reader),
@@ -1791,6 +1794,7 @@ func (FfiConverterTransactionChainOptions) Write(writer io.Writer, value Transac
 		FfiConverterBytesINSTANCE.Write(writer, variant_value.Era)
 		FfiConverterUint32INSTANCE.Write(writer, variant_value.Nonce)
 		FfiConverterUint64INSTANCE.Write(writer, variant_value.Tip)
+		FfiConverterOptionalUint32INSTANCE.Write(writer, variant_value.AssetId)
 		FfiConverterBytesINSTANCE.Write(writer, variant_value.BlockHash)
 		FfiConverterBytesINSTANCE.Write(writer, variant_value.GenesisHash)
 		FfiConverterUint32INSTANCE.Write(writer, variant_value.SpecVersion)
@@ -2638,10 +2642,10 @@ func NewIcpWalletOptions(useLegacyPath bool, keyType string) WalletOptions {
 	}))
 }
 
-func NewSubstrateTransactionOptions(call string, era string, nonce uint32, tip uint64, blockHash string, genesisHash string, specVersion uint32, transactionVersion uint32, appId *uint32) TransactionChainOptions {
+func NewSubstrateTransactionOptions(call string, era string, nonce uint32, tip uint64, assetId *uint32, blockHash string, genesisHash string, specVersion uint32, transactionVersion uint32, appId *uint32) TransactionChainOptions {
 	return FfiConverterTransactionChainOptionsINSTANCE.Lift(rustCall(func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
-			inner: C.uniffi_kos_mobile_fn_func_new_substrate_transaction_options(FfiConverterStringINSTANCE.Lower(call), FfiConverterStringINSTANCE.Lower(era), FfiConverterUint32INSTANCE.Lower(nonce), FfiConverterUint64INSTANCE.Lower(tip), FfiConverterStringINSTANCE.Lower(blockHash), FfiConverterStringINSTANCE.Lower(genesisHash), FfiConverterUint32INSTANCE.Lower(specVersion), FfiConverterUint32INSTANCE.Lower(transactionVersion), FfiConverterOptionalUint32INSTANCE.Lower(appId), _uniffiStatus),
+			inner: C.uniffi_kos_mobile_fn_func_new_substrate_transaction_options(FfiConverterStringINSTANCE.Lower(call), FfiConverterStringINSTANCE.Lower(era), FfiConverterUint32INSTANCE.Lower(nonce), FfiConverterUint64INSTANCE.Lower(tip), FfiConverterOptionalUint32INSTANCE.Lower(assetId), FfiConverterStringINSTANCE.Lower(blockHash), FfiConverterStringINSTANCE.Lower(genesisHash), FfiConverterUint32INSTANCE.Lower(specVersion), FfiConverterUint32INSTANCE.Lower(transactionVersion), FfiConverterOptionalUint32INSTANCE.Lower(appId), _uniffiStatus),
 		}
 	}))
 }

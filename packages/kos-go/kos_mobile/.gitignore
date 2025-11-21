@@ -1,0 +1,16 @@
+*.test
+
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+vendor/
+
+go.work
+go.work.sum
+
+.env
+
+.idea/
+.vscode/

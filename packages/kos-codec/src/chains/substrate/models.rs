@@ -12,6 +12,11 @@ pub struct ExtrinsicPayload {
     pub era: Vec<u8>,
     pub nonce: u32,
     pub tip: u64,
+
+    /// Optional asset ID for Asset Hub transactions. When set, the asset ID is encoded
+    /// as part of the transaction payload for asset-specific operations.
+    pub asset_id: Option<u32>,
+
     pub mode: Option<u8>,
     pub spec_version: u32,
     pub transaction_version: u32,
@@ -31,10 +36,16 @@ impl ExtrinsicPayload {
         encoded.extend(Compact(self.nonce).encode());
         encoded.extend(Compact(self.tip).encode());
 
+        if let Some(asset_id) = self.asset_id {
+            encoded.extend(Compact(asset_id).encode());
+        }
+
         // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
         if let Some(app_id) = self.app_id {
             encoded.extend(Compact(app_id).encode());
-        } else if let Some(mode) = self.mode {
+        }
+
+        if let Some(mode) = self.mode {
             encoded.extend(mode.encode());
         }
 
@@ -43,11 +54,8 @@ impl ExtrinsicPayload {
         encoded.extend(&self.genesis_hash);
         encoded.extend(&self.block_hash);
 
-        // Use the metadata_hash if it is not set for AVAIL transactions
-        if self.app_id.is_none() {
-            if let Some(metadata_hash) = self.metadata_hash {
-                encoded.push(metadata_hash);
-            }
+        if let Some(metadata_hash) = self.metadata_hash {
+            encoded.push(metadata_hash);
         }
 
         encoded
@@ -69,10 +77,15 @@ impl ExtrinsicPayload {
         encoded.extend_from_slice(&Compact(self.nonce).encode());
         encoded.extend_from_slice(&Compact(self.tip).encode());
 
+        if let Some(asset_id) = self.asset_id {
+            encoded.extend(Compact(asset_id).encode());
+        }
         // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
         if let Some(app_id) = self.app_id {
             encoded.extend_from_slice(Compact(app_id).encode().as_slice());
-        } else if let Some(mode) = self.mode {
+        }
+
+        if let Some(mode) = self.mode {
             encoded.push(mode);
         }
 

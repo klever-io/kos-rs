@@ -104,21 +104,25 @@ test-darwin-arm64:
 	GOARCH=arm64 \
 	go test $(TEST_FLAGS) ./...
 
-.PHONY: build-all
-build-all: build-linux-amd64 build-darwin-arm64
-	@echo "Built all platforms"
+.PHONY: build-linux-musl
+build-linux-musl:
+	LD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/linux-amd64 \
+	CGO_ENABLED=1 \
+	CGO_LDFLAGS="-lm" \
+	GOOS=linux \
+	GOARCH=amd64 \
+	GOFLAGS="-tags=musl" \
+	go build $(BUILD_FLAGS) -o bin/kos-linux-musl ./...
 
-.PHONY: test-all
-test-all:
-	@echo "Testing all available platforms..."
-	@if [ -d "kos_mobile/lib/linux-amd64" ]; then \
-		echo "Testing Linux AMD64..."; \
-		$(MAKE) test-linux-amd64; \
-	fi
-	@if [ -d "kos_mobile/lib/darwin-aarch64" ]; then \
-		echo "Testing Darwin ARM64..."; \
-		$(MAKE) test-darwin-arm64; \
-	fi
+.PHONY: test-linux-musl
+test-linux-musl:
+	LD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/linux-amd64 \
+	CGO_ENABLED=1 \
+	CGO_LDFLAGS="-lm" \
+	GOOS=linux \
+	GOARCH=amd64 \
+	GOFLAGS="-tags=musl" \
+	go test $(TEST_FLAGS) ./...
 
 .PHONY: check-lib
 check-lib:
@@ -143,10 +147,10 @@ help:
 	@echo "  check-lib     - Verify library exists for current platform"
 	@echo ""
 	@echo "Cross-platform targets:"
-	@echo "  build-all           - Build for all platforms"
 	@echo "  build-linux-amd64   - Build for Linux AMD64"
+	@echo "  build-linux-musl    - Build for Linux with musl"
 	@echo "  build-darwin-arm64  - Build for macOS ARM64"
-	@echo "  test-all            - Test all available platforms"
 	@echo "  test-linux-amd64    - Test Linux AMD64"
+	@echo "  test-linux-musl     - Test Linux with musl"
 	@echo "  test-darwin-amd64   - Test macOS AMD64"
 	@echo "  test-darwin-arm64   - Test macOS ARM64"

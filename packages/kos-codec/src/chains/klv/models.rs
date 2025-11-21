@@ -1,82 +1,92 @@
 use crate::protos::generated::klv::proto;
 use crate::protos::generated::klv::proto::tx_contract::ContractType;
-use tiny_json_rs::mapper;
-use tiny_json_rs::serializer;
-use tiny_json_rs::Deserialize;
-use tiny_json_rs::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::protos;
 use kos::crypto::base64::simple_base64_decode;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
 pub struct Transaction {
-    #[Rename = "RawData"]
+    #[serde(rename = "RawData")]
     pub raw_data: Option<Raw>,
-    #[Rename = "Signature"]
-    pub signature: Option<Vec<String>>, //Base64 encoded
-    #[Rename = "Result"]
+
+    #[serde(rename = "Signature")]
+    pub signature: Option<Vec<String>>, // Base64 encoded
+
+    #[serde(rename = "Result")]
     pub result: Option<i32>,
-    #[Rename = "ResultCode"]
+
+    #[serde(rename = "ResultCode")]
     pub result_code: Option<i32>,
-    #[Rename = "Receipts"]
+
+    #[serde(rename = "Receipts")]
     pub receipts: Option<Vec<Receipt>>,
-    #[Rename = "Block"]
+
+    #[serde(rename = "Block")]
     pub block: Option<u64>,
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Raw {
-    #[Rename = "Nonce"]
+    #[serde(rename = "Nonce")]
     pub nonce: Option<u64>,
-    #[Rename = "Sender"]
+
+    #[serde(rename = "Sender")]
     pub sender: String,
-    #[Rename = "Contract"]
+
+    #[serde(rename = "Contract")]
     pub contract: Vec<TxContract>,
-    #[Rename = "PermissionID"]
+
+    #[serde(rename = "PermissionID")]
     pub permission_id: Option<i32>,
-    #[Rename = "Data"]
+
+    #[serde(rename = "Data")]
     pub data: Option<Vec<String>>,
-    #[Rename = "KAppFee"] // Use this to match the exact JSON field name for this field
+
+    #[serde(rename = "KAppFee")]
     pub k_app_fee: Option<i64>,
-    #[Rename = "BandwidthFee"] // Use this to match the exact JSON field name for this field
+
+    #[serde(rename = "BandwidthFee")]
     pub bandwidth_fee: Option<i64>,
-    #[Rename = "Version"]
+
+    #[serde(rename = "Version")]
     pub version: Option<u32>,
-    #[Rename = "ChainID"]
+
+    #[serde(rename = "ChainID")]
     pub chain_id: String,
-    #[Rename = "KDAFee"] // Use this to match the exact JSON field name for this field
-    pub kda_fee: ::core::option::Option<KdaFee>,
+
+    #[serde(rename = "KDAFee")]
+    pub kda_fee: Option<KdaFee>,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct TxContract {
-    #[Rename = "Parameter"]
+    #[serde(rename = "Parameter")]
     pub parameter: Parameter,
-    #[Rename = "Type"]
+
+    #[serde(rename = "Type")]
     pub r#type: Option<i32>,
-    // ... other fields
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct Parameter {
     pub type_url: String,
     pub value: Option<String>,
-    // ... other fields
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct KdaFee {
-    #[Rename = "KDA"]
+    #[serde(rename = "KDA")]
     pub kda: String,
-    #[Rename = "Amount"]
+
+    #[serde(rename = "Amount")]
     pub amount: i64,
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Receipt {
-    #[Rename = "Data"]
+    #[serde(rename = "Data")]
     pub data: Vec<String>,
 }
 
@@ -85,7 +95,6 @@ pub struct Receipt {
 pub enum ConversionError {
     InvalidData(&'static str),
     Base64Error,
-    // You can add more error types as needed for detailed error handling
 }
 
 impl TryFrom<Transaction> for proto::Transaction {
@@ -119,7 +128,7 @@ impl TryFrom<Transaction> for proto::Transaction {
             result_code: value.result_code.unwrap_or(0),
             receipts,
             block: value.block.unwrap_or(0),
-            ..Default::default() // Include other fields as necessary
+            ..Default::default()
         };
 
         Ok(proto_tx)
@@ -173,17 +182,19 @@ impl TryFrom<TxContract> for proto::TxContract {
     type Error = ConversionError;
 
     fn try_from(value: TxContract) -> Result<Self, Self::Error> {
-        // Remove escapes
+        // Remove escapes - serde_json handles this automatically now!
         let contract_name = value.parameter.type_url.replace("\\", "");
 
-        //Remove the "type.googleapis.com/" prefix
+        // Remove the "type.googleapis.com/" prefix
         let contract_name = contract_name
             .strip_prefix("type.googleapis.com/proto.")
             .ok_or(ConversionError::InvalidData("Invalid contract name"))?;
-        //Add Type at the end of str
+
+        // Add Type at the end of str
         let contract_name = format!("{contract_name}Type");
         let contract_type = ContractType::from_str_name(&contract_name)
             .ok_or(ConversionError::InvalidData("Invalid contract type"))?;
+
         let proto_contract = proto::TxContract {
             r#type: contract_type as i32,
             parameter: Option::from(protos::Any::try_from(value.parameter)?),
