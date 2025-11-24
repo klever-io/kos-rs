@@ -45,7 +45,7 @@ impl ExtrinsicPayload {
             if let Some(asset_id) = self.asset_id {
                 encoded.extend(Compact(asset_id).encode());
             } else {
-                encoded.extend(Compact(0 as u32).encode());
+                encoded.extend(Compact(0_u32).encode());
             }
         }
 
@@ -100,7 +100,7 @@ impl ExtrinsicPayload {
             if let Some(asset_id) = self.asset_id {
                 encoded.extend(Compact(asset_id).encode());
             } else {
-                encoded.extend(Compact(0 as u32).encode());
+                encoded.extend(Compact(0_u32).encode());
             }
         }
 
