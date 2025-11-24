@@ -862,6 +862,7 @@ mod tests {
                 spec_version: 49u32,
                 transaction_version: 1u32,
                 app_id: Some(0),
+                signed_extensions: None,
             },
         };
         let tx_raw = "BgMA4Joq8Ot/mtzHHkiREf9pHPhDDm8dhpaRVqgiIYIXQRUCCT0AZQOMAAAxAAAAAQAAALkXRrReA0bML4FaUgucbLTVwJAq+EjbCoD4WTLS6CdqtAlHmxoXTft03So61uXHTubmwxNr1obVwnGfhN0XlmA=";

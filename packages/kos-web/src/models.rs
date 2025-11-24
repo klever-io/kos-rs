@@ -161,6 +161,7 @@ impl TransactionChainOptions {
                 spec_version,
                 transaction_version,
                 app_id,
+                signed_extensions: None,
             },
         })
     }

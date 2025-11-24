@@ -22,6 +22,7 @@ pub enum TransactionChainOptions {
         spec_version: u32,
         transaction_version: u32,
         app_id: Option<u32>,
+        signed_extensions: Option<Vec<u8>>,
     },
     Cosmos {
         chain_id: String,
@@ -42,11 +43,14 @@ pub fn new_substrate_transaction_options(
     spec_version: u32,
     transaction_version: u32,
     app_id: Option<u32>,
+    signed_extensions: Option<String>,
 ) -> TransactionChainOptions {
     let call = hex_string_to_vec(call.as_str()).unwrap_or_default();
     let era = hex_string_to_vec(era.as_str()).unwrap_or_default();
     let block_hash = hex_string_to_vec(block_hash.as_str()).unwrap_or_default();
     let genesis_hash = hex_string_to_vec(genesis_hash.as_str()).unwrap_or_default();
+    let signed_extensions =
+        signed_extensions.map(|ext| hex_string_to_vec(ext.as_str()).unwrap_or_default());
 
     TransactionChainOptions::Substrate {
         call,
@@ -59,6 +63,7 @@ pub fn new_substrate_transaction_options(
         spec_version,
         transaction_version,
         app_id,
+        signed_extensions,
     }
 }
 
@@ -171,6 +176,7 @@ pub fn convert_tx_options(options: Option<TransactionChainOptions>) -> Option<Ch
             spec_version,
             transaction_version,
             app_id,
+            signed_extensions,
         }) => Some(ChainOptions::SUBSTRATE {
             call,
             era,
@@ -182,6 +188,7 @@ pub fn convert_tx_options(options: Option<TransactionChainOptions>) -> Option<Ch
             spec_version,
             transaction_version,
             app_id,
+            signed_extensions,
         }),
         Some(TransactionChainOptions::Cosmos {
             chain_id,

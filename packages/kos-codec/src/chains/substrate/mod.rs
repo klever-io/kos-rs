@@ -63,6 +63,7 @@ fn unwrap_extrinsic(
             spec_version,
             transaction_version,
             app_id,
+            signed_extensions,
         } => {
             let genesis_hash: [u8; 32] = genesis_hash
                 .as_slice()
@@ -94,6 +95,7 @@ fn unwrap_extrinsic(
                 block_hash,
                 metadata_hash,
                 app_id,
+                signed_extensions,
             })
         }
         _ => Err(ChainError::InvalidOptions),
@@ -132,6 +134,7 @@ mod test {
                 spec_version: 1003004,
                 transaction_version: 26,
                 app_id: None,
+                signed_extensions: None,
             }),
         };
 
@@ -194,6 +197,7 @@ mod test {
                 spec_version: 1003003,
                 transaction_version: 26,
                 app_id: None,
+                signed_extensions: None,
             }),
         };
 
@@ -259,6 +263,7 @@ mod test {
                 spec_version,
                 transaction_version,
                 app_id: Some(0),
+                signed_extensions: None,
             }),
         };
 
@@ -324,6 +329,7 @@ mod test {
                 spec_version,
                 transaction_version,
                 app_id: None,
+                signed_extensions: None,
             }),
         };
 
@@ -389,6 +395,7 @@ mod test {
                 spec_version,
                 transaction_version,
                 app_id: None,
+                signed_extensions: None,
             }),
         };
 
@@ -453,6 +460,7 @@ mod test {
                 spec_version,
                 transaction_version,
                 app_id: None,
+                signed_extensions: None,
             }),
         };
 

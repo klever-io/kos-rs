@@ -730,6 +730,7 @@ mod tests {
             spec_version: 2000002,
             transaction_version: 15,
             app_id: None,
+            signed_extensions: None,
         };
 
         let transaction = sign_transaction(
