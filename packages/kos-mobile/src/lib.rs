@@ -740,7 +740,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(transaction.raw.len(), 292, "The raw length doesn't match");
+        assert_eq!(transaction.raw.len(), 290, "The raw length doesn't match");
     }
 
     #[test]

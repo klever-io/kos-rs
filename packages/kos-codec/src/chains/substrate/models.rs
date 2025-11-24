@@ -139,9 +139,5 @@ fn parse_signed_extensions(
     let json_str = std::str::from_utf8(bytes)?;
     let json: Value = serde_json::from_str(json_str)?;
 
-    if json.get(&field).is_some() {
-        return Ok(true);
-    }
-
-    Ok(false)
+    Ok(json.get(&field).is_some())
 }

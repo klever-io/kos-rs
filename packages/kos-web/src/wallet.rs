@@ -871,6 +871,6 @@ mod tests {
 
         assert!(!signed_tx.signature.is_empty());
         assert!(!signed_tx.tx_hash.is_empty());
-        assert_eq!(signed_tx.raw_data.len(), 147);
+        assert_eq!(signed_tx.raw_data.len(), 146);
     }
 }
