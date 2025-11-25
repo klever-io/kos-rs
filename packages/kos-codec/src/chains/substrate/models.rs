@@ -1,5 +1,4 @@
 use parity_scale_codec::{Compact, Encode};
-use serde_json::Value;
 
 const SIGNED_FLAG: u8 = 0b1000_0000;
 const TRANSACTION_VERSION: u8 = 4;
@@ -25,7 +24,7 @@ pub struct ExtrinsicPayload {
     pub metadata_hash: Option<u8>,
     pub app_id: Option<u32>,
 
-    pub signed_extensions: Option<Vec<u8>>,
+    pub signed_extensions: Option<Vec<String>>,
 }
 
 impl ExtrinsicPayload {
@@ -39,7 +38,7 @@ impl ExtrinsicPayload {
         encoded.extend(Compact(self.tip).encode());
 
         let has_charge_asset_tx_payment =
-            parse_signed_extensions(&self.signed_extensions, "ChargeAssetTxPayment".to_string());
+            parse_signed_extensions(&self.signed_extensions, "ChargeAssetTxPayment");
 
         if let Ok(true) = has_charge_asset_tx_payment {
             if let Some(asset_id) = self.asset_id {
@@ -49,7 +48,7 @@ impl ExtrinsicPayload {
             }
         }
 
-        let has_app_id = parse_signed_extensions(&self.signed_extensions, "AppId".to_string());
+        let has_app_id = parse_signed_extensions(&self.signed_extensions, "AppId");
         if let Ok(true) = has_app_id {
             if let Some(app_id) = self.app_id {
                 encoded.extend(Compact(app_id).encode());
@@ -94,7 +93,7 @@ impl ExtrinsicPayload {
         encoded.extend_from_slice(&Compact(self.tip).encode());
 
         let has_charge_asset_tx_payment =
-            parse_signed_extensions(&self.signed_extensions, "ChargeAssetTxPayment".to_string());
+            parse_signed_extensions(&self.signed_extensions, "ChargeAssetTxPayment");
 
         if let Ok(true) = has_charge_asset_tx_payment {
             if let Some(asset_id) = self.asset_id {
@@ -104,7 +103,7 @@ impl ExtrinsicPayload {
             }
         }
 
-        let has_app_id = parse_signed_extensions(&self.signed_extensions, "AppId".to_string());
+        let has_app_id = parse_signed_extensions(&self.signed_extensions, "AppId");
         if let Ok(true) = has_app_id {
             if let Some(app_id) = self.app_id {
                 encoded.extend(Compact(app_id).encode());
@@ -126,18 +125,13 @@ impl ExtrinsicPayload {
     }
 }
 
-/// Parses signed extensions and returns the if payment extension type exists
+/// Parses signed extensions and returns true if the specified extension type exists
 fn parse_signed_extensions(
-    signed_extensions: &Option<Vec<u8>>,
-    field: String,
+    signed_extensions: &Option<Vec<String>>,
+    field: &str,
 ) -> Result<bool, Box<dyn std::error::Error>> {
-    let bytes = match signed_extensions {
-        Some(b) => b,
-        None => return Ok(false),
-    };
-
-    let json_str = std::str::from_utf8(bytes)?;
-    let json: Value = serde_json::from_str(json_str)?;
-
-    Ok(json.get(&field).is_some())
+    match signed_extensions {
+        Some(extensions) => Ok(extensions.iter().any(|ext| ext == field)),
+        None => Ok(false),
+    }
 }

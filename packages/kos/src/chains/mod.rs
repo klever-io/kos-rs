@@ -331,7 +331,7 @@ pub enum ChainOptions {
         spec_version: u32,
         transaction_version: u32,
         app_id: Option<u32>,
-        signed_extensions: Option<Vec<u8>>,
+        signed_extensions: Option<Vec<String>>,
     },
     COSMOS {
         chain_id: String,
