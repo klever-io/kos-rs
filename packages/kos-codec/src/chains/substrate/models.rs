@@ -14,7 +14,7 @@ pub struct ExtrinsicPayload {
 
     /// Optional asset ID for Asset Hub transactions. When set, the asset ID is encoded
     /// as part of the transaction payload for asset-specific operations.
-    pub asset_id: Option<u32>,
+    pub asset_id: Option<String>,
 
     pub mode: Option<u8>,
     pub spec_version: u32,
@@ -41,8 +41,12 @@ impl ExtrinsicPayload {
             parse_signed_extensions(&self.signed_extensions, "ChargeAssetTxPayment");
 
         if let Ok(true) = has_charge_asset_tx_payment {
-            if let Some(asset_id) = self.asset_id {
-                encoded.extend(Compact(asset_id).encode());
+            if let Some(asset_id) = &self.asset_id {
+                if let Ok(asset_id_num) = asset_id.parse::<u32>() {
+                    encoded.extend(Compact(asset_id_num).encode());
+                } else {
+                    encoded.extend(Compact(0_u32).encode());
+                }
             } else {
                 encoded.extend(Compact(0_u32).encode());
             }
@@ -96,8 +100,12 @@ impl ExtrinsicPayload {
             parse_signed_extensions(&self.signed_extensions, "ChargeAssetTxPayment");
 
         if let Ok(true) = has_charge_asset_tx_payment {
-            if let Some(asset_id) = self.asset_id {
-                encoded.extend(Compact(asset_id).encode());
+            if let Some(asset_id) = &self.asset_id {
+                if let Ok(asset_id_num) = asset_id.parse::<u32>() {
+                    encoded.extend(Compact(asset_id_num).encode());
+                } else {
+                    encoded.extend(Compact(0_u32).encode());
+                }
             } else {
                 encoded.extend(Compact(0_u32).encode());
             }
