@@ -5,7 +5,6 @@ const TRANSACTION_VERSION: u8 = 4;
 const PUBLIC_KEY_TYPE: u8 = 0x00;
 
 /// Represents the payload of a Substrate extrinsic (transaction) that will be signed.
-/// This structure contains all the necessary fields required for transaction signing.
 #[allow(dead_code)]
 pub struct ExtrinsicPayload {
     pub call: Vec<u8>,
@@ -15,7 +14,7 @@ pub struct ExtrinsicPayload {
 
     /// Optional asset ID for Asset Hub transactions. When set, the asset ID is encoded
     /// as part of the transaction payload for asset-specific operations.
-    pub asset_id: Option<u32>,
+    pub asset_id: Option<String>,
 
     pub mode: Option<u8>,
     pub spec_version: u32,
@@ -24,11 +23,13 @@ pub struct ExtrinsicPayload {
     pub block_hash: [u8; 32],
     pub metadata_hash: Option<u8>,
     pub app_id: Option<u32>,
+
+    pub signed_extensions: Option<Vec<String>>,
 }
 
 impl ExtrinsicPayload {
     /// Encodes the payload using the Substrate transaction format.
-    /// The format is: version + era + nonce + tip + call + params
+    /// The default format is: version + era + nonce + tip + call + params
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut encoded = Vec::new();
         encoded.extend(self.call.clone());
@@ -36,8 +37,26 @@ impl ExtrinsicPayload {
         encoded.extend(Compact(self.nonce).encode());
         encoded.extend(Compact(self.tip).encode());
 
-        if let Some(asset_id) = self.asset_id {
-            encoded.extend(Compact(asset_id).encode());
+        let has_charge_asset_tx_payment =
+            parse_signed_extensions(&self.signed_extensions, "ChargeAssetTxPayment");
+
+        if let Ok(true) = has_charge_asset_tx_payment {
+            if let Some(asset_id) = &self.asset_id {
+                if let Ok(asset_id_num) = asset_id.parse::<u32>() {
+                    encoded.extend(Compact(asset_id_num).encode());
+                } else {
+                    encoded.extend(Compact(0_u32).encode());
+                }
+            } else {
+                encoded.extend(Compact(0_u32).encode());
+            }
+        }
+
+        let has_app_id = parse_signed_extensions(&self.signed_extensions, "AppId");
+        if let Ok(true) = has_app_id {
+            if let Some(app_id) = self.app_id {
+                encoded.extend(Compact(app_id).encode());
+            }
         }
 
         // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
@@ -62,7 +81,7 @@ impl ExtrinsicPayload {
     }
 
     /// Encodes the payload with a signature using the Substrate transaction format.
-    /// The format is: length + (version + signature + era + nonce + tip + call + params)
+    /// The default format is: length + (version + signature + era + nonce + tip + call + params)
     pub fn encode_with_signature(&self, public_key: &[u8; 32], signature: &[u8]) -> Vec<u8> {
         let mut encoded = Vec::new();
 
@@ -77,12 +96,26 @@ impl ExtrinsicPayload {
         encoded.extend_from_slice(&Compact(self.nonce).encode());
         encoded.extend_from_slice(&Compact(self.tip).encode());
 
-        if let Some(asset_id) = self.asset_id {
-            encoded.extend(Compact(asset_id).encode());
+        let has_charge_asset_tx_payment =
+            parse_signed_extensions(&self.signed_extensions, "ChargeAssetTxPayment");
+
+        if let Ok(true) = has_charge_asset_tx_payment {
+            if let Some(asset_id) = &self.asset_id {
+                if let Ok(asset_id_num) = asset_id.parse::<u32>() {
+                    encoded.extend(Compact(asset_id_num).encode());
+                } else {
+                    encoded.extend(Compact(0_u32).encode());
+                }
+            } else {
+                encoded.extend(Compact(0_u32).encode());
+            }
         }
-        // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
-        if let Some(app_id) = self.app_id {
-            encoded.extend_from_slice(Compact(app_id).encode().as_slice());
+
+        let has_app_id = parse_signed_extensions(&self.signed_extensions, "AppId");
+        if let Ok(true) = has_app_id {
+            if let Some(app_id) = self.app_id {
+                encoded.extend(Compact(app_id).encode());
+            }
         }
 
         if let Some(mode) = self.mode {
@@ -97,5 +130,16 @@ impl ExtrinsicPayload {
         complete_encoded.extend_from_slice(&encoded);
 
         complete_encoded
+    }
+}
+
+/// Parses signed extensions and returns true if the specified extension type exists
+fn parse_signed_extensions(
+    signed_extensions: &Option<Vec<String>>,
+    field: &str,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    match signed_extensions {
+        Some(extensions) => Ok(extensions.iter().any(|ext| ext == field)),
+        None => Ok(false),
     }
 }
