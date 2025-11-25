@@ -718,7 +718,7 @@ mod tests {
             era: hex::decode("0501").unwrap(),
             nonce: 6,
             tip: 0,
-            asset_id: Some(0),
+            asset_id: Some("0".to_string()),
             block_hash: hex::decode(
                 "781cf57533b15a5a13729a33543fd6ae137bce54ef14eb933b0a4813489e7e0a",
             )
@@ -730,6 +730,7 @@ mod tests {
             spec_version: 2000002,
             transaction_version: 15,
             app_id: None,
+            signed_extensions: None,
         };
 
         let transaction = sign_transaction(
@@ -739,7 +740,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(transaction.raw.len(), 292, "The raw length doesn't match");
+        assert_eq!(transaction.raw.len(), 290, "The raw length doesn't match");
     }
 
     #[test]
