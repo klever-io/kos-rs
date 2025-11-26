@@ -52,16 +52,11 @@ impl ExtrinsicPayload {
             }
         }
 
-        let has_app_id = parse_signed_extensions(&self.signed_extensions, "AppId");
+        let has_app_id = parse_signed_extensions(&self.signed_extensions, "CheckAppId");
         if let Ok(true) = has_app_id {
             if let Some(app_id) = self.app_id {
                 encoded.extend(Compact(app_id).encode());
             }
-        }
-
-        // Use the app_id if it is set for AVAIL transactions, otherwise use the mode
-        if let Some(app_id) = self.app_id {
-            encoded.extend(Compact(app_id).encode());
         }
 
         if let Some(mode) = self.mode {
@@ -111,7 +106,7 @@ impl ExtrinsicPayload {
             }
         }
 
-        let has_app_id = parse_signed_extensions(&self.signed_extensions, "AppId");
+        let has_app_id = parse_signed_extensions(&self.signed_extensions, "CheckAppId");
         if let Ok(true) = has_app_id {
             if let Some(app_id) = self.app_id {
                 encoded.extend(Compact(app_id).encode());
