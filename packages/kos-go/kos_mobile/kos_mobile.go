@@ -708,7 +708,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_substrate_transaction_options()
 		})
-		if checksum != 59821 {
+		if checksum != 29579 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_substrate_transaction_options: UniFFI API checksum mismatch")
 		}
@@ -1702,12 +1702,13 @@ type TransactionChainOptionsSubstrate struct {
 	Era                []byte
 	Nonce              uint32
 	Tip                uint64
-	AssetId            *uint32
+	AssetId            *string
 	BlockHash          []byte
 	GenesisHash        []byte
 	SpecVersion        uint32
 	TransactionVersion uint32
 	AppId              *uint32
+	SignedExtensions   *[]string
 }
 
 func (e TransactionChainOptionsSubstrate) Destroy() {
@@ -1715,12 +1716,13 @@ func (e TransactionChainOptionsSubstrate) Destroy() {
 	FfiDestroyerBytes{}.Destroy(e.Era)
 	FfiDestroyerUint32{}.Destroy(e.Nonce)
 	FfiDestroyerUint64{}.Destroy(e.Tip)
-	FfiDestroyerOptionalUint32{}.Destroy(e.AssetId)
+	FfiDestroyerOptionalString{}.Destroy(e.AssetId)
 	FfiDestroyerBytes{}.Destroy(e.BlockHash)
 	FfiDestroyerBytes{}.Destroy(e.GenesisHash)
 	FfiDestroyerUint32{}.Destroy(e.SpecVersion)
 	FfiDestroyerUint32{}.Destroy(e.TransactionVersion)
 	FfiDestroyerOptionalUint32{}.Destroy(e.AppId)
+	FfiDestroyerOptionalSequenceString{}.Destroy(e.SignedExtensions)
 }
 
 type TransactionChainOptionsCosmos struct {
@@ -1762,12 +1764,13 @@ func (FfiConverterTransactionChainOptions) Read(reader io.Reader) TransactionCha
 			FfiConverterBytesINSTANCE.Read(reader),
 			FfiConverterUint32INSTANCE.Read(reader),
 			FfiConverterUint64INSTANCE.Read(reader),
-			FfiConverterOptionalUint32INSTANCE.Read(reader),
+			FfiConverterOptionalStringINSTANCE.Read(reader),
 			FfiConverterBytesINSTANCE.Read(reader),
 			FfiConverterBytesINSTANCE.Read(reader),
 			FfiConverterUint32INSTANCE.Read(reader),
 			FfiConverterUint32INSTANCE.Read(reader),
 			FfiConverterOptionalUint32INSTANCE.Read(reader),
+			FfiConverterOptionalSequenceStringINSTANCE.Read(reader),
 		}
 	case 4:
 		return TransactionChainOptionsCosmos{
@@ -1794,12 +1797,13 @@ func (FfiConverterTransactionChainOptions) Write(writer io.Writer, value Transac
 		FfiConverterBytesINSTANCE.Write(writer, variant_value.Era)
 		FfiConverterUint32INSTANCE.Write(writer, variant_value.Nonce)
 		FfiConverterUint64INSTANCE.Write(writer, variant_value.Tip)
-		FfiConverterOptionalUint32INSTANCE.Write(writer, variant_value.AssetId)
+		FfiConverterOptionalStringINSTANCE.Write(writer, variant_value.AssetId)
 		FfiConverterBytesINSTANCE.Write(writer, variant_value.BlockHash)
 		FfiConverterBytesINSTANCE.Write(writer, variant_value.GenesisHash)
 		FfiConverterUint32INSTANCE.Write(writer, variant_value.SpecVersion)
 		FfiConverterUint32INSTANCE.Write(writer, variant_value.TransactionVersion)
 		FfiConverterOptionalUint32INSTANCE.Write(writer, variant_value.AppId)
+		FfiConverterOptionalSequenceStringINSTANCE.Write(writer, variant_value.SignedExtensions)
 	case TransactionChainOptionsCosmos:
 		writeInt32(writer, 4)
 		FfiConverterStringINSTANCE.Write(writer, variant_value.ChainId)
@@ -1919,6 +1923,43 @@ func (_ FfiDestroyerOptionalUint32) Destroy(value *uint32) {
 	}
 }
 
+type FfiConverterOptionalString struct{}
+
+var FfiConverterOptionalStringINSTANCE = FfiConverterOptionalString{}
+
+func (c FfiConverterOptionalString) Lift(rb RustBufferI) *string {
+	return LiftFromRustBuffer[*string](c, rb)
+}
+
+func (_ FfiConverterOptionalString) Read(reader io.Reader) *string {
+	if readInt8(reader) == 0 {
+		return nil
+	}
+	temp := FfiConverterStringINSTANCE.Read(reader)
+	return &temp
+}
+
+func (c FfiConverterOptionalString) Lower(value *string) C.RustBuffer {
+	return LowerIntoRustBuffer[*string](c, value)
+}
+
+func (_ FfiConverterOptionalString) Write(writer io.Writer, value *string) {
+	if value == nil {
+		writeInt8(writer, 0)
+	} else {
+		writeInt8(writer, 1)
+		FfiConverterStringINSTANCE.Write(writer, *value)
+	}
+}
+
+type FfiDestroyerOptionalString struct{}
+
+func (_ FfiDestroyerOptionalString) Destroy(value *string) {
+	if value != nil {
+		FfiDestroyerString{}.Destroy(*value)
+	}
+}
+
 type FfiConverterOptionalWalletOptions struct{}
 
 var FfiConverterOptionalWalletOptionsINSTANCE = FfiConverterOptionalWalletOptions{}
@@ -2027,6 +2068,43 @@ type FfiDestroyerOptionalWalletChainOptions struct{}
 func (_ FfiDestroyerOptionalWalletChainOptions) Destroy(value *WalletChainOptions) {
 	if value != nil {
 		FfiDestroyerWalletChainOptions{}.Destroy(*value)
+	}
+}
+
+type FfiConverterOptionalSequenceString struct{}
+
+var FfiConverterOptionalSequenceStringINSTANCE = FfiConverterOptionalSequenceString{}
+
+func (c FfiConverterOptionalSequenceString) Lift(rb RustBufferI) *[]string {
+	return LiftFromRustBuffer[*[]string](c, rb)
+}
+
+func (_ FfiConverterOptionalSequenceString) Read(reader io.Reader) *[]string {
+	if readInt8(reader) == 0 {
+		return nil
+	}
+	temp := FfiConverterSequenceStringINSTANCE.Read(reader)
+	return &temp
+}
+
+func (c FfiConverterOptionalSequenceString) Lower(value *[]string) C.RustBuffer {
+	return LowerIntoRustBuffer[*[]string](c, value)
+}
+
+func (_ FfiConverterOptionalSequenceString) Write(writer io.Writer, value *[]string) {
+	if value == nil {
+		writeInt8(writer, 0)
+	} else {
+		writeInt8(writer, 1)
+		FfiConverterSequenceStringINSTANCE.Write(writer, *value)
+	}
+}
+
+type FfiDestroyerOptionalSequenceString struct{}
+
+func (_ FfiDestroyerOptionalSequenceString) Destroy(value *[]string) {
+	if value != nil {
+		FfiDestroyerSequenceString{}.Destroy(*value)
 	}
 }
 
@@ -2642,10 +2720,10 @@ func NewIcpWalletOptions(useLegacyPath bool, keyType string) WalletOptions {
 	}))
 }
 
-func NewSubstrateTransactionOptions(call string, era string, nonce uint32, tip uint64, assetId *uint32, blockHash string, genesisHash string, specVersion uint32, transactionVersion uint32, appId *uint32) TransactionChainOptions {
+func NewSubstrateTransactionOptions(call string, era string, nonce uint32, tip uint64, assetId *string, blockHash string, genesisHash string, specVersion uint32, transactionVersion uint32, appId *uint32, signedExtensions *[]string) TransactionChainOptions {
 	return FfiConverterTransactionChainOptionsINSTANCE.Lift(rustCall(func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
-			inner: C.uniffi_kos_mobile_fn_func_new_substrate_transaction_options(FfiConverterStringINSTANCE.Lower(call), FfiConverterStringINSTANCE.Lower(era), FfiConverterUint32INSTANCE.Lower(nonce), FfiConverterUint64INSTANCE.Lower(tip), FfiConverterOptionalUint32INSTANCE.Lower(assetId), FfiConverterStringINSTANCE.Lower(blockHash), FfiConverterStringINSTANCE.Lower(genesisHash), FfiConverterUint32INSTANCE.Lower(specVersion), FfiConverterUint32INSTANCE.Lower(transactionVersion), FfiConverterOptionalUint32INSTANCE.Lower(appId), _uniffiStatus),
+			inner: C.uniffi_kos_mobile_fn_func_new_substrate_transaction_options(FfiConverterStringINSTANCE.Lower(call), FfiConverterStringINSTANCE.Lower(era), FfiConverterUint32INSTANCE.Lower(nonce), FfiConverterUint64INSTANCE.Lower(tip), FfiConverterOptionalStringINSTANCE.Lower(assetId), FfiConverterStringINSTANCE.Lower(blockHash), FfiConverterStringINSTANCE.Lower(genesisHash), FfiConverterUint32INSTANCE.Lower(specVersion), FfiConverterUint32INSTANCE.Lower(transactionVersion), FfiConverterOptionalUint32INSTANCE.Lower(appId), FfiConverterOptionalSequenceStringINSTANCE.Lower(signedExtensions), _uniffiStatus),
 		}
 	}))
 }
