@@ -263,7 +263,20 @@ mod test {
                 spec_version,
                 transaction_version,
                 app_id: Some(0),
-                signed_extensions: None,
+                signed_extensions: Some(
+                    [
+                        "CheckNonZeroSender".to_string(),
+                        "CheckSpecVersion".to_string(),
+                        "CheckTxVersion".to_string(),
+                        "CheckGenesis".to_string(),
+                        "CheckMortality".to_string(),
+                        "CheckNonce".to_string(),
+                        "CheckWeight".to_string(),
+                        "ChargeTransactionPayment".to_string(),
+                        "CheckAppId".to_string(),
+                    ]
+                    .to_vec(),
+                ),
             }),
         };
 
@@ -288,7 +301,7 @@ mod test {
 
         let signed_tx = encode_for_broadcast(tx.clone(), acc).unwrap();
 
-        assert_eq!(hex::encode(signed_tx.raw_data), "2d02840066933bd1f37070ef87bd1198af3dacceb095237f803f3d32b173e6b425ed79723045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54073045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54b50120000603004e0edd04c47b1adc3b21dcd8671a5d90a1c2eb75fb60d293a9086f2626dbcd5904");
+        assert_eq!(hex::encode(signed_tx.raw_data), "3102840066933bd1f37070ef87bd1198af3dacceb095237f803f3d32b173e6b425ed79723045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54073045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54b5012000000603004e0edd04c47b1adc3b21dcd8671a5d90a1c2eb75fb60d293a9086f2626dbcd5904");
         assert_eq!(
             hex::encode(signed_tx.signature),
             "3045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54073045022100d38f71947b2cf543589450dd80e31d14012a45776b5990a549ad54"

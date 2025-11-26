@@ -98,6 +98,8 @@ test-linux-amd64:
 
 .PHONY: test-darwin-arm64
 test-darwin-arm64:
+	install_name_tool -id @rpath/libkos_mobile.dylib kos_mobile/lib/darwin-aarch64/libkos_mobile.dylib
+	otool -D kos_mobile/lib/darwin-aarch64/libkos_mobile.dylib
 	DYLD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/darwin-aarch64 \
 	CGO_ENABLED=1 \
 	GOOS=darwin \
@@ -152,5 +154,4 @@ help:
 	@echo "  build-darwin-arm64  - Build for macOS ARM64"
 	@echo "  test-linux-amd64    - Test Linux AMD64"
 	@echo "  test-linux-musl     - Test Linux with musl"
-	@echo "  test-darwin-amd64   - Test macOS AMD64"
 	@echo "  test-darwin-arm64   - Test macOS ARM64"
