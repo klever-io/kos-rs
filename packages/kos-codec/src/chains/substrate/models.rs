@@ -52,7 +52,7 @@ impl ExtrinsicPayload {
             }
         }
 
-        let has_app_id = parse_signed_extensions(&self.signed_extensions, "AppId");
+        let has_app_id = parse_signed_extensions(&self.signed_extensions, "CheckAppId");
         if let Ok(true) = has_app_id {
             if let Some(app_id) = self.app_id {
                 encoded.extend(Compact(app_id).encode());
@@ -111,7 +111,7 @@ impl ExtrinsicPayload {
             }
         }
 
-        let has_app_id = parse_signed_extensions(&self.signed_extensions, "AppId");
+        let has_app_id = parse_signed_extensions(&self.signed_extensions, "CheckAppId");
         if let Ok(true) = has_app_id {
             if let Some(app_id) = self.app_id {
                 encoded.extend(Compact(app_id).encode());
