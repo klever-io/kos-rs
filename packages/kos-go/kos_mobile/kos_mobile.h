@@ -582,7 +582,7 @@ RustBuffer uniffi_kos_mobile_fn_func_new_icp_wallet_options(int8_t use_legacy_pa
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_SUBSTRATE_TRANSACTION_OPTIONS
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_SUBSTRATE_TRANSACTION_OPTIONS
-RustBuffer uniffi_kos_mobile_fn_func_new_substrate_transaction_options(RustBuffer call, RustBuffer era, uint32_t nonce, uint64_t tip, RustBuffer asset_id, RustBuffer block_hash, RustBuffer genesis_hash, uint32_t spec_version, uint32_t transaction_version, RustBuffer app_id, RustCallStatus *out_status
+RustBuffer uniffi_kos_mobile_fn_func_new_substrate_transaction_options(RustBuffer call, RustBuffer era, uint32_t nonce, uint64_t tip, RustBuffer asset_id, RustBuffer block_hash, RustBuffer genesis_hash, uint32_t spec_version, uint32_t transaction_version, RustBuffer app_id, RustBuffer signed_extensions, RustCallStatus *out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_NEW_WALLET_OPTIONS

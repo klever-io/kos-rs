@@ -133,7 +133,7 @@ impl TransactionChainOptions {
         era: String,
         nonce: u32,
         tip: u64,
-        asset_id: Option<u32>,
+        asset_id: Option<String>,
         block_hash: String,
         genesis_hash: String,
         spec_version: u32,
@@ -161,6 +161,7 @@ impl TransactionChainOptions {
                 spec_version,
                 transaction_version,
                 app_id,
+                signed_extensions: None,
             },
         })
     }
