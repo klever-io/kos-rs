@@ -10,7 +10,11 @@ use alloc::vec::Vec;
 const VERSION_BYTE_ACCOUNT_ID: u8 = 6 << 3; // 48 - Base32-encodes to 'G...'
 const VERSION_BYTE_SEED: u8 = 18 << 3; // 144 - Base32-encodes to 'S...'
 const ED25519_KEY_SIZE: usize = 32;
-const STELLAR_RAW_DATA_SIZE: usize = 35;
+const STELLAR_KEY_LENGTH: usize = 56;
+const STELLAR_RAW_DATA_SIZE: usize = 1 + ED25519_KEY_SIZE + 2; // version + payload + checksum
+const PAYLOAD_START: usize = 1;
+const PAYLOAD_END: usize = 1 + ED25519_KEY_SIZE;
+const CHECKSUM_START: usize = PAYLOAD_END;
 
 pub struct XLM {}
 
@@ -21,7 +25,8 @@ impl XLM {
     }
 
     pub fn decode_secret_key(&self, secret_key: &str) -> Result<Vec<u8>, super::ChainError> {
-        let (version, payload) = stellar_decode(secret_key)?;
+        let (version, payload) =
+            stellar_decode(secret_key).map_err(|_| super::ChainError::InvalidPrivateKey)?;
 
         if version != VERSION_BYTE_SEED {
             return Err(super::ChainError::InvalidPrivateKey);
@@ -91,6 +96,10 @@ fn stellar_encode_secret(secret_key: &[u8]) -> Result<String, super::ChainError>
 }
 
 fn stellar_decode(encoded: &str) -> Result<(u8, Vec<u8>), super::ChainError> {
+    if encoded.len() != STELLAR_KEY_LENGTH {
+        return Err(super::ChainError::InvalidPublicKey);
+    }
+
     let padded = match encoded.len() % 8 {
         0 => encoded.to_string(),
         n => format!("{}{}", encoded, "=".repeat(8 - n)),
@@ -104,10 +113,11 @@ fn stellar_decode(encoded: &str) -> Result<(u8, Vec<u8>), super::ChainError> {
     }
 
     let version = raw_data[0];
-    let payload = &raw_data[1..33];
-    let provided_checksum = u16::from_le_bytes([raw_data[33], raw_data[34]]);
+    let payload = &raw_data[PAYLOAD_START..PAYLOAD_END];
+    let provided_checksum =
+        u16::from_le_bytes([raw_data[CHECKSUM_START], raw_data[CHECKSUM_START + 1]]);
 
-    let calculated_checksum = crc16_checksum(&raw_data[0..33]);
+    let calculated_checksum = crc16_checksum(&raw_data[0..CHECKSUM_START]);
     if provided_checksum != calculated_checksum {
         return Err(super::ChainError::InvalidPublicKey);
     }
@@ -471,6 +481,41 @@ mod tests {
         let invalid_format = "invalid_string";
         let result = stellar.decode_secret_key(invalid_format);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_stellar_decode_checksum_mismatch() {
+        let stellar = XLM {};
+
+        const VALID_SECRET_KEY: &str = "SBTEMPAKHZLJWSNGNXQWW2WHUH6PZP5W26OCFCSO554FT7DHXUKA32KK";
+        const VALID_ADDRESS: &str = "GCRRSYF5JBFPXHN5DCG65A4J3MUYE53QMQ4XMXZ3CNKWFJIJJTGMH6MZ";
+
+        // Wrong last char
+        const CORRUPTED_SECRET: &str = "SBTEMPAKHZLJWSNGNXQWW2WHUH6PZP5W26OCFCSO554FT7DHXUKA32KX";
+        const CORRUPTED_ADDRESS: &str = "GCRRSYF5JBFPXHN5DCG65A4J3MUYE53QMQ4XMXZ3CNKWFJIJJTGMH6MX";
+
+        assert!(stellar.decode_secret_key(VALID_SECRET_KEY).is_ok());
+        assert!(stellar.decode_address(VALID_ADDRESS).is_ok());
+
+        let secret_result = stellar.decode_secret_key(CORRUPTED_SECRET);
+        assert!(
+            secret_result.is_err(),
+            "Corrupted secret key should fail checksum validation"
+        );
+        assert!(matches!(
+            secret_result.unwrap_err(),
+            ChainError::InvalidPrivateKey
+        ));
+
+        let address_result = stellar.decode_address(CORRUPTED_ADDRESS);
+        assert!(
+            address_result.is_err(),
+            "Corrupted address should fail checksum validation"
+        );
+        assert!(matches!(
+            address_result.unwrap_err(),
+            ChainError::InvalidPublicKey
+        ));
     }
 
     #[test]
