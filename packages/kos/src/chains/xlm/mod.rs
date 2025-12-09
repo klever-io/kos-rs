@@ -20,8 +20,10 @@ pub struct XLM {}
 
 impl XLM {
     pub fn get_secret_key(&self, private_key: Vec<u8>) -> Result<String, super::ChainError> {
-        let pvk_bytes: [u8; ED25519_KEY_SIZE] = private_key_from_vec(&private_key)?;
-        stellar_encode_secret(&pvk_bytes)
+        let mut pvk_bytes: [u8; ED25519_KEY_SIZE] = private_key_from_vec(&private_key)?;
+        let result = stellar_encode_secret(&pvk_bytes);
+        pvk_bytes.fill(0);
+        result
     }
 
     pub fn decode_secret_key(&self, secret_key: &str) -> Result<Vec<u8>, super::ChainError> {
@@ -231,7 +233,6 @@ mod tests {
     use crate::test_utils::get_test_mnemonic;
     use alloc::vec;
 
-    const STELLAR_KEY_LENGTH: usize = 56;
     const ED25519_SIG_SIZE: usize = 64;
     const COMBINED_SIG_SIZE: usize = 96;
     const INVALID_KEY_SIZE: usize = 33;
