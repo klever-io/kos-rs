@@ -1,4 +1,4 @@
-.PHONY: all fmt clippy check webpack webpack-npm grcov build-go build-go-mac build-go-musl
+.PHONY: all fmt clippy check test webpack webpack-npm grcov build-go build-go-mac build-go-musl
 
 UNAME := $(shell uname)
 
@@ -15,6 +15,9 @@ check: fmt clippy
 	cargo deny check
 #	cargo outdated --exit-code 1
 	cargo pants
+
+test: fmt clippy
+	cargo test --workspace --exclude kos-hardware
 
 grcov:
 	cargo build
@@ -57,7 +60,7 @@ build-go-mac:
 	cp target/release/libkos_mobile.dylib ./packages/kos-go/kos_mobile/lib/darwin-aarch64/ || \
 	(echo "Error: Failed to copy libkos_mobile.dylib"; exit 1)
 
-build-go-musl:	
+build-go-musl:
 	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.4.0+v0.28.3 && \
 	cargo build --profile min-size --target x86_64-unknown-linux-musl --package kos-mobile && \
 	uniffi-bindgen-go --library target/x86_64-unknown-linux-musl/min-size/libkos_mobile.a --out-dir ./packages/kos-go
