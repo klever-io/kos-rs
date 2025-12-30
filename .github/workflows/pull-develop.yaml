@@ -44,6 +44,7 @@ jobs:
 
       - name: checks
         run: |
+          rm -rf ~/.cargo/advisory-dbs
           cargo deny check
           cargo pants
 
