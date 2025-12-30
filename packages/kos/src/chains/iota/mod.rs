@@ -24,7 +24,7 @@ impl Chain for IOTA {
     }
 
     fn get_decimals(&self) -> u32 {
-        todo!()
+        6
     }
 
     fn mnemonic_to_seed(&self, mnemonic: String, password: String) -> Result<Vec<u8>, ChainError> {
@@ -37,7 +37,7 @@ impl Chain for IOTA {
     }
 
     fn get_path(&self, index: u32, _is_legacy: bool) -> String {
-        format!("m/44'/74218'/0'/0'/{index}'")
+        format!("m/44'/4218'/0'/0'/{index}'")
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
@@ -124,15 +124,15 @@ mod test {
     fn test_derive() {
         let mnemonic = get_test_mnemonic();
 
-        let sui = super::IOTA {};
-        let seed = sui.mnemonic_to_seed(mnemonic, String::new()).unwrap();
-        let path = sui.get_path(0, false);
-        let pvk = sui.derive(seed.clone(), path).unwrap();
-        let pbk = sui.get_pbk(pvk.clone()).unwrap();
-        let addr = sui.get_address(pbk.clone()).unwrap();
+        let iota = super::IOTA {};
+        let seed = iota.mnemonic_to_seed(mnemonic, String::new()).unwrap();
+        let path = iota.get_path(0, false);
+        let pvk = iota.derive(seed.clone(), path).unwrap();
+        let pbk = iota.get_pbk(pvk.clone()).unwrap();
+        let addr = iota.get_address(pbk.clone()).unwrap();
         assert_eq!(
             addr,
-            "0x6bc69446b8ff53ec55a8b687cc535533f76631e3ac56dee5cad35c7578967534"
+            "0x365b74f27ca7c6d7ce019d73042f85cc4627e1aeec2b7822994e16010234e576"
         );
     }
 
@@ -151,7 +151,7 @@ mod test {
 
         assert_eq!(
             hex::encode(signature),
-            "3e3a6f65ea7764edd49c25693f0dabf49ff3e53de374705d6a78b2495a502d5ea99147f88aed8b00b91490c49cf33581434bc7ea7cee67f6c35a206e44a5df064fc5e0ba2cb70f35c207f53e47345d954255b8f420e0180752b55630caaedd50"
+            "03d8debef73a53b359ec4426340e0a0bb490c7fd63685c04837a22e384708e1f11f022c8799e6d21a1599e81c5b9963dcbdcc936596c85d2daea51e1687b5e09931c54b678837cf96a49ee1d1122027fabadf0aee97d9f9094187db8be396f63"
         );
     }
 }
