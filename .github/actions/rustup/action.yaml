@@ -1,10 +1,10 @@
 name: WasmPack toolchain
+description: Set up Rust, LLVM, and related tools for WasmPack workflows
 inputs:
   with_cache:
     description: activate cargo cache
-    default: true
+    default: "true"
     required: false
-    type: boolean
 
 runs:
   using: "composite"
@@ -56,12 +56,16 @@ runs:
       shell: bash
       run: |
         cargo install --locked wasm-pack || true
+
+    - if: ${{ steps.cache-rustup.outputs.cache-hit != 'true' }}
+      name: Ensure cargo-deny is up to date
+      shell: bash
+      run: cargo install --locked cargo-deny --force
     
     - if: ${{ steps.cache-rustup.outputs.cache-hit != 'true' }}
       shell: bash
       name: Cargo tools
       run: |
-        cargo install cargo-deny || true
         cargo install --locked cargo-outdated || true
         cargo install --locked cargo-udeps || true
         cargo install --locked cargo-audit || true
