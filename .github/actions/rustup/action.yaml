@@ -60,7 +60,9 @@ runs:
     - if: ${{ steps.cache-rustup.outputs.cache-hit != 'true' }}
       name: Ensure cargo-deny is up to date
       shell: bash
-      run: cargo install --locked cargo-deny --force
+      run: |
+        cargo install --locked cargo-deny --force
+        rm -rf ~/.cargo/advisory-dbs || true
     
     - if: ${{ steps.cache-rustup.outputs.cache-hit != 'true' }}
       shell: bash
