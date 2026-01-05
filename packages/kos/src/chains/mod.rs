@@ -5,6 +5,7 @@ use crate::chains::bch::BCH;
 use crate::chains::btc::BTC;
 use crate::chains::eth::ETH;
 use crate::chains::icp::ICP;
+use crate::chains::iota::IOTA;
 use crate::chains::klv::KLV;
 use crate::chains::sol::SOL;
 use crate::chains::substrate::Substrate;
@@ -32,6 +33,7 @@ pub mod btc;
 pub mod constants;
 pub mod eth;
 pub mod icp;
+pub mod iota;
 pub mod klv;
 pub mod sol;
 pub mod substrate;
@@ -386,7 +388,7 @@ struct ChainRegistry {
 }
 impl ChainRegistry {
     fn new() -> Self {
-        static REGISTRY: [(u32, ChainInfo); 48] = [
+        static REGISTRY: [(u32, ChainInfo); 49] = [
             (
                 constants::ETH,
                 ChainInfo {
@@ -647,6 +649,13 @@ impl ChainRegistry {
                 },
             ),
             (
+                constants::IOTA,
+                ChainInfo {
+                    factory: || Box::new(IOTA {}),
+                    supported: true,
+                },
+            ),
+            (
                 constants::APT,
                 ChainInfo {
                     factory: || Box::new(APT {}),
@@ -876,4 +885,5 @@ pub enum ChainType {
     BCH,
     BNB,
     XLM,
+    IOTA,
 }

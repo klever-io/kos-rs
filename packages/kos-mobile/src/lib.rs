@@ -485,6 +485,27 @@ mod tests {
         );
     }
     #[test]
+    fn should_sign_raw_transaction_iota() {
+        let chain_id = 69;
+
+        let raw = "00000200080a000000000000000020f852c6b5ad76755c760c81fc629f1faa229529ab438e9a38fe414f756d21116f0202000101000001010300000000010100ae772350bb072a38c1cfae0478b686a9a1021f57f81f7d9872e80299ba9aaa02015fe88858aa27e33850dad08047297a4cb0b80ec9565ca391ba295923dc167b606f83fd140000000020da023c194b290b1f98c47a7631d0cc1081fc368bccfe238965e66d66e68c65f5ae772350bb072a38c1cfae0478b686a9a1021f57f81f7d9872e80299ba9aaa02e803000000000000307a2d000000000000";
+
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic().to_string(), chain_id, 0, None)
+                .unwrap();
+
+        let transaction = sign_transaction(account, raw.to_string(), None).unwrap();
+
+        assert_eq!(transaction.chain_id, chain_id, "The chain_id doesn't match");
+        assert_eq!(
+            transaction.sender,
+            "0x365b74f27ca7c6d7ce019d73042f85cc4627e1aeec2b7822994e16010234e576",
+            "The sender doesn't match"
+        );
+        assert_eq!(transaction.raw, "00000200080a000000000000000020f852c6b5ad76755c760c81fc629f1faa229529ab438e9a38fe414f756d21116f0202000101000001010300000000010100ae772350bb072a38c1cfae0478b686a9a1021f57f81f7d9872e80299ba9aaa02015fe88858aa27e33850dad08047297a4cb0b80ec9565ca391ba295923dc167b606f83fd140000000020da023c194b290b1f98c47a7631d0cc1081fc368bccfe238965e66d66e68c65f5ae772350bb072a38c1cfae0478b686a9a1021f57f81f7d9872e80299ba9aaa02e803000000000000307a2d000000000000", "The raw doesn't match");
+        assert_eq!(transaction.signature, "0005f770aee829e547f3de76b1a5aaf762227fac4a097e638d57060108140507b65328db581bc617e500b27c39fbae85e91be92280d95b2f031259d2915183440d931c54b678837cf96a49ee1d1122027fabadf0aee97d9f9094187db8be396f63", "The signature doesn't match");
+    }
+    #[test]
     fn should_sign_raw_transaction_sol() {
         let chain_id = 40;
 

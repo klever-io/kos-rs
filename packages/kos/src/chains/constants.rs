@@ -57,3 +57,4 @@ pub const POLYGON_ZKEVM: u32 = 51;
 pub const STOLZ: u32 = 52;
 pub const KAR: u32 = 53;
 pub const ACA: u32 = 54;
+pub const IOTA: u32 = 55;
