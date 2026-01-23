@@ -5,7 +5,6 @@ use crate::chains::bch::BCH;
 use crate::chains::btc::BTC;
 use crate::chains::eth::ETH;
 use crate::chains::icp::ICP;
-use crate::chains::iota::IOTA;
 use crate::chains::klv::KLV;
 use crate::chains::sol::SOL;
 use crate::chains::substrate::Substrate;
@@ -33,7 +32,6 @@ pub mod btc;
 pub mod constants;
 pub mod eth;
 pub mod icp;
-pub mod iota;
 pub mod klv;
 pub mod sol;
 pub mod substrate;
@@ -644,14 +642,14 @@ impl ChainRegistry {
             (
                 constants::SUI,
                 ChainInfo {
-                    factory: || Box::new(SUI {}),
+                    factory: || Box::new(SUI::new()),
                     supported: true,
                 },
             ),
             (
                 constants::IOTA,
                 ChainInfo {
-                    factory: || Box::new(IOTA {}),
+                    factory: || Box::new(SUI::new_sui_based(69, 4218, "IOTA", "Iota", 6, false)),
                     supported: true,
                 },
             ),
