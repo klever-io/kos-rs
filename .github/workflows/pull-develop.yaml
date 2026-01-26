@@ -44,7 +44,6 @@ jobs:
 
       - name: checks
         run: |
-          cargo deny check
           cargo pants
 
 

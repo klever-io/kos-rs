@@ -386,7 +386,7 @@ struct ChainRegistry {
 }
 impl ChainRegistry {
     fn new() -> Self {
-        static REGISTRY: [(u32, ChainInfo); 48] = [
+        static REGISTRY: [(u32, ChainInfo); 49] = [
             (
                 constants::ETH,
                 ChainInfo {
@@ -642,7 +642,14 @@ impl ChainRegistry {
             (
                 constants::SUI,
                 ChainInfo {
-                    factory: || Box::new(SUI {}),
+                    factory: || Box::new(SUI::new()),
+                    supported: true,
+                },
+            ),
+            (
+                constants::IOTA,
+                ChainInfo {
+                    factory: || Box::new(SUI::new_sui_based(69, 4218, "IOTA", "Iota", 6, false)),
                     supported: true,
                 },
             ),
@@ -876,4 +883,5 @@ pub enum ChainType {
     BCH,
     BNB,
     XLM,
+    IOTA,
 }
