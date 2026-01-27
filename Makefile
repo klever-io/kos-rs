@@ -50,23 +50,20 @@ build-go:
 	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.4.0+v0.28.3 && \
 	cargo build --release --package kos-mobile && uniffi-bindgen-go --library target/release/libkos_mobile.a --out-dir ./packages/kos-go
 	mkdir -p ./packages/kos-go/kos_mobile/lib/linux-amd64/ && \
-	cp target/release/libkos_mobile.so ./packages/kos-go/kos_mobile/lib/linux-amd64/ || \
-	(echo "Error: Failed to copy libkos_mobile.so"; exit 1)
+	cp target/release/libkos_mobile.so ./packages/kos-go/kos_mobile/lib/linux-amd64/
 
 build-go-mac:
 	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.4.0+v0.28.3 && \
 	cargo build --release --package kos-mobile && uniffi-bindgen-go --library target/release/libkos_mobile.a --out-dir ./packages/kos-go
 	mkdir -p ./packages/kos-go/kos_mobile/lib/darwin-aarch64/ && \
-	cp target/release/libkos_mobile.dylib ./packages/kos-go/kos_mobile/lib/darwin-aarch64/ || \
-	(echo "Error: Failed to copy libkos_mobile.dylib"; exit 1)
+	cp target/release/libkos_mobile.dylib ./packages/kos-go/kos_mobile/lib/darwin-aarch64/
 
 build-go-musl:
 	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.4.0+v0.28.3 && \
 	cargo build --profile min-size --target x86_64-unknown-linux-musl --package kos-mobile && \
 	uniffi-bindgen-go --library target/x86_64-unknown-linux-musl/min-size/libkos_mobile.a --out-dir ./packages/kos-go
 	mkdir -p ./packages/kos-go/kos_mobile/lib/linux-musl-amd64/ && \
-	cp target/x86_64-unknown-linux-musl/min-size/libkos_mobile.so ./packages/kos-go/kos_mobile/lib/linux-musl-amd64/ || \
-	(echo "Error: Failed to copy libkos_mobile.so from musl build"; exit 1)
+	cp target/x86_64-unknown-linux-musl/min-size/libkos_mobile.a ./packages/kos-go/kos_mobile/lib/linux-musl-amd64/
 
 test-ios: build-ios
 	cd packages/kos-mobile/ios/framework/KOSMobile && xcodebuild \
