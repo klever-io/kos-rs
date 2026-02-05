@@ -64,7 +64,7 @@ coins-bip32 = { version = "0.8", default-features = false }
 coins-bip39 = { version = "0.8", default-features = false, features = [
     "english",
 ] }
-bytes = { version = "1.4.0", default-features = false }
+bytes = { version = "1.11.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 rand = "0.8"
 
