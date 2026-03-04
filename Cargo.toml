@@ -47,7 +47,7 @@ homepage = "https://klever.org/"
 license = "Apache-2.0"
 repository = "https://github.com/kleverio/kos-rs"
 rust-version = "1.74.0"
-version = "0.2.39"
+version = "0.2.40"
 
 [workspace.dependencies]
 bech32 = "0.9.1"
@@ -86,9 +86,9 @@ enum_delegate = "0.2"
 serde = { version = "1.0", default-features = false }
 serde_json = "1.0"
 thiserror = "1.0"
-kos-mobile = { version = "0.1.0", path = "./packages/kos-mobile", default-features = false }
+kos-mobile = { version = "0.2.40", path = "./packages/kos-mobile", default-features = false }
 ecies = { version = "0.2.7", default-features = false, features = ["pure"] }
-kos = { version = "0.2.39", path = "./packages/kos", default-features = false, features = ["not-ksafe"] }
+kos = { version = "0.2.40", path = "./packages/kos", default-features = false, features = ["not-ksafe"] }
 
 # lightning
 lwk_common = "0.9.0"
