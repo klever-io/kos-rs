@@ -20,11 +20,14 @@ command -v jq  >/dev/null 2>&1 || error "jq not installed"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
     || error "Not inside a git repository"
 
-CURRENT_VERSION=$(git describe --always --long --dirty --tag 2>/dev/null || true)
+TAG_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true)
 
-if [[ -z "$CURRENT_VERSION" ]]; then
+if [[ -z "$TAG_VERSION" ]]; then
     echo "ERROR: No git tags found. Using default version 0.1.0"
     CURRENT_VERSION="0.1.0"
+else
+    CURRENT_VERSION="${TAG_VERSION#v}"
+    CURRENT_VERSION="${CURRENT_VERSION%-dirty}"
 fi
 
 echo "Release dev ${CURRENT_VERSION}"
