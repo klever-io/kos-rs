@@ -23,7 +23,7 @@ jobs:
           with_cache: true
 
       - name: Restore .env file
-        run: echo $NODES_ENV | base64 -d > packages/kos-web/.env.nodes
+        run: printf '%s' "$NODES_ENV" | base64 -d > packages/kos-web/.env.nodes
         env:
           NODES_ENV: ${{ secrets.NODES_ENV }}
 
