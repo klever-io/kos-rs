@@ -45,7 +45,7 @@ authors = ["Klever <kos@klever.io>"]
 edition = "2021"
 homepage = "https://klever.org/"
 license = "Apache-2.0"
-repository = "https://github.com/kleverio/kos-rs"
+repository = "https://github.com/klever-io/kos-rs"
 rust-version = "1.74.0"
 version = "0.2.40"
 
