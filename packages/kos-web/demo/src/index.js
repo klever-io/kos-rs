@@ -1,9 +1,7 @@
 import {
     Wallet,
     PathOptions,
-    TransactionChainOptions,
-    toBytes,
-    toString
+    TransactionChainOptions
 } from '@klever/kos-web';
 
 function main() {
