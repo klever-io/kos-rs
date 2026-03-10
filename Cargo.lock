@@ -1011,6 +1011,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
+name = "cfg_eval"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45565fc9416b9896014f5732ac776f810ee53a66730c17e4020c3ec064a8f88f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.114",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1889,6 +1900,12 @@ name = "escape-bytes"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bfcf67fea2815c2fc3b90873fae90957be12ff417335dfadc7f52927feb03b2"
+
+[[package]]
+name = "ethnum"
+version = "1.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca81e6b4777c89fd810c25a4be2b1bd93ea034fbe58e6a75216a34c6b82c539b"
 
 [[package]]
 name = "eyre"
@@ -2956,7 +2973,7 @@ dependencies = [
 
 [[package]]
 name = "kos"
-version = "0.2.40"
+version = "0.2.41"
 dependencies = [
  "aes",
  "aes-gcm",
@@ -2990,7 +3007,7 @@ dependencies = [
 
 [[package]]
 name = "kos-codec"
-version = "0.2.40"
+version = "0.2.41"
 dependencies = [
  "alloy-dyn-abi",
  "base32",
@@ -3022,7 +3039,7 @@ dependencies = [
 
 [[package]]
 name = "kos-hardware"
-version = "0.2.40"
+version = "0.2.41"
 dependencies = [
  "kos",
  "tiny-json-rs",
@@ -3030,7 +3047,7 @@ dependencies = [
 
 [[package]]
 name = "kos-mobile"
-version = "0.2.40"
+version = "0.2.41"
 dependencies = [
  "anyhow",
  "bigdecimal",
@@ -3050,7 +3067,7 @@ dependencies = [
 
 [[package]]
 name = "kos-web"
-version = "0.2.40"
+version = "0.2.41"
 dependencies = [
  "enum_delegate",
  "enum_dispatch",
@@ -4898,25 +4915,27 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "stellar-strkey"
-version = "0.0.9"
+version = "0.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e3aa3ed00e70082cb43febc1c2afa5056b9bb3e348bbb43d0cd0aa88a611144"
+checksum = "ee1832fb50c651ad10f734aaf5d31ca5acdfb197a6ecda64d93fcdb8885af913"
 dependencies = [
  "crate-git-revision",
  "data-encoding",
- "thiserror 1.0.69",
 ]
 
 [[package]]
 name = "stellar-xdr"
-version = "22.2.0"
+version = "25.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e09ea07e51f4123d8142f9b9f6924691413abfcba4ab642b333e795782c0141"
+checksum = "1f8116e81c7b5c1313a21396581aa9c2ff0f4033cc29a695f3f816ee882dd66b"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.22.1",
+ "cfg_eval",
  "crate-git-revision",
  "escape-bytes",
+ "ethnum",
  "hex",
+ "sha2 0.10.9",
  "stellar-strkey",
 ]
 
