@@ -5,12 +5,14 @@ use core::fmt::{Display, Formatter};
 #[allow(dead_code)]
 pub enum Secp256Err {
     ErrDerive,
+    SignError,
 }
 
 impl Display for Secp256Err {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
             Secp256Err::ErrDerive => write!(f, "Derive error"),
+            Secp256Err::SignError => write!(f, "Sign error"),
         }
     }
 }
@@ -34,7 +36,12 @@ extern "C" {
 
     fn c_ecdsa_get_pub_key33(pvk: *const u8, pbk: *mut u8);
 
-    fn c_ecdsa_secp256k1_sign_der(msg: *const u8, msg_len: u32, pvk: *const u8, sig: *mut u8);
+    fn c_ecdsa_secp256k1_sign_der(
+        msg: *const u8,
+        msg_len: u32,
+        pvk: *const u8,
+        sig: *mut u8,
+    ) -> u32;
 }
 
 pub trait Secp256k1Trait {
@@ -90,17 +97,18 @@ impl Secp256k1Trait for Secp256K1 {
 
     fn sign_der(msg: &[u8; 32], pvk: &[u8; 32]) -> Result<Vec<u8>, Secp256Err> {
         let mut sig = [0u8; 72];
-
-        unsafe {
+        let len = unsafe {
             c_ecdsa_secp256k1_sign_der(
                 msg.as_ptr(),
                 msg.len() as u32,
                 pvk.as_ptr(),
                 sig.as_mut_ptr(),
-            );
+            )
+        } as usize;
+        if len == 0 || len > 72 {
+            return Err(Secp256Err::SignError);
         }
-
-        Ok(sig.to_vec())
+        Ok(sig[..len].to_vec())
     }
 }
 
