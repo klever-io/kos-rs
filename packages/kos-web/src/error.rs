@@ -1,106 +1,90 @@
 use kos::chains::ChainError;
+use hex::FromHexError;
 use std::{error, fmt, str};
 use wasm_bindgen::JsValue;
 
-/// Crypto error variants
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum Error {
-    // Invalid string
+pub enum KOSError {
+    UnsupportedChain { id: String },
+    KOSDelegate(String),
+    HexDecode(String),
+    KOSNumber(String),
     InvalidString(String),
-    // JSON serialization error
     JSONSerde(String),
-    // UnsupportedChain,
-    UnsupportedChain(String),
-    // InvalidMnemonic,
-    InvalidMnemonic(&'static str),
-    // InvalidPath,
-    InvalidPath(&'static str),
-    // InvalidPrivateKey,
-    InvalidPrivateKey(&'static str),
-    // InvalidPublicKey,
+    InvalidMnemonic(String),
+    InvalidPath(String),
+    InvalidPrivateKey(String),
     InvalidPublicKey(String),
-    // InvalidAddress,
     InvalidAddress(String),
-    // InvalidChecksum,
-    InvalidChecksum(&'static str),
-    /// Invalid secp256k1 signature
-    InvalidSignature(&'static str),
-    /// Invalid secp256k1 signature message
+    InvalidChecksum(String),
+    InvalidSignature(String),
     InvalidMessage(String),
-    /// Out of preallocated memory
     NotEnoughMemory(String),
-    /// Invalid Enum Variant
     InvalidEnumVariant(String),
-    /// Invalid Len
     InvalidLen(String),
-    /// InvalidNumberParse
     InvalidNumberParse(String),
-    /// InvalidTransaction
     InvalidTransaction(String),
-    /// WalletManagerError
     WalletManager(String),
-    /// CipherError
     Cipher(String),
-    /// TransportError
     Transport(String),
-    /// DelegateError
-    Delegate(String),
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for KOSError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::InvalidString(e) => write!(f, "Invalid string: {e}"),
-            Error::JSONSerde(e) => write!(f, "JSON serialization: {e}"),
-            Error::UnsupportedChain(e) => write!(f, "Unsupported chain: {e}"),
-            Error::InvalidMnemonic(e) => write!(f, "Invalid mnemonic: {e}"),
-            Error::InvalidPath(e) => write!(f, "Invalid path: {e}"),
-            Error::InvalidPrivateKey(e) => write!(f, "Invalid private key: {e}"),
-            Error::InvalidPublicKey(e) => write!(f, "Invalid public key: {e}"),
-            Error::InvalidAddress(e) => write!(f, "Invalid address: {e}"),
-            Error::InvalidChecksum(e) => write!(f, "Invalid checksum: {e}"),
-            Error::InvalidSignature(e) => write!(f, "Invalid signature: {e}"),
-            Error::InvalidMessage(e) => write!(f, "Invalid message: {e}"),
-            Error::NotEnoughMemory(e) => write!(f, "Not enough memory: {e}"),
-            Error::InvalidEnumVariant(e) => write!(f, "Invalid Enum Variant error: {e}"),
-            Error::InvalidLen(e) => write!(f, "Invalid Len: {e}"),
-            Error::InvalidNumberParse(e) => write!(f, "Invalid number parse: {e}"),
-            Error::InvalidTransaction(e) => write!(f, "Invalid transaction: {e}"),
-            Error::WalletManager(e) => write!(f, "WalletManager error: {e}"),
-            Error::Cipher(e) => write!(f, "Cipher error: {e}"),
-            Error::Transport(e) => write!(f, "Transport error: {e}"),
-            Error::Delegate(e) => write!(f, "Delegate error: {e}"),
+            KOSError::UnsupportedChain { id } => write!(f, "UnsupportedChainError: Unsupported chain {id}"),
+            KOSError::KOSDelegate(e) => write!(f, "KOSDelegateError: {e}"),
+            KOSError::HexDecode(e) => write!(f, "HexDecodeError: {e}"),
+            KOSError::KOSNumber(e) => write!(f, "KOSNumberError: {e}"),
+            KOSError::InvalidString(e) => write!(f, "Invalid string: {e}"),
+            KOSError::JSONSerde(e) => write!(f, "JSON serialization: {e}"),
+            KOSError::InvalidMnemonic(e) => write!(f, "Invalid mnemonic: {e}"),
+            KOSError::InvalidPath(e) => write!(f, "Invalid path: {e}"),
+            KOSError::InvalidPrivateKey(e) => write!(f, "Invalid private key: {e}"),
+            KOSError::InvalidPublicKey(e) => write!(f, "Invalid public key: {e}"),
+            KOSError::InvalidAddress(e) => write!(f, "Invalid address: {e}"),
+            KOSError::InvalidChecksum(e) => write!(f, "Invalid checksum: {e}"),
+            KOSError::InvalidSignature(e) => write!(f, "Invalid signature: {e}"),
+            KOSError::InvalidMessage(e) => write!(f, "Invalid message: {e}"),
+            KOSError::NotEnoughMemory(e) => write!(f, "Not enough memory: {e}"),
+            KOSError::InvalidEnumVariant(e) => write!(f, "Invalid Enum Variant error: {e}"),
+            KOSError::InvalidLen(e) => write!(f, "Invalid Len: {e}"),
+            KOSError::InvalidNumberParse(e) => write!(f, "Invalid number parse: {e}"),
+            KOSError::InvalidTransaction(e) => write!(f, "Invalid transaction: {e}"),
+            KOSError::WalletManager(e) => write!(f, "WalletManager error: {e}"),
+            KOSError::Cipher(e) => write!(f, "Cipher error: {e}"),
+            KOSError::Transport(e) => write!(f, "Transport error: {e}"),
         }
     }
 }
 
-impl From<serde_json::Error> for Error {
-    fn from(e: serde_json::Error) -> Self {
-        Self::JSONSerde(e.to_string())
+impl From<ChainError> for KOSError {
+    fn from(err: ChainError) -> Self {
+        KOSError::KOSDelegate(err.to_string())
     }
 }
 
-impl error::Error for Error {
+impl From<FromHexError> for KOSError {
+    fn from(err: FromHexError) -> Self {
+        KOSError::HexDecode(err.to_string())
+    }
+}
+
+impl From<serde_json::Error> for KOSError {
+    fn from(e: serde_json::Error) -> Self {
+        KOSError::JSONSerde(e.to_string())
+    }
+}
+
+impl error::Error for KOSError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         None
     }
 }
 
-impl From<Error> for JsValue {
-    fn from(e: Error) -> Self {
-        JsValue::from_str(&format!("{e}"))
-    }
-}
-
-impl From<hex::FromHexError> for Error {
-    fn from(e: hex::FromHexError) -> Self {
-        Self::InvalidString(e.to_string())
-    }
-}
-
-impl From<ChainError> for Error {
-    fn from(err: ChainError) -> Self {
-        Error::Delegate(err.to_string())
+impl From<KOSError> for JsValue {
+    fn from(e: KOSError) -> Self {
+        JsValue::from_str(&e.to_string())
     }
 }
