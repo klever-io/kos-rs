@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::KosError;
 
 use core::cmp::Ordering;
 use std::{
@@ -49,7 +49,7 @@ impl<'de> Deserialize<'de> for BigNumber {
 }
 
 impl FromStr for BigNumber {
-    type Err = Error;
+    type Err = KosError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         BigNumber::from_string(s)
@@ -57,7 +57,7 @@ impl FromStr for BigNumber {
 }
 
 impl TryInto<BigNumber> for &str {
-    type Error = Error;
+    type Error = KosError;
 
     fn try_into(self) -> Result<BigNumber, Self::Error> {
         BigNumber::from_str(self)
@@ -65,7 +65,7 @@ impl TryInto<BigNumber> for &str {
 }
 
 impl TryFrom<String> for BigNumber {
-    type Error = Error;
+    type Error = KosError;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
         BigNumber::from_str(&s)
@@ -75,12 +75,12 @@ impl TryFrom<String> for BigNumber {
 #[wasm_bindgen]
 impl BigNumber {
     #[wasm_bindgen(js_name = "fromString")]
-    pub fn from_string(value: &str) -> Result<BigNumber, Error> {
+    pub fn from_string(value: &str) -> Result<BigNumber, KosError> {
         let value = value.trim().replace('_', "");
 
         Ok(BigNumber {
             v: BigInt::from_str(value.as_str())
-                .map_err(|e| Error::InvalidNumberParse(e.to_string()))?,
+                .map_err(|e| KosError::InvalidNumberParse(e.to_string()))?,
         })
     }
 

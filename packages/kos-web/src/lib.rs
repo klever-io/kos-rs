@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::KosError;
 use kos::crypto::cipher;
 use kos::crypto::mnemonic::generate_mnemonic;
 use qrcode_generator::QrCodeEcc;
@@ -13,57 +13,57 @@ pub mod wallet;
 
 /// Generates a random mnemonic phrase given the number of words to generate, `count`.
 #[wasm_bindgen(js_name = "generateMnemonicPhrase")]
-pub fn generate_mnemonic_phrase(count: usize) -> Result<String, Error> {
+pub fn generate_mnemonic_phrase(count: usize) -> Result<String, KosError> {
     Ok(generate_mnemonic(count)?.to_phrase())
 }
 
 /// Converts the given string to bytes.
 #[wasm_bindgen(js_name = "toBytes")]
-pub fn to_bytes(data: &str) -> Result<Vec<u8>, Error> {
+pub fn to_bytes(data: &str) -> Result<Vec<u8>, KosError> {
     Ok(data.as_bytes().to_vec())
 }
 
 /// Converts the given bytes to a string.
 #[wasm_bindgen(js_name = "toString")]
-pub fn to_string(data: &[u8]) -> Result<String, Error> {
+pub fn to_string(data: &[u8]) -> Result<String, KosError> {
     String::from_utf8(data.to_vec())
-        .map_err(|e| Error::InvalidString(format!("Invalid UTF-8 string: {e}")))
+        .map_err(|e| KosError::InvalidString(format!("Invalid UTF-8 string: {e}")))
 }
 
 /// Decrypts the given data with the given password.
 /// Data will have the algorithm tag prepended to it (1 byte).
 #[wasm_bindgen(js_name = "decrypt")]
-pub fn decrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, Error> {
-    cipher::decrypt(data, password, iterations).map_err(|e| Error::Cipher(format!("{e}")))
+pub fn decrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, KosError> {
+    cipher::decrypt(data, password, iterations).map_err(|e| KosError::Cipher(format!("{e}")))
 }
 
 /// Encrypt for GCM the given data with the given password.
 /// Data will have the algorithm tag prepended to it (1 byte).
 #[wasm_bindgen(js_name = "encrypt")]
-pub fn encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, Error> {
+pub fn encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, KosError> {
     cipher::encrypt(cipher::CipherAlgo::GCM, data, password, iterations)
-        .map_err(|e| Error::Cipher(format!("{e}")))
+        .map_err(|e| KosError::Cipher(format!("{e}")))
 }
 
 /// Create pem file from tag and data
 #[wasm_bindgen(js_name = "toPem")]
-pub fn to_pem(tag: String, data: &[u8]) -> Result<String, Error> {
+pub fn to_pem(tag: String, data: &[u8]) -> Result<String, KosError> {
     let result = cipher::to_pem(tag, data)?;
     Ok(result.to_string())
 }
 
 /// Decrypt pem file to bytes
 #[wasm_bindgen(js_name = "fromPem")]
-pub fn from_pem(data: &str, password: &str, iterations: u32) -> Result<Vec<u8>, Error> {
+pub fn from_pem(data: &str, password: &str, iterations: u32) -> Result<Vec<u8>, KosError> {
     let pem = cipher::string_to_pem(data)?;
     decrypt(pem.contents(), password, iterations)
 }
 
 /// Create QRCode based on data
 #[wasm_bindgen(js_name = "generateQR")]
-pub fn generate_qr(data: &str) -> Result<Vec<u8>, Error> {
+pub fn generate_qr(data: &str) -> Result<Vec<u8>, KosError> {
     qrcode_generator::to_png_to_vec(data, QrCodeEcc::Low, 1024)
-        .map_err(|e| Error::InvalidString(format!("Invalid QRCode data: {e}")))
+        .map_err(|e| KosError::InvalidString(format!("Invalid QRCode data: {e}")))
 }
 
 #[wasm_bindgen(js_name = "isChainSupported")]
@@ -76,9 +76,9 @@ pub fn get_path_by_chain(
     chain_id: u32,
     index: u32,
     use_legacy_path: bool,
-) -> Result<String, Error> {
+) -> Result<String, KosError> {
     let chain = kos::chains::get_chain_by_id(chain_id)
-        .ok_or(Error::UnsupportedChain(format!("{chain_id}")))?;
+        .ok_or(KosError::UnsupportedChain(format!("{chain_id}")))?;
     let path = chain.get_path(index, use_legacy_path);
     Ok(path)
 }

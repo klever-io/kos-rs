@@ -4,7 +4,7 @@ use crate::models::{
 };
 
 use crate::cipher::{decrypt_from_pem, encrypt_to_pem};
-use crate::error::Error;
+use crate::error::KosError;
 use crate::utils::unpack;
 use kos::chains::{get_chain_by_base_id, get_chain_by_params, Transaction as KosTransaction};
 use kos_codec::{encode_for_broadcast, encode_for_signing, KosCodedAccount};
@@ -66,28 +66,28 @@ impl Wallet {
         path: String,
         password: Option<String>,
         options: Option<WalletChainOptions>,
-    ) -> Result<Wallet, Error> {
+    ) -> Result<Wallet, KosError> {
         // validate mnemonic entropy
         kos::crypto::mnemonic::validate_mnemonic(&mnemonic)?;
 
         let custom_chain_options = wallet_options_to_chain_type(chain_id, &options);
 
         let chain = get_chain_by_params(custom_chain_options.clone())
-            .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
+            .ok_or_else(|| KosError::WalletManager("Invalid chain".to_string()))?;
 
         let seed = chain
             .mnemonic_to_seed(mnemonic.clone(), password.unwrap_or_default())
-            .map_err(|e| Error::WalletManager(format!("mnemonic to seed: {e}")))?;
+            .map_err(|e| KosError::WalletManager(format!("mnemonic to seed: {e}")))?;
         let private_key = chain
             .derive(seed, path.clone())
-            .map_err(|e| Error::WalletManager(format!("derive keypair: {e}")))?;
+            .map_err(|e| KosError::WalletManager(format!("derive keypair: {e}")))?;
 
         let public_key = chain
             .get_pbk(private_key.clone())
-            .map_err(|e| Error::WalletManager(format!("get public key: {e}")))?;
+            .map_err(|e| KosError::WalletManager(format!("get public key: {e}")))?;
         let address = chain
             .get_address(public_key.clone())
-            .map_err(|e| Error::WalletManager(format!("get address: {e}")))?;
+            .map_err(|e| KosError::WalletManager(format!("get address: {e}")))?;
 
         Ok(Wallet {
             chain: chain_id,
@@ -111,9 +111,9 @@ impl Wallet {
         path_options: &PathOptions,
         password: Option<String>,
         options: Option<WalletChainOptions>,
-    ) -> Result<Wallet, Error> {
+    ) -> Result<Wallet, KosError> {
         let chain = get_chain_by_base_id(chain_id)
-            .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
+            .ok_or_else(|| KosError::WalletManager("Invalid chain".to_string()))?;
         let path = chain.get_path(path_options.index, path_options.is_legacy.unwrap_or(false));
 
         let mut wallet = Wallet::from_mnemonic(chain_id, mnemonic, path, password, options)?;
@@ -128,26 +128,26 @@ impl Wallet {
         chain_id: u32,
         private_key: String,
         options: Option<WalletChainOptions>,
-    ) -> Result<Wallet, Error> {
+    ) -> Result<Wallet, KosError> {
         // convert hex to bytes
         let private_key_bytes = hex::decode(private_key.clone())?;
 
         // check size of private key
         if private_key_bytes.len() != 32 {
-            return Err(Error::WalletManager("Invalid private key".to_string()));
+            return Err(KosError::WalletManager("Invalid private key".to_string()));
         }
 
         let custom_chain_options = wallet_options_to_chain_type(chain_id, &options);
 
         let chain = get_chain_by_params(custom_chain_options.clone())
-            .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
+            .ok_or_else(|| KosError::WalletManager("Invalid chain".to_string()))?;
 
         let public_key = chain
             .get_pbk(private_key_bytes.clone())
-            .map_err(|e| Error::WalletManager(format!("get public key: {e}")))?;
+            .map_err(|e| KosError::WalletManager(format!("get public key: {e}")))?;
         let address = chain
             .get_address(public_key.clone())
-            .map_err(|e| Error::WalletManager(format!("get address: {e}")))?;
+            .map_err(|e| KosError::WalletManager(format!("get address: {e}")))?;
 
         // create wallet from keypair
         Ok(Wallet {
@@ -170,13 +170,13 @@ impl Wallet {
         chain: u32,
         data: &[u8],
         options: Option<WalletChainOptions>,
-    ) -> Result<Wallet, Error> {
+    ) -> Result<Wallet, KosError> {
         // decode pem file
         let pem =
-            parse_pem(data).map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
+            parse_pem(data).map_err(|_| KosError::WalletManager("Invalid PEM data".to_string()))?;
 
         let content = String::from_utf8(pem.contents().to_vec())
-            .map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
+            .map_err(|_| KosError::WalletManager("Invalid PEM data".to_string()))?;
 
         let pk_hex = content.chars().take(64).collect::<String>();
 
@@ -192,15 +192,16 @@ impl Wallet {
         password: &str,
         iterations: u32,
         options: Option<WalletChainOptions>,
-    ) -> Result<Wallet, Error> {
-        let pem_string = String::from_utf8(data.to_vec())
-            .map_err(|_| Error::WalletManager("Invalid PEM data: not valid UTF-8".to_string()))?;
+    ) -> Result<Wallet, KosError> {
+        let pem_string = String::from_utf8(data.to_vec()).map_err(|_| {
+            KosError::WalletManager("Invalid PEM data: not valid UTF-8".to_string())
+        })?;
 
         let decrypted_data = decrypt_from_pem(&pem_string, password, iterations)
-            .map_err(|e| Error::Cipher(format!("Failed to decrypt PEM: {e}")))?;
+            .map_err(|e| KosError::Cipher(format!("Failed to decrypt PEM: {e}")))?;
 
         let content = String::from_utf8(decrypted_data).map_err(|_| {
-            Error::Cipher(
+            KosError::Cipher(
                 "Decrypted data is not valid UTF-8 - wrong password or corrupted PEM".to_string(),
             )
         })?;
@@ -208,7 +209,7 @@ impl Wallet {
         let content = content.trim();
 
         if content.len() < 64 {
-            return Err(Error::Cipher(format!(
+            return Err(KosError::Cipher(format!(
             "Invalid KC PEM content: expected at least 64 characters for private key, got {} - wrong password or corrupted data",
             content.len()
         )));
@@ -217,36 +218,36 @@ impl Wallet {
         let pk_hex = content.chars().take(64).collect::<String>();
 
         if !pk_hex.chars().all(|c| c.is_ascii_hexdigit()) {
-            return Err(Error::Cipher(
+            return Err(KosError::Cipher(
             "Invalid KC PEM content: private key contains non-hexadecimal characters - wrong password or corrupted data".to_string()
         ));
         }
 
         let decoded_bytes = hex::decode(&pk_hex)
-        .map_err(|_| Error::Cipher("Invalid KC PEM content: private key hex decoding failed - wrong password or corrupted data".to_string()))?;
+        .map_err(|_| KosError::Cipher("Invalid KC PEM content: private key hex decoding failed - wrong password or corrupted data".to_string()))?;
 
         if decoded_bytes.len() != 32 {
-            return Err(Error::Cipher(format!(
+            return Err(KosError::Cipher(format!(
             "Invalid KC PEM content: private key should be 32 bytes when decoded, got {} bytes - wrong password or corrupted data",
             decoded_bytes.len()
         )));
         }
 
         if decoded_bytes.iter().all(|&b| b == 0) {
-            return Err(Error::Cipher(
+            return Err(KosError::Cipher(
             "Invalid KC PEM content: private key is all zeros - wrong password or corrupted data".to_string()
         ));
         }
 
         Wallet::from_private_key(chain, pk_hex, options)
-            .map_err(|e| Error::Cipher(format!("KC PEM private key validation failed: {e}")))
+            .map_err(|e| KosError::Cipher(format!("KC PEM private key validation failed: {e}")))
     }
 
     #[wasm_bindgen(js_name = "fromPem")]
-    pub fn from_pem(data: &[u8]) -> Result<Wallet, Error> {
+    pub fn from_pem(data: &[u8]) -> Result<Wallet, KosError> {
         // parse pem
         let pem =
-            parse_pem(data).map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
+            parse_pem(data).map_err(|_| KosError::WalletManager("Invalid PEM data".to_string()))?;
 
         Wallet::import(pem)
     }
@@ -257,24 +258,24 @@ impl Wallet {
         data: &[u8],
         password: &str,
         iterations: u32,
-    ) -> Result<Wallet, Error> {
+    ) -> Result<Wallet, KosError> {
         let pem_string = String::from_utf8(data.to_vec())
-            .map_err(|_| Error::WalletManager("Invalid PEM data".to_string()))?;
+            .map_err(|_| KosError::WalletManager("Invalid PEM data".to_string()))?;
 
         let decrypted_data = decrypt_from_pem(&pem_string, password, iterations)
-            .map_err(|e| Error::Cipher(format!("decrypt PEM: {e}")))?;
+            .map_err(|e| KosError::Cipher(format!("decrypt PEM: {e}")))?;
 
-        let wallet: Wallet =
-            unpack(&decrypted_data).map_err(|e| Error::Cipher(format!("deserialize data: {e}")))?;
+        let wallet: Wallet = unpack(&decrypted_data)
+            .map_err(|e| KosError::Cipher(format!("deserialize data: {e}")))?;
 
         Ok(wallet)
     }
 
     #[wasm_bindgen(js_name = "exportToPem")]
     /// export wallet to unencrypted PEM format
-    pub fn export_to_pem(&self) -> Result<Vec<u8>, Error> {
+    pub fn export_to_pem(&self) -> Result<Vec<u8>, KosError> {
         let wallet_bytes = crate::utils::pack(self)
-            .map_err(|e| Error::Cipher(format!("serialize wallet: {e}")))?;
+            .map_err(|e| KosError::Cipher(format!("serialize wallet: {e}")))?;
 
         let pem = Pem::new("KLEVER WALLET", wallet_bytes);
 
@@ -288,9 +289,9 @@ impl Wallet {
         password: &str,
         iterations: u32,
         algo: CipherAlgo,
-    ) -> Result<Vec<u8>, Error> {
+    ) -> Result<Vec<u8>, KosError> {
         let wallet_bytes = crate::utils::pack(self)
-            .map_err(|e| Error::Cipher(format!("serialize wallet: {e}")))?;
+            .map_err(|e| KosError::Cipher(format!("serialize wallet: {e}")))?;
 
         let encrypted_pem = encrypt_to_pem(
             algo.into(),
@@ -299,7 +300,7 @@ impl Wallet {
             iterations,
             "KLEVER WALLET",
         )
-        .map_err(|e| Error::Cipher(format!("encrypt PEM: {e}")))?;
+        .map_err(|e| KosError::Cipher(format!("encrypt PEM: {e}")))?;
 
         Ok(encrypted_pem.into_bytes())
     }
@@ -311,11 +312,11 @@ impl Wallet {
         password: &str,
         iterations: u32,
         algo: CipherAlgo,
-    ) -> Result<Vec<u8>, Error> {
+    ) -> Result<Vec<u8>, KosError> {
         let private_key = self
             .private_key
             .as_ref()
-            .ok_or_else(|| Error::WalletManager("No private key available".to_string()))?;
+            .ok_or_else(|| KosError::WalletManager("No private key available".to_string()))?;
 
         let encrypted_pem = encrypt_to_pem(
             algo.into(), // Convert to cipher::CipherAlgo
@@ -324,7 +325,7 @@ impl Wallet {
             iterations,
             "ENCRYPTED PRIVATE KEY",
         )
-        .map_err(|e| Error::Cipher(format!("encrypt PEM: {e}")))?;
+        .map_err(|e| KosError::Cipher(format!("encrypt PEM: {e}")))?;
 
         Ok(encrypted_pem.into_bytes())
     }
@@ -332,10 +333,10 @@ impl Wallet {
 
 // wallet properties
 impl Wallet {
-    pub fn import(pem: Pem) -> Result<Wallet, Error> {
+    pub fn import(pem: Pem) -> Result<Wallet, KosError> {
         // Deserialize decrypted bytes to WalletManager
-        let wallet: Wallet =
-            unpack(pem.contents()).map_err(|e| Error::Cipher(format!("deserialize data: {e}")))?;
+        let wallet: Wallet = unpack(pem.contents())
+            .map_err(|e| KosError::Cipher(format!("deserialize data: {e}")))?;
 
         Ok(wallet)
     }
@@ -379,8 +380,8 @@ impl Wallet {
 
     #[wasm_bindgen(js_name = "getIndex")]
     /// get wallet index if wallet is created from mnemonic index
-    pub fn get_index(&self) -> Result<u32, Error> {
-        self.index.ok_or(Error::WalletManager(
+    pub fn get_index(&self) -> Result<u32, KosError> {
+        self.index.ok_or(KosError::WalletManager(
             "Wallet is not created from mnemonic index".to_string(),
         ))
     }
@@ -422,14 +423,14 @@ impl Wallet {
 impl Wallet {
     #[wasm_bindgen(js_name = "signMessage")]
     /// sign message with keypair
-    pub fn sign_message(&self, message: &[u8], legacy: bool) -> Result<Vec<u8>, Error> {
+    pub fn sign_message(&self, message: &[u8], legacy: bool) -> Result<Vec<u8>, KosError> {
         match self.private_key {
             Some(ref pk_hex) => {
                 let pk_bytes = hex::decode(pk_hex)?;
                 let custom_chain_options = wallet_options_to_chain_type(self.chain, &self.options);
 
                 let chain = get_chain_by_params(custom_chain_options.clone())
-                    .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
+                    .ok_or_else(|| KosError::WalletManager("Invalid chain".to_string()))?;
 
                 let kos_codec_acc = KosCodedAccount {
                     chain_id: chain.get_id(),
@@ -442,9 +443,9 @@ impl Wallet {
 
                 chain
                     .sign_message(pk_bytes, message_encoded, legacy)
-                    .map_err(|e| Error::WalletManager(format!("sign message: {e}")))
+                    .map_err(|e| KosError::WalletManager(format!("sign message: {e}")))
             }
-            None => Err(Error::WalletManager("no keypair".to_string())),
+            None => Err(KosError::WalletManager("no keypair".to_string())),
         }
     }
 
@@ -454,7 +455,7 @@ impl Wallet {
         &self,
         tx_raw: &[u8],
         options: Option<TransactionChainOptions>,
-    ) -> Result<Transaction, Error> {
+    ) -> Result<Transaction, KosError> {
         match self.private_key {
             Some(ref pk_hex) => {
                 let pk_bytes = hex::decode(pk_hex)?;
@@ -471,7 +472,7 @@ impl Wallet {
                 let custom_chain_options = wallet_options_to_chain_type(self.chain, &self.options);
 
                 let chain = get_chain_by_params(custom_chain_options.clone())
-                    .ok_or_else(|| Error::WalletManager("Invalid chain".to_string()))?;
+                    .ok_or_else(|| KosError::WalletManager("Invalid chain".to_string()))?;
 
                 let kos_codec_acc = KosCodedAccount {
                     chain_id: chain.get_id(),
@@ -483,7 +484,7 @@ impl Wallet {
 
                 let signed_tx = chain
                     .sign_tx(pk_bytes, encoded)
-                    .map_err(|e| Error::WalletManager(format!("sign transaction: {e}")))?;
+                    .map_err(|e| KosError::WalletManager(format!("sign transaction: {e}")))?;
 
                 let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_tx)?;
 
@@ -493,7 +494,7 @@ impl Wallet {
                     signature: encoded_to_broadcast.signature,
                 })
             }
-            None => Err(Error::WalletManager("no private key".to_string())),
+            None => Err(KosError::WalletManager("no private key".to_string())),
         }
     }
 }

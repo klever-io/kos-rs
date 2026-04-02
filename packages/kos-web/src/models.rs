@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::KosError;
 use kos::chains::util::hex_string_to_vec;
 use kos::chains::{ChainOptions, CustomChainType};
 use kos::crypto::base64;
@@ -139,15 +139,15 @@ impl TransactionChainOptions {
         spec_version: u32,
         transaction_version: u32,
         app_id: Option<u32>,
-    ) -> Result<TransactionChainOptions, Error> {
+    ) -> Result<TransactionChainOptions, KosError> {
         let call = hex_string_to_vec(call.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid call hex: {e}")))?;
+            .map_err(|e| KosError::WalletManager(format!("Invalid call hex: {e}")))?;
         let era = hex_string_to_vec(era.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid era hex: {e}")))?;
+            .map_err(|e| KosError::WalletManager(format!("Invalid era hex: {e}")))?;
         let block_hash = hex_string_to_vec(block_hash.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid block hash hex: {e}")))?;
+            .map_err(|e| KosError::WalletManager(format!("Invalid block hash hex: {e}")))?;
         let genesis_hash = hex_string_to_vec(genesis_hash.as_str())
-            .map_err(|e| Error::WalletManager(format!("Invalid genesis hash hex: {e}")))?;
+            .map_err(|e| KosError::WalletManager(format!("Invalid genesis hash hex: {e}")))?;
 
         Ok(TransactionChainOptions {
             data: ChainOptions::SUBSTRATE {
