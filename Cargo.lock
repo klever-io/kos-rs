@@ -3069,12 +3069,17 @@ dependencies = [
 name = "kos-web"
 version = "0.2.41"
 dependencies = [
+ "bigdecimal",
+ "ecies",
  "enum_delegate",
  "enum_dispatch",
  "hex",
  "kos",
  "kos-codec",
  "lazy_static",
+ "lwk_common",
+ "lwk_signer",
+ "lwk_wollet",
  "num-bigint",
  "num-traits",
  "pem",
@@ -3084,6 +3089,7 @@ dependencies = [
  "serde-wasm-bindgen",
  "serde_json",
  "strum",
+ "thiserror 1.0.69",
  "wasm-bindgen",
 ]
 

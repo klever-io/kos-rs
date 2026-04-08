@@ -30,5 +30,10 @@ kos = { workspace = true, features = ["not-ksafe"] }
 wasm-bindgen = { workspace = true }
 num-bigint = "0.4"
 num-traits = "0.2"
+bigdecimal = "0.4"
 kos-codec = { path = "../kos-codec" }
-
+thiserror = { workspace = true }
+lwk_common = { workspace = true }
+lwk_signer = { workspace = true }
+lwk_wollet = { workspace = true }
+ecies = { workspace = true }
