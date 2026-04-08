@@ -21,11 +21,6 @@ impl KOSError {
     pub fn get_message(&self) -> String {
         self.message.clone()
     }
-
-    #[wasm_bindgen(js_name = toString)]
-    pub fn to_string(&self) -> String {
-        self.message.clone()
-    }
 }
 
 impl KOSError {

@@ -123,6 +123,9 @@ impl KOSTransaction {
 
 #[wasm_bindgen]
 pub fn generate_mnemonic(size: i32) -> Result<String, KOSError> {
+    if size < 0 {
+        return Err(KOSError::kos_delegate("invalid mnemonic".to_string()));
+    }
     Ok(kos::crypto::mnemonic::generate_mnemonic(size as usize)?.to_phrase())
 }
 
@@ -295,11 +298,8 @@ pub fn sign_message(account: KOSAccount, hex: String, legacy: bool) -> Result<Ve
 
     let message_encoded = kos_codec::encode_for_sign_message(kos_codec_acc, message)?;
 
-    let signature = chain.sign_message(
-        hex::decode(account.private_key).unwrap(),
-        message_encoded,
-        legacy,
-    )?;
+    let signature =
+        chain.sign_message(hex::decode(account.private_key)?, message_encoded, legacy)?;
     Ok(signature)
 }
 
@@ -683,7 +683,7 @@ mod tests {
                 simple_base64_encode(&hex::decode("76a9145bb0ba5ba58cdab459f27f2d29f40e1dd5db238188ac").unwrap()),
                 simple_base64_encode(&hex::decode("76a9145bb0ba5ba58cdab459f27f2d29f40e1dd5db238188ac").unwrap()),
             ],
-        )),
+        ).unwrap()),
     )
     .unwrap();
         assert_eq!(transaction.raw, "0100000002afa8838dbaa03cd3e4fee38bdcb6a428965559ae941dca5a8f91999cfd6d8b0d010000006b48304502210099626d28374fa3d1a0034330fee7745ab02db07cd37649e6d3ffbe046ff92e9402203793bee2372ab59a05b45188c2bace3b48e73209a01e4d5d862925971632c80a412102bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217ffffffffdb6d60d4a93a95738e72f641bcdd166c94f6e1f439dfe695e40583997284463c010000006a4730440220447084aae4c6800db7c86b8bc8da675e464991a035b2b4010cde48b64a1013a10220582acfb5265c22eae9c2880e07ae66fc86cbef2e97a2ca1bc513535ba322360d412102bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217ffffffff0240420f00000000001976a91434bf902df5d66f0e9b89d0f83fbcad638ad19ae988acea970700000000001976a9145bb0ba5ba58cdab459f27f2d29f40e1dd5db238188ac00000000", "The raw doesn't match");
@@ -703,7 +703,7 @@ mod tests {
                 simple_base64_encode(&hex::decode("0014546d5f8e86641e4d1eec5b9155a540d953245e4a").unwrap()),
                 simple_base64_encode(&hex::decode("0014546d5f8e86641e4d1eec5b9155a540d953245e4a").unwrap()),
             ],
-        )),
+        ).unwrap()),
     )
     .unwrap();
         assert_eq!(transaction.raw, "01000000000102badfa0606bc6a1738d8ddf951b1ebf9e87779934a5774b836668efb5a6d643970000000000fffffffffe60fbeb66791b10c765a207c900a08b2a9bd7ef21e1dd6e5b2ef1e9d686e5230000000000ffffffff028813000000000000160014e4132ab9175345e24b344f50e6d6764a651a89e6c21f000000000000160014546d5f8e86641e4d1eec5b9155a540d953245e4a02483045022100ca1df8381e56e2ac2228e040cc2ff1c1079928222365f5c62cd6c18f398a6f55022029dca1177ab6edcfa03a25c7df32e1644c5d1fe496c6c7995a715373b56a591901210330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c024830450221009496122a56551a0dab4fa8562474c943c79158f7592a845abd7b60ddf34c10c902205021b73e27a44b0c365fbd015133a4bb6dce79dd09705096de1c7b31a1f9b8a701210330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c00000000", "The raw doesn't match");
@@ -722,7 +722,7 @@ mod tests {
             vec![
                 simple_base64_encode(&hex::decode("76a914be4232b46086c1d46d12c65eacbd807e87b92a5488ac").unwrap()),
             ],
-        )),
+        ).unwrap()),
     )
     .unwrap();
         assert_eq!(transaction.raw, "0100000001c2c12c2f80249f568cf90ffd87d47afbbed81e803d2a7076c554e81b73253ab5000000006a4730440220423d61c364084d0c24f155519d4991549b1090bdd65ac6c74ebc6f3917d5dff6022056c3af1de9b4e33369dcd134591a80554ce5a108c300bc0cc2ed4c11d0a6861c0121026fa9a6f213b6ba86447965f6b4821264aaadd7521f049f00db9c43a770ea7405ffffffff02e8030000000000001976a914a3d92f1bab64bb8154ed118cd27fb5081344ca8488ac04580f00000000001976a914be4232b46086c1d46d12c65eacbd807e87b92a5488ac00000000", "The raw doesn't match");
@@ -746,7 +746,7 @@ mod tests {
             vec![
                 simple_base64_encode(&hex::decode("76a91479975a24fdab613e17cf184bc185071aad17441888ac").unwrap()),
             ],
-        )),
+        ).unwrap()),
     )
     .unwrap();
         assert_eq!(transaction.raw, "0100000001c4d32b8d271b3d4c7c269f2af31f87ad71315b72610744843bca92600c6c662d030000006a4730440220198e150a394004850b0ab50423ab583e7b4a7fdb12f6ff98849ed532a8b8f5fc02202cfea08c49254a1b245cf9f460d596812e0f4dd0d1ddb1f008fe01d52f3d74f7012102cc6b0dc33aabcf3a23643e5e2919a80c50fb3dd2129ce409bbc5f0d4643d05e0feffffff01f98b1acc0e0000001976a9146dc8f8d77f0d1ea8c42f2374e5b3abbb77fda44f88ac00000000", "The raw doesn't match");
@@ -770,7 +770,8 @@ mod tests {
             15,
             None,
             None,
-        );
+        )
+        .unwrap();
         let transaction = sign_transaction(
         account,
         "0a0300b8c8ac77e723fae060f2dc70d00a591e1127ec07e0e81e2237a823cbe5210d1e02286bee05011800000082841e000f00000068d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f781cf57533b15a5a13729a33543fd6ae137bce54ef14eb933b0a4813489e7e0a00".to_string(),

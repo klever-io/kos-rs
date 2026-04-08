@@ -50,7 +50,7 @@ fn derive_from_mnemonic(
     is_mainnet: bool,
     index: u32,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = mnemonic_to_seed(mnemonic, passphrase).unwrap();
+    let seed = mnemonic_to_seed(mnemonic, passphrase).map_err(|_| LdError::MnemonicError)?;
 
     let network = if is_mainnet {
         Network::Bitcoin
@@ -75,12 +75,13 @@ fn derive_from_mnemonic(
         ChildNumber::Hardened {
             index: language_index,
         },
-        ChildNumber::from_hardened_idx(word_count).unwrap(),
-        ChildNumber::from_hardened_idx(index).unwrap(),
+        ChildNumber::from_hardened_idx(word_count).map_err(|_| LdError::InvalidIndex)?,
+        ChildNumber::from_hardened_idx(index).map_err(|_| LdError::InvalidIndex)?,
     ]);
     let data = derive(&secp, &root, &path).map_err(|_| LdError::DerivationError)?;
     let len = word_count * 4 / 3;
-    let mnemonic = Mnemonic::from_entropy_in(lang, &data[0..len as usize]).unwrap();
+    let mnemonic = Mnemonic::from_entropy_in(lang, &data[0..len as usize])
+        .map_err(|_| LdError::MnemonicError)?;
     let mnemonic_str = mnemonic.to_string();
     Ok(mnemonic_str.as_bytes().to_vec())
 }
@@ -90,8 +91,12 @@ fn derive<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
     root: &Xpriv,
     path: &P,
 ) -> Result<Vec<u8>, LdError> {
-    let bip85_root = root.derive_priv(secp, path).unwrap();
-    let derived = bip85_root.derive_priv(secp, &path).unwrap();
+    let bip85_root = root
+        .derive_priv(secp, path)
+        .map_err(|_| LdError::DerivationError)?;
+    let derived = bip85_root
+        .derive_priv(secp, &path)
+        .map_err(|_| LdError::DerivationError)?;
     let mut h = hmac::HmacEngine::<sha512::Hash>::new("bip-entropy-from-k".as_bytes());
     h.input(&derived.private_key.secret_bytes());
     let data = hmac::Hmac::from_engine(h).to_byte_array();
@@ -105,7 +110,7 @@ pub fn generate_xpub(
     is_mainnet: bool,
     index: u32,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
 
     let network = if is_mainnet {
         Network::Bitcoin
@@ -125,7 +130,7 @@ pub fn get_xpub_as_string(
     is_mainnet: bool,
     index: u32,
 ) -> Result<String, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let network = if is_mainnet {
         Network::Bitcoin
     } else {
@@ -145,7 +150,7 @@ pub fn derive_xpub(
     index: u32,
     derivation_path: &str,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let network = if is_mainnet {
         Network::Bitcoin
     } else {
@@ -167,7 +172,7 @@ pub fn slip77_master_blinding_key(
     is_mainnet: bool,
     index: u32,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let master_blinding_key = MasterBlindingKey::from_seed(&seed);
     Ok(master_blinding_key.as_bytes().to_vec())
 }
@@ -180,7 +185,7 @@ pub fn sign_ecdsa_recoverable(
     index: u32,
     msg: Vec<u8>,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
 
     let network = if is_mainnet {
         Network::Bitcoin
@@ -210,7 +215,7 @@ pub fn hmac_sha256(
     derivation_path: &str,
     msg: Vec<u8>,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let xprv = Xpriv::new_master(Network::Bitcoin, &seed).map_err(|_| LdError::IntanceError)?;
     let der: DerivationPath = derivation_path.parse().map_err(|_| LdError::IntanceError)?;
     let priv_key = xprv
@@ -232,7 +237,7 @@ pub fn ecies_encrypt(
     index: u32,
     msg: Vec<u8>,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let network = if is_mainnet {
         Network::Bitcoin
     } else {
@@ -253,7 +258,7 @@ pub fn ecies_decrypt(
     index: u32,
     msg: Vec<u8>,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let network = if is_mainnet {
         Network::Bitcoin
     } else {
@@ -273,7 +278,7 @@ pub fn sign_ecdsa(
     msg: Vec<u8>,
     derivation_path: String,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let network = if is_mainnet {
         Network::Bitcoin
     } else {
