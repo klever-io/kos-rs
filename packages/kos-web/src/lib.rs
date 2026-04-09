@@ -1,13 +1,8 @@
-pub mod models;
-pub mod number;
-pub mod signer;
-
 use crate::models::{
     convert_tx_options, wallet_options_to_chain_type, TransactionChainOptions, WalletOptions,
 };
 use hex::ToHex;
 use kos::chains::{get_chain_by_base_id, get_chain_by_params, Chain, Transaction};
-use kos::crypto::cipher;
 use kos::crypto::cipher::CipherAlgo;
 use kos_codec::KosCodedAccount;
 use kos_codec::{encode_for_broadcast, encode_for_signing};
@@ -15,6 +10,8 @@ use wasm_bindgen::prelude::*;
 
 mod error;
 use error::KOSError;
+pub mod models;
+pub mod number;
 
 #[wasm_bindgen]
 pub struct KOSAccount {
@@ -235,7 +232,8 @@ pub fn encrypt_with_cfb(
 #[wasm_bindgen]
 pub fn decrypt(data: String, password: String, iterations: u32) -> Result<String, KOSError> {
     let data_in_byte = hex::decode(data)?;
-    let decrypted_data = cipher::decrypt(&data_in_byte, password.as_str(), iterations)?;
+    let decrypted_data =
+        kos::crypto::cipher::decrypt(&data_in_byte, password.as_str(), iterations)?;
     Ok(String::from_utf8_lossy(&decrypted_data).to_string())
 }
 

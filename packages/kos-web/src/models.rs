@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::*;
 use crate::error::KOSError;
 
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum WalletChainOptionsType {
     NotCustom(u32),
     NotCustomBase(u32),
@@ -17,6 +18,7 @@ pub enum WalletChainOptionsType {
 
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WalletChainOptions {
     kind: WalletChainOptionsType,
 }
@@ -107,6 +109,7 @@ impl WalletChainOptions {
 
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WalletOptions {
     pub use_legacy_path: bool,
     specific: Option<WalletChainOptions>,
