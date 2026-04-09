@@ -1,5 +1,7 @@
 pub mod models;
 pub mod number;
+
+#[cfg(feature = "native")]
 pub mod signer;
 
 use crate::models::{

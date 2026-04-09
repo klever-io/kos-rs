@@ -76,3 +76,6 @@ test-ios: build-ios
 
 test-android: build-android
 	cd packages/kos-mobile/android && ./gradlew lib:testDebugUnitTest
+
+uniffi-wasm:
+	cd packages/kos-mobile && cargo build --target wasm32-unknown-unknown --no-default-features --features wasm --release

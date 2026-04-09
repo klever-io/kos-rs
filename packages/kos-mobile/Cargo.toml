@@ -12,7 +12,9 @@ version.workspace = true
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [features]
-default = ["serde"]
+default = ["serde", "native"]
+native = ["ecies", "lwk_common", "lwk_signer", "lwk_wollet"]
+wasm = ["uniffi/wasm-unstable-single-threaded"]
 
 [[bin]]
 name = "uniffi-bindgen"
@@ -29,11 +31,11 @@ uniffi = { workspace = true, features = ["cli"] }
 serde = { workspace = true, features = ["derive"], optional = true }
 num-bigint = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false }
-lwk_common = { workspace = true }
-lwk_signer = { workspace = true }
-lwk_wollet = { workspace = true }
+lwk_common = { workspace = true, optional = true }
+lwk_signer = { workspace = true, optional = true }
+lwk_wollet = { workspace = true, optional = true }
 anyhow = { version = "1.0.96", default-features = false }
-ecies = { workspace = true }
+ecies = { workspace = true, optional = true }
 bigdecimal = { version = "0.4.7", default-features = false }
 
 
