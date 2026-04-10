@@ -4,7 +4,6 @@ resolver = "2"
 members = [
     "packages/kos",
     "packages/kos-mobile",
-    "packages/kos-web",
     "packages/kos-hardware",
     "packages/kos-codec",
 ]

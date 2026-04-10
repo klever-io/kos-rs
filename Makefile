@@ -26,10 +26,16 @@ grcov:
 # grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing --ignore "/*" -o lcov.info
 
 webpack:
-	wasm-pack build --scope klever --target web --out-name index --out-dir ../../packages/kos-web/demo/kos ./packages/kos-web
+	cd packages/kos-mobile && \
+	wasm-pack build --scope klever --target web --release --no-default-features --features wasm && \
+	cp -r pkg/* demo/kos/ && rm -rf pkg && cd demo/kos && \
+	for f in kos_mobile*; do mv "$$f" "$${f/kos_mobile/index}"; done && rm -rf kos_mobile*
 
 webpack-npm:
-	wasm-pack build --scope klever --target bundler --release --out-name index --out-dir ../../packages/kos-web/demo/kos ./packages/kos-web
+	cd packages/kos-mobile && \
+	wasm-pack build --scope klever --target bundler --release --no-default-features --features wasm && \
+	cp -r pkg/* demo/kos/ && rm -rf pkg && cd demo/kos && \
+	for f in kos_mobile*; do mv "$$f" "$${f/kos_mobile/index}"; done && rm -rf kos_mobile*
 
 clean-mobile-build:
 	cd packages/kos-mobile && ./build_clean.sh
@@ -76,6 +82,3 @@ test-ios: build-ios
 
 test-android: build-android
 	cd packages/kos-mobile/android && ./gradlew lib:testDebugUnitTest
-
-uniffi-wasm:
-	cd packages/kos-mobile && cargo build --target wasm32-unknown-unknown --no-default-features --features wasm --release
