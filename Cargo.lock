@@ -2973,7 +2973,7 @@ dependencies = [
 
 [[package]]
 name = "kos"
-version = "0.2.41"
+version = "0.3.0"
 dependencies = [
  "aes",
  "aes-gcm",
@@ -3007,7 +3007,7 @@ dependencies = [
 
 [[package]]
 name = "kos-codec"
-version = "0.2.41"
+version = "0.3.0"
 dependencies = [
  "alloy-dyn-abi",
  "base32",
@@ -3039,7 +3039,7 @@ dependencies = [
 
 [[package]]
 name = "kos-hardware"
-version = "0.2.41"
+version = "0.3.0"
 dependencies = [
  "kos",
  "tiny-json-rs",
@@ -3047,7 +3047,7 @@ dependencies = [
 
 [[package]]
 name = "kos-mobile"
-version = "0.2.41"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "bigdecimal",
@@ -3067,8 +3067,9 @@ dependencies = [
 
 [[package]]
 name = "kos-web"
-version = "0.2.41"
+version = "0.3.0"
 dependencies = [
+ "bigdecimal",
  "enum_delegate",
  "enum_dispatch",
  "hex",
@@ -3084,6 +3085,7 @@ dependencies = [
  "serde-wasm-bindgen",
  "serde_json",
  "strum",
+ "thiserror 1.0.69",
  "wasm-bindgen",
 ]
 
@@ -3947,9 +3949,9 @@ dependencies = [
 
 [[package]]
 name = "quinn-proto"
-version = "0.11.13"
+version = "0.11.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1906b49b0c3bc04b5fe5d86a77925ae6524a19b816ae38ce1e426255f1d8a31"
+checksum = "434b42fec591c96ef50e21e886936e66d3cc3f737104fdb9b737c40ffb94c098"
 dependencies = [
  "bytes",
  "getrandom 0.3.4",
@@ -4384,9 +4386,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-webpki"
-version = "0.103.9"
+version = "0.103.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7df23109aa6c1567d1c575b9952556388da57401e4ace1d15f79eedad0d8f53"
+checksum = "df33b2b81ac578cabaf06b89b0631153a3f416b0a886e8a7a1707fb51abbd1ef"
 dependencies = [
  "ring",
  "rustls-pki-types",
