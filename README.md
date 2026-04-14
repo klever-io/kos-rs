@@ -1,4 +1,4 @@
-# Klever Wallet Library for Rust (kos-rs)
+0xfaa9ff80d01d6dfdbaad1ef46f19f1ad6fa9ac64# Klever Wallet Library for Rust (kos-rs)
 
 kos-rs is an open-source library crafted to deliver fundamental low-level crypto-wallet capabilities for blockchain
 actions and transactions. Built with Rust, it ensures top-tier security and versatile platform adaptability, positioning
