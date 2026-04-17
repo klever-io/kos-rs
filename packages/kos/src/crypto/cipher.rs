@@ -353,11 +353,8 @@ pub fn create_encrypted_certificate_pem(
 }
 
 pub fn create_checksum(password: &str) -> String {
-    let rng = rand::thread_rng();
-    let salt = SaltString::generate(rng);
-    let password_hash = pbkdf2::Pbkdf2
-        .hash_password(password.as_bytes(), &salt)
-        .unwrap();
+    let salt = SaltString::generate(&mut OsRng);
+    let password_hash = Pbkdf2.hash_password(password.as_bytes(), &salt).unwrap();
 
     password_hash.to_string()
 }
@@ -397,7 +394,8 @@ pub fn decrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, 
 
 pub fn gcm_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
     // Derive key from password
-    let salt: [u8; 32] = rand::thread_rng().gen();
+    let mut salt = [0u8; 32];
+    rand::rng().fill_bytes(&mut salt);
     let derived_key = derive_key(&salt, password, iterations);
     let key = Key::<Aes256Gcm>::from_slice(&derived_key);
     let cipher = Aes256Gcm::new(key);
@@ -441,7 +439,8 @@ pub fn gcm_decrypt(
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 pub fn cbc_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
-    let iv: [u8; IV_SIZE] = rand::thread_rng().gen();
+    let mut iv = [0u8; IV_SIZE];
+    rand::rng().fill_bytes(&mut iv);
     let derived_key = derive_key(&iv, password, iterations); // KeySize [u8; 32]
     let key = GenericArray::from_slice(&derived_key);
 
@@ -460,7 +459,8 @@ pub fn cbc_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u
     hmac_input.extend_from_slice(&iv);
     hmac_input.extend_from_slice(ct);
 
-    let hmac_salt: [u8; 32] = rand::thread_rng().gen();
+    let mut hmac_salt = [0u8; 32];
+    rand::rng().fill_bytes(&mut hmac_salt);
     let hmac_key = derive_key(&hmac_salt, password, iterations);
 
     let mut mac: Hmac<Sha256> = <Hmac<Sha256> as KeyInit>::new_from_slice(&hmac_key)
@@ -523,7 +523,8 @@ pub fn cbc_decrypt(
 type Aes256CfbEnc = cfb_mode::Encryptor<aes::Aes256>;
 type Aes256CfbDec = cfb_mode::Decryptor<aes::Aes256>;
 pub fn cfb_encrypt(data: &[u8], password: &str, iterations: u32) -> Result<Vec<u8>, ChainError> {
-    let iv: [u8; IV_SIZE] = rand::thread_rng().gen();
+    let mut iv = [0u8; IV_SIZE];
+    rand::rng().fill_bytes(&mut iv);
     let derived_key = derive_key(&iv, password, iterations); //  KeySize [u8; 32]
     let key = GenericArray::from_slice(&derived_key);
 

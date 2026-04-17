@@ -28,9 +28,8 @@ ed25519-dalek = { version = "2.1.0", features = ["hazmat"], default-features = f
 pbkdf2 = { version = "0.12.2", features = ["sha2", "hmac", "password-hash"], default-features = false }
 bip39-dict = { version = "0.1.0", features = ["english"], default-features = false }
 libsecp256k1 = { version = "0.7.1", features = ["hmac", "static-context"], default-features = false }
-rand_core = { version = "0.6.4", default-features = false }
-
-rand = { workspace = true, optional = true }
+rand_core = { version = "0.10.1", default-features = false }
+rand = { version = "0.10.1", optional = true }
 coins-bip32 = { workspace = true, optional = true }
 coins-bip39 = { workspace = true, optional = true }
 getrandom = { version = "0.2", features = ["js"], optional = true }
@@ -44,16 +43,12 @@ cbc = { version = "0.1", features = ["block-padding", "std"], optional = true }
 serde = { version = "1.0.215", features = ["derive"], optional = true }
 base32 = { version = "0.5.1" }
 
-
-
-
 [features]
 default = ["not-ksafe"]
 not-ksafe = [
     "rand",
     "coins-bip32",
     "coins-bip39",
-    "rand_core/getrandom",
     "getrandom",
     "alloy-dyn-abi",
     "serde_json",

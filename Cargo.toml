@@ -51,8 +51,8 @@ version = "0.3.0"
 
 [workspace.dependencies]
 bech32 = "0.9.1"
-sha2 = { version = "0.10" }
-sha3 = { version = "0.10" }
+sha2 = { version = "0.11.0" }
+sha3 = { version = "0.11.0" }
 hmac = { version = "0.12" }
 secp256k1 = { version = "0.27", features = [
     "recovery",
@@ -60,38 +60,32 @@ secp256k1 = { version = "0.27", features = [
     "bitcoin_hashes",
 ] }
 ed25519-dalek = { version = "2" }
-coins-bip32 = { version = "0.8", default-features = false }
-coins-bip39 = { version = "0.8", default-features = false, features = [
+coins-bip32 = { version = "0.13.0", default-features = false }
+coins-bip39 = { version = "0.13.0", default-features = false, features = [
     "english",
 ] }
 bytes = { version = "1.11.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
-rand = "0.8"
-
+rand = "0.10.1"
 prost = "0.11"
 prost-types = "0.11"
-
-
 lazy_static = "1.4.0"
-
-
 reqwest = { version = "0.12", default-features = false, features = [
     "rustls-tls",
     "blocking",
     "json",
 ] }
 wasm-bindgen = "0.2"
-uniffi = { version = "0.28.1" }
+uniffi = { version = "0.31.1" }
 enum_delegate = "0.2"
 serde = { version = "1.0", default-features = false }
 serde_json = "1.0"
-thiserror = "1.0"
+thiserror = "2.0.18"
 kos-mobile = { version = "0.3.0", path = "./packages/kos-mobile", default-features = false }
 ecies = { version = "0.2.7", default-features = false, features = ["pure"] }
 kos = { version = "0.3.0", path = "./packages/kos", default-features = false, features = ["not-ksafe"] }
 
 # lightning
-lwk_common = "0.9.0"
-lwk_signer = "0.9.0"
-# lwk_wollet = { git = "https://github.com/breez/lwk", branch = "breez-sdk-liquid-0.6.3" }
-lwk_wollet = "0.9.0"
+lwk_common = "0.16.0"
+lwk_signer = "0.16.0"
+lwk_wollet = "0.16.0"

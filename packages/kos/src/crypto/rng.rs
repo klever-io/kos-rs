@@ -1,5 +1,5 @@
-#[allow(unused_imports)]
-use rand_core::{CryptoRng, Error, RngCore};
+use core::convert::Infallible;
+use rand_core::{CryptoRng, Rng, TryCryptoRng, TryRng};
 
 #[cfg(feature = "ksafe")]
 extern "C" {
@@ -12,44 +12,42 @@ extern "C" {
 struct MyRng;
 
 #[cfg(feature = "ksafe")]
-impl RngCore for MyRng {
-    fn next_u32(&mut self) -> u32 {
+impl TryRng for MyRng {
+    type Error = Infallible;
+
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
         let mut buf = [0u8; 4];
         unsafe {
             random_buffer(buf.as_mut_ptr(), buf.len() as u32);
         }
-        u32::from_ne_bytes(buf)
+        Ok(u32::from_ne_bytes(buf))
     }
 
-    fn next_u64(&mut self) -> u64 {
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
         let mut buf = [0u8; 8];
         unsafe {
             random_buffer(buf.as_mut_ptr(), buf.len() as u32);
         }
-        u64::from_ne_bytes(buf)
+        Ok(u64::from_ne_bytes(buf))
     }
 
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
         unsafe {
             random_buffer(dest.as_mut_ptr(), dest.len() as u32);
         }
-    }
-
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
-        self.fill_bytes(dest);
         Ok(())
     }
 }
 
 #[cfg(feature = "ksafe")]
-impl CryptoRng for MyRng {}
+impl TryCryptoRng for MyRng {}
 
 #[cfg(not(feature = "ksafe"))]
-pub fn getrandom_or_panic() -> impl RngCore + CryptoRng {
+pub fn getrandom_or_panic() -> impl Rng + CryptoRng {
     rand_core::OsRng
 }
 
 #[cfg(feature = "ksafe")]
-pub fn getrandom_or_panic() -> impl RngCore + CryptoRng {
+pub fn getrandom_or_panic() -> impl Rng + CryptoRng {
     MyRng
 }
