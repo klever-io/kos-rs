@@ -1,6 +1,5 @@
 use alloc::vec::Vec;
 use core::fmt::{Display, Formatter};
-use schnorrkel::context::SigningContext;
 use schnorrkel::derive::ChainCode;
 
 const SUBSTRATE_CTX: &[u8; 9] = b"substrate";
@@ -40,11 +39,8 @@ impl Sr25519Trait for Sr25519 {
 
     fn sign(msg: &[u8], pvk: &[u8; 64]) -> Result<Vec<u8>, Sr25519Error> {
         let pvk = schnorrkel::SecretKey::from_bytes(pvk).map_err(|_| Sr25519Error::ErrDerive)?;
-
         let pbk = pvk.to_public();
-        let ctx = SigningContext::new(SUBSTRATE_CTX).bytes(msg);
-        let ctx = schnorrkel::context::attach_rng(ctx, crate::crypto::rng::getrandom_or_panic());
-        let sig = pvk.sign(ctx, &pbk);
+        let sig = pvk.sign_simple(SUBSTRATE_CTX, msg, &pbk);
         Ok(sig.to_bytes().as_slice().to_vec())
     }
 
