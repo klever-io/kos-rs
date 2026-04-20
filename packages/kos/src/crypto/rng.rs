@@ -1,5 +1,7 @@
-use core::convert::Infallible;
-use rand_core::{CryptoRng, Rng, TryCryptoRng, TryRng};
+use rand_core::{CryptoRng, Rng};
+
+#[cfg(feature = "ksafe")]
+use rand_core::{TryCryptoRng, TryRng};
 
 #[cfg(feature = "ksafe")]
 extern "C" {
@@ -13,7 +15,7 @@ struct MyRng;
 
 #[cfg(feature = "ksafe")]
 impl TryRng for MyRng {
-    type Error = Infallible;
+    type Error = core::convert::Infallible;
 
     fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
         let mut buf = [0u8; 4];
@@ -43,11 +45,13 @@ impl TryRng for MyRng {
 impl TryCryptoRng for MyRng {}
 
 #[cfg(not(feature = "ksafe"))]
+#[allow(dead_code)]
 pub fn getrandom_or_panic() -> impl Rng + CryptoRng {
-    rand_core::OsRng
+    rand_core::UnwrapErr(rand::rngs::SysRng)
 }
 
 #[cfg(feature = "ksafe")]
+#[allow(dead_code)]
 pub fn getrandom_or_panic() -> impl Rng + CryptoRng {
     MyRng
 }

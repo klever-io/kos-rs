@@ -3,7 +3,7 @@
 UNAME := $(shell uname)
 
 all: fmt
-	cargo build
+	cargo build -j4
 
 fmt:
 	cargo fmt --all -- --check
@@ -35,7 +35,7 @@ clean-mobile-build:
 	cd packages/kos-mobile && ./build_clean.sh
 
 build-ksafe:
-	cargo build --package kos-hardware --target thumbv7em-none-eabihf --profile hardware
+	cargo build -j4 --package kos-hardware --target thumbv7em-none-eabihf --profile hardware
 
 build-android:
 	cd packages/kos-mobile && ./build_android.sh
