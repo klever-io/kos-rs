@@ -1,4 +1,4 @@
-use rand_core::{CryptoRng, Rng};
+use rand_core::CryptoRng;
 
 #[cfg(feature = "ksafe")]
 use rand_core::{TryCryptoRng, TryRng};
@@ -46,12 +46,12 @@ impl TryCryptoRng for MyRng {}
 
 #[cfg(not(feature = "ksafe"))]
 #[allow(dead_code)]
-pub fn getrandom_or_panic() -> impl Rng + CryptoRng {
+pub fn getrandom_or_panic() -> impl CryptoRng {
     rand_core::UnwrapErr(rand::rngs::SysRng)
 }
 
 #[cfg(feature = "ksafe")]
 #[allow(dead_code)]
-pub fn getrandom_or_panic() -> impl Rng + CryptoRng {
+pub fn getrandom_or_panic() -> impl CryptoRng {
     MyRng
 }
