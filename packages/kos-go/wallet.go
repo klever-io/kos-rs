@@ -1,6 +1,10 @@
 package kosgo
 
-import kos_mobile "github.com/klever-io/kos-rs/packages/kos-go/kos_mobile"
+import (
+	"fmt"
+
+	kos_mobile "github.com/klever-io/kos-rs/packages/kos-go/kos_mobile"
+)
 
 type KosAccount = kos_mobile.KosAccount
 type KosTransaction = kos_mobile.KosTransaction
@@ -61,12 +65,24 @@ func SignTransaction(account KosAccount, raw string, options TransactionChainOpt
 	var actualOpts TransactionChainOptions
 	switch v := options.(type) {
 	case *TransactionChainOptionsBtc:
+		if v == nil {
+			return KosTransaction{}, fmt.Errorf("SignTransaction: nil *TransactionChainOptionsBtc")
+		}
 		actualOpts = *v
 	case *TransactionChainOptionsSubstrate:
+		if v == nil {
+			return KosTransaction{}, fmt.Errorf("SignTransaction: nil *TransactionChainOptionsSubstrate")
+		}
 		actualOpts = *v
 	case *TransactionChainOptionsEvm:
+		if v == nil {
+			return KosTransaction{}, fmt.Errorf("SignTransaction: nil *TransactionChainOptionsEvm")
+		}
 		actualOpts = *v
 	case *TransactionChainOptionsCosmos:
+		if v == nil {
+			return KosTransaction{}, fmt.Errorf("SignTransaction: nil *TransactionChainOptionsCosmos")
+		}
 		actualOpts = *v
 	default:
 		actualOpts = options

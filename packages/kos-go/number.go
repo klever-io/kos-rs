@@ -31,10 +31,16 @@ func NewBigNumberZero() *BigNumber {
 }
 
 func (b *BigNumber) String() string {
+	if b == nil {
+		return ""
+	}
 	return kos_mobile.BigNumberString(b.inner)
 }
 
 func Add(lhs, rhs *BigNumber) (*BigNumber, error) {
+	if lhs == nil || rhs == nil {
+		return nil, fmt.Errorf("nil BigNumber operand")
+	}
 	result, err := kos_mobile.BigNumberAdd(lhs.inner, rhs.inner)
 	if err != nil {
 		return nil, err
@@ -43,6 +49,9 @@ func Add(lhs, rhs *BigNumber) (*BigNumber, error) {
 }
 
 func Sub(lhs, rhs *BigNumber) (*BigNumber, error) {
+	if lhs == nil || rhs == nil {
+		return nil, fmt.Errorf("nil BigNumber operand")
+	}
 	result, err := kos_mobile.BigNumberSubtract(lhs.inner, rhs.inner)
 	if err != nil {
 		return nil, err
@@ -51,6 +60,9 @@ func Sub(lhs, rhs *BigNumber) (*BigNumber, error) {
 }
 
 func Mul(lhs, rhs *BigNumber) (*BigNumber, error) {
+	if lhs == nil || rhs == nil {
+		return nil, fmt.Errorf("nil BigNumber operand")
+	}
 	result, err := kos_mobile.BigNumberMultiply(lhs.inner, rhs.inner)
 	if err != nil {
 		return nil, err
@@ -59,6 +71,9 @@ func Mul(lhs, rhs *BigNumber) (*BigNumber, error) {
 }
 
 func Div(lhs, rhs *BigNumber) (*BigNumber, error) {
+	if lhs == nil || rhs == nil {
+		return nil, fmt.Errorf("nil BigNumber operand")
+	}
 	result, err := kos_mobile.BigNumberDivide(lhs.inner, rhs.inner)
 	if err != nil {
 		return nil, err
@@ -67,6 +82,9 @@ func Div(lhs, rhs *BigNumber) (*BigNumber, error) {
 }
 
 func Pow(base, exp *BigNumber) (*BigNumber, error) {
+	if base == nil || exp == nil {
+		return nil, fmt.Errorf("nil BigNumber operand")
+	}
 	result, err := kos_mobile.BigNumberPow(base.inner, exp.inner)
 	if err != nil {
 		return nil, err
@@ -75,26 +93,44 @@ func Pow(base, exp *BigNumber) (*BigNumber, error) {
 }
 
 func IsEqual(lhs, rhs *BigNumber) bool {
+	if lhs == nil || rhs == nil {
+		return false
+	}
 	return kos_mobile.BigNumberIsEqual(lhs.inner, rhs.inner)
 }
 
 func IsGt(lhs, rhs *BigNumber) bool {
+	if lhs == nil || rhs == nil {
+		return false
+	}
 	return kos_mobile.BigNumberIsGt(lhs.inner, rhs.inner)
 }
 
 func IsGte(lhs, rhs *BigNumber) bool {
+	if lhs == nil || rhs == nil {
+		return false
+	}
 	return kos_mobile.BigNumberIsGte(lhs.inner, rhs.inner)
 }
 
 func IsLt(lhs, rhs *BigNumber) bool {
+	if lhs == nil || rhs == nil {
+		return false
+	}
 	return kos_mobile.BigNumberIsLt(lhs.inner, rhs.inner)
 }
 
 func IsLte(lhs, rhs *BigNumber) bool {
+	if lhs == nil || rhs == nil {
+		return false
+	}
 	return kos_mobile.BigNumberIsLte(lhs.inner, rhs.inner)
 }
 
 func Abs(b *BigNumber) (*BigNumber, error) {
+	if b == nil {
+		return nil, fmt.Errorf("nil BigNumber operand")
+	}
 	result, err := kos_mobile.BigNumberAbsolute(b.inner)
 	if err != nil {
 		return nil, err
@@ -103,10 +139,16 @@ func Abs(b *BigNumber) (*BigNumber, error) {
 }
 
 func IsZero(b *BigNumber) bool {
+	if b == nil {
+		return false
+	}
 	return kos_mobile.BigNumberIsZero(b.inner)
 }
 
 func Increment(b *BigNumber) (*BigNumber, error) {
+	if b == nil {
+		return nil, fmt.Errorf("nil BigNumber operand")
+	}
 	result, err := kos_mobile.BigNumberIncrement(b.inner)
 	if err != nil {
 		return nil, err
@@ -115,6 +157,9 @@ func Increment(b *BigNumber) (*BigNumber, error) {
 }
 
 func Decrement(b *BigNumber) (*BigNumber, error) {
+	if b == nil {
+		return nil, fmt.Errorf("nil BigNumber operand")
+	}
 	result, err := kos_mobile.BigNumberDecrement(b.inner)
 	if err != nil {
 		return nil, err
@@ -123,9 +168,15 @@ func Decrement(b *BigNumber) (*BigNumber, error) {
 }
 
 func IsPositive(b *BigNumber) bool {
+	if b == nil {
+		return false
+	}
 	return kos_mobile.BigNumberIsPositive(b.inner)
 }
 
 func IsNegative(b *BigNumber) bool {
+	if b == nil {
+		return false
+	}
 	return kos_mobile.BigNumberIsNegative(b.inner)
 }

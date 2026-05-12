@@ -24,7 +24,11 @@ func main() {
 
 	rawTx := "0100000002afa8838dbaa03cd3e4fee38bdcb6a428965559ae941dca5a8f91999cfd6d8b0d0100000000ffffffffdb6d60d4a93a95738e72f641bcdd166c94f6e1f439dfe695e40583997284463c0100000000ffffffff0240420f00000000001976a91434bf902df5d66f0e9b89d0f83fbcad638ad19ae988acea970700000000001976a9145bb0ba5ba58cdab459f27f2d29f40e1dd5db238188ac00000000"
 
-	prevScript, _ := hex.DecodeString("76a9145bb0ba5ba58cdab459f27f2d29f40e1dd5db238188ac")
+	prevScript, err := hex.DecodeString("76a9145bb0ba5ba58cdab459f27f2d29f40e1dd5db238188ac")
+	if err != nil {
+		fmt.Printf("failed to decode prevScript: %v\n", err)
+		return
+	}
 	options := kosgo.TransactionChainOptionsBtc{
 		PrevScripts:  [][]byte{prevScript, prevScript},
 		InputAmounts: []uint64{498870, 1001016},
@@ -32,7 +36,8 @@ func main() {
 
 	transaction, err := kosgo.SignTransaction(account, rawTx, options)
 	if err != nil {
-		fmt.Printf("failed to sign transaction: %v", err)
+		fmt.Printf("failed to sign transaction: %v\n", err)
+		return
 	}
 
 	expectedRaw :=

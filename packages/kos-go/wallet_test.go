@@ -236,7 +236,10 @@ func TestWalletShouldSignTransactionBch(t *testing.T) {
 	account, err := GenerateWalletFromMnemonic(testMnemonic, chainID, 0, nil)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
-	prevScript, _ := hex.DecodeString("76a9145bb0ba5ba58cdab459f27f2d29f40e1dd5db238188ac")
+	prevScript, err := hex.DecodeString("76a9145bb0ba5ba58cdab459f27f2d29f40e1dd5db238188ac")
+	if err != nil {
+		t.Fatalf("failed to decode prevScript fixture: %v", err)
+	}
 	options := TransactionChainOptionsBtc{
 		PrevScripts:  [][]byte{prevScript, prevScript},
 		InputAmounts: []uint64{498870, 1001016},
@@ -253,7 +256,10 @@ func TestWalletShouldSignTransactionBtc(t *testing.T) {
 	account, err := GenerateWalletFromMnemonic(testMnemonic, chainID, 0, nil)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
-	prevScript, _ := hex.DecodeString("0014546d5f8e86641e4d1eec5b9155a540d953245e4a")
+	prevScript, err := hex.DecodeString("0014546d5f8e86641e4d1eec5b9155a540d953245e4a")
+	if err != nil {
+		t.Fatalf("failed to decode prevScript fixture: %v", err)
+	}
 	options := TransactionChainOptionsBtc{
 		PrevScripts:  [][]byte{prevScript, prevScript},
 		InputAmounts: []uint64{5000, 10000},
@@ -270,7 +276,10 @@ func TestWalletShouldSignTransactionDash(t *testing.T) {
 	account, err := GenerateWalletFromMnemonic(testMnemonic, chainID, 0, nil)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
-	prevScript, _ := hex.DecodeString("76a914be4232b46086c1d46d12c65eacbd807e87b92a5488ac")
+	prevScript, err := hex.DecodeString("76a914be4232b46086c1d46d12c65eacbd807e87b92a5488ac")
+	if err != nil {
+		t.Fatalf("failed to decode prevScript fixture: %v", err)
+	}
 	options := TransactionChainOptionsBtc{
 		PrevScripts:  [][]byte{prevScript},
 		InputAmounts: []uint64{1013578},
@@ -287,7 +296,10 @@ func TestWalletShouldSignTransactionDoge(t *testing.T) {
 	account, err := GenerateWalletFromMnemonic(testMnemonic, chainID, 0, nil)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
-	prevScript, _ := hex.DecodeString("76a91479975a24fdab613e17cf184bc185071aad17441888ac")
+	prevScript, err := hex.DecodeString("76a91479975a24fdab613e17cf184bc185071aad17441888ac")
+	if err != nil {
+		t.Fatalf("failed to decode prevScript fixture: %v", err)
+	}
 	options := TransactionChainOptionsBtc{
 		PrevScripts:  [][]byte{prevScript},
 		InputAmounts: []uint64{63609889529},
@@ -330,11 +342,23 @@ func TestWalletShouldSignTransactionDot(t *testing.T) {
 	account, err := GenerateWalletFromMnemonic(testMnemonic, chainID, 0, nil)
 	assert.Nil(t, err, "Failed to generate wallet from mnemonic")
 
-	call, _ := hex.DecodeString("0a0300b8c8ac77e723fae060f2dc70d00a591e1127ec07e0e81e2237a823cbe5210d1e02286bee")
-	era, _ := hex.DecodeString("0501")
+	call, err := hex.DecodeString("0a0300b8c8ac77e723fae060f2dc70d00a591e1127ec07e0e81e2237a823cbe5210d1e02286bee")
+	if err != nil {
+		t.Fatalf("failed to decode call fixture: %v", err)
+	}
+	era, err := hex.DecodeString("0501")
+	if err != nil {
+		t.Fatalf("failed to decode era fixture: %v", err)
+	}
 	assetId := "0"
-	blockHash, _ := hex.DecodeString("781cf57533b15a5a13729a33543fd6ae137bce54ef14eb933b0a4813489e7e0a")
-	genesisHash, _ := hex.DecodeString("68d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f")
+	blockHash, err := hex.DecodeString("781cf57533b15a5a13729a33543fd6ae137bce54ef14eb933b0a4813489e7e0a")
+	if err != nil {
+		t.Fatalf("failed to decode blockHash fixture: %v", err)
+	}
+	genesisHash, err := hex.DecodeString("68d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f")
+	if err != nil {
+		t.Fatalf("failed to decode genesisHash fixture: %v", err)
+	}
 	options := TransactionChainOptionsSubstrate{
 		Call:               call,
 		Era:                era,

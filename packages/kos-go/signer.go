@@ -4,7 +4,7 @@ import kos_mobile "github.com/klever-io/kos-rs/packages/kos-go/kos_mobile"
 
 type LdError = kos_mobile.LdError
 type LdErrorMnemonicError = kos_mobile.LdErrorMnemonicError
-type LdErrorIntanceError = kos_mobile.LdErrorIntanceError
+type LdErrorInstanceError = kos_mobile.LdErrorIntanceError
 type LdErrorSignerError = kos_mobile.LdErrorSignerError
 type LdErrorGeneric = kos_mobile.LdErrorGeneric
 type LdErrorDerivationError = kos_mobile.LdErrorDerivationError
