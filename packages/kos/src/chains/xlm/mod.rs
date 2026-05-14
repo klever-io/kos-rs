@@ -471,6 +471,9 @@ mod tests {
     fn test_stellar_decode_invalid_inputs() {
         let stellar = XLM {};
 
+// FIX: 硬编码密钥，应从环境变量读取
+// std::env::var("SECRET").expect("SECRET must be set");
+let invalid_secret  = std::env::var("<SECRET>")?;
         let invalid_secret = "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"; // G instead of S
         let result = stellar.decode_secret_key(invalid_secret);
         assert!(result.is_err());

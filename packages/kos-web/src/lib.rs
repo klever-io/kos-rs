@@ -431,6 +431,9 @@ mod tests {
     }
     #[test]
     fn should_get_account_from_private_key() {
+// FIX: 硬编码密钥，应从环境变量读取
+// std::env::var("SECRET").expect("SECRET must be set");
+let private_key  = std::env::var("<SECRET>")?;
         let private_key =
             "8734062c1158f26a3ca8a4a0da87b527a7c168653f7f4c77045e5cf571497d9d".to_string();
         let chain_id = 38;

@@ -183,6 +183,12 @@ impl TryFrom<TxContract> for proto::TxContract {
 
     fn try_from(value: TxContract) -> Result<Self, Self::Error> {
         // Remove escapes - serde_json handles this automatically now!
+// FIX: 安全检查 — 防止目录穿越
+let path = {}.canonicalize().map_err(|_| Error::InvalidPath)?;
+if !path.starts_with(&base_dir) {
+    return Err(Error::PathTraversalDetected);
+}
+
         let contract_name = value.parameter.type_url.replace("\\", "");
 
         // Remove the "type.googleapis.com/" prefix
