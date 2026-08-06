@@ -69,13 +69,11 @@ fn sign_to_bigint(sign: Sign) -> num_bigint::Sign {
     }
 }
 
-#[uniffi::export]
-fn big_number_new(value: String) -> Result<BigNumber, KOSError> {
+pub fn big_number_new(value: String) -> Result<BigNumber, KOSError> {
     BigNumber::new(&value)
 }
 
-#[uniffi::export]
-fn big_number_new_zero() -> BigNumber {
+pub fn big_number_new_zero() -> BigNumber {
     BigNumber {
         digits: vec![0],
         scale: 0,
@@ -83,8 +81,7 @@ fn big_number_new_zero() -> BigNumber {
     }
 }
 
-#[uniffi::export]
-fn big_number_string(value: BigNumber) -> String {
+pub fn big_number_string(value: BigNumber) -> String {
     value
         .to_bigdecimal()
         .with_scale(32)
@@ -92,8 +89,7 @@ fn big_number_string(value: BigNumber) -> String {
         .to_plain_string()
 }
 
-#[uniffi::export]
-fn big_number_add(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
+pub fn big_number_add(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
     let left: BigDecimal = lhs.to_bigdecimal();
     let right: BigDecimal = rhs.to_bigdecimal();
 
@@ -102,8 +98,7 @@ fn big_number_add(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError>
     Ok(BigNumber::from_bigdecimal(result))
 }
 
-#[uniffi::export]
-fn big_number_subtract(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
+pub fn big_number_subtract(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
     let left: BigDecimal = lhs.to_bigdecimal();
     let right: BigDecimal = rhs.to_bigdecimal();
 
@@ -112,8 +107,7 @@ fn big_number_subtract(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSE
     Ok(BigNumber::from_bigdecimal(result))
 }
 
-#[uniffi::export]
-fn big_number_multiply(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
+pub fn big_number_multiply(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
     let left: BigDecimal = lhs.to_bigdecimal();
     let right: BigDecimal = rhs.to_bigdecimal();
 
@@ -122,8 +116,7 @@ fn big_number_multiply(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSE
     Ok(BigNumber::from_bigdecimal(result))
 }
 
-#[uniffi::export]
-fn big_number_divide(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
+pub fn big_number_divide(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSError> {
     let left: BigDecimal = lhs.to_bigdecimal();
     let right: BigDecimal = rhs.to_bigdecimal();
 
@@ -132,8 +125,7 @@ fn big_number_divide(lhs: BigNumber, rhs: BigNumber) -> Result<BigNumber, KOSErr
     Ok(BigNumber::from_bigdecimal(result))
 }
 
-#[uniffi::export]
-fn big_number_pow(base: BigNumber, exponent: BigNumber) -> Result<BigNumber, KOSError> {
+pub fn big_number_pow(base: BigNumber, exponent: BigNumber) -> Result<BigNumber, KOSError> {
     let exp: BigDecimal = exponent.to_bigdecimal();
     if exp.is_negative() {
         return Err(KOSError::KOSNumber(
@@ -165,67 +157,56 @@ fn big_number_pow(base: BigNumber, exponent: BigNumber) -> Result<BigNumber, KOS
     }
 }
 
-#[uniffi::export]
-fn big_number_is_equal(lhs: BigNumber, rhs: BigNumber) -> bool {
+pub fn big_number_is_equal(lhs: BigNumber, rhs: BigNumber) -> bool {
     lhs.to_bigdecimal() == rhs.to_bigdecimal()
 }
 
-#[uniffi::export]
-fn big_number_is_gt(lhs: BigNumber, rhs: BigNumber) -> bool {
+pub fn big_number_is_gt(lhs: BigNumber, rhs: BigNumber) -> bool {
     lhs.to_bigdecimal() > rhs.to_bigdecimal()
 }
 
-#[uniffi::export]
-fn big_number_is_gte(lhs: BigNumber, rhs: BigNumber) -> bool {
+pub fn big_number_is_gte(lhs: BigNumber, rhs: BigNumber) -> bool {
     lhs.to_bigdecimal() >= rhs.to_bigdecimal()
 }
 
-#[uniffi::export]
-fn big_number_is_lt(lhs: BigNumber, rhs: BigNumber) -> bool {
+pub fn big_number_is_lt(lhs: BigNumber, rhs: BigNumber) -> bool {
     lhs.to_bigdecimal() < rhs.to_bigdecimal()
 }
 
-#[uniffi::export]
-fn big_number_is_lte(lhs: BigNumber, rhs: BigNumber) -> bool {
+pub fn big_number_is_lte(lhs: BigNumber, rhs: BigNumber) -> bool {
     lhs.to_bigdecimal() <= rhs.to_bigdecimal()
 }
 
-#[uniffi::export]
-fn big_number_absolute(value: BigNumber) -> Result<BigNumber, KOSError> {
+pub fn big_number_absolute(value: BigNumber) -> Result<BigNumber, KOSError> {
     let val: BigDecimal = value.to_bigdecimal();
 
     Ok(BigNumber::from_bigdecimal(val.abs()))
 }
 
-#[uniffi::export]
-fn big_number_is_zero(value: BigNumber) -> bool {
+pub fn big_number_is_zero(value: BigNumber) -> bool {
     value.to_bigdecimal().is_zero()
 }
 
-#[uniffi::export]
-fn big_number_increment(value: BigNumber) -> Result<BigNumber, KOSError> {
+pub fn big_number_increment(value: BigNumber) -> Result<BigNumber, KOSError> {
     let val: BigDecimal = value.to_bigdecimal();
     let result: BigDecimal = val + BigDecimal::one();
 
     Ok(BigNumber::from_bigdecimal(result))
 }
 
-#[uniffi::export]
-fn big_number_decrement(value: BigNumber) -> Result<BigNumber, KOSError> {
+pub fn big_number_decrement(value: BigNumber) -> Result<BigNumber, KOSError> {
     let val: BigDecimal = value.to_bigdecimal();
     let result: BigDecimal = val - BigDecimal::one();
 
     Ok(BigNumber::from_bigdecimal(result))
 }
 
-#[uniffi::export]
-fn big_number_is_positive(value: BigNumber) -> bool {
+pub fn big_number_is_positive(value: BigNumber) -> bool {
     let val: BigDecimal = value.to_bigdecimal();
     val.is_positive()
 }
 
-#[uniffi::export]
-fn big_number_is_negative(value: BigNumber) -> bool {
+pub fn big_number_is_negative(value: BigNumber) -> bool {
     let val: BigDecimal = value.to_bigdecimal();
     val.is_negative()
 }

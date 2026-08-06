@@ -96,7 +96,6 @@ fn derive<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
     Ok(data.to_vec())
 }
 
-#[uniffi::export]
 pub fn generate_xpub(
     mnemonic: &str,
     passphrase: &str,
@@ -116,7 +115,6 @@ pub fn generate_xpub(
     Ok(Xpub::from_priv(&secp, &xprv).encode().to_vec())
 }
 
-#[uniffi::export]
 pub fn get_xpub_as_string(
     mnemonic: &str,
     passphrase: &str,
@@ -135,7 +133,6 @@ pub fn get_xpub_as_string(
     Ok(Xpub::from_priv(&secp, &xprv).public_key.to_string())
 }
 
-#[uniffi::export]
 pub fn derive_xpub(
     mnemonic: &str,
     passphrase: &str,
@@ -158,7 +155,6 @@ pub fn derive_xpub(
     Ok(Xpub::from_priv(&secp, &derived).encode().to_vec())
 }
 
-#[uniffi::export]
 pub fn slip77_master_blinding_key(
     mnemonic: &str,
     passphrase: &str,
@@ -170,7 +166,6 @@ pub fn slip77_master_blinding_key(
     Ok(master_blinding_key.as_bytes().to_vec())
 }
 
-#[uniffi::export]
 pub fn sign_ecdsa_recoverable(
     mnemonic: &str,
     passphrase: &str,
@@ -199,7 +194,6 @@ pub fn sign_ecdsa_recoverable(
     Ok(complete_signature)
 }
 
-#[uniffi::export]
 pub fn hmac_sha256(
     mnemonic: &str,
     passphrase: &str,
@@ -222,7 +216,6 @@ pub fn hmac_sha256(
         .to_vec())
 }
 
-#[uniffi::export]
 pub fn ecies_encrypt(
     mnemonic: &str,
     passphrase: &str,
@@ -245,7 +238,6 @@ pub fn ecies_encrypt(
     })
 }
 
-#[uniffi::export]
 pub fn ecies_decrypt(
     mnemonic: &str,
     passphrase: &str,
@@ -266,8 +258,7 @@ pub fn ecies_decrypt(
     })
 }
 
-#[uniffi::export]
-fn sign_ecdsa(
+pub fn sign_ecdsa(
     mnemonic: &str,
     passphrase: &str,
     is_mainnet: bool,

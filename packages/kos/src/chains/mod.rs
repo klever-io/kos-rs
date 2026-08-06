@@ -6,6 +6,7 @@ use crate::chains::btc::BTC;
 use crate::chains::eth::ETH;
 use crate::chains::icp::ICP;
 use crate::chains::klv::KLV;
+use crate::chains::near::NEAR;
 use crate::chains::sol::SOL;
 use crate::chains::substrate::Substrate;
 use crate::chains::sui::SUI;
@@ -33,6 +34,7 @@ pub mod constants;
 pub mod eth;
 pub mod icp;
 pub mod klv;
+pub mod near;
 pub mod sol;
 pub mod substrate;
 pub mod sui;
@@ -372,6 +374,22 @@ pub trait Chain {
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError>;
     fn get_tx_info(&self, raw_tx: Vec<u8>) -> Result<TxInfo, ChainError>;
     fn get_chain_type(&self) -> ChainType;
+    fn decode_private_key(&self, private_key: String) -> Result<Vec<u8>, ChainError> {
+        let key_str = private_key.trim();
+        let hex_str = key_str.strip_prefix("0x").unwrap_or(key_str);
+        hex::decode(hex_str).map_err(|_| ChainError::InvalidPrivateKey)
+    }
+    fn decode_public_key(&self, public_key: String) -> Result<Vec<u8>, ChainError> {
+        let key_str = public_key.trim();
+        let hex_str = key_str.strip_prefix("0x").unwrap_or(key_str);
+        hex::decode(hex_str).map_err(|_| ChainError::InvalidPublicKey)
+    }
+    fn encode_private_key(&self, private_key: Vec<u8>) -> String {
+        hex::encode(private_key)
+    }
+    fn encode_public_key(&self, public_key: Vec<u8>) -> String {
+        hex::encode(public_key)
+    }
 }
 
 type ChainFactory = fn() -> Box<dyn Chain>;
@@ -696,13 +714,6 @@ impl ChainRegistry {
                 },
             ),
             (
-                constants::NEAR,
-                ChainInfo {
-                    factory: || Box::new(ETH::new_eth_based(64, 397, "NEAR", "Near")),
-                    supported: true,
-                },
-            ),
-            (
                 constants::FTM,
                 ChainInfo {
                     factory: || Box::new(ETH::new_eth_based(54, 250, "FTM", "Fantom")),
@@ -741,6 +752,13 @@ impl ChainRegistry {
                 constants::XLM,
                 ChainInfo {
                     factory: || Box::new(xlm::XLM {}),
+                    supported: true,
+                },
+            ),
+            (
+                constants::NEAR,
+                ChainInfo {
+                    factory: || Box::new(NEAR {}),
                     supported: true,
                 },
             ),
@@ -884,4 +902,5 @@ pub enum ChainType {
     BNB,
     XLM,
     IOTA,
+    NEAR,
 }
