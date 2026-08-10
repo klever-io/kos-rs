@@ -1287,7 +1287,7 @@ mod tests {
         let account =
             generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
 
-        let pbk_bytes = hex::decode(&account.public_key).unwrap();
+        let pbk_bytes = decode_public_key(chain_id, account.public_key.clone(), None).unwrap();
         let address = generate_address_from_public_key(chain_id, &pbk_bytes, None).unwrap();
 
         assert_eq!(
