@@ -48,7 +48,7 @@ fn derive_from_mnemonic(
     is_mainnet: bool,
     index: u32,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = mnemonic_to_seed(mnemonic, passphrase).unwrap();
+    let seed = mnemonic_to_seed(mnemonic, passphrase).map_err(|_| LdError::MnemonicError)?;
 
     let network = if is_mainnet {
         Network::Bitcoin
@@ -102,7 +102,7 @@ pub fn generate_xpub(
     is_mainnet: bool,
     index: u32,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
 
     let network = if is_mainnet {
         Network::Bitcoin
@@ -121,7 +121,7 @@ pub fn get_xpub_as_string(
     is_mainnet: bool,
     index: u32,
 ) -> Result<String, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let network = if is_mainnet {
         Network::Bitcoin
     } else {
@@ -140,7 +140,7 @@ pub fn derive_xpub(
     index: u32,
     derivation_path: &str,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let network = if is_mainnet {
         Network::Bitcoin
     } else {
@@ -161,7 +161,7 @@ pub fn slip77_master_blinding_key(
     is_mainnet: bool,
     index: u32,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let master_blinding_key = MasterBlindingKey::from_seed(&seed);
     Ok(master_blinding_key.as_bytes().to_vec())
 }
@@ -173,7 +173,7 @@ pub fn sign_ecdsa_recoverable(
     index: u32,
     msg: Vec<u8>,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
 
     let network = if is_mainnet {
         Network::Bitcoin
@@ -202,7 +202,7 @@ pub fn hmac_sha256(
     derivation_path: &str,
     msg: Vec<u8>,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let xprv = Xpriv::new_master(Network::Bitcoin, &seed).map_err(|_| LdError::IntanceError)?;
     let der: DerivationPath = derivation_path.parse().map_err(|_| LdError::IntanceError)?;
     let priv_key = xprv
@@ -223,7 +223,7 @@ pub fn ecies_encrypt(
     index: u32,
     msg: Vec<u8>,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let network = if is_mainnet {
         Network::Bitcoin
     } else {
@@ -245,7 +245,7 @@ pub fn ecies_decrypt(
     index: u32,
     msg: Vec<u8>,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let network = if is_mainnet {
         Network::Bitcoin
     } else {
@@ -266,7 +266,7 @@ pub fn sign_ecdsa(
     msg: Vec<u8>,
     derivation_path: String,
 ) -> Result<Vec<u8>, LdError> {
-    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index).unwrap();
+    let seed = derive_from_mnemonic(mnemonic, passphrase, is_mainnet, index)?;
     let network = if is_mainnet {
         Network::Bitcoin
     } else {
@@ -315,5 +315,16 @@ mod tests {
         .unwrap();
         print!("{:?}", derived_xpub);
         assert_eq!(derived_xpub.len(), 78);
+    }
+
+    #[test]
+    fn should_fail_sign_ecdsa_with_invalid_mnemonic() {
+        use crate::signer::{sign_ecdsa, LdError};
+        let passphrase = "";
+        let is_mainnet = true;
+        let msg = vec![0u8; 32];
+        let derivation_path = "m/44'/0'/0'/0/0".to_string();
+        let res = sign_ecdsa("invalid mnemonic", passphrase, is_mainnet, 0, msg, derivation_path);
+        assert!(matches!(res, Err(LdError::MnemonicError)));
     }
 }
