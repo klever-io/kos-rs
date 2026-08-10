@@ -31,11 +31,11 @@ rpath = true
 
 [profile.min-size]
 inherits = "release"
-opt-level = "s"         # Optimize for size (s is often better for libs than z)
-strip = "symbols"       # Strip symbols from binary
+opt-level = "z"         # Optimize for minimal size
+strip = true            # Strip all symbols from binary
 panic = "abort"         # Abort on panic
-codegen-units = 1       # More aggressive code merging
-lto = false             # LTO can increase static lib size
+codegen-units = 1       # Single code generation unit for maximum LTO optimization
+lto = true              # Enable Link Time Optimization
 overflow-checks = false # Disable overflow checks for size
 debug = 0               # No debug info
 incremental = false     # Disable incremental compilation

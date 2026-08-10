@@ -348,7 +348,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_absolute()
 		})
-		if checksum != 63402 {
+		if checksum != 7679 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_absolute: UniFFI API checksum mismatch")
 		}
@@ -357,7 +357,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_add()
 		})
-		if checksum != 977 {
+		if checksum != 12982 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_add: UniFFI API checksum mismatch")
 		}
@@ -366,7 +366,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_decrement()
 		})
-		if checksum != 53089 {
+		if checksum != 16704 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_decrement: UniFFI API checksum mismatch")
 		}
@@ -375,7 +375,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_divide()
 		})
-		if checksum != 28107 {
+		if checksum != 13549 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_divide: UniFFI API checksum mismatch")
 		}
@@ -384,7 +384,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_increment()
 		})
-		if checksum != 4952 {
+		if checksum != 48235 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_increment: UniFFI API checksum mismatch")
 		}
@@ -393,7 +393,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_is_equal()
 		})
-		if checksum != 35658 {
+		if checksum != 52144 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_is_equal: UniFFI API checksum mismatch")
 		}
@@ -402,7 +402,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_is_gt()
 		})
-		if checksum != 6998 {
+		if checksum != 19930 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_is_gt: UniFFI API checksum mismatch")
 		}
@@ -411,7 +411,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_is_gte()
 		})
-		if checksum != 1717 {
+		if checksum != 5110 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_is_gte: UniFFI API checksum mismatch")
 		}
@@ -420,7 +420,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_is_lt()
 		})
-		if checksum != 27131 {
+		if checksum != 7869 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_is_lt: UniFFI API checksum mismatch")
 		}
@@ -429,7 +429,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_is_lte()
 		})
-		if checksum != 32874 {
+		if checksum != 29896 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_is_lte: UniFFI API checksum mismatch")
 		}
@@ -438,7 +438,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_is_negative()
 		})
-		if checksum != 23683 {
+		if checksum != 57120 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_is_negative: UniFFI API checksum mismatch")
 		}
@@ -447,7 +447,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_is_positive()
 		})
-		if checksum != 63669 {
+		if checksum != 16383 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_is_positive: UniFFI API checksum mismatch")
 		}
@@ -456,7 +456,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_is_zero()
 		})
-		if checksum != 5388 {
+		if checksum != 60469 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_is_zero: UniFFI API checksum mismatch")
 		}
@@ -465,7 +465,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_multiply()
 		})
-		if checksum != 6873 {
+		if checksum != 63715 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_multiply: UniFFI API checksum mismatch")
 		}
@@ -474,7 +474,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_new()
 		})
-		if checksum != 6951 {
+		if checksum != 43866 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_new: UniFFI API checksum mismatch")
 		}
@@ -483,7 +483,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_new_zero()
 		})
-		if checksum != 17227 {
+		if checksum != 17086 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_new_zero: UniFFI API checksum mismatch")
 		}
@@ -492,7 +492,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_pow()
 		})
-		if checksum != 42826 {
+		if checksum != 62832 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_pow: UniFFI API checksum mismatch")
 		}
@@ -501,7 +501,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_string()
 		})
-		if checksum != 39006 {
+		if checksum != 21171 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_string: UniFFI API checksum mismatch")
 		}
@@ -510,9 +510,27 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_big_number_subtract()
 		})
-		if checksum != 42165 {
+		if checksum != 25455 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_big_number_subtract: UniFFI API checksum mismatch")
+		}
+	}
+	{
+		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
+			return C.uniffi_kos_mobile_checksum_func_decode_private_key()
+		})
+		if checksum != 17204 {
+			// If this happens try cleaning and rebuilding your project
+			panic("kos_mobile: uniffi_kos_mobile_checksum_func_decode_private_key: UniFFI API checksum mismatch")
+		}
+	}
+	{
+		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
+			return C.uniffi_kos_mobile_checksum_func_decode_public_key()
+		})
+		if checksum != 51806 {
+			// If this happens try cleaning and rebuilding your project
+			panic("kos_mobile: uniffi_kos_mobile_checksum_func_decode_public_key: UniFFI API checksum mismatch")
 		}
 	}
 	{
@@ -528,7 +546,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_derive_xpub()
 		})
-		if checksum != 59242 {
+		if checksum != 32584 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_derive_xpub: UniFFI API checksum mismatch")
 		}
@@ -537,7 +555,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_ecies_decrypt()
 		})
-		if checksum != 8486 {
+		if checksum != 11136 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_ecies_decrypt: UniFFI API checksum mismatch")
 		}
@@ -546,9 +564,27 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_ecies_encrypt()
 		})
-		if checksum != 52348 {
+		if checksum != 52317 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_ecies_encrypt: UniFFI API checksum mismatch")
+		}
+	}
+	{
+		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
+			return C.uniffi_kos_mobile_checksum_func_encode_private_key()
+		})
+		if checksum != 56432 {
+			// If this happens try cleaning and rebuilding your project
+			panic("kos_mobile: uniffi_kos_mobile_checksum_func_encode_private_key: UniFFI API checksum mismatch")
+		}
+	}
+	{
+		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
+			return C.uniffi_kos_mobile_checksum_func_encode_public_key()
+		})
+		if checksum != 24897 {
+			// If this happens try cleaning and rebuilding your project
+			panic("kos_mobile: uniffi_kos_mobile_checksum_func_encode_public_key: UniFFI API checksum mismatch")
 		}
 	}
 	{
@@ -580,6 +616,15 @@ func uniffiCheckChecksums() {
 	}
 	{
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
+			return C.uniffi_kos_mobile_checksum_func_generate_address_from_public_key()
+		})
+		if checksum != 60647 {
+			// If this happens try cleaning and rebuilding your project
+			panic("kos_mobile: uniffi_kos_mobile_checksum_func_generate_address_from_public_key: UniFFI API checksum mismatch")
+		}
+	}
+	{
+		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_generate_mnemonic()
 		})
 		if checksum != 27040 {
@@ -591,16 +636,25 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_generate_wallet_from_mnemonic()
 		})
-		if checksum != 30857 {
+		if checksum != 50190 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_generate_wallet_from_mnemonic: UniFFI API checksum mismatch")
 		}
 	}
 	{
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
+			return C.uniffi_kos_mobile_checksum_func_generate_wallet_from_mnemonic_with_path()
+		})
+		if checksum != 18305 {
+			// If this happens try cleaning and rebuilding your project
+			panic("kos_mobile: uniffi_kos_mobile_checksum_func_generate_wallet_from_mnemonic_with_path: UniFFI API checksum mismatch")
+		}
+	}
+	{
+		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_generate_wallet_from_private_key()
 		})
-		if checksum != 1902 {
+		if checksum != 62557 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_generate_wallet_from_private_key: UniFFI API checksum mismatch")
 		}
@@ -609,7 +663,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_generate_xpub()
 		})
-		if checksum != 14878 {
+		if checksum != 1557 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_generate_xpub: UniFFI API checksum mismatch")
 		}
@@ -636,7 +690,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_get_xpub_as_string()
 		})
-		if checksum != 2590 {
+		if checksum != 40171 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_get_xpub_as_string: UniFFI API checksum mismatch")
 		}
@@ -645,7 +699,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_hmac_sha256()
 		})
-		if checksum != 13652 {
+		if checksum != 56098 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_hmac_sha256: UniFFI API checksum mismatch")
 		}
@@ -663,7 +717,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_bitcoin_transaction_options()
 		})
-		if checksum != 41010 {
+		if checksum != 1632 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_bitcoin_transaction_options: UniFFI API checksum mismatch")
 		}
@@ -672,7 +726,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_cosmos_transaction_options()
 		})
-		if checksum != 26941 {
+		if checksum != 53580 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_cosmos_transaction_options: UniFFI API checksum mismatch")
 		}
@@ -681,7 +735,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_eth_wallet_options()
 		})
-		if checksum != 48102 {
+		if checksum != 41571 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_eth_wallet_options: UniFFI API checksum mismatch")
 		}
@@ -690,7 +744,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_evm_transaction_options()
 		})
-		if checksum != 53286 {
+		if checksum != 62015 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_evm_transaction_options: UniFFI API checksum mismatch")
 		}
@@ -699,7 +753,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_icp_wallet_options()
 		})
-		if checksum != 63536 {
+		if checksum != 62141 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_icp_wallet_options: UniFFI API checksum mismatch")
 		}
@@ -708,7 +762,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_substrate_transaction_options()
 		})
-		if checksum != 29579 {
+		if checksum != 40916 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_substrate_transaction_options: UniFFI API checksum mismatch")
 		}
@@ -717,7 +771,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_new_wallet_options()
 		})
-		if checksum != 7184 {
+		if checksum != 53582 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_new_wallet_options: UniFFI API checksum mismatch")
 		}
@@ -726,7 +780,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_sign_ecdsa()
 		})
-		if checksum != 58121 {
+		if checksum != 29776 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_sign_ecdsa: UniFFI API checksum mismatch")
 		}
@@ -735,7 +789,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_sign_ecdsa_recoverable()
 		})
-		if checksum != 64991 {
+		if checksum != 13249 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_sign_ecdsa_recoverable: UniFFI API checksum mismatch")
 		}
@@ -753,7 +807,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_sign_transaction()
 		})
-		if checksum != 20752 {
+		if checksum != 58408 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_sign_transaction: UniFFI API checksum mismatch")
 		}
@@ -762,7 +816,7 @@ func uniffiCheckChecksums() {
 		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
 			return C.uniffi_kos_mobile_checksum_func_slip77_master_blinding_key()
 		})
-		if checksum != 5170 {
+		if checksum != 46344 {
 			// If this happens try cleaning and rebuilding your project
 			panic("kos_mobile: uniffi_kos_mobile_checksum_func_slip77_master_blinding_key: UniFFI API checksum mismatch")
 		}
@@ -999,50 +1053,6 @@ type FfiDestroyerBytes struct{}
 
 func (FfiDestroyerBytes) Destroy(_ []byte) {}
 
-type BigNumber struct {
-	Digits []uint32
-	Scale  int64
-	Sign   Sign
-}
-
-func (r *BigNumber) Destroy() {
-	FfiDestroyerSequenceUint32{}.Destroy(r.Digits)
-	FfiDestroyerInt64{}.Destroy(r.Scale)
-	FfiDestroyerSign{}.Destroy(r.Sign)
-}
-
-type FfiConverterBigNumber struct{}
-
-var FfiConverterBigNumberINSTANCE = FfiConverterBigNumber{}
-
-func (c FfiConverterBigNumber) Lift(rb RustBufferI) BigNumber {
-	return LiftFromRustBuffer[BigNumber](c, rb)
-}
-
-func (c FfiConverterBigNumber) Read(reader io.Reader) BigNumber {
-	return BigNumber{
-		FfiConverterSequenceUint32INSTANCE.Read(reader),
-		FfiConverterInt64INSTANCE.Read(reader),
-		FfiConverterSignINSTANCE.Read(reader),
-	}
-}
-
-func (c FfiConverterBigNumber) Lower(value BigNumber) C.RustBuffer {
-	return LowerIntoRustBuffer[BigNumber](c, value)
-}
-
-func (c FfiConverterBigNumber) Write(writer io.Writer, value BigNumber) {
-	FfiConverterSequenceUint32INSTANCE.Write(writer, value.Digits)
-	FfiConverterInt64INSTANCE.Write(writer, value.Scale)
-	FfiConverterSignINSTANCE.Write(writer, value.Sign)
-}
-
-type FfiDestroyerBigNumber struct{}
-
-func (_ FfiDestroyerBigNumber) Destroy(value BigNumber) {
-	value.Destroy()
-}
-
 type KosAccount struct {
 	ChainId    uint32
 	PrivateKey string
@@ -1184,6 +1194,50 @@ func (c FfiConverterWalletOptions) Write(writer io.Writer, value WalletOptions) 
 type FfiDestroyerWalletOptions struct{}
 
 func (_ FfiDestroyerWalletOptions) Destroy(value WalletOptions) {
+	value.Destroy()
+}
+
+type BigNumber struct {
+	Digits []uint32
+	Scale  int64
+	Sign   Sign
+}
+
+func (r *BigNumber) Destroy() {
+	FfiDestroyerSequenceUint32{}.Destroy(r.Digits)
+	FfiDestroyerInt64{}.Destroy(r.Scale)
+	FfiDestroyerSign{}.Destroy(r.Sign)
+}
+
+type FfiConverterBigNumber struct{}
+
+var FfiConverterBigNumberINSTANCE = FfiConverterBigNumber{}
+
+func (c FfiConverterBigNumber) Lift(rb RustBufferI) BigNumber {
+	return LiftFromRustBuffer[BigNumber](c, rb)
+}
+
+func (c FfiConverterBigNumber) Read(reader io.Reader) BigNumber {
+	return BigNumber{
+		FfiConverterSequenceUint32INSTANCE.Read(reader),
+		FfiConverterInt64INSTANCE.Read(reader),
+		FfiConverterSignINSTANCE.Read(reader),
+	}
+}
+
+func (c FfiConverterBigNumber) Lower(value BigNumber) C.RustBuffer {
+	return LowerIntoRustBuffer[BigNumber](c, value)
+}
+
+func (c FfiConverterBigNumber) Write(writer io.Writer, value BigNumber) {
+	FfiConverterSequenceUint32INSTANCE.Write(writer, value.Digits)
+	FfiConverterInt64INSTANCE.Write(writer, value.Scale)
+	FfiConverterSignINSTANCE.Write(writer, value.Sign)
+}
+
+type FfiDestroyerBigNumber struct{}
+
+func (_ FfiDestroyerBigNumber) Destroy(value BigNumber) {
 	value.Destroy()
 }
 
@@ -1401,6 +1455,249 @@ func (_ FfiDestroyerKosError) Destroy(value *KosError) {
 		_ = variantValue
 		panic(fmt.Sprintf("invalid error value `%v` in FfiDestroyerKosError.Destroy", value))
 	}
+}
+
+type TransactionChainOptions interface {
+	Destroy()
+}
+type TransactionChainOptionsEvm struct {
+	ChainId uint32
+}
+
+func (e TransactionChainOptionsEvm) Destroy() {
+	FfiDestroyerUint32{}.Destroy(e.ChainId)
+}
+
+type TransactionChainOptionsBtc struct {
+	PrevScripts  [][]byte
+	InputAmounts []uint64
+}
+
+func (e TransactionChainOptionsBtc) Destroy() {
+	FfiDestroyerSequenceBytes{}.Destroy(e.PrevScripts)
+	FfiDestroyerSequenceUint64{}.Destroy(e.InputAmounts)
+}
+
+type TransactionChainOptionsSubstrate struct {
+	Call               []byte
+	Era                []byte
+	Nonce              uint32
+	Tip                uint64
+	AssetId            *string
+	BlockHash          []byte
+	GenesisHash        []byte
+	SpecVersion        uint32
+	TransactionVersion uint32
+	AppId              *uint32
+	SignedExtensions   *[]string
+}
+
+func (e TransactionChainOptionsSubstrate) Destroy() {
+	FfiDestroyerBytes{}.Destroy(e.Call)
+	FfiDestroyerBytes{}.Destroy(e.Era)
+	FfiDestroyerUint32{}.Destroy(e.Nonce)
+	FfiDestroyerUint64{}.Destroy(e.Tip)
+	FfiDestroyerOptionalString{}.Destroy(e.AssetId)
+	FfiDestroyerBytes{}.Destroy(e.BlockHash)
+	FfiDestroyerBytes{}.Destroy(e.GenesisHash)
+	FfiDestroyerUint32{}.Destroy(e.SpecVersion)
+	FfiDestroyerUint32{}.Destroy(e.TransactionVersion)
+	FfiDestroyerOptionalUint32{}.Destroy(e.AppId)
+	FfiDestroyerOptionalSequenceString{}.Destroy(e.SignedExtensions)
+}
+
+type TransactionChainOptionsCosmos struct {
+	ChainId       string
+	AccountNumber uint64
+}
+
+func (e TransactionChainOptionsCosmos) Destroy() {
+	FfiDestroyerString{}.Destroy(e.ChainId)
+	FfiDestroyerUint64{}.Destroy(e.AccountNumber)
+}
+
+type FfiConverterTransactionChainOptions struct{}
+
+var FfiConverterTransactionChainOptionsINSTANCE = FfiConverterTransactionChainOptions{}
+
+func (c FfiConverterTransactionChainOptions) Lift(rb RustBufferI) TransactionChainOptions {
+	return LiftFromRustBuffer[TransactionChainOptions](c, rb)
+}
+
+func (c FfiConverterTransactionChainOptions) Lower(value TransactionChainOptions) C.RustBuffer {
+	return LowerIntoRustBuffer[TransactionChainOptions](c, value)
+}
+func (FfiConverterTransactionChainOptions) Read(reader io.Reader) TransactionChainOptions {
+	id := readInt32(reader)
+	switch id {
+	case 1:
+		return TransactionChainOptionsEvm{
+			FfiConverterUint32INSTANCE.Read(reader),
+		}
+	case 2:
+		return TransactionChainOptionsBtc{
+			FfiConverterSequenceBytesINSTANCE.Read(reader),
+			FfiConverterSequenceUint64INSTANCE.Read(reader),
+		}
+	case 3:
+		return TransactionChainOptionsSubstrate{
+			FfiConverterBytesINSTANCE.Read(reader),
+			FfiConverterBytesINSTANCE.Read(reader),
+			FfiConverterUint32INSTANCE.Read(reader),
+			FfiConverterUint64INSTANCE.Read(reader),
+			FfiConverterOptionalStringINSTANCE.Read(reader),
+			FfiConverterBytesINSTANCE.Read(reader),
+			FfiConverterBytesINSTANCE.Read(reader),
+			FfiConverterUint32INSTANCE.Read(reader),
+			FfiConverterUint32INSTANCE.Read(reader),
+			FfiConverterOptionalUint32INSTANCE.Read(reader),
+			FfiConverterOptionalSequenceStringINSTANCE.Read(reader),
+		}
+	case 4:
+		return TransactionChainOptionsCosmos{
+			FfiConverterStringINSTANCE.Read(reader),
+			FfiConverterUint64INSTANCE.Read(reader),
+		}
+	default:
+		panic(fmt.Sprintf("invalid enum value %v in FfiConverterTransactionChainOptions.Read()", id))
+	}
+}
+
+func (FfiConverterTransactionChainOptions) Write(writer io.Writer, value TransactionChainOptions) {
+	switch variant_value := value.(type) {
+	case TransactionChainOptionsEvm:
+		writeInt32(writer, 1)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.ChainId)
+	case TransactionChainOptionsBtc:
+		writeInt32(writer, 2)
+		FfiConverterSequenceBytesINSTANCE.Write(writer, variant_value.PrevScripts)
+		FfiConverterSequenceUint64INSTANCE.Write(writer, variant_value.InputAmounts)
+	case TransactionChainOptionsSubstrate:
+		writeInt32(writer, 3)
+		FfiConverterBytesINSTANCE.Write(writer, variant_value.Call)
+		FfiConverterBytesINSTANCE.Write(writer, variant_value.Era)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.Nonce)
+		FfiConverterUint64INSTANCE.Write(writer, variant_value.Tip)
+		FfiConverterOptionalStringINSTANCE.Write(writer, variant_value.AssetId)
+		FfiConverterBytesINSTANCE.Write(writer, variant_value.BlockHash)
+		FfiConverterBytesINSTANCE.Write(writer, variant_value.GenesisHash)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.SpecVersion)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.TransactionVersion)
+		FfiConverterOptionalUint32INSTANCE.Write(writer, variant_value.AppId)
+		FfiConverterOptionalSequenceStringINSTANCE.Write(writer, variant_value.SignedExtensions)
+	case TransactionChainOptionsCosmos:
+		writeInt32(writer, 4)
+		FfiConverterStringINSTANCE.Write(writer, variant_value.ChainId)
+		FfiConverterUint64INSTANCE.Write(writer, variant_value.AccountNumber)
+	default:
+		_ = variant_value
+		panic(fmt.Sprintf("invalid enum value `%v` in FfiConverterTransactionChainOptions.Write", value))
+	}
+}
+
+type FfiDestroyerTransactionChainOptions struct{}
+
+func (_ FfiDestroyerTransactionChainOptions) Destroy(value TransactionChainOptions) {
+	value.Destroy()
+}
+
+type WalletChainOptions interface {
+	Destroy()
+}
+type WalletChainOptionsCustomEth struct {
+	ChainId uint32
+}
+
+func (e WalletChainOptionsCustomEth) Destroy() {
+	FfiDestroyerUint32{}.Destroy(e.ChainId)
+}
+
+type WalletChainOptionsCustomIcp struct {
+	KeyType string
+}
+
+func (e WalletChainOptionsCustomIcp) Destroy() {
+	FfiDestroyerString{}.Destroy(e.KeyType)
+}
+
+type FfiConverterWalletChainOptions struct{}
+
+var FfiConverterWalletChainOptionsINSTANCE = FfiConverterWalletChainOptions{}
+
+func (c FfiConverterWalletChainOptions) Lift(rb RustBufferI) WalletChainOptions {
+	return LiftFromRustBuffer[WalletChainOptions](c, rb)
+}
+
+func (c FfiConverterWalletChainOptions) Lower(value WalletChainOptions) C.RustBuffer {
+	return LowerIntoRustBuffer[WalletChainOptions](c, value)
+}
+func (FfiConverterWalletChainOptions) Read(reader io.Reader) WalletChainOptions {
+	id := readInt32(reader)
+	switch id {
+	case 1:
+		return WalletChainOptionsCustomEth{
+			FfiConverterUint32INSTANCE.Read(reader),
+		}
+	case 2:
+		return WalletChainOptionsCustomIcp{
+			FfiConverterStringINSTANCE.Read(reader),
+		}
+	default:
+		panic(fmt.Sprintf("invalid enum value %v in FfiConverterWalletChainOptions.Read()", id))
+	}
+}
+
+func (FfiConverterWalletChainOptions) Write(writer io.Writer, value WalletChainOptions) {
+	switch variant_value := value.(type) {
+	case WalletChainOptionsCustomEth:
+		writeInt32(writer, 1)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.ChainId)
+	case WalletChainOptionsCustomIcp:
+		writeInt32(writer, 2)
+		FfiConverterStringINSTANCE.Write(writer, variant_value.KeyType)
+	default:
+		_ = variant_value
+		panic(fmt.Sprintf("invalid enum value `%v` in FfiConverterWalletChainOptions.Write", value))
+	}
+}
+
+type FfiDestroyerWalletChainOptions struct{}
+
+func (_ FfiDestroyerWalletChainOptions) Destroy(value WalletChainOptions) {
+	value.Destroy()
+}
+
+type Sign uint
+
+const (
+	SignMinus  Sign = 1
+	SignNoSign Sign = 2
+	SignPlus   Sign = 3
+)
+
+type FfiConverterSign struct{}
+
+var FfiConverterSignINSTANCE = FfiConverterSign{}
+
+func (c FfiConverterSign) Lift(rb RustBufferI) Sign {
+	return LiftFromRustBuffer[Sign](c, rb)
+}
+
+func (c FfiConverterSign) Lower(value Sign) C.RustBuffer {
+	return LowerIntoRustBuffer[Sign](c, value)
+}
+func (FfiConverterSign) Read(reader io.Reader) Sign {
+	id := readInt32(reader)
+	return Sign(id)
+}
+
+func (FfiConverterSign) Write(writer io.Writer, value Sign) {
+	writeInt32(writer, int32(value))
+}
+
+type FfiDestroyerSign struct{}
+
+func (_ FfiDestroyerSign) Destroy(value Sign) {
 }
 
 type LdError struct {
@@ -1641,249 +1938,6 @@ func (_ FfiDestroyerLdError) Destroy(value *LdError) {
 		_ = variantValue
 		panic(fmt.Sprintf("invalid error value `%v` in FfiDestroyerLdError.Destroy", value))
 	}
-}
-
-type Sign uint
-
-const (
-	SignMinus  Sign = 1
-	SignNoSign Sign = 2
-	SignPlus   Sign = 3
-)
-
-type FfiConverterSign struct{}
-
-var FfiConverterSignINSTANCE = FfiConverterSign{}
-
-func (c FfiConverterSign) Lift(rb RustBufferI) Sign {
-	return LiftFromRustBuffer[Sign](c, rb)
-}
-
-func (c FfiConverterSign) Lower(value Sign) C.RustBuffer {
-	return LowerIntoRustBuffer[Sign](c, value)
-}
-func (FfiConverterSign) Read(reader io.Reader) Sign {
-	id := readInt32(reader)
-	return Sign(id)
-}
-
-func (FfiConverterSign) Write(writer io.Writer, value Sign) {
-	writeInt32(writer, int32(value))
-}
-
-type FfiDestroyerSign struct{}
-
-func (_ FfiDestroyerSign) Destroy(value Sign) {
-}
-
-type TransactionChainOptions interface {
-	Destroy()
-}
-type TransactionChainOptionsEvm struct {
-	ChainId uint32
-}
-
-func (e TransactionChainOptionsEvm) Destroy() {
-	FfiDestroyerUint32{}.Destroy(e.ChainId)
-}
-
-type TransactionChainOptionsBtc struct {
-	PrevScripts  [][]byte
-	InputAmounts []uint64
-}
-
-func (e TransactionChainOptionsBtc) Destroy() {
-	FfiDestroyerSequenceBytes{}.Destroy(e.PrevScripts)
-	FfiDestroyerSequenceUint64{}.Destroy(e.InputAmounts)
-}
-
-type TransactionChainOptionsSubstrate struct {
-	Call               []byte
-	Era                []byte
-	Nonce              uint32
-	Tip                uint64
-	AssetId            *string
-	BlockHash          []byte
-	GenesisHash        []byte
-	SpecVersion        uint32
-	TransactionVersion uint32
-	AppId              *uint32
-	SignedExtensions   *[]string
-}
-
-func (e TransactionChainOptionsSubstrate) Destroy() {
-	FfiDestroyerBytes{}.Destroy(e.Call)
-	FfiDestroyerBytes{}.Destroy(e.Era)
-	FfiDestroyerUint32{}.Destroy(e.Nonce)
-	FfiDestroyerUint64{}.Destroy(e.Tip)
-	FfiDestroyerOptionalString{}.Destroy(e.AssetId)
-	FfiDestroyerBytes{}.Destroy(e.BlockHash)
-	FfiDestroyerBytes{}.Destroy(e.GenesisHash)
-	FfiDestroyerUint32{}.Destroy(e.SpecVersion)
-	FfiDestroyerUint32{}.Destroy(e.TransactionVersion)
-	FfiDestroyerOptionalUint32{}.Destroy(e.AppId)
-	FfiDestroyerOptionalSequenceString{}.Destroy(e.SignedExtensions)
-}
-
-type TransactionChainOptionsCosmos struct {
-	ChainId       string
-	AccountNumber uint64
-}
-
-func (e TransactionChainOptionsCosmos) Destroy() {
-	FfiDestroyerString{}.Destroy(e.ChainId)
-	FfiDestroyerUint64{}.Destroy(e.AccountNumber)
-}
-
-type FfiConverterTransactionChainOptions struct{}
-
-var FfiConverterTransactionChainOptionsINSTANCE = FfiConverterTransactionChainOptions{}
-
-func (c FfiConverterTransactionChainOptions) Lift(rb RustBufferI) TransactionChainOptions {
-	return LiftFromRustBuffer[TransactionChainOptions](c, rb)
-}
-
-func (c FfiConverterTransactionChainOptions) Lower(value TransactionChainOptions) C.RustBuffer {
-	return LowerIntoRustBuffer[TransactionChainOptions](c, value)
-}
-func (FfiConverterTransactionChainOptions) Read(reader io.Reader) TransactionChainOptions {
-	id := readInt32(reader)
-	switch id {
-	case 1:
-		return TransactionChainOptionsEvm{
-			FfiConverterUint32INSTANCE.Read(reader),
-		}
-	case 2:
-		return TransactionChainOptionsBtc{
-			FfiConverterSequenceBytesINSTANCE.Read(reader),
-			FfiConverterSequenceUint64INSTANCE.Read(reader),
-		}
-	case 3:
-		return TransactionChainOptionsSubstrate{
-			FfiConverterBytesINSTANCE.Read(reader),
-			FfiConverterBytesINSTANCE.Read(reader),
-			FfiConverterUint32INSTANCE.Read(reader),
-			FfiConverterUint64INSTANCE.Read(reader),
-			FfiConverterOptionalStringINSTANCE.Read(reader),
-			FfiConverterBytesINSTANCE.Read(reader),
-			FfiConverterBytesINSTANCE.Read(reader),
-			FfiConverterUint32INSTANCE.Read(reader),
-			FfiConverterUint32INSTANCE.Read(reader),
-			FfiConverterOptionalUint32INSTANCE.Read(reader),
-			FfiConverterOptionalSequenceStringINSTANCE.Read(reader),
-		}
-	case 4:
-		return TransactionChainOptionsCosmos{
-			FfiConverterStringINSTANCE.Read(reader),
-			FfiConverterUint64INSTANCE.Read(reader),
-		}
-	default:
-		panic(fmt.Sprintf("invalid enum value %v in FfiConverterTransactionChainOptions.Read()", id))
-	}
-}
-
-func (FfiConverterTransactionChainOptions) Write(writer io.Writer, value TransactionChainOptions) {
-	switch variant_value := value.(type) {
-	case TransactionChainOptionsEvm:
-		writeInt32(writer, 1)
-		FfiConverterUint32INSTANCE.Write(writer, variant_value.ChainId)
-	case TransactionChainOptionsBtc:
-		writeInt32(writer, 2)
-		FfiConverterSequenceBytesINSTANCE.Write(writer, variant_value.PrevScripts)
-		FfiConverterSequenceUint64INSTANCE.Write(writer, variant_value.InputAmounts)
-	case TransactionChainOptionsSubstrate:
-		writeInt32(writer, 3)
-		FfiConverterBytesINSTANCE.Write(writer, variant_value.Call)
-		FfiConverterBytesINSTANCE.Write(writer, variant_value.Era)
-		FfiConverterUint32INSTANCE.Write(writer, variant_value.Nonce)
-		FfiConverterUint64INSTANCE.Write(writer, variant_value.Tip)
-		FfiConverterOptionalStringINSTANCE.Write(writer, variant_value.AssetId)
-		FfiConverterBytesINSTANCE.Write(writer, variant_value.BlockHash)
-		FfiConverterBytesINSTANCE.Write(writer, variant_value.GenesisHash)
-		FfiConverterUint32INSTANCE.Write(writer, variant_value.SpecVersion)
-		FfiConverterUint32INSTANCE.Write(writer, variant_value.TransactionVersion)
-		FfiConverterOptionalUint32INSTANCE.Write(writer, variant_value.AppId)
-		FfiConverterOptionalSequenceStringINSTANCE.Write(writer, variant_value.SignedExtensions)
-	case TransactionChainOptionsCosmos:
-		writeInt32(writer, 4)
-		FfiConverterStringINSTANCE.Write(writer, variant_value.ChainId)
-		FfiConverterUint64INSTANCE.Write(writer, variant_value.AccountNumber)
-	default:
-		_ = variant_value
-		panic(fmt.Sprintf("invalid enum value `%v` in FfiConverterTransactionChainOptions.Write", value))
-	}
-}
-
-type FfiDestroyerTransactionChainOptions struct{}
-
-func (_ FfiDestroyerTransactionChainOptions) Destroy(value TransactionChainOptions) {
-	value.Destroy()
-}
-
-type WalletChainOptions interface {
-	Destroy()
-}
-type WalletChainOptionsCustomEth struct {
-	ChainId uint32
-}
-
-func (e WalletChainOptionsCustomEth) Destroy() {
-	FfiDestroyerUint32{}.Destroy(e.ChainId)
-}
-
-type WalletChainOptionsCustomIcp struct {
-	KeyType string
-}
-
-func (e WalletChainOptionsCustomIcp) Destroy() {
-	FfiDestroyerString{}.Destroy(e.KeyType)
-}
-
-type FfiConverterWalletChainOptions struct{}
-
-var FfiConverterWalletChainOptionsINSTANCE = FfiConverterWalletChainOptions{}
-
-func (c FfiConverterWalletChainOptions) Lift(rb RustBufferI) WalletChainOptions {
-	return LiftFromRustBuffer[WalletChainOptions](c, rb)
-}
-
-func (c FfiConverterWalletChainOptions) Lower(value WalletChainOptions) C.RustBuffer {
-	return LowerIntoRustBuffer[WalletChainOptions](c, value)
-}
-func (FfiConverterWalletChainOptions) Read(reader io.Reader) WalletChainOptions {
-	id := readInt32(reader)
-	switch id {
-	case 1:
-		return WalletChainOptionsCustomEth{
-			FfiConverterUint32INSTANCE.Read(reader),
-		}
-	case 2:
-		return WalletChainOptionsCustomIcp{
-			FfiConverterStringINSTANCE.Read(reader),
-		}
-	default:
-		panic(fmt.Sprintf("invalid enum value %v in FfiConverterWalletChainOptions.Read()", id))
-	}
-}
-
-func (FfiConverterWalletChainOptions) Write(writer io.Writer, value WalletChainOptions) {
-	switch variant_value := value.(type) {
-	case WalletChainOptionsCustomEth:
-		writeInt32(writer, 1)
-		FfiConverterUint32INSTANCE.Write(writer, variant_value.ChainId)
-	case WalletChainOptionsCustomIcp:
-		writeInt32(writer, 2)
-		FfiConverterStringINSTANCE.Write(writer, variant_value.KeyType)
-	default:
-		_ = variant_value
-		panic(fmt.Sprintf("invalid enum value `%v` in FfiConverterWalletChainOptions.Write", value))
-	}
-}
-
-type FfiDestroyerWalletChainOptions struct{}
-
-func (_ FfiDestroyerWalletChainOptions) Destroy(value WalletChainOptions) {
-	value.Destroy()
 }
 
 type FfiConverterOptionalUint32 struct{}
@@ -2470,6 +2524,34 @@ func BigNumberSubtract(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
 	}
 }
 
+func DecodePrivateKey(chainId uint32, privateKey string, options *WalletOptions) ([]byte, error) {
+	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+		return GoRustBuffer{
+			inner: C.uniffi_kos_mobile_fn_func_decode_private_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterStringINSTANCE.Lower(privateKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
+		}
+	})
+	if _uniffiErr != nil {
+		var _uniffiDefaultValue []byte
+		return _uniffiDefaultValue, _uniffiErr
+	} else {
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
+	}
+}
+
+func DecodePublicKey(chainId uint32, publicKey string, options *WalletOptions) ([]byte, error) {
+	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+		return GoRustBuffer{
+			inner: C.uniffi_kos_mobile_fn_func_decode_public_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterStringINSTANCE.Lower(publicKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
+		}
+	})
+	if _uniffiErr != nil {
+		var _uniffiDefaultValue []byte
+		return _uniffiDefaultValue, _uniffiErr
+	} else {
+		return FfiConverterBytesINSTANCE.Lift(_uniffiRV), nil
+	}
+}
+
 func Decrypt(data string, password string, iterations uint32) (string, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
@@ -2526,6 +2608,34 @@ func EciesEncrypt(mnemonic string, passphrase string, isMainnet bool, index uint
 	}
 }
 
+func EncodePrivateKey(chainId uint32, privateKey []byte, options *WalletOptions) (string, error) {
+	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+		return GoRustBuffer{
+			inner: C.uniffi_kos_mobile_fn_func_encode_private_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterBytesINSTANCE.Lower(privateKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
+		}
+	})
+	if _uniffiErr != nil {
+		var _uniffiDefaultValue string
+		return _uniffiDefaultValue, _uniffiErr
+	} else {
+		return FfiConverterStringINSTANCE.Lift(_uniffiRV), nil
+	}
+}
+
+func EncodePublicKey(chainId uint32, publicKey []byte, options *WalletOptions) (string, error) {
+	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+		return GoRustBuffer{
+			inner: C.uniffi_kos_mobile_fn_func_encode_public_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterBytesINSTANCE.Lower(publicKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
+		}
+	})
+	if _uniffiErr != nil {
+		var _uniffiDefaultValue string
+		return _uniffiDefaultValue, _uniffiErr
+	} else {
+		return FfiConverterStringINSTANCE.Lift(_uniffiRV), nil
+	}
+}
+
 func EncryptWithCbc(data string, password string, iterations uint32) (string, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
@@ -2568,6 +2678,20 @@ func EncryptWithGcm(data string, password string, iterations uint32) (string, er
 	}
 }
 
+func GenerateAddressFromPublicKey(chainId uint32, publicKey []byte, options *WalletOptions) (string, error) {
+	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+		return GoRustBuffer{
+			inner: C.uniffi_kos_mobile_fn_func_generate_address_from_public_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterBytesINSTANCE.Lower(publicKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
+		}
+	})
+	if _uniffiErr != nil {
+		var _uniffiDefaultValue string
+		return _uniffiDefaultValue, _uniffiErr
+	} else {
+		return FfiConverterStringINSTANCE.Lift(_uniffiRV), nil
+	}
+}
+
 func GenerateMnemonic(size int32) (string, error) {
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
@@ -2586,6 +2710,20 @@ func GenerateWalletFromMnemonic(mnemonic string, chainId uint32, index uint32, o
 	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_generate_wallet_from_mnemonic(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterUint32INSTANCE.Lower(index), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
+		}
+	})
+	if _uniffiErr != nil {
+		var _uniffiDefaultValue KosAccount
+		return _uniffiDefaultValue, _uniffiErr
+	} else {
+		return FfiConverterKosAccountINSTANCE.Lift(_uniffiRV), nil
+	}
+}
+
+func GenerateWalletFromMnemonicWithPath(mnemonic string, chainId uint32, path string, options *WalletOptions) (KosAccount, error) {
+	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+		return GoRustBuffer{
+			inner: C.uniffi_kos_mobile_fn_func_generate_wallet_from_mnemonic_with_path(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterStringINSTANCE.Lower(path), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
 	})
 	if _uniffiErr != nil {

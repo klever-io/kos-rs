@@ -474,6 +474,16 @@ RustBuffer uniffi_kos_mobile_fn_func_big_number_string(RustBuffer value, RustCal
 RustBuffer uniffi_kos_mobile_fn_func_big_number_subtract(RustBuffer lhs, RustBuffer rhs, RustCallStatus *out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_DECODE_PRIVATE_KEY
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_DECODE_PRIVATE_KEY
+RustBuffer uniffi_kos_mobile_fn_func_decode_private_key(uint32_t chain_id, RustBuffer private_key, RustBuffer options, RustCallStatus *out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_DECODE_PUBLIC_KEY
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_DECODE_PUBLIC_KEY
+RustBuffer uniffi_kos_mobile_fn_func_decode_public_key(uint32_t chain_id, RustBuffer public_key, RustBuffer options, RustCallStatus *out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_DECRYPT
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_DECRYPT
 RustBuffer uniffi_kos_mobile_fn_func_decrypt(RustBuffer data, RustBuffer password, uint32_t iterations, RustCallStatus *out_status
@@ -494,6 +504,16 @@ RustBuffer uniffi_kos_mobile_fn_func_ecies_decrypt(RustBuffer mnemonic, RustBuff
 RustBuffer uniffi_kos_mobile_fn_func_ecies_encrypt(RustBuffer mnemonic, RustBuffer passphrase, int8_t is_mainnet, uint32_t index, RustBuffer msg, RustCallStatus *out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCODE_PRIVATE_KEY
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCODE_PRIVATE_KEY
+RustBuffer uniffi_kos_mobile_fn_func_encode_private_key(uint32_t chain_id, RustBuffer private_key, RustBuffer options, RustCallStatus *out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCODE_PUBLIC_KEY
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCODE_PUBLIC_KEY
+RustBuffer uniffi_kos_mobile_fn_func_encode_public_key(uint32_t chain_id, RustBuffer public_key, RustBuffer options, RustCallStatus *out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_CBC
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_ENCRYPT_WITH_CBC
 RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_cbc(RustBuffer data, RustBuffer password, uint32_t iterations, RustCallStatus *out_status
@@ -509,6 +529,11 @@ RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_cfb(RustBuffer data, RustBuffe
 RustBuffer uniffi_kos_mobile_fn_func_encrypt_with_gcm(RustBuffer data, RustBuffer password, uint32_t iterations, RustCallStatus *out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_ADDRESS_FROM_PUBLIC_KEY
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_ADDRESS_FROM_PUBLIC_KEY
+RustBuffer uniffi_kos_mobile_fn_func_generate_address_from_public_key(uint32_t chain_id, RustBuffer public_key, RustBuffer options, RustCallStatus *out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_MNEMONIC
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_MNEMONIC
 RustBuffer uniffi_kos_mobile_fn_func_generate_mnemonic(int32_t size, RustCallStatus *out_status
@@ -517,6 +542,11 @@ RustBuffer uniffi_kos_mobile_fn_func_generate_mnemonic(int32_t size, RustCallSta
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_WALLET_FROM_MNEMONIC
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_WALLET_FROM_MNEMONIC
 RustBuffer uniffi_kos_mobile_fn_func_generate_wallet_from_mnemonic(RustBuffer mnemonic, uint32_t chain_id, uint32_t index, RustBuffer options, RustCallStatus *out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_WALLET_FROM_MNEMONIC_WITH_PATH
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_WALLET_FROM_MNEMONIC_WITH_PATH
+RustBuffer uniffi_kos_mobile_fn_func_generate_wallet_from_mnemonic_with_path(RustBuffer mnemonic, uint32_t chain_id, RustBuffer path, RustBuffer options, RustCallStatus *out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_FN_FUNC_GENERATE_WALLET_FROM_PRIVATE_KEY
@@ -1014,6 +1044,18 @@ uint16_t uniffi_kos_mobile_checksum_func_big_number_subtract(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_DECODE_PRIVATE_KEY
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_DECODE_PRIVATE_KEY
+uint16_t uniffi_kos_mobile_checksum_func_decode_private_key(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_DECODE_PUBLIC_KEY
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_DECODE_PUBLIC_KEY
+uint16_t uniffi_kos_mobile_checksum_func_decode_public_key(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_DECRYPT
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_DECRYPT
 uint16_t uniffi_kos_mobile_checksum_func_decrypt(void
@@ -1038,6 +1080,18 @@ uint16_t uniffi_kos_mobile_checksum_func_ecies_encrypt(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_ENCODE_PRIVATE_KEY
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_ENCODE_PRIVATE_KEY
+uint16_t uniffi_kos_mobile_checksum_func_encode_private_key(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_ENCODE_PUBLIC_KEY
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_ENCODE_PUBLIC_KEY
+uint16_t uniffi_kos_mobile_checksum_func_encode_public_key(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_ENCRYPT_WITH_CBC
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_ENCRYPT_WITH_CBC
 uint16_t uniffi_kos_mobile_checksum_func_encrypt_with_cbc(void
@@ -1056,6 +1110,12 @@ uint16_t uniffi_kos_mobile_checksum_func_encrypt_with_gcm(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_GENERATE_ADDRESS_FROM_PUBLIC_KEY
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_GENERATE_ADDRESS_FROM_PUBLIC_KEY
+uint16_t uniffi_kos_mobile_checksum_func_generate_address_from_public_key(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_GENERATE_MNEMONIC
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_GENERATE_MNEMONIC
 uint16_t uniffi_kos_mobile_checksum_func_generate_mnemonic(void
@@ -1065,6 +1125,12 @@ uint16_t uniffi_kos_mobile_checksum_func_generate_mnemonic(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_GENERATE_WALLET_FROM_MNEMONIC
 #define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_GENERATE_WALLET_FROM_MNEMONIC
 uint16_t uniffi_kos_mobile_checksum_func_generate_wallet_from_mnemonic(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_GENERATE_WALLET_FROM_MNEMONIC_WITH_PATH
+#define UNIFFI_FFIDEF_UNIFFI_KOS_MOBILE_CHECKSUM_FUNC_GENERATE_WALLET_FROM_MNEMONIC_WITH_PATH
+uint16_t uniffi_kos_mobile_checksum_func_generate_wallet_from_mnemonic_with_path(void
     
 );
 #endif
