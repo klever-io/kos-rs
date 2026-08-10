@@ -3016,7 +3016,6 @@ dependencies = [
  "bech32 0.9.1",
  "bip39-dict",
  "blake2b-ref",
- "bs58",
  "cbc",
  "cfb-mode",
  "coins-bip32",

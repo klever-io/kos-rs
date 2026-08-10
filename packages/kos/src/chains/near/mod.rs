@@ -7,7 +7,7 @@ use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
-use bs58;
+use crate::crypto::b58::{b58dec, b58enc_string};
 
 pub const ID: u32 = 64;
 
@@ -51,7 +51,7 @@ impl Chain for NEAR {
         data_to_encode.extend_from_slice(&private_key);
         data_to_encode.extend_from_slice(&public_key);
 
-        let data_base58 = bs58::encode(&data_to_encode).into_string();
+        let data_base58 = b58enc_string(&data_to_encode);
         let data_with_schema = format!("{}:{data_base58}", util::NearKeySchema::Ed25519);
         Ok(data_with_schema.into_bytes())
     }
@@ -76,15 +76,14 @@ impl Chain for NEAR {
                 Err(ChainError::NotSupported)
             }
             util::NearKeySchema::Ed25519 => {
-                let decoded_bytes = bs58::decode(pvk_base58)
-                    .into_vec()
-                    .map_err(|_| ChainError::InvalidPrivateKey)?;
+                let decoded_bytes =
+                    b58dec(pvk_base58.as_bytes()).map_err(|_| ChainError::InvalidPrivateKey)?;
 
                 let mut pvk_bytes = private_key_from_vec(&decoded_bytes)?;
                 let pbk = Ed25519::public_from_private(&pvk_bytes)?;
                 pvk_bytes.fill(0);
 
-                let pbk_base58 = bs58::encode(&pbk).into_string();
+                let pbk_base58 = b58enc_string(&pbk);
                 let pbk_with_schema = format!("{schema}:{pbk_base58}");
                 Ok(pbk_with_schema.into_bytes())
             }
@@ -105,9 +104,8 @@ impl Chain for NEAR {
                 Err(ChainError::NotSupported)
             }
             util::NearKeySchema::Ed25519 => {
-                let pbk_bytes = bs58::decode(pbk_base58)
-                    .into_vec()
-                    .map_err(|_| ChainError::InvalidPublicKey)?;
+                let pbk_bytes =
+                    b58dec(pbk_base58.as_bytes()).map_err(|_| ChainError::InvalidPublicKey)?;
 
                 if pbk_bytes.len() != 32 {
                     return Err(ChainError::InvalidPublicKey);
@@ -160,9 +158,8 @@ impl Chain for NEAR {
                 Err(ChainError::NotSupported)
             }
             util::NearKeySchema::Ed25519 => {
-                let decoded_bytes = bs58::decode(pvk_base58)
-                    .into_vec()
-                    .map_err(|_| ChainError::InvalidPrivateKey)?;
+                let decoded_bytes =
+                    b58dec(pvk_base58.as_bytes()).map_err(|_| ChainError::InvalidPrivateKey)?;
 
                 let mut pvk_bytes = private_key_from_vec(&decoded_bytes)?;
                 let signature = Ed25519::sign(&pvk_bytes, &payload)?;
@@ -269,7 +266,7 @@ mod test {
 
         // Known raw 32-byte public key (all 0x01 bytes)
         let raw_pubkey = vec![1u8; 32];
-        let pbk_b58 = bs58::encode(&raw_pubkey).into_string();
+        let pbk_b58 = b58enc_string(&raw_pubkey);
         let pbk_formatted = format!("ed25519:{pbk_b58}").into_bytes();
         let addr_from_known = near.get_address(pbk_formatted).unwrap();
         assert_eq!(
@@ -288,7 +285,7 @@ mod test {
         );
 
         // Invalid key length (decoded length != 32 bytes)
-        let short_key = format!("ed25519:{}", bs58::encode(&[1u8; 31]).into_string()).into_bytes();
+        let short_key = format!("ed25519:{}", b58enc_string(&[1u8; 31])).into_bytes();
         assert!(matches!(
             near.get_address(short_key),
             Err(ChainError::InvalidPublicKey)
