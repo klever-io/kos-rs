@@ -2,12 +2,12 @@ mod util;
 
 use crate::chains::util::private_key_from_vec;
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
+use crate::crypto::b58::{b58dec, b58enc_string};
 use crate::crypto::bip32;
 use crate::crypto::ed25519::{Ed25519, Ed25519Trait};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
-use crate::crypto::b58::{b58dec, b58enc_string};
 
 pub const ID: u32 = 64;
 
