@@ -46,7 +46,7 @@ edition = "2021"
 homepage = "https://klever.org/"
 license = "Apache-2.0"
 repository = "https://github.com/klever-io/kos-rs"
-rust-version = "1.87.0"
+rust-version = "1.93.1"
 version = "0.3.1"
 
 [workspace.dependencies]

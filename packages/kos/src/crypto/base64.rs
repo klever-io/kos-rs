@@ -26,7 +26,7 @@ pub fn simple_base64_encode(input: &[u8]) -> alloc::string::String {
         output.push(CHARSET[(temp & 0x3F) as usize] as char);
     }
 
-    while output.len() % 4 != 0 {
+    while !output.len().is_multiple_of(4) {
         output.push('=');
     }
 
