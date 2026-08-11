@@ -13,11 +13,10 @@ use sha2::{Digest, Sha256};
 /// References:
 /// - <https://nomicon.io/RuntimeSpec/Transactions>
 /// - <https://borsh.io/>
-
+///
 // ------------------------------------------------------------------
 // encode_for_sign
 // ------------------------------------------------------------------
-
 /// Compute the signing hash for a NEAR transaction.
 ///
 /// Expects `transaction.raw_data` to contain the Borsh-serialised
