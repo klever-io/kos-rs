@@ -12,7 +12,7 @@ RUN apk add --no-cache \
     protobuf-dev
 
 # Instala o uniffi-bindgen-go com lockfile do repositorio
-RUN cargo install --locked uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.4.0+v0.28.3
+RUN cargo install --locked uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.7.1+v0.31.0
 
 ENV PROTOC_INCLUDE=/usr/include
 ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=gcc

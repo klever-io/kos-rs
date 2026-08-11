@@ -28,7 +28,29 @@ type RustBufferI interface {
 	Capacity() uint64
 }
 
-func RustBufferFromExternal(b RustBufferI) GoRustBuffer {
+// C.RustBuffer fields exposed as an interface so they can be accessed in different Go packages.
+// See https://github.com/golang/go/issues/13467
+type ExternalCRustBuffer interface {
+	Data() unsafe.Pointer
+	Len() uint64
+	Capacity() uint64
+}
+
+func RustBufferFromC(b C.RustBuffer) ExternalCRustBuffer {
+	return GoRustBuffer{
+		inner: b,
+	}
+}
+
+func CFromRustBuffer(b ExternalCRustBuffer) C.RustBuffer {
+	return C.RustBuffer{
+		capacity: C.uint64_t(b.Capacity()),
+		len:      C.uint64_t(b.Len()),
+		data:     (*C.uchar)(b.Data()),
+	}
+}
+
+func RustBufferFromExternal(b ExternalCRustBuffer) GoRustBuffer {
 	return GoRustBuffer{
 		inner: C.RustBuffer{
 			capacity: C.uint64_t(b.Capacity()),
@@ -127,17 +149,18 @@ func LiftFromRustBuffer[GoType any](bufReader BufReader[GoType], rbuf RustBuffer
 	return item
 }
 
-func rustCallWithError[E any, U any](converter BufReader[*E], callback func(*C.RustCallStatus) U) (U, *E) {
+func rustCallWithError[E any, U any](converter BufReader[E], callback func(*C.RustCallStatus) U) (U, E) {
 	var status C.RustCallStatus
 	returnValue := callback(&status)
 	err := checkCallStatus(converter, status)
 	return returnValue, err
 }
 
-func checkCallStatus[E any](converter BufReader[*E], status C.RustCallStatus) *E {
+func checkCallStatus[E any](converter BufReader[E], status C.RustCallStatus) E {
 	switch status.code {
 	case 0:
-		return nil
+		var zero E
+		return zero
 	case 1:
 		return LiftFromRustBuffer(converter, GoRustBuffer{inner: status.errorBuf})
 	case 2:
@@ -335,7 +358,7 @@ func init() {
 
 func uniffiCheckChecksums() {
 	// Get the bindings contract version from our ComponentInterface
-	bindingsContractVersion := 26
+	bindingsContractVersion := 30
 	// Get the scaffolding contract version by calling the into the dylib
 	scaffoldingContractVersion := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint32_t {
 		return C.ffi_kos_mobile_uniffi_contract_version()
@@ -990,6 +1013,10 @@ func (FfiConverterString) Lower(value string) C.RustBuffer {
 	return stringToRustBuffer(value)
 }
 
+func (c FfiConverterString) LowerExternal(value string) ExternalCRustBuffer {
+	return RustBufferFromC(stringToRustBuffer(value))
+}
+
 func (FfiConverterString) Write(writer io.Writer, value string) {
 	if len(value) > math.MaxInt32 {
 		panic("String is too large to fit into Int32")
@@ -1015,6 +1042,10 @@ var FfiConverterBytesINSTANCE = FfiConverterBytes{}
 
 func (c FfiConverterBytes) Lower(value []byte) C.RustBuffer {
 	return LowerIntoRustBuffer[[]byte](c, value)
+}
+
+func (c FfiConverterBytes) LowerExternal(value []byte) ExternalCRustBuffer {
+	return RustBufferFromC(c.Lower(value))
 }
 
 func (c FfiConverterBytes) Write(writer io.Writer, value []byte) {
@@ -1052,6 +1083,54 @@ func (c FfiConverterBytes) Read(reader io.Reader) []byte {
 type FfiDestroyerBytes struct{}
 
 func (FfiDestroyerBytes) Destroy(_ []byte) {}
+
+type BigNumber struct {
+	Digits []uint32
+	Scale  int64
+	Sign   Sign
+}
+
+func (r *BigNumber) Destroy() {
+	FfiDestroyerSequenceUint32{}.Destroy(r.Digits)
+	FfiDestroyerInt64{}.Destroy(r.Scale)
+	FfiDestroyerSign{}.Destroy(r.Sign)
+}
+
+type FfiConverterBigNumber struct{}
+
+var FfiConverterBigNumberINSTANCE = FfiConverterBigNumber{}
+
+func (c FfiConverterBigNumber) Lift(rb RustBufferI) BigNumber {
+	return LiftFromRustBuffer[BigNumber](c, rb)
+}
+
+func (c FfiConverterBigNumber) Read(reader io.Reader) BigNumber {
+	return BigNumber{
+		FfiConverterSequenceUint32INSTANCE.Read(reader),
+		FfiConverterInt64INSTANCE.Read(reader),
+		FfiConverterSignINSTANCE.Read(reader),
+	}
+}
+
+func (c FfiConverterBigNumber) Lower(value BigNumber) C.RustBuffer {
+	return LowerIntoRustBuffer[BigNumber](c, value)
+}
+
+func (c FfiConverterBigNumber) LowerExternal(value BigNumber) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[BigNumber](c, value))
+}
+
+func (c FfiConverterBigNumber) Write(writer io.Writer, value BigNumber) {
+	FfiConverterSequenceUint32INSTANCE.Write(writer, value.Digits)
+	FfiConverterInt64INSTANCE.Write(writer, value.Scale)
+	FfiConverterSignINSTANCE.Write(writer, value.Sign)
+}
+
+type FfiDestroyerBigNumber struct{}
+
+func (_ FfiDestroyerBigNumber) Destroy(value BigNumber) {
+	value.Destroy()
+}
 
 type KosAccount struct {
 	ChainId    uint32
@@ -1092,6 +1171,10 @@ func (c FfiConverterKosAccount) Read(reader io.Reader) KosAccount {
 
 func (c FfiConverterKosAccount) Lower(value KosAccount) C.RustBuffer {
 	return LowerIntoRustBuffer[KosAccount](c, value)
+}
+
+func (c FfiConverterKosAccount) LowerExternal(value KosAccount) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[KosAccount](c, value))
 }
 
 func (c FfiConverterKosAccount) Write(writer io.Writer, value KosAccount) {
@@ -1144,6 +1227,10 @@ func (c FfiConverterKosTransaction) Lower(value KosTransaction) C.RustBuffer {
 	return LowerIntoRustBuffer[KosTransaction](c, value)
 }
 
+func (c FfiConverterKosTransaction) LowerExternal(value KosTransaction) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[KosTransaction](c, value))
+}
+
 func (c FfiConverterKosTransaction) Write(writer io.Writer, value KosTransaction) {
 	FfiConverterUint32INSTANCE.Write(writer, value.ChainId)
 	FfiConverterStringINSTANCE.Write(writer, value.Raw)
@@ -1186,6 +1273,10 @@ func (c FfiConverterWalletOptions) Lower(value WalletOptions) C.RustBuffer {
 	return LowerIntoRustBuffer[WalletOptions](c, value)
 }
 
+func (c FfiConverterWalletOptions) LowerExternal(value WalletOptions) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[WalletOptions](c, value))
+}
+
 func (c FfiConverterWalletOptions) Write(writer io.Writer, value WalletOptions) {
 	FfiConverterBoolINSTANCE.Write(writer, value.UseLegacyPath)
 	FfiConverterOptionalWalletChainOptionsINSTANCE.Write(writer, value.Specific)
@@ -1197,55 +1288,11 @@ func (_ FfiDestroyerWalletOptions) Destroy(value WalletOptions) {
 	value.Destroy()
 }
 
-type BigNumber struct {
-	Digits []uint32
-	Scale  int64
-	Sign   Sign
-}
-
-func (r *BigNumber) Destroy() {
-	FfiDestroyerSequenceUint32{}.Destroy(r.Digits)
-	FfiDestroyerInt64{}.Destroy(r.Scale)
-	FfiDestroyerSign{}.Destroy(r.Sign)
-}
-
-type FfiConverterBigNumber struct{}
-
-var FfiConverterBigNumberINSTANCE = FfiConverterBigNumber{}
-
-func (c FfiConverterBigNumber) Lift(rb RustBufferI) BigNumber {
-	return LiftFromRustBuffer[BigNumber](c, rb)
-}
-
-func (c FfiConverterBigNumber) Read(reader io.Reader) BigNumber {
-	return BigNumber{
-		FfiConverterSequenceUint32INSTANCE.Read(reader),
-		FfiConverterInt64INSTANCE.Read(reader),
-		FfiConverterSignINSTANCE.Read(reader),
-	}
-}
-
-func (c FfiConverterBigNumber) Lower(value BigNumber) C.RustBuffer {
-	return LowerIntoRustBuffer[BigNumber](c, value)
-}
-
-func (c FfiConverterBigNumber) Write(writer io.Writer, value BigNumber) {
-	FfiConverterSequenceUint32INSTANCE.Write(writer, value.Digits)
-	FfiConverterInt64INSTANCE.Write(writer, value.Scale)
-	FfiConverterSignINSTANCE.Write(writer, value.Sign)
-}
-
-type FfiDestroyerBigNumber struct{}
-
-func (_ FfiDestroyerBigNumber) Destroy(value BigNumber) {
-	value.Destroy()
-}
-
 type KosError struct {
 	err error
 }
 
-// Convience method to turn *KosError into error
+// Convenience method to turn *KosError into error
 // Avoiding treating nil pointer as non nil error interface
 func (err *KosError) AsError() error {
 	if err == nil {
@@ -1394,6 +1441,10 @@ func (c FfiConverterKosError) Lower(value *KosError) C.RustBuffer {
 	return LowerIntoRustBuffer[*KosError](c, value)
 }
 
+func (c FfiConverterKosError) LowerExternal(value *KosError) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[*KosError](c, value))
+}
+
 func (c FfiConverterKosError) Read(reader io.Reader) *KosError {
 	errorID := readUint32(reader)
 
@@ -1457,254 +1508,11 @@ func (_ FfiDestroyerKosError) Destroy(value *KosError) {
 	}
 }
 
-type TransactionChainOptions interface {
-	Destroy()
-}
-type TransactionChainOptionsEvm struct {
-	ChainId uint32
-}
-
-func (e TransactionChainOptionsEvm) Destroy() {
-	FfiDestroyerUint32{}.Destroy(e.ChainId)
-}
-
-type TransactionChainOptionsBtc struct {
-	PrevScripts  [][]byte
-	InputAmounts []uint64
-}
-
-func (e TransactionChainOptionsBtc) Destroy() {
-	FfiDestroyerSequenceBytes{}.Destroy(e.PrevScripts)
-	FfiDestroyerSequenceUint64{}.Destroy(e.InputAmounts)
-}
-
-type TransactionChainOptionsSubstrate struct {
-	Call               []byte
-	Era                []byte
-	Nonce              uint32
-	Tip                uint64
-	AssetId            *string
-	BlockHash          []byte
-	GenesisHash        []byte
-	SpecVersion        uint32
-	TransactionVersion uint32
-	AppId              *uint32
-	SignedExtensions   *[]string
-}
-
-func (e TransactionChainOptionsSubstrate) Destroy() {
-	FfiDestroyerBytes{}.Destroy(e.Call)
-	FfiDestroyerBytes{}.Destroy(e.Era)
-	FfiDestroyerUint32{}.Destroy(e.Nonce)
-	FfiDestroyerUint64{}.Destroy(e.Tip)
-	FfiDestroyerOptionalString{}.Destroy(e.AssetId)
-	FfiDestroyerBytes{}.Destroy(e.BlockHash)
-	FfiDestroyerBytes{}.Destroy(e.GenesisHash)
-	FfiDestroyerUint32{}.Destroy(e.SpecVersion)
-	FfiDestroyerUint32{}.Destroy(e.TransactionVersion)
-	FfiDestroyerOptionalUint32{}.Destroy(e.AppId)
-	FfiDestroyerOptionalSequenceString{}.Destroy(e.SignedExtensions)
-}
-
-type TransactionChainOptionsCosmos struct {
-	ChainId       string
-	AccountNumber uint64
-}
-
-func (e TransactionChainOptionsCosmos) Destroy() {
-	FfiDestroyerString{}.Destroy(e.ChainId)
-	FfiDestroyerUint64{}.Destroy(e.AccountNumber)
-}
-
-type FfiConverterTransactionChainOptions struct{}
-
-var FfiConverterTransactionChainOptionsINSTANCE = FfiConverterTransactionChainOptions{}
-
-func (c FfiConverterTransactionChainOptions) Lift(rb RustBufferI) TransactionChainOptions {
-	return LiftFromRustBuffer[TransactionChainOptions](c, rb)
-}
-
-func (c FfiConverterTransactionChainOptions) Lower(value TransactionChainOptions) C.RustBuffer {
-	return LowerIntoRustBuffer[TransactionChainOptions](c, value)
-}
-func (FfiConverterTransactionChainOptions) Read(reader io.Reader) TransactionChainOptions {
-	id := readInt32(reader)
-	switch id {
-	case 1:
-		return TransactionChainOptionsEvm{
-			FfiConverterUint32INSTANCE.Read(reader),
-		}
-	case 2:
-		return TransactionChainOptionsBtc{
-			FfiConverterSequenceBytesINSTANCE.Read(reader),
-			FfiConverterSequenceUint64INSTANCE.Read(reader),
-		}
-	case 3:
-		return TransactionChainOptionsSubstrate{
-			FfiConverterBytesINSTANCE.Read(reader),
-			FfiConverterBytesINSTANCE.Read(reader),
-			FfiConverterUint32INSTANCE.Read(reader),
-			FfiConverterUint64INSTANCE.Read(reader),
-			FfiConverterOptionalStringINSTANCE.Read(reader),
-			FfiConverterBytesINSTANCE.Read(reader),
-			FfiConverterBytesINSTANCE.Read(reader),
-			FfiConverterUint32INSTANCE.Read(reader),
-			FfiConverterUint32INSTANCE.Read(reader),
-			FfiConverterOptionalUint32INSTANCE.Read(reader),
-			FfiConverterOptionalSequenceStringINSTANCE.Read(reader),
-		}
-	case 4:
-		return TransactionChainOptionsCosmos{
-			FfiConverterStringINSTANCE.Read(reader),
-			FfiConverterUint64INSTANCE.Read(reader),
-		}
-	default:
-		panic(fmt.Sprintf("invalid enum value %v in FfiConverterTransactionChainOptions.Read()", id))
-	}
-}
-
-func (FfiConverterTransactionChainOptions) Write(writer io.Writer, value TransactionChainOptions) {
-	switch variant_value := value.(type) {
-	case TransactionChainOptionsEvm:
-		writeInt32(writer, 1)
-		FfiConverterUint32INSTANCE.Write(writer, variant_value.ChainId)
-	case TransactionChainOptionsBtc:
-		writeInt32(writer, 2)
-		FfiConverterSequenceBytesINSTANCE.Write(writer, variant_value.PrevScripts)
-		FfiConverterSequenceUint64INSTANCE.Write(writer, variant_value.InputAmounts)
-	case TransactionChainOptionsSubstrate:
-		writeInt32(writer, 3)
-		FfiConverterBytesINSTANCE.Write(writer, variant_value.Call)
-		FfiConverterBytesINSTANCE.Write(writer, variant_value.Era)
-		FfiConverterUint32INSTANCE.Write(writer, variant_value.Nonce)
-		FfiConverterUint64INSTANCE.Write(writer, variant_value.Tip)
-		FfiConverterOptionalStringINSTANCE.Write(writer, variant_value.AssetId)
-		FfiConverterBytesINSTANCE.Write(writer, variant_value.BlockHash)
-		FfiConverterBytesINSTANCE.Write(writer, variant_value.GenesisHash)
-		FfiConverterUint32INSTANCE.Write(writer, variant_value.SpecVersion)
-		FfiConverterUint32INSTANCE.Write(writer, variant_value.TransactionVersion)
-		FfiConverterOptionalUint32INSTANCE.Write(writer, variant_value.AppId)
-		FfiConverterOptionalSequenceStringINSTANCE.Write(writer, variant_value.SignedExtensions)
-	case TransactionChainOptionsCosmos:
-		writeInt32(writer, 4)
-		FfiConverterStringINSTANCE.Write(writer, variant_value.ChainId)
-		FfiConverterUint64INSTANCE.Write(writer, variant_value.AccountNumber)
-	default:
-		_ = variant_value
-		panic(fmt.Sprintf("invalid enum value `%v` in FfiConverterTransactionChainOptions.Write", value))
-	}
-}
-
-type FfiDestroyerTransactionChainOptions struct{}
-
-func (_ FfiDestroyerTransactionChainOptions) Destroy(value TransactionChainOptions) {
-	value.Destroy()
-}
-
-type WalletChainOptions interface {
-	Destroy()
-}
-type WalletChainOptionsCustomEth struct {
-	ChainId uint32
-}
-
-func (e WalletChainOptionsCustomEth) Destroy() {
-	FfiDestroyerUint32{}.Destroy(e.ChainId)
-}
-
-type WalletChainOptionsCustomIcp struct {
-	KeyType string
-}
-
-func (e WalletChainOptionsCustomIcp) Destroy() {
-	FfiDestroyerString{}.Destroy(e.KeyType)
-}
-
-type FfiConverterWalletChainOptions struct{}
-
-var FfiConverterWalletChainOptionsINSTANCE = FfiConverterWalletChainOptions{}
-
-func (c FfiConverterWalletChainOptions) Lift(rb RustBufferI) WalletChainOptions {
-	return LiftFromRustBuffer[WalletChainOptions](c, rb)
-}
-
-func (c FfiConverterWalletChainOptions) Lower(value WalletChainOptions) C.RustBuffer {
-	return LowerIntoRustBuffer[WalletChainOptions](c, value)
-}
-func (FfiConverterWalletChainOptions) Read(reader io.Reader) WalletChainOptions {
-	id := readInt32(reader)
-	switch id {
-	case 1:
-		return WalletChainOptionsCustomEth{
-			FfiConverterUint32INSTANCE.Read(reader),
-		}
-	case 2:
-		return WalletChainOptionsCustomIcp{
-			FfiConverterStringINSTANCE.Read(reader),
-		}
-	default:
-		panic(fmt.Sprintf("invalid enum value %v in FfiConverterWalletChainOptions.Read()", id))
-	}
-}
-
-func (FfiConverterWalletChainOptions) Write(writer io.Writer, value WalletChainOptions) {
-	switch variant_value := value.(type) {
-	case WalletChainOptionsCustomEth:
-		writeInt32(writer, 1)
-		FfiConverterUint32INSTANCE.Write(writer, variant_value.ChainId)
-	case WalletChainOptionsCustomIcp:
-		writeInt32(writer, 2)
-		FfiConverterStringINSTANCE.Write(writer, variant_value.KeyType)
-	default:
-		_ = variant_value
-		panic(fmt.Sprintf("invalid enum value `%v` in FfiConverterWalletChainOptions.Write", value))
-	}
-}
-
-type FfiDestroyerWalletChainOptions struct{}
-
-func (_ FfiDestroyerWalletChainOptions) Destroy(value WalletChainOptions) {
-	value.Destroy()
-}
-
-type Sign uint
-
-const (
-	SignMinus  Sign = 1
-	SignNoSign Sign = 2
-	SignPlus   Sign = 3
-)
-
-type FfiConverterSign struct{}
-
-var FfiConverterSignINSTANCE = FfiConverterSign{}
-
-func (c FfiConverterSign) Lift(rb RustBufferI) Sign {
-	return LiftFromRustBuffer[Sign](c, rb)
-}
-
-func (c FfiConverterSign) Lower(value Sign) C.RustBuffer {
-	return LowerIntoRustBuffer[Sign](c, value)
-}
-func (FfiConverterSign) Read(reader io.Reader) Sign {
-	id := readInt32(reader)
-	return Sign(id)
-}
-
-func (FfiConverterSign) Write(writer io.Writer, value Sign) {
-	writeInt32(writer, int32(value))
-}
-
-type FfiDestroyerSign struct{}
-
-func (_ FfiDestroyerSign) Destroy(value Sign) {
-}
-
 type LdError struct {
 	err error
 }
 
-// Convience method to turn *LdError into error
+// Convenience method to turn *LdError into error
 // Avoiding treating nil pointer as non nil error interface
 func (err *LdError) AsError() error {
 	if err == nil {
@@ -1871,6 +1679,10 @@ func (c FfiConverterLdError) Lower(value *LdError) C.RustBuffer {
 	return LowerIntoRustBuffer[*LdError](c, value)
 }
 
+func (c FfiConverterLdError) LowerExternal(value *LdError) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[*LdError](c, value))
+}
+
 func (c FfiConverterLdError) Read(reader io.Reader) *LdError {
 	errorID := readUint32(reader)
 
@@ -1940,6 +1752,261 @@ func (_ FfiDestroyerLdError) Destroy(value *LdError) {
 	}
 }
 
+type Sign uint
+
+const (
+	SignMinus  Sign = 1
+	SignNoSign Sign = 2
+	SignPlus   Sign = 3
+)
+
+type FfiConverterSign struct{}
+
+var FfiConverterSignINSTANCE = FfiConverterSign{}
+
+func (c FfiConverterSign) Lift(rb RustBufferI) Sign {
+	return LiftFromRustBuffer[Sign](c, rb)
+}
+
+func (c FfiConverterSign) Lower(value Sign) C.RustBuffer {
+	return LowerIntoRustBuffer[Sign](c, value)
+}
+
+func (c FfiConverterSign) LowerExternal(value Sign) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[Sign](c, value))
+}
+func (FfiConverterSign) Read(reader io.Reader) Sign {
+	id := readInt32(reader)
+	return Sign(id)
+}
+
+func (FfiConverterSign) Write(writer io.Writer, value Sign) {
+	writeInt32(writer, int32(value))
+}
+
+type FfiDestroyerSign struct{}
+
+func (_ FfiDestroyerSign) Destroy(value Sign) {
+}
+
+type TransactionChainOptions interface {
+	Destroy()
+}
+type TransactionChainOptionsEvm struct {
+	ChainId uint32
+}
+
+func (e TransactionChainOptionsEvm) Destroy() {
+	FfiDestroyerUint32{}.Destroy(e.ChainId)
+}
+
+type TransactionChainOptionsBtc struct {
+	PrevScripts  [][]byte
+	InputAmounts []uint64
+}
+
+func (e TransactionChainOptionsBtc) Destroy() {
+	FfiDestroyerSequenceBytes{}.Destroy(e.PrevScripts)
+	FfiDestroyerSequenceUint64{}.Destroy(e.InputAmounts)
+}
+
+type TransactionChainOptionsSubstrate struct {
+	Call               []byte
+	Era                []byte
+	Nonce              uint32
+	Tip                uint64
+	AssetId            *string
+	BlockHash          []byte
+	GenesisHash        []byte
+	SpecVersion        uint32
+	TransactionVersion uint32
+	AppId              *uint32
+	SignedExtensions   *[]string
+}
+
+func (e TransactionChainOptionsSubstrate) Destroy() {
+	FfiDestroyerBytes{}.Destroy(e.Call)
+	FfiDestroyerBytes{}.Destroy(e.Era)
+	FfiDestroyerUint32{}.Destroy(e.Nonce)
+	FfiDestroyerUint64{}.Destroy(e.Tip)
+	FfiDestroyerOptionalString{}.Destroy(e.AssetId)
+	FfiDestroyerBytes{}.Destroy(e.BlockHash)
+	FfiDestroyerBytes{}.Destroy(e.GenesisHash)
+	FfiDestroyerUint32{}.Destroy(e.SpecVersion)
+	FfiDestroyerUint32{}.Destroy(e.TransactionVersion)
+	FfiDestroyerOptionalUint32{}.Destroy(e.AppId)
+	FfiDestroyerOptionalSequenceString{}.Destroy(e.SignedExtensions)
+}
+
+type TransactionChainOptionsCosmos struct {
+	ChainId       string
+	AccountNumber uint64
+}
+
+func (e TransactionChainOptionsCosmos) Destroy() {
+	FfiDestroyerString{}.Destroy(e.ChainId)
+	FfiDestroyerUint64{}.Destroy(e.AccountNumber)
+}
+
+type FfiConverterTransactionChainOptions struct{}
+
+var FfiConverterTransactionChainOptionsINSTANCE = FfiConverterTransactionChainOptions{}
+
+func (c FfiConverterTransactionChainOptions) Lift(rb RustBufferI) TransactionChainOptions {
+	return LiftFromRustBuffer[TransactionChainOptions](c, rb)
+}
+
+func (c FfiConverterTransactionChainOptions) Lower(value TransactionChainOptions) C.RustBuffer {
+	return LowerIntoRustBuffer[TransactionChainOptions](c, value)
+}
+
+func (c FfiConverterTransactionChainOptions) LowerExternal(value TransactionChainOptions) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[TransactionChainOptions](c, value))
+}
+func (FfiConverterTransactionChainOptions) Read(reader io.Reader) TransactionChainOptions {
+	id := readInt32(reader)
+	switch id {
+	case 1:
+		return TransactionChainOptionsEvm{
+			FfiConverterUint32INSTANCE.Read(reader),
+		}
+	case 2:
+		return TransactionChainOptionsBtc{
+			FfiConverterSequenceBytesINSTANCE.Read(reader),
+			FfiConverterSequenceUint64INSTANCE.Read(reader),
+		}
+	case 3:
+		return TransactionChainOptionsSubstrate{
+			FfiConverterBytesINSTANCE.Read(reader),
+			FfiConverterBytesINSTANCE.Read(reader),
+			FfiConverterUint32INSTANCE.Read(reader),
+			FfiConverterUint64INSTANCE.Read(reader),
+			FfiConverterOptionalStringINSTANCE.Read(reader),
+			FfiConverterBytesINSTANCE.Read(reader),
+			FfiConverterBytesINSTANCE.Read(reader),
+			FfiConverterUint32INSTANCE.Read(reader),
+			FfiConverterUint32INSTANCE.Read(reader),
+			FfiConverterOptionalUint32INSTANCE.Read(reader),
+			FfiConverterOptionalSequenceStringINSTANCE.Read(reader),
+		}
+	case 4:
+		return TransactionChainOptionsCosmos{
+			FfiConverterStringINSTANCE.Read(reader),
+			FfiConverterUint64INSTANCE.Read(reader),
+		}
+	default:
+		panic(fmt.Sprintf("invalid enum value %v in FfiConverterTransactionChainOptions.Read()", id))
+	}
+}
+
+func (FfiConverterTransactionChainOptions) Write(writer io.Writer, value TransactionChainOptions) {
+	switch variant_value := value.(type) {
+	case TransactionChainOptionsEvm:
+		writeInt32(writer, 1)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.ChainId)
+	case TransactionChainOptionsBtc:
+		writeInt32(writer, 2)
+		FfiConverterSequenceBytesINSTANCE.Write(writer, variant_value.PrevScripts)
+		FfiConverterSequenceUint64INSTANCE.Write(writer, variant_value.InputAmounts)
+	case TransactionChainOptionsSubstrate:
+		writeInt32(writer, 3)
+		FfiConverterBytesINSTANCE.Write(writer, variant_value.Call)
+		FfiConverterBytesINSTANCE.Write(writer, variant_value.Era)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.Nonce)
+		FfiConverterUint64INSTANCE.Write(writer, variant_value.Tip)
+		FfiConverterOptionalStringINSTANCE.Write(writer, variant_value.AssetId)
+		FfiConverterBytesINSTANCE.Write(writer, variant_value.BlockHash)
+		FfiConverterBytesINSTANCE.Write(writer, variant_value.GenesisHash)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.SpecVersion)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.TransactionVersion)
+		FfiConverterOptionalUint32INSTANCE.Write(writer, variant_value.AppId)
+		FfiConverterOptionalSequenceStringINSTANCE.Write(writer, variant_value.SignedExtensions)
+	case TransactionChainOptionsCosmos:
+		writeInt32(writer, 4)
+		FfiConverterStringINSTANCE.Write(writer, variant_value.ChainId)
+		FfiConverterUint64INSTANCE.Write(writer, variant_value.AccountNumber)
+	default:
+		_ = variant_value
+		panic(fmt.Sprintf("invalid enum value `%v` in FfiConverterTransactionChainOptions.Write", value))
+	}
+}
+
+type FfiDestroyerTransactionChainOptions struct{}
+
+func (_ FfiDestroyerTransactionChainOptions) Destroy(value TransactionChainOptions) {
+	value.Destroy()
+}
+
+type WalletChainOptions interface {
+	Destroy()
+}
+type WalletChainOptionsCustomEth struct {
+	ChainId uint32
+}
+
+func (e WalletChainOptionsCustomEth) Destroy() {
+	FfiDestroyerUint32{}.Destroy(e.ChainId)
+}
+
+type WalletChainOptionsCustomIcp struct {
+	KeyType string
+}
+
+func (e WalletChainOptionsCustomIcp) Destroy() {
+	FfiDestroyerString{}.Destroy(e.KeyType)
+}
+
+type FfiConverterWalletChainOptions struct{}
+
+var FfiConverterWalletChainOptionsINSTANCE = FfiConverterWalletChainOptions{}
+
+func (c FfiConverterWalletChainOptions) Lift(rb RustBufferI) WalletChainOptions {
+	return LiftFromRustBuffer[WalletChainOptions](c, rb)
+}
+
+func (c FfiConverterWalletChainOptions) Lower(value WalletChainOptions) C.RustBuffer {
+	return LowerIntoRustBuffer[WalletChainOptions](c, value)
+}
+
+func (c FfiConverterWalletChainOptions) LowerExternal(value WalletChainOptions) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[WalletChainOptions](c, value))
+}
+func (FfiConverterWalletChainOptions) Read(reader io.Reader) WalletChainOptions {
+	id := readInt32(reader)
+	switch id {
+	case 1:
+		return WalletChainOptionsCustomEth{
+			FfiConverterUint32INSTANCE.Read(reader),
+		}
+	case 2:
+		return WalletChainOptionsCustomIcp{
+			FfiConverterStringINSTANCE.Read(reader),
+		}
+	default:
+		panic(fmt.Sprintf("invalid enum value %v in FfiConverterWalletChainOptions.Read()", id))
+	}
+}
+
+func (FfiConverterWalletChainOptions) Write(writer io.Writer, value WalletChainOptions) {
+	switch variant_value := value.(type) {
+	case WalletChainOptionsCustomEth:
+		writeInt32(writer, 1)
+		FfiConverterUint32INSTANCE.Write(writer, variant_value.ChainId)
+	case WalletChainOptionsCustomIcp:
+		writeInt32(writer, 2)
+		FfiConverterStringINSTANCE.Write(writer, variant_value.KeyType)
+	default:
+		_ = variant_value
+		panic(fmt.Sprintf("invalid enum value `%v` in FfiConverterWalletChainOptions.Write", value))
+	}
+}
+
+type FfiDestroyerWalletChainOptions struct{}
+
+func (_ FfiDestroyerWalletChainOptions) Destroy(value WalletChainOptions) {
+	value.Destroy()
+}
+
 type FfiConverterOptionalUint32 struct{}
 
 var FfiConverterOptionalUint32INSTANCE = FfiConverterOptionalUint32{}
@@ -1958,6 +2025,10 @@ func (_ FfiConverterOptionalUint32) Read(reader io.Reader) *uint32 {
 
 func (c FfiConverterOptionalUint32) Lower(value *uint32) C.RustBuffer {
 	return LowerIntoRustBuffer[*uint32](c, value)
+}
+
+func (c FfiConverterOptionalUint32) LowerExternal(value *uint32) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[*uint32](c, value))
 }
 
 func (_ FfiConverterOptionalUint32) Write(writer io.Writer, value *uint32) {
@@ -1997,6 +2068,10 @@ func (c FfiConverterOptionalString) Lower(value *string) C.RustBuffer {
 	return LowerIntoRustBuffer[*string](c, value)
 }
 
+func (c FfiConverterOptionalString) LowerExternal(value *string) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[*string](c, value))
+}
+
 func (_ FfiConverterOptionalString) Write(writer io.Writer, value *string) {
 	if value == nil {
 		writeInt8(writer, 0)
@@ -2032,6 +2107,10 @@ func (_ FfiConverterOptionalWalletOptions) Read(reader io.Reader) *WalletOptions
 
 func (c FfiConverterOptionalWalletOptions) Lower(value *WalletOptions) C.RustBuffer {
 	return LowerIntoRustBuffer[*WalletOptions](c, value)
+}
+
+func (c FfiConverterOptionalWalletOptions) LowerExternal(value *WalletOptions) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[*WalletOptions](c, value))
 }
 
 func (_ FfiConverterOptionalWalletOptions) Write(writer io.Writer, value *WalletOptions) {
@@ -2071,6 +2150,10 @@ func (c FfiConverterOptionalTransactionChainOptions) Lower(value *TransactionCha
 	return LowerIntoRustBuffer[*TransactionChainOptions](c, value)
 }
 
+func (c FfiConverterOptionalTransactionChainOptions) LowerExternal(value *TransactionChainOptions) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[*TransactionChainOptions](c, value))
+}
+
 func (_ FfiConverterOptionalTransactionChainOptions) Write(writer io.Writer, value *TransactionChainOptions) {
 	if value == nil {
 		writeInt8(writer, 0)
@@ -2108,6 +2191,10 @@ func (c FfiConverterOptionalWalletChainOptions) Lower(value *WalletChainOptions)
 	return LowerIntoRustBuffer[*WalletChainOptions](c, value)
 }
 
+func (c FfiConverterOptionalWalletChainOptions) LowerExternal(value *WalletChainOptions) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[*WalletChainOptions](c, value))
+}
+
 func (_ FfiConverterOptionalWalletChainOptions) Write(writer io.Writer, value *WalletChainOptions) {
 	if value == nil {
 		writeInt8(writer, 0)
@@ -2143,6 +2230,10 @@ func (_ FfiConverterOptionalSequenceString) Read(reader io.Reader) *[]string {
 
 func (c FfiConverterOptionalSequenceString) Lower(value *[]string) C.RustBuffer {
 	return LowerIntoRustBuffer[*[]string](c, value)
+}
+
+func (c FfiConverterOptionalSequenceString) LowerExternal(value *[]string) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[*[]string](c, value))
 }
 
 func (_ FfiConverterOptionalSequenceString) Write(writer io.Writer, value *[]string) {
@@ -2184,6 +2275,10 @@ func (c FfiConverterSequenceUint32) Read(reader io.Reader) []uint32 {
 
 func (c FfiConverterSequenceUint32) Lower(value []uint32) C.RustBuffer {
 	return LowerIntoRustBuffer[[]uint32](c, value)
+}
+
+func (c FfiConverterSequenceUint32) LowerExternal(value []uint32) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[[]uint32](c, value))
 }
 
 func (c FfiConverterSequenceUint32) Write(writer io.Writer, value []uint32) {
@@ -2229,6 +2324,10 @@ func (c FfiConverterSequenceUint64) Lower(value []uint64) C.RustBuffer {
 	return LowerIntoRustBuffer[[]uint64](c, value)
 }
 
+func (c FfiConverterSequenceUint64) LowerExternal(value []uint64) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[[]uint64](c, value))
+}
+
 func (c FfiConverterSequenceUint64) Write(writer io.Writer, value []uint64) {
 	if len(value) > math.MaxInt32 {
 		panic("[]uint64 is too large to fit into Int32")
@@ -2270,6 +2369,10 @@ func (c FfiConverterSequenceString) Read(reader io.Reader) []string {
 
 func (c FfiConverterSequenceString) Lower(value []string) C.RustBuffer {
 	return LowerIntoRustBuffer[[]string](c, value)
+}
+
+func (c FfiConverterSequenceString) LowerExternal(value []string) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[[]string](c, value))
 }
 
 func (c FfiConverterSequenceString) Write(writer io.Writer, value []string) {
@@ -2315,6 +2418,10 @@ func (c FfiConverterSequenceBytes) Lower(value [][]byte) C.RustBuffer {
 	return LowerIntoRustBuffer[[][]byte](c, value)
 }
 
+func (c FfiConverterSequenceBytes) LowerExternal(value [][]byte) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[[][]byte](c, value))
+}
+
 func (c FfiConverterSequenceBytes) Write(writer io.Writer, value [][]byte) {
 	if len(value) > math.MaxInt32 {
 		panic("[][]byte is too large to fit into Int32")
@@ -2335,7 +2442,7 @@ func (FfiDestroyerSequenceBytes) Destroy(sequence [][]byte) {
 }
 
 func BigNumberAbsolute(value BigNumber) (BigNumber, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_absolute(FfiConverterBigNumberINSTANCE.Lower(value), _uniffiStatus),
 		}
@@ -2349,7 +2456,7 @@ func BigNumberAbsolute(value BigNumber) (BigNumber, error) {
 }
 
 func BigNumberAdd(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_add(FfiConverterBigNumberINSTANCE.Lower(lhs), FfiConverterBigNumberINSTANCE.Lower(rhs), _uniffiStatus),
 		}
@@ -2363,7 +2470,7 @@ func BigNumberAdd(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
 }
 
 func BigNumberDecrement(value BigNumber) (BigNumber, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_decrement(FfiConverterBigNumberINSTANCE.Lower(value), _uniffiStatus),
 		}
@@ -2377,7 +2484,7 @@ func BigNumberDecrement(value BigNumber) (BigNumber, error) {
 }
 
 func BigNumberDivide(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_divide(FfiConverterBigNumberINSTANCE.Lower(lhs), FfiConverterBigNumberINSTANCE.Lower(rhs), _uniffiStatus),
 		}
@@ -2391,7 +2498,7 @@ func BigNumberDivide(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
 }
 
 func BigNumberIncrement(value BigNumber) (BigNumber, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_increment(FfiConverterBigNumberINSTANCE.Lower(value), _uniffiStatus),
 		}
@@ -2453,7 +2560,7 @@ func BigNumberIsZero(value BigNumber) bool {
 }
 
 func BigNumberMultiply(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_multiply(FfiConverterBigNumberINSTANCE.Lower(lhs), FfiConverterBigNumberINSTANCE.Lower(rhs), _uniffiStatus),
 		}
@@ -2467,7 +2574,7 @@ func BigNumberMultiply(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
 }
 
 func BigNumberNew(value string) (BigNumber, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_new(FfiConverterStringINSTANCE.Lower(value), _uniffiStatus),
 		}
@@ -2489,7 +2596,7 @@ func BigNumberNewZero() BigNumber {
 }
 
 func BigNumberPow(base BigNumber, exponent BigNumber) (BigNumber, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_pow(FfiConverterBigNumberINSTANCE.Lower(base), FfiConverterBigNumberINSTANCE.Lower(exponent), _uniffiStatus),
 		}
@@ -2511,7 +2618,7 @@ func BigNumberString(value BigNumber) string {
 }
 
 func BigNumberSubtract(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_big_number_subtract(FfiConverterBigNumberINSTANCE.Lower(lhs), FfiConverterBigNumberINSTANCE.Lower(rhs), _uniffiStatus),
 		}
@@ -2525,7 +2632,7 @@ func BigNumberSubtract(lhs BigNumber, rhs BigNumber) (BigNumber, error) {
 }
 
 func DecodePrivateKey(chainId uint32, privateKey string, options *WalletOptions) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_decode_private_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterStringINSTANCE.Lower(privateKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
@@ -2539,7 +2646,7 @@ func DecodePrivateKey(chainId uint32, privateKey string, options *WalletOptions)
 }
 
 func DecodePublicKey(chainId uint32, publicKey string, options *WalletOptions) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_decode_public_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterStringINSTANCE.Lower(publicKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
@@ -2553,7 +2660,7 @@ func DecodePublicKey(chainId uint32, publicKey string, options *WalletOptions) (
 }
 
 func Decrypt(data string, password string, iterations uint32) (string, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_decrypt(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), FfiConverterUint32INSTANCE.Lower(iterations), _uniffiStatus),
 		}
@@ -2567,7 +2674,7 @@ func Decrypt(data string, password string, iterations uint32) (string, error) {
 }
 
 func DeriveXpub(mnemonic string, passphrase string, isMainnet bool, index uint32, derivationPath string) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_derive_xpub(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterStringINSTANCE.Lower(derivationPath), _uniffiStatus),
 		}
@@ -2581,7 +2688,7 @@ func DeriveXpub(mnemonic string, passphrase string, isMainnet bool, index uint32
 }
 
 func EciesDecrypt(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_ecies_decrypt(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBytesINSTANCE.Lower(msg), _uniffiStatus),
 		}
@@ -2595,7 +2702,7 @@ func EciesDecrypt(mnemonic string, passphrase string, isMainnet bool, index uint
 }
 
 func EciesEncrypt(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_ecies_encrypt(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBytesINSTANCE.Lower(msg), _uniffiStatus),
 		}
@@ -2609,7 +2716,7 @@ func EciesEncrypt(mnemonic string, passphrase string, isMainnet bool, index uint
 }
 
 func EncodePrivateKey(chainId uint32, privateKey []byte, options *WalletOptions) (string, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_encode_private_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterBytesINSTANCE.Lower(privateKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
@@ -2623,7 +2730,7 @@ func EncodePrivateKey(chainId uint32, privateKey []byte, options *WalletOptions)
 }
 
 func EncodePublicKey(chainId uint32, publicKey []byte, options *WalletOptions) (string, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_encode_public_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterBytesINSTANCE.Lower(publicKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
@@ -2637,7 +2744,7 @@ func EncodePublicKey(chainId uint32, publicKey []byte, options *WalletOptions) (
 }
 
 func EncryptWithCbc(data string, password string, iterations uint32) (string, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_cbc(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), FfiConverterUint32INSTANCE.Lower(iterations), _uniffiStatus),
 		}
@@ -2651,7 +2758,7 @@ func EncryptWithCbc(data string, password string, iterations uint32) (string, er
 }
 
 func EncryptWithCfb(data string, password string, iterations uint32) (string, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_cfb(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), FfiConverterUint32INSTANCE.Lower(iterations), _uniffiStatus),
 		}
@@ -2665,7 +2772,7 @@ func EncryptWithCfb(data string, password string, iterations uint32) (string, er
 }
 
 func EncryptWithGcm(data string, password string, iterations uint32) (string, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_encrypt_with_gcm(FfiConverterStringINSTANCE.Lower(data), FfiConverterStringINSTANCE.Lower(password), FfiConverterUint32INSTANCE.Lower(iterations), _uniffiStatus),
 		}
@@ -2679,7 +2786,7 @@ func EncryptWithGcm(data string, password string, iterations uint32) (string, er
 }
 
 func GenerateAddressFromPublicKey(chainId uint32, publicKey []byte, options *WalletOptions) (string, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_generate_address_from_public_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterBytesINSTANCE.Lower(publicKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
@@ -2693,7 +2800,7 @@ func GenerateAddressFromPublicKey(chainId uint32, publicKey []byte, options *Wal
 }
 
 func GenerateMnemonic(size int32) (string, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_generate_mnemonic(FfiConverterInt32INSTANCE.Lower(size), _uniffiStatus),
 		}
@@ -2707,7 +2814,7 @@ func GenerateMnemonic(size int32) (string, error) {
 }
 
 func GenerateWalletFromMnemonic(mnemonic string, chainId uint32, index uint32, options *WalletOptions) (KosAccount, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_generate_wallet_from_mnemonic(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterUint32INSTANCE.Lower(index), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
@@ -2721,7 +2828,7 @@ func GenerateWalletFromMnemonic(mnemonic string, chainId uint32, index uint32, o
 }
 
 func GenerateWalletFromMnemonicWithPath(mnemonic string, chainId uint32, path string, options *WalletOptions) (KosAccount, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_generate_wallet_from_mnemonic_with_path(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterStringINSTANCE.Lower(path), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
@@ -2735,7 +2842,7 @@ func GenerateWalletFromMnemonicWithPath(mnemonic string, chainId uint32, path st
 }
 
 func GenerateWalletFromPrivateKey(chainId uint32, privateKey string, options *WalletOptions) (KosAccount, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_generate_wallet_from_private_key(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterStringINSTANCE.Lower(privateKey), FfiConverterOptionalWalletOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
@@ -2749,7 +2856,7 @@ func GenerateWalletFromPrivateKey(chainId uint32, privateKey string, options *Wa
 }
 
 func GenerateXpub(mnemonic string, passphrase string, isMainnet bool, index uint32) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_generate_xpub(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), _uniffiStatus),
 		}
@@ -2763,7 +2870,7 @@ func GenerateXpub(mnemonic string, passphrase string, isMainnet bool, index uint
 }
 
 func GetPathByChain(chainId uint32, index uint32, useLegacyPath bool) (string, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_get_path_by_chain(FfiConverterUint32INSTANCE.Lower(chainId), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBoolINSTANCE.Lower(useLegacyPath), _uniffiStatus),
 		}
@@ -2785,7 +2892,7 @@ func GetSupportedChains() []uint32 {
 }
 
 func GetXpubAsString(mnemonic string, passphrase string, isMainnet bool, index uint32) (string, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_get_xpub_as_string(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), _uniffiStatus),
 		}
@@ -2799,7 +2906,7 @@ func GetXpubAsString(mnemonic string, passphrase string, isMainnet bool, index u
 }
 
 func HmacSha256(mnemonic string, passphrase string, isMainnet bool, index uint32, derivationPath string, msg []byte) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_hmac_sha256(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterStringINSTANCE.Lower(derivationPath), FfiConverterBytesINSTANCE.Lower(msg), _uniffiStatus),
 		}
@@ -2875,7 +2982,7 @@ func NewWalletOptions(useLegacyPath bool) WalletOptions {
 }
 
 func SignEcdsa(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte, derivationPath string) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_sign_ecdsa(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBytesINSTANCE.Lower(msg), FfiConverterStringINSTANCE.Lower(derivationPath), _uniffiStatus),
 		}
@@ -2889,7 +2996,7 @@ func SignEcdsa(mnemonic string, passphrase string, isMainnet bool, index uint32,
 }
 
 func SignEcdsaRecoverable(mnemonic string, passphrase string, isMainnet bool, index uint32, msg []byte) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_sign_ecdsa_recoverable(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), FfiConverterBytesINSTANCE.Lower(msg), _uniffiStatus),
 		}
@@ -2903,7 +3010,7 @@ func SignEcdsaRecoverable(mnemonic string, passphrase string, isMainnet bool, in
 }
 
 func SignMessage(account KosAccount, hex string, legacy bool) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_sign_message(FfiConverterKosAccountINSTANCE.Lower(account), FfiConverterStringINSTANCE.Lower(hex), FfiConverterBoolINSTANCE.Lower(legacy), _uniffiStatus),
 		}
@@ -2917,7 +3024,7 @@ func SignMessage(account KosAccount, hex string, legacy bool) ([]byte, error) {
 }
 
 func SignTransaction(account KosAccount, raw string, options *TransactionChainOptions) (KosTransaction, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*KosError](FfiConverterKosError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_sign_transaction(FfiConverterKosAccountINSTANCE.Lower(account), FfiConverterStringINSTANCE.Lower(raw), FfiConverterOptionalTransactionChainOptionsINSTANCE.Lower(options), _uniffiStatus),
 		}
@@ -2931,7 +3038,7 @@ func SignTransaction(account KosAccount, raw string, options *TransactionChainOp
 }
 
 func Slip77MasterBlindingKey(mnemonic string, passphrase string, isMainnet bool, index uint32) ([]byte, error) {
-	_uniffiRV, _uniffiErr := rustCallWithError[LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+	_uniffiRV, _uniffiErr := rustCallWithError[*LdError](FfiConverterLdError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
 		return GoRustBuffer{
 			inner: C.uniffi_kos_mobile_fn_func_slip77_master_blinding_key(FfiConverterStringINSTANCE.Lower(mnemonic), FfiConverterStringINSTANCE.Lower(passphrase), FfiConverterBoolINSTANCE.Lower(isMainnet), FfiConverterUint32INSTANCE.Lower(index), _uniffiStatus),
 		}
