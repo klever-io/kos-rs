@@ -324,7 +324,14 @@ mod tests {
         let is_mainnet = true;
         let msg = vec![0u8; 32];
         let derivation_path = "m/44'/0'/0'/0/0".to_string();
-        let res = sign_ecdsa("invalid mnemonic", passphrase, is_mainnet, 0, msg, derivation_path);
+        let res = sign_ecdsa(
+            "invalid mnemonic",
+            passphrase,
+            is_mainnet,
+            0,
+            msg,
+            derivation_path,
+        );
         assert!(matches!(res, Err(LdError::MnemonicError)));
     }
 }
