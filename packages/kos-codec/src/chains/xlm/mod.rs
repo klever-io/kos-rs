@@ -1,7 +1,7 @@
 use base64::{engine::general_purpose, Engine as _};
 use kos::chains::{ChainError, Transaction};
 use sha2::{Digest, Sha256};
-use stellar_xdr::curr::{
+use stellar_xdr::{
     BytesM, DecoratedSignature, EnvelopeType, Hash, Limits, ReadXdr, Signature, SignatureHint,
     TransactionEnvelope, TransactionSignaturePayload, TransactionSignaturePayloadTaggedTransaction,
     WriteXdr,
