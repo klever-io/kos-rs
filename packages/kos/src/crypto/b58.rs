@@ -1,5 +1,5 @@
 use crate::chains::ChainError;
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -54,7 +54,7 @@ pub fn b58enc(data: &[u8]) -> Vec<u8> {
 
 pub fn custom_b58enc_string(data: &[u8], alpha: &[u8; 58]) -> String {
     let bytes = custom_b58enc(data, alpha);
-    String::from_utf8(bytes).unwrap()
+    String::from_utf8_lossy(&bytes).to_string()
 }
 
 pub fn b58enc_string(data: &[u8]) -> String {
