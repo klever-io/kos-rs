@@ -184,7 +184,7 @@ pub fn encode_for_broadcast(
 // Helper function to process signature bytes from transaction.signaturez'
 fn process_signatures(signature_data: &[u8]) -> Result<Vec<Vec<u8>>, ChainError> {
     // Each sighash is 32 bytes, so we should have a multiple of 32
-    if signature_data.len() % 64 != 0 {
+    if !signature_data.len().is_multiple_of(64) {
         return Err(ChainError::InvalidSignatureLength);
     }
 

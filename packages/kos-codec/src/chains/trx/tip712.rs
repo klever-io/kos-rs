@@ -514,7 +514,7 @@ fn hash_domain(data: &StructuredData, types_set: &HashSet<String>) -> Result<[u8
 fn hash_typed_data(data: &StructuredData) -> Result<[u8; 32]> {
     // Create the set of types
     let mut types_set = HashSet::new();
-    for (type_name, _) in data.types.iter() {
+    for type_name in data.types.keys() {
         types_set.insert(type_name.to_string());
     }
 

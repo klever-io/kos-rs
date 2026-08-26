@@ -31,7 +31,6 @@ pub enum TransactionChainOptions {
 }
 
 #[allow(clippy::too_many_arguments)]
-#[uniffi::export]
 pub fn new_substrate_transaction_options(
     call: String,
     era: String,
@@ -65,7 +64,6 @@ pub fn new_substrate_transaction_options(
     }
 }
 
-#[uniffi::export]
 pub fn new_bitcoin_transaction_options(
     input_amounts: Vec<u64>,
     prev_scripts: Vec<String>,
@@ -81,12 +79,10 @@ pub fn new_bitcoin_transaction_options(
     }
 }
 
-#[uniffi::export]
 pub fn new_evm_transaction_options(chain_id: u32) -> TransactionChainOptions {
     TransactionChainOptions::Evm { chain_id }
 }
 
-#[uniffi::export]
 pub fn new_cosmos_transaction_options(
     chain_id: String,
     account_number: u64,
@@ -109,7 +105,6 @@ pub struct WalletOptions {
     pub specific: Option<WalletChainOptions>,
 }
 
-#[uniffi::export]
 pub fn new_wallet_options(use_legacy_path: bool) -> WalletOptions {
     WalletOptions {
         use_legacy_path,
@@ -117,7 +112,6 @@ pub fn new_wallet_options(use_legacy_path: bool) -> WalletOptions {
     }
 }
 
-#[uniffi::export]
 pub fn new_eth_wallet_options(use_legacy_path: bool, chain_id: u32) -> WalletOptions {
     WalletOptions {
         use_legacy_path,
@@ -125,7 +119,6 @@ pub fn new_eth_wallet_options(use_legacy_path: bool, chain_id: u32) -> WalletOpt
     }
 }
 
-#[uniffi::export]
 pub fn new_icp_wallet_options(use_legacy_path: bool, key_type: String) -> WalletOptions {
     WalletOptions {
         use_legacy_path,

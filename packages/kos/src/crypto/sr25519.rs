@@ -40,7 +40,6 @@ impl Sr25519Trait for Sr25519 {
 
     fn sign(msg: &[u8], pvk: &[u8; 64]) -> Result<Vec<u8>, Sr25519Error> {
         let pvk = schnorrkel::SecretKey::from_bytes(pvk).map_err(|_| Sr25519Error::ErrDerive)?;
-
         let pbk = pvk.to_public();
         let ctx = SigningContext::new(SUBSTRATE_CTX).bytes(msg);
         let ctx = schnorrkel::context::attach_rng(ctx, crate::crypto::rng::getrandom_or_panic());
@@ -76,5 +75,32 @@ impl Sr25519Trait for Sr25519 {
         nonce.copy_from_slice(&secret[32..64]);
 
         Ok((sk, nonce))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sr25519_sign_and_verify() {
+        let mini_secret = [7u8; 32];
+        let secret = schnorrkel::MiniSecretKey::from_bytes(&mini_secret)
+            .unwrap()
+            .expand(schnorrkel::ExpansionMode::Ed25519);
+        let mut pvk = [0u8; 64];
+        pvk.copy_from_slice(&secret.to_bytes());
+
+        let public_bytes = Sr25519::public_from_private(&pvk).unwrap();
+        let message = b"hello world substrate signing test";
+
+        let sig = Sr25519::sign(message, &pvk).expect("Signing must succeed");
+        assert_eq!(sig.len(), 64);
+
+        let public = schnorrkel::PublicKey::from_bytes(&public_bytes).unwrap();
+        let signature = schnorrkel::Signature::from_bytes(&sig).unwrap();
+        assert!(public
+            .verify_simple(SUBSTRATE_CTX, message, &signature)
+            .is_ok());
     }
 }

@@ -5,7 +5,7 @@ rustflags = [
     "-C",
     "link-arg=dynamic_lookup",
     "-C",
-    "link-arg=-Wl,-install_name,@loader_path/libkos_mobile.dylib",
+    "link-arg=-Wl,-install_name,@rpath/libkos_mobile.dylib",
 ]
 
 [target.aarch64-apple-darwin]
@@ -15,7 +15,7 @@ rustflags = [
     "-C",
     "link-arg=dynamic_lookup",
     "-C",
-    "link-arg=-Wl,-install_name,@loader_path/libkos_mobile.dylib",
+    "link-arg=-Wl,-install_name,@rpath/libkos_mobile.dylib",
 ]
 
 [target.aarch64-apple-ios]

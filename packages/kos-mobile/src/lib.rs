@@ -99,8 +99,39 @@ fn generate_wallet_from_mnemonic(
 
     Ok(KOSAccount {
         chain_id,
-        private_key: hex::encode(private_key),
-        public_key: hex::encode(public_key.clone()),
+        private_key: chain.encode_private_key(private_key),
+        public_key: chain.encode_public_key(public_key.clone()),
+        address: chain.get_address(public_key)?,
+        path,
+        options,
+    })
+}
+
+#[uniffi::export]
+fn generate_wallet_from_mnemonic_with_path(
+    mnemonic: String,
+    chain_id: u32,
+    path: String,
+    options: Option<WalletOptions>,
+) -> Result<KOSAccount, KOSError> {
+    if !validate_mnemonic(mnemonic.clone()) {
+        return Err(KOSError::KOSDelegate("Invalid mnemonic".to_string()));
+    }
+
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
+
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: chain_id.to_string(),
+    })?;
+
+    let seed = chain.mnemonic_to_seed(mnemonic, String::from(""))?;
+    let private_key = chain.derive(seed, path.clone())?;
+    let public_key = chain.get_pbk(private_key.clone())?;
+
+    Ok(KOSAccount {
+        chain_id,
+        private_key: chain.encode_private_key(private_key),
+        public_key: chain.encode_public_key(public_key.clone()),
         address: chain.get_address(public_key)?,
         path,
         options,
@@ -119,17 +150,103 @@ fn generate_wallet_from_private_key(
         id: chain_id.to_string(),
     })?;
 
-    let public_key = chain.get_pbk(hex::decode(private_key.clone())?)?;
+    let pvk_bytes = chain.decode_private_key(private_key.clone())?;
+    let public_key = chain.get_pbk(pvk_bytes)?;
     let address = chain.get_address(public_key.clone())?;
 
     Ok(KOSAccount {
         chain_id,
         private_key: private_key.clone(),
-        public_key: hex::encode(public_key.clone()),
+        public_key: chain.encode_public_key(public_key.clone()),
         address,
         path: String::new(),
         options,
     })
+}
+
+#[uniffi::export]
+fn generate_address_from_public_key(
+    chain_id: u32,
+    public_key: &[u8],
+    options: Option<WalletOptions>,
+) -> Result<String, KOSError> {
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
+
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: chain_id.to_string(),
+    })?;
+
+    let address = chain.get_address(public_key.to_vec())?;
+
+    Ok(address)
+}
+
+#[uniffi::export]
+fn encode_private_key(
+    chain_id: u32,
+    private_key: &[u8],
+    options: Option<WalletOptions>,
+) -> Result<String, KOSError> {
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
+
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: chain_id.to_string(),
+    })?;
+
+    let private_key_str = chain.encode_private_key(private_key.to_vec());
+
+    Ok(private_key_str)
+}
+
+#[uniffi::export]
+fn decode_private_key(
+    chain_id: u32,
+    private_key: String,
+    options: Option<WalletOptions>,
+) -> Result<Vec<u8>, KOSError> {
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
+
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: chain_id.to_string(),
+    })?;
+
+    chain
+        .decode_private_key(private_key)
+        .map_err(|e| KOSError::KOSDelegate(e.to_string()))
+}
+
+#[uniffi::export]
+fn encode_public_key(
+    chain_id: u32,
+    public_key: &[u8],
+    options: Option<WalletOptions>,
+) -> Result<String, KOSError> {
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
+
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: chain_id.to_string(),
+    })?;
+
+    let public_key_str = chain.encode_public_key(public_key.to_vec());
+
+    Ok(public_key_str)
+}
+
+#[uniffi::export]
+fn decode_public_key(
+    chain_id: u32,
+    public_key: String,
+    options: Option<WalletOptions>,
+) -> Result<Vec<u8>, KOSError> {
+    let chain_params = wallet_options_to_chain_type(chain_id, &options);
+
+    let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
+        id: chain_id.to_string(),
+    })?;
+
+    chain
+        .decode_public_key(public_key)
+        .map_err(|e| KOSError::KOSDelegate(e.to_string()))
 }
 
 #[uniffi::export]
@@ -191,7 +308,8 @@ fn sign_transaction(
     };
 
     let encoded = encode_for_signing(kos_codec_acc.clone(), transaction)?;
-    let signed_transaction = chain.sign_tx(hex::decode(account.private_key.clone())?, encoded)?;
+    let pvk_bytes = chain.decode_private_key(account.private_key.clone())?;
+    let signed_transaction = chain.sign_tx(pvk_bytes, encoded)?;
     let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_transaction)?;
 
     Ok(KOSTransaction {
@@ -217,11 +335,8 @@ fn sign_message(account: KOSAccount, hex: String, legacy: bool) -> Result<Vec<u8
 
     let message_encoded = kos_codec::encode_for_sign_message(kos_codec_acc, message)?;
 
-    let signature = chain.sign_message(
-        hex::decode(account.private_key).unwrap(),
-        message_encoded,
-        legacy,
-    )?;
+    let pvk_bytes = chain.decode_private_key(account.private_key)?;
+    let signature = chain.sign_message(pvk_bytes, message_encoded, legacy)?;
     Ok(signature)
 }
 
@@ -233,6 +348,296 @@ fn is_chain_supported(chain_id: u32) -> bool {
 #[uniffi::export]
 fn get_supported_chains() -> Vec<u32> {
     kos::chains::get_supported_chains()
+}
+
+// Exported helper functions for models, number, and signer at root level
+
+#[allow(clippy::too_many_arguments)]
+#[uniffi::export]
+pub fn new_substrate_transaction_options(
+    call: String,
+    era: String,
+    nonce: u32,
+    tip: u64,
+    asset_id: Option<String>,
+    block_hash: String,
+    genesis_hash: String,
+    spec_version: u32,
+    transaction_version: u32,
+    app_id: Option<u32>,
+    signed_extensions: Option<Vec<String>>,
+) -> models::TransactionChainOptions {
+    models::new_substrate_transaction_options(
+        call,
+        era,
+        nonce,
+        tip,
+        asset_id,
+        block_hash,
+        genesis_hash,
+        spec_version,
+        transaction_version,
+        app_id,
+        signed_extensions,
+    )
+}
+
+#[uniffi::export]
+pub fn new_bitcoin_transaction_options(
+    input_amounts: Vec<u64>,
+    prev_scripts: Vec<String>,
+) -> models::TransactionChainOptions {
+    models::new_bitcoin_transaction_options(input_amounts, prev_scripts)
+}
+
+#[uniffi::export]
+pub fn new_evm_transaction_options(chain_id: u32) -> models::TransactionChainOptions {
+    models::new_evm_transaction_options(chain_id)
+}
+
+#[uniffi::export]
+pub fn new_cosmos_transaction_options(
+    chain_id: String,
+    account_number: u64,
+) -> models::TransactionChainOptions {
+    models::new_cosmos_transaction_options(chain_id, account_number)
+}
+
+#[uniffi::export]
+pub fn new_wallet_options(use_legacy_path: bool) -> models::WalletOptions {
+    models::new_wallet_options(use_legacy_path)
+}
+
+#[uniffi::export]
+pub fn new_eth_wallet_options(use_legacy_path: bool, chain_id: u32) -> models::WalletOptions {
+    models::new_eth_wallet_options(use_legacy_path, chain_id)
+}
+
+#[uniffi::export]
+pub fn new_icp_wallet_options(use_legacy_path: bool, key_type: String) -> models::WalletOptions {
+    models::new_icp_wallet_options(use_legacy_path, key_type)
+}
+
+#[uniffi::export]
+pub fn big_number_new(value: String) -> Result<number::BigNumber, KOSError> {
+    number::big_number_new(value)
+}
+
+#[uniffi::export]
+pub fn big_number_new_zero() -> number::BigNumber {
+    number::big_number_new_zero()
+}
+
+#[uniffi::export]
+pub fn big_number_string(value: number::BigNumber) -> String {
+    number::big_number_string(value)
+}
+
+#[uniffi::export]
+pub fn big_number_add(
+    lhs: number::BigNumber,
+    rhs: number::BigNumber,
+) -> Result<number::BigNumber, KOSError> {
+    number::big_number_add(lhs, rhs)
+}
+
+#[uniffi::export]
+pub fn big_number_subtract(
+    lhs: number::BigNumber,
+    rhs: number::BigNumber,
+) -> Result<number::BigNumber, KOSError> {
+    number::big_number_subtract(lhs, rhs)
+}
+
+#[uniffi::export]
+pub fn big_number_multiply(
+    lhs: number::BigNumber,
+    rhs: number::BigNumber,
+) -> Result<number::BigNumber, KOSError> {
+    number::big_number_multiply(lhs, rhs)
+}
+
+#[uniffi::export]
+pub fn big_number_divide(
+    lhs: number::BigNumber,
+    rhs: number::BigNumber,
+) -> Result<number::BigNumber, KOSError> {
+    number::big_number_divide(lhs, rhs)
+}
+
+#[uniffi::export]
+pub fn big_number_pow(
+    base: number::BigNumber,
+    exponent: number::BigNumber,
+) -> Result<number::BigNumber, KOSError> {
+    number::big_number_pow(base, exponent)
+}
+
+#[uniffi::export]
+pub fn big_number_is_equal(lhs: number::BigNumber, rhs: number::BigNumber) -> bool {
+    number::big_number_is_equal(lhs, rhs)
+}
+
+#[uniffi::export]
+pub fn big_number_is_gt(lhs: number::BigNumber, rhs: number::BigNumber) -> bool {
+    number::big_number_is_gt(lhs, rhs)
+}
+
+#[uniffi::export]
+pub fn big_number_is_gte(lhs: number::BigNumber, rhs: number::BigNumber) -> bool {
+    number::big_number_is_gte(lhs, rhs)
+}
+
+#[uniffi::export]
+pub fn big_number_is_lt(lhs: number::BigNumber, rhs: number::BigNumber) -> bool {
+    number::big_number_is_lt(lhs, rhs)
+}
+
+#[uniffi::export]
+pub fn big_number_is_lte(lhs: number::BigNumber, rhs: number::BigNumber) -> bool {
+    number::big_number_is_lte(lhs, rhs)
+}
+
+#[uniffi::export]
+pub fn big_number_absolute(value: number::BigNumber) -> Result<number::BigNumber, KOSError> {
+    number::big_number_absolute(value)
+}
+
+#[uniffi::export]
+pub fn big_number_is_zero(value: number::BigNumber) -> bool {
+    number::big_number_is_zero(value)
+}
+
+#[uniffi::export]
+pub fn big_number_increment(value: number::BigNumber) -> Result<number::BigNumber, KOSError> {
+    number::big_number_increment(value)
+}
+
+#[uniffi::export]
+pub fn big_number_decrement(value: number::BigNumber) -> Result<number::BigNumber, KOSError> {
+    number::big_number_decrement(value)
+}
+
+#[uniffi::export]
+pub fn big_number_is_positive(value: number::BigNumber) -> bool {
+    number::big_number_is_positive(value)
+}
+
+#[uniffi::export]
+pub fn big_number_is_negative(value: number::BigNumber) -> bool {
+    number::big_number_is_negative(value)
+}
+
+#[uniffi::export]
+pub fn generate_xpub(
+    mnemonic: &str,
+    passphrase: &str,
+    is_mainnet: bool,
+    index: u32,
+) -> Result<Vec<u8>, signer::LdError> {
+    signer::generate_xpub(mnemonic, passphrase, is_mainnet, index)
+}
+
+#[uniffi::export]
+pub fn get_xpub_as_string(
+    mnemonic: &str,
+    passphrase: &str,
+    is_mainnet: bool,
+    index: u32,
+) -> Result<String, signer::LdError> {
+    signer::get_xpub_as_string(mnemonic, passphrase, is_mainnet, index)
+}
+
+#[uniffi::export]
+pub fn derive_xpub(
+    mnemonic: &str,
+    passphrase: &str,
+    is_mainnet: bool,
+    index: u32,
+    derivation_path: &str,
+) -> Result<Vec<u8>, signer::LdError> {
+    signer::derive_xpub(mnemonic, passphrase, is_mainnet, index, derivation_path)
+}
+
+#[uniffi::export]
+pub fn slip77_master_blinding_key(
+    mnemonic: &str,
+    passphrase: &str,
+    is_mainnet: bool,
+    index: u32,
+) -> Result<Vec<u8>, signer::LdError> {
+    signer::slip77_master_blinding_key(mnemonic, passphrase, is_mainnet, index)
+}
+
+#[uniffi::export]
+pub fn sign_ecdsa_recoverable(
+    mnemonic: &str,
+    passphrase: &str,
+    is_mainnet: bool,
+    index: u32,
+    msg: Vec<u8>,
+) -> Result<Vec<u8>, signer::LdError> {
+    signer::sign_ecdsa_recoverable(mnemonic, passphrase, is_mainnet, index, msg)
+}
+
+#[uniffi::export]
+pub fn hmac_sha256(
+    mnemonic: &str,
+    passphrase: &str,
+    is_mainnet: bool,
+    index: u32,
+    derivation_path: &str,
+    msg: Vec<u8>,
+) -> Result<Vec<u8>, signer::LdError> {
+    signer::hmac_sha256(
+        mnemonic,
+        passphrase,
+        is_mainnet,
+        index,
+        derivation_path,
+        msg,
+    )
+}
+
+#[uniffi::export]
+pub fn ecies_encrypt(
+    mnemonic: &str,
+    passphrase: &str,
+    is_mainnet: bool,
+    index: u32,
+    msg: Vec<u8>,
+) -> Result<Vec<u8>, signer::LdError> {
+    signer::ecies_encrypt(mnemonic, passphrase, is_mainnet, index, msg)
+}
+
+#[uniffi::export]
+pub fn ecies_decrypt(
+    mnemonic: &str,
+    passphrase: &str,
+    is_mainnet: bool,
+    index: u32,
+    msg: Vec<u8>,
+) -> Result<Vec<u8>, signer::LdError> {
+    signer::ecies_decrypt(mnemonic, passphrase, is_mainnet, index, msg)
+}
+
+#[uniffi::export]
+pub fn sign_ecdsa(
+    mnemonic: &str,
+    passphrase: &str,
+    is_mainnet: bool,
+    index: u32,
+    msg: Vec<u8>,
+    derivation_path: String,
+) -> Result<Vec<u8>, signer::LdError> {
+    signer::sign_ecdsa(
+        mnemonic,
+        passphrase,
+        is_mainnet,
+        index,
+        msg,
+        derivation_path,
+    )
 }
 
 #[cfg(test)]
@@ -860,5 +1265,63 @@ mod tests {
 
         let path = get_path_by_chain(27, 1, false).unwrap();
         assert_eq!(path, "//0///");
+    }
+
+    #[test]
+    fn should_generate_address_from_public_key_for_near() {
+        let chain_id = 64; // NEAR
+        let pbk_zeros = hex::decode("656432353531393a366a3462367a55617479366644316177716347434355394a59474357595567644a6851727a665a6871453235").unwrap();
+
+        let address =
+            generate_address_from_public_key(chain_id, pbk_zeros.as_slice(), None).unwrap();
+
+        assert_eq!(
+            address, "5510e2b44cae6eb807e3e0e45d579dda058c274abcba15e5cb84636f5d1ee412",
+            "The generated NEAR address does not match expected output"
+        );
+    }
+
+    #[test]
+    fn should_generate_address_from_public_key_matching_wallet_for_near() {
+        let chain_id = 64; // NEAR
+        let account =
+            generate_wallet_from_mnemonic(get_test_mnemonic(), chain_id, 0, None).unwrap();
+
+        let pbk_bytes = decode_public_key(chain_id, account.public_key.clone(), None).unwrap();
+        let address = generate_address_from_public_key(chain_id, &pbk_bytes, None).unwrap();
+
+        assert_eq!(
+            address, account.address,
+            "Address generated from public key should match wallet account address"
+        );
+    }
+
+    #[test]
+    fn should_fail_generate_address_from_public_key_with_unsupported_chain() {
+        let chain_id = 999;
+        let pbk_bytes = b"dummy_public_key";
+
+        match generate_address_from_public_key(chain_id, pbk_bytes, None) {
+            Ok(_) => panic!("Expected error for unsupported chain ID, but succeeded"),
+            Err(e) => {
+                if let KOSError::UnsupportedChain { id } = e {
+                    assert_eq!(id, chain_id.to_string(), "Invalid chain ID error");
+                } else {
+                    panic!("Expected UnsupportedChain error, found different error");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn should_fail_generate_address_from_public_key_with_invalid_key_for_near() {
+        let chain_id = 64; // NEAR
+        let invalid_pbk = b"invalid_near_public_key";
+
+        match generate_address_from_public_key(chain_id, invalid_pbk, None) {
+            Ok(_) => panic!("Expected error for invalid NEAR public key, but succeeded"),
+            Err(KOSError::KOSDelegate(..)) => {}
+            Err(e) => panic!("Expected KOSDelegate error, found: {:?}", e),
+        }
     }
 }

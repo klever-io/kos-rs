@@ -51,7 +51,7 @@ info:
 .PHONY: test
 test: info
 	@echo "Running tests..."
-	$(LIB_PATH_VAR)=$(PWD)/$(LIB_DIR) \
+	$(LIB_PATH_VAR)=$(CURDIR)/$(LIB_DIR) \
 	CGO_ENABLED=$(CGO_ENABLED) \
 	GOOS=$(GOOS) \
 	GOARCH=$(GOARCH) \
@@ -60,7 +60,7 @@ test: info
 .PHONY: build
 build: info
 	@echo "Building..."
-	$(LIB_PATH_VAR)=$(PWD)/$(LIB_DIR) \
+	$(LIB_PATH_VAR)=$(CURDIR)/$(LIB_DIR) \
 	CGO_ENABLED=$(CGO_ENABLED) \
 	GOOS=$(GOOS) \
 	GOARCH=$(GOARCH) \
@@ -74,7 +74,7 @@ clean:
 
 .PHONY: build-linux-amd64
 build-linux-amd64:
-	LD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/linux-amd64 \
+	LD_LIBRARY_PATH=$(CURDIR)/kos_mobile/lib/linux-amd64 \
 	CGO_ENABLED=1 \
 	GOOS=linux \
 	GOARCH=amd64 \
@@ -82,7 +82,7 @@ build-linux-amd64:
 
 .PHONY: build-darwin-arm64
 build-darwin-arm64:
-	DYLD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/darwin-aarch64 \
+	DYLD_LIBRARY_PATH=$(CURDIR)/kos_mobile/lib/darwin-aarch64 \
 	CGO_ENABLED=1 \
 	GOOS=darwin \
 	GOARCH=arm64 \
@@ -90,7 +90,7 @@ build-darwin-arm64:
 
 .PHONY: test-linux-amd64
 test-linux-amd64:
-	LD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/linux-amd64 \
+	LD_LIBRARY_PATH=$(CURDIR)/kos_mobile/lib/linux-amd64 \
 	CGO_ENABLED=1 \
 	GOOS=linux \
 	GOARCH=amd64 \
@@ -100,7 +100,7 @@ test-linux-amd64:
 test-darwin-arm64:
 	install_name_tool -id @rpath/libkos_mobile.dylib kos_mobile/lib/darwin-aarch64/libkos_mobile.dylib
 	otool -D kos_mobile/lib/darwin-aarch64/libkos_mobile.dylib
-	DYLD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/darwin-aarch64 \
+	DYLD_LIBRARY_PATH=$(CURDIR)/kos_mobile/lib/darwin-aarch64 \
 	CGO_ENABLED=1 \
 	GOOS=darwin \
 	GOARCH=arm64 \
@@ -108,7 +108,7 @@ test-darwin-arm64:
 
 .PHONY: build-linux-musl
 build-linux-musl:
-	LD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/linux-amd64 \
+	LD_LIBRARY_PATH=$(CURDIR)/kos_mobile/lib/linux-amd64 \
 	CGO_ENABLED=1 \
 	CGO_LDFLAGS="-lm" \
 	GOOS=linux \
@@ -118,7 +118,7 @@ build-linux-musl:
 
 .PHONY: test-linux-musl
 test-linux-musl:
-	LD_LIBRARY_PATH=$(PWD)/kos_mobile/lib/linux-amd64 \
+	LD_LIBRARY_PATH=$(CURDIR)/kos_mobile/lib/linux-amd64 \
 	CGO_ENABLED=1 \
 	CGO_LDFLAGS="-lm" \
 	GOOS=linux \
