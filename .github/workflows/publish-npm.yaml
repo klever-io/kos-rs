@@ -19,10 +19,29 @@ jobs:
       TOKEN: ${{ secrets.GIT_PASS }}
 
     steps:
+      - name: Validate and resolve ref
+        id: resolve_ref
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${INPUT_TAG:-}" ]; then
+            TAG="${INPUT_TAG}"
+            [[ "$TAG" =~ ^v ]] || TAG="v$TAG"
+            if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+              echo "Error: Invalid tag format '$INPUT_TAG'. Expected (v)X.Y.Z" >&2
+              exit 1
+            fi
+            echo "ref=$TAG" >> "$GITHUB_OUTPUT"
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${{ github.ref }}" >> "$GITHUB_OUTPUT"
+            echo "version=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ steps.resolve_ref.outputs.ref }}
           submodules: recursive
           fetch-depth: 0
 
@@ -42,14 +61,12 @@ jobs:
 
       - name: Set NPM package release version
         env:
-          INPUT_TAG: ${{ github.event.inputs.tag }}
+          RESOLVED_VERSION: ${{ steps.resolve_ref.outputs.version }}
         run: |
-          if [ -n "${INPUT_TAG:-}" ] && [[ "${INPUT_TAG}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
-            TAG="${INPUT_TAG}"
-            VERSION="${TAG#v}"
-            echo "Setting version to $VERSION from input"
+          if [ -n "${RESOLVED_VERSION:-}" ]; then
+            echo "Setting version to $RESOLVED_VERSION from validated input"
             TMP_FILE=$(mktemp)
-            jq --arg v "$VERSION" '.version = $v' packages/kos-web/demo/kos/package.json > "$TMP_FILE"
+            jq --arg v "$RESOLVED_VERSION" '.version = $v' packages/kos-web/demo/kos/package.json > "$TMP_FILE"
             mv "$TMP_FILE" packages/kos-web/demo/kos/package.json
           else
             bash .github/actions/npm-package-version.sh packages/kos-web/demo/kos
