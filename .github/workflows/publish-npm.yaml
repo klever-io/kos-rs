@@ -41,9 +41,11 @@ jobs:
         run: make webpack-npm
 
       - name: Set NPM package release version
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
         run: |
-          if [ -n "${{ github.event.inputs.tag }}" ]; then
-            TAG="${{ github.event.inputs.tag }}"
+          if [ -n "${INPUT_TAG:-}" ] && [[ "${INPUT_TAG}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
+            TAG="${INPUT_TAG}"
             VERSION="${TAG#v}"
             echo "Setting version to $VERSION from input"
             TMP_FILE=$(mktemp)
