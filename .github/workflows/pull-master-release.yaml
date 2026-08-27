@@ -76,16 +76,3 @@ jobs:
           gh release create "v$VERSION" ./packages/kos-web/demo/kos-js.zip --title "Release v$VERSION" --generate-notes --target master || { echo 'Release creation failed'; exit 1; }
         env:
           GH_TOKEN: ${{ secrets.GIT_PASS }}
-
-      - name: Setup npm module
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-          registry-url: 'https://registry.npmjs.org/'
-          scope: '@klever'
-          always-auth: true
-
-      - name: Publish npm module
-        run: npm publish ./packages/kos-web/demo/kos --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
