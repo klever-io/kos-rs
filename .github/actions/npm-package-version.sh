@@ -33,6 +33,9 @@ if [[ -n "$TAG_VERSION" ]]; then
     RAW_VERSION="$TAG_VERSION"
 elif [[ -f "Cargo.toml" ]]; then
     RAW_VERSION=$(grep -E '^version = "[0-9]+\.[0-9]+\.[0-9]+"' Cargo.toml | head -n1 | sed 's/version = "\(.*\)"/\1/' || true)
+    if [[ -z "$RAW_VERSION" ]]; then
+        RAW_VERSION=$(jq -r '.version // empty' "$PACKAGE_JSON")
+    fi
 else
     RAW_VERSION=$(jq -r '.version // empty' "$PACKAGE_JSON")
 fi
