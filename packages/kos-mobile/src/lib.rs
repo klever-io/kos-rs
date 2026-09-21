@@ -805,16 +805,24 @@ mod tests {
 
     #[test]
     fn should_fail_to_get_account_from_zero_private_key_sr25519() {
-        let zero_64_hex = "0000000000000000000000000000000000000000000000000000000000000000".to_string();
+        let zero_64_hex =
+            "0000000000000000000000000000000000000000000000000000000000000000".to_string();
         let zero_128_hex = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string();
         let zero_0x_hex = "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string();
         let zero_scalar_with_nonce = "00000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000".to_string();
 
         for chain_id in [27 /* KSM */, 21 /* DOT */] {
             assert!(generate_wallet_from_private_key(chain_id, zero_64_hex.clone(), None).is_err());
-            assert!(generate_wallet_from_private_key(chain_id, zero_128_hex.clone(), None).is_err());
+            assert!(
+                generate_wallet_from_private_key(chain_id, zero_128_hex.clone(), None).is_err()
+            );
             assert!(generate_wallet_from_private_key(chain_id, zero_0x_hex.clone(), None).is_err());
-            assert!(generate_wallet_from_private_key(chain_id, zero_scalar_with_nonce.clone(), None).is_err());
+            assert!(generate_wallet_from_private_key(
+                chain_id,
+                zero_scalar_with_nonce.clone(),
+                None
+            )
+            .is_err());
 
             assert!(decode_private_key(chain_id, zero_64_hex.clone(), None).is_err());
             assert!(decode_private_key(chain_id, zero_128_hex.clone(), None).is_err());
@@ -837,7 +845,8 @@ mod tests {
 
     #[test]
     fn should_fail_to_get_account_from_zero_private_key_other_chains() {
-        let zero_64_hex = "0000000000000000000000000000000000000000000000000000000000000000".to_string();
+        let zero_64_hex =
+            "0000000000000000000000000000000000000000000000000000000000000000".to_string();
 
         // KLV (38)
         assert!(generate_wallet_from_private_key(38, zero_64_hex.clone(), None).is_err());
