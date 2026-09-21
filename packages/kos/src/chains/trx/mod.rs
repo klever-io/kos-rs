@@ -1,4 +1,4 @@
-use crate::chains::util::{private_key_from_vec, slice_from_vec};
+use crate::chains::util::{is_zero_key, private_key_from_vec, slice_from_vec};
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
 use crate::crypto::hash::{keccak256_digest, sha256_digest};
@@ -71,6 +71,9 @@ impl Chain for TRX {
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
+        if public_key.len() < 2 || is_zero_key(&public_key) {
+            return Err(ChainError::InvalidPublicKey);
+        }
         let hash = keccak256_digest(&public_key[1..]);
 
         let mut address: [u8; TRX_ADD_RAW_LEN] = [0; TRX_ADD_RAW_LEN];
@@ -84,17 +87,13 @@ impl Chain for TRX {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
-        if private_key.len() != 32 {
-            return Err(ChainError::InvalidPrivateKey);
-        }
-
-        let mut pvk_bytes: [u8; 32] = [0; 32];
-        pvk_bytes.copy_from_slice(&private_key[..32]);
+        let mut pvk_bytes: [u8; 32] = private_key_from_vec(&private_key)?;
 
         let mut payload = [0u8; 32];
         payload.copy_from_slice(&tx.tx_hash[..]);
 
         tx.signature = secp256k1::Secp256K1::sign(&payload, &pvk_bytes)?.to_vec();
+        pvk_bytes.fill(0);
 
         Ok(tx)
     }
@@ -105,13 +104,6 @@ impl Chain for TRX {
         message: Vec<u8>,
         _legacy: bool,
     ) -> Result<Vec<u8>, ChainError> {
-        if private_key.len() != 32 {
-            return Err(ChainError::InvalidPrivateKey);
-        }
-
-        let mut pvk_bytes: [u8; 32] = [0; 32];
-        pvk_bytes.copy_from_slice(&private_key[..32]);
-
         let sig = self.sign_raw(private_key, message)?;
         Ok(sig.as_slice().to_vec())
     }

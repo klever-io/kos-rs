@@ -1,4 +1,4 @@
-use crate::chains::util::{private_key_from_vec, slice_from_vec};
+use crate::chains::util::{is_zero_key, private_key_from_vec, slice_from_vec};
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::hash::keccak256_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
@@ -105,6 +105,9 @@ impl Chain for ETH {
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
+        if public_key.len() < 2 || is_zero_key(&public_key) {
+            return Err(ChainError::InvalidPublicKey);
+        }
         let pbk_hash = keccak256_digest(&public_key[1..]);
         let mut address_bytes: [u8; ETH_ADDR_SIZE] = [0; ETH_ADDR_SIZE];
         address_bytes.copy_from_slice(&pbk_hash[12..]);

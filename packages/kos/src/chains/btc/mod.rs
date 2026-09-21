@@ -154,12 +154,7 @@ impl Chain for BTC {
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
-        if private_key.len() != 32 {
-            return Err(ChainError::InvalidPrivateKey);
-        }
-
-        let mut pk_bytes: [u8; 32] = [0; 32];
-        pk_bytes.copy_from_slice(&private_key[..32]);
+        let pk_bytes: [u8; 32] = private_key_from_vec(&private_key)?;
 
         let pbk = Secp256K1::private_to_public_compressed(&pk_bytes)?;
         Ok(pbk.to_vec())

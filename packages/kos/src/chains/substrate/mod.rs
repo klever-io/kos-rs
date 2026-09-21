@@ -1,4 +1,4 @@
-use crate::chains::util::private_key_from_vec;
+use crate::chains::util::{is_zero_key, private_key_from_vec};
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::hash::blake2b_64_digest;
 use crate::crypto::sr25519::Sr25519Trait;
@@ -74,12 +74,21 @@ impl Chain for Substrate {
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         let mut pvk = private_key_from_vec(&private_key)?;
+        if is_zero_key(&pvk[..32]) {
+            return Err(ChainError::InvalidPrivateKey);
+        }
         let pbk = sr25519::Sr25519::public_from_private(&pvk)?;
+        if is_zero_key(&pbk) {
+            return Err(ChainError::InvalidPublicKey);
+        }
         pvk.fill(0);
         Ok(pbk)
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
+        if public_key.len() != 32 || is_zero_key(&public_key) {
+            return Err(ChainError::InvalidPublicKey);
+        }
         let identifier = self.network_id & LOWER_MASK;
         let mut prefix = Vec::new();
         if identifier < TYPE1_ACCOUNT_ID {
@@ -126,6 +135,9 @@ impl Chain for Substrate {
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
         let mut private_key_bytes = private_key_from_vec(&private_key)?;
+        if is_zero_key(&private_key_bytes[..32]) {
+            return Err(ChainError::InvalidPrivateKey);
+        }
         let sig = sr25519::Sr25519::sign(&payload, &private_key_bytes)?;
         private_key_bytes.fill(0);
 
@@ -248,5 +260,95 @@ mod test {
             .unwrap();
 
         assert_eq!(true, verify_result == ());
+    }
+
+    #[test]
+    fn test_zero_private_key_fails() {
+        let ksm = super::Substrate::new(27, 2, "Kusama", "KSM");
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
+
+        // 64-byte zero private key
+        assert!(matches!(
+            ksm.get_pbk(vec![0u8; 64]),
+            Err(crate::chains::ChainError::InvalidPrivateKey)
+        ));
+        assert!(matches!(
+            dot.get_pbk(vec![0u8; 64]),
+            Err(crate::chains::ChainError::InvalidPrivateKey)
+        ));
+
+        // Zero scalar with non-zero nonce (scalar is first 32 bytes)
+        let mut zero_scalar_key = vec![0u8; 64];
+        zero_scalar_key[32] = 1;
+        assert!(matches!(
+            ksm.get_pbk(zero_scalar_key.clone()),
+            Err(crate::chains::ChainError::InvalidPrivateKey)
+        ));
+        assert!(matches!(
+            dot.get_pbk(zero_scalar_key.clone()),
+            Err(crate::chains::ChainError::InvalidPrivateKey)
+        ));
+        assert!(matches!(
+            ksm.sign_raw(zero_scalar_key, vec![0u8; 32]),
+            Err(crate::chains::ChainError::InvalidPrivateKey)
+        ));
+
+        // 32-byte zero private key
+        assert!(matches!(
+            ksm.get_pbk(vec![0u8; 32]),
+            Err(crate::chains::ChainError::InvalidPrivateKey)
+        ));
+
+        // Empty private key
+        assert!(matches!(
+            ksm.get_pbk(vec![]),
+            Err(crate::chains::ChainError::InvalidPrivateKey)
+        ));
+
+        // sign_raw with zero private key
+        assert!(matches!(
+            ksm.sign_raw(vec![0u8; 64], vec![0u8; 32]),
+            Err(crate::chains::ChainError::InvalidPrivateKey)
+        ));
+
+        // decode_private_key with zero hex
+        assert!(matches!(
+            ksm.decode_private_key(
+                "0000000000000000000000000000000000000000000000000000000000000000".to_string()
+            ),
+            Err(crate::chains::ChainError::InvalidPrivateKey)
+        ));
+        assert!(matches!(
+            ksm.decode_private_key("0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string()),
+            Err(crate::chains::ChainError::InvalidPrivateKey)
+        ));
+    }
+
+    #[test]
+    fn test_zero_public_key_fails() {
+        let ksm = super::Substrate::new(27, 2, "Kusama", "KSM");
+        let dot = super::Substrate::new(21, 0, "Polkadot", "DOT");
+
+        // 32-byte zero public key
+        assert!(matches!(
+            ksm.get_address(vec![0u8; 32]),
+            Err(crate::chains::ChainError::InvalidPublicKey)
+        ));
+        assert!(matches!(
+            dot.get_address(vec![0u8; 32]),
+            Err(crate::chains::ChainError::InvalidPublicKey)
+        ));
+
+        // Empty public key
+        assert!(matches!(
+            ksm.get_address(vec![]),
+            Err(crate::chains::ChainError::InvalidPublicKey)
+        ));
+
+        // Wrong length public key
+        assert!(matches!(
+            ksm.get_address(vec![1u8; 31]),
+            Err(crate::chains::ChainError::InvalidPublicKey)
+        ));
     }
 }

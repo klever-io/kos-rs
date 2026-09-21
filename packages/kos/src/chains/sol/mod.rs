@@ -1,4 +1,4 @@
-use crate::chains::util::private_key_from_vec;
+use crate::chains::util::{is_zero_key, private_key_from_vec};
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
 use crate::crypto::bip32;
@@ -49,6 +49,9 @@ impl Chain for SOL {
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
+        if public_key.len() != 32 || is_zero_key(&public_key) {
+            return Err(ChainError::InvalidPublicKey);
+        }
         let addr = b58enc(&public_key);
         Ok(String::from_utf8(addr)?)
     }
