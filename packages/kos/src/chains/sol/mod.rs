@@ -49,7 +49,7 @@ impl Chain for SOL {
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
-        if public_key.len() != 32 || is_zero_key(&public_key) {
+        if public_key.len() != 32 {
             return Err(ChainError::InvalidPublicKey);
         }
         let addr = b58enc(&public_key);
@@ -137,5 +137,14 @@ mod test {
 
         // Same transaction signed with same key should produce same signature and hash
         assert_eq!(hex::encode(&result), "a3c211cc274707367d89ee4ecdab99fa99d856c4ccbc03591bddcaf325da2f3b64f74f4e692da212d3ce157bea6277195c66765e4f552c42ea63d513a07d8907");
+    }
+
+    #[test]
+    fn solana_system_program_public_key_has_an_address() {
+        let sol = SOL {};
+        assert_eq!(
+            sol.get_address(vec![0u8; 32]).unwrap(),
+            "11111111111111111111111111111111"
+        );
     }
 }
