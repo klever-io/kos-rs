@@ -850,17 +850,22 @@ mod tests {
 
         // KLV (38)
         assert!(generate_wallet_from_private_key(38, zero_64_hex.clone(), None).is_err());
-        // SOL (39)
-        assert!(generate_wallet_from_private_key(39, zero_64_hex.clone(), None).is_err());
-        // ETH (1)
+        // SOL (29 authoritative ID, 40 base ID)
+        assert!(generate_wallet_from_private_key(29, zero_64_hex.clone(), None).is_err());
+        assert!(generate_wallet_from_private_key(40, zero_64_hex.clone(), None).is_err());
+        // ETH (3)
+        assert!(generate_wallet_from_private_key(3, zero_64_hex.clone(), None).is_err());
+        // TRX (1)
         assert!(generate_wallet_from_private_key(1, zero_64_hex.clone(), None).is_err());
-        // TRX (2)
-        assert!(generate_wallet_from_private_key(2, zero_64_hex.clone(), None).is_err());
 
         // Zero public key should fail to generate address
-        assert!(generate_address_from_public_key(27, &[0u8; 32], None).is_err());
-        assert!(generate_address_from_public_key(38, &[0u8; 32], None).is_err());
-        assert!(generate_address_from_public_key(39, &[0u8; 32], None).is_err());
+        assert!(generate_address_from_public_key(27, &[0u8; 32], None).is_err()); // KSM
+        assert!(generate_address_from_public_key(38, &[0u8; 32], None).is_err()); // KLV
+        assert!(generate_address_from_public_key(29, &[0u8; 32], None).is_err()); // SOL (29)
+        assert!(generate_address_from_public_key(40, &[0u8; 32], None).is_err()); // SOL (40)
+        assert!(generate_address_from_public_key(3, &[0u8; 65], None).is_err()); // ETH (3)
+        assert!(generate_address_from_public_key(1, &[0u8; 65], None).is_err());
+        // TRX (1)
     }
 
     #[test]
