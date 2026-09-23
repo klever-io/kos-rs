@@ -69,7 +69,10 @@ impl BTC {
 
 impl BTC {
     fn get_addr_new(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
-        if public_key.len() != 33 || is_zero_key(&public_key) {
+        if public_key.len() != 33
+            || is_zero_key(&public_key)
+            || (public_key[0] != 0x02 && public_key[0] != 0x03)
+        {
             return Err(ChainError::InvalidPublicKey);
         }
 
@@ -89,7 +92,10 @@ impl BTC {
     }
 
     pub fn get_addr_legacy(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
-        if public_key.len() != 33 || is_zero_key(&public_key) {
+        if public_key.len() != 33
+            || is_zero_key(&public_key)
+            || (public_key[0] != 0x02 && public_key[0] != 0x03)
+        {
             return Err(ChainError::InvalidPublicKey);
         }
 
@@ -385,9 +391,15 @@ mod test {
         assert!(btc.get_address(vec![0u8; 33]).is_err());
         assert!(btc.get_address(vec![1u8; 32]).is_err());
         assert!(btc.get_address(vec![1u8; 65]).is_err());
+        // Invalid prefix 0x00 or 0x05
+        let mut invalid_pub = vec![0x05; 33];
+        assert!(btc.get_address(invalid_pub.clone()).is_err());
+        invalid_pub[0] = 0x00;
+        assert!(btc.get_address(invalid_pub).is_err());
 
         // Same for legacy address
         assert!(btc.get_addr_legacy(vec![0u8; 33]).is_err());
         assert!(btc.get_addr_legacy(vec![1u8; 32]).is_err());
+        assert!(btc.get_addr_legacy(vec![0x05; 33]).is_err());
     }
 }
