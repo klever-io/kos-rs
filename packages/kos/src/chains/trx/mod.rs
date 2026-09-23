@@ -1,4 +1,4 @@
-use crate::chains::util::{is_zero_key, private_key_from_vec, slice_from_vec};
+use crate::chains::util::{private_key_from_vec, slice_from_vec};
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
 use crate::crypto::hash::{keccak256_digest, sha256_digest};
@@ -64,6 +64,9 @@ impl Chain for TRX {
     }
 
     fn get_pbk(&self, private_key: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+        if private_key.len() != 32 {
+            return Err(ChainError::InvalidPrivateKey);
+        }
         let mut pvk = private_key_from_vec(&private_key)?;
         let pbk = secp256k1::Secp256K1::private_to_public_uncompressed(&pvk)?;
         pvk.fill(0);
@@ -71,7 +74,7 @@ impl Chain for TRX {
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
-        if public_key.len() < 2 || is_zero_key(&public_key) {
+        if public_key.len() != 65 || public_key[0] != 0x04 {
             return Err(ChainError::InvalidPublicKey);
         }
         let hash = keccak256_digest(&public_key[1..]);
@@ -87,6 +90,9 @@ impl Chain for TRX {
         private_key: Vec<u8>,
         mut tx: Transaction,
     ) -> Result<Transaction, ChainError> {
+        if private_key.len() != 32 {
+            return Err(ChainError::InvalidPrivateKey);
+        }
         let mut pvk_bytes: [u8; 32] = private_key_from_vec(&private_key)?;
 
         let mut payload = [0u8; 32];
@@ -109,6 +115,9 @@ impl Chain for TRX {
     }
 
     fn sign_raw(&self, private_key: Vec<u8>, payload: Vec<u8>) -> Result<Vec<u8>, ChainError> {
+        if private_key.len() != 32 {
+            return Err(ChainError::InvalidPrivateKey);
+        }
         let mut pvk_bytes = private_key_from_vec(&private_key)?;
         let payload_bytes = slice_from_vec(&payload)?;
 
@@ -129,10 +138,12 @@ impl Chain for TRX {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::chains::{trx::TRON_MESSAGE_PREFIX, Chain};
     use crate::crypto::hash::keccak256_digest;
     use crate::test_utils::get_test_mnemonic;
     use alloc::string::{String, ToString};
+    use alloc::vec;
     use alloc::vec::Vec;
 
     #[test]
@@ -177,5 +188,40 @@ mod test {
             hex::encode(signature),
             "cf7b64342bc41955671164c8d5fe7ee992e9497ff4bedcad02f7236be994e4821e2e3fe5807f88ff7099ab3ce8973e4399ccb24bcb41c8d92c64675a32c77e7101"
         );
+    }
+
+    #[test]
+    fn test_trx_invalid_keys() {
+        let trx = super::TRX {};
+
+        // Private key must be exactly 32 non-zero bytes for wallet derivation and signing
+        assert!(trx.get_pbk(vec![0u8; 32]).is_err());
+        assert!(trx.get_pbk(vec![1u8; 31]).is_err());
+        assert!(trx.get_pbk(vec![1u8; 33]).is_err());
+        assert!(trx.get_pbk(vec![1u8; 64]).is_err());
+
+        let tx = Transaction {
+            raw_data: vec![],
+            tx_hash: vec![1u8; 32],
+            signature: vec![],
+            options: None,
+        };
+        assert!(trx.sign_tx(vec![1u8; 31], tx.clone()).is_err());
+        assert!(trx.sign_tx(vec![1u8; 33], tx).is_err());
+
+        assert!(trx
+            .sign_message(vec![1u8; 31], vec![1u8; 32], false)
+            .is_err());
+        assert!(trx
+            .sign_message(vec![1u8; 33], vec![1u8; 32], false)
+            .is_err());
+
+        // Public key must be exactly 65 bytes starting with 0x04
+        assert!(trx.get_address(vec![0u8; 65]).is_err());
+        assert!(trx.get_address(vec![0x04; 64]).is_err());
+        assert!(trx.get_address(vec![0x04; 66]).is_err());
+        assert!(trx.get_address(vec![0x02; 65]).is_err());
+        assert!(trx.get_address(vec![0x03; 65]).is_err());
+        assert!(trx.get_address(vec![0x02; 33]).is_err());
     }
 }

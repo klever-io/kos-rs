@@ -1,4 +1,4 @@
-use crate::chains::util::{is_zero_key, private_key_from_vec, slice_from_vec};
+use crate::chains::util::{private_key_from_vec, slice_from_vec};
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::hash::keccak256_digest;
 use crate::crypto::secp256k1::{Secp256K1, Secp256k1Trait};
@@ -105,7 +105,7 @@ impl Chain for ETH {
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
-        if public_key.len() < 2 || is_zero_key(&public_key) {
+        if public_key.len() != 65 || public_key[0] != 0x04 {
             return Err(ChainError::InvalidPublicKey);
         }
         let pbk_hash = keccak256_digest(&public_key[1..]);
@@ -166,6 +166,7 @@ mod test {
     use crate::chains::Chain;
     use crate::test_utils::get_test_mnemonic;
     use alloc::string::ToString;
+    use alloc::vec;
 
     #[test]
     fn test_derive() {
@@ -213,5 +214,18 @@ mod test {
             hex::encode(signature),
             "960e9bb7f2cdfa4325661e11218c28ab2804b8966d6529b86073886a95142c881a965b3608a573ff035a780039afcbca13be25ee57ac175dd5ca7b82b79948c61c"
         );
+    }
+
+    #[test]
+    fn test_eth_invalid_keys() {
+        let eth = super::ETH::new();
+
+        // Public key must be exactly 65 bytes starting with 0x04
+        assert!(eth.get_address(vec![0u8; 65]).is_err());
+        assert!(eth.get_address(vec![0x04; 64]).is_err());
+        assert!(eth.get_address(vec![0x04; 66]).is_err());
+        assert!(eth.get_address(vec![0x02; 65]).is_err());
+        assert!(eth.get_address(vec![0x03; 65]).is_err());
+        assert!(eth.get_address(vec![0x02; 33]).is_err());
     }
 }

@@ -163,6 +163,7 @@ mod test {
     use crate::chains::Chain;
     use crate::test_utils::get_test_mnemonic;
     use alloc::string::{String, ToString};
+    use alloc::vec;
     use schnorrkel;
 
     #[test]

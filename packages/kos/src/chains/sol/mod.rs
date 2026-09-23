@@ -1,4 +1,4 @@
-use crate::chains::util::{is_zero_key, private_key_from_vec};
+use crate::chains::util::private_key_from_vec;
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
 use crate::crypto::bip32;
@@ -111,6 +111,7 @@ mod test {
     use super::*;
     use crate::test_utils::get_test_mnemonic;
     use alloc::string::ToString;
+    use alloc::vec;
 
     #[test]
     fn test_derive() {
