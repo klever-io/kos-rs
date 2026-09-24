@@ -377,12 +377,20 @@ pub trait Chain {
     fn decode_private_key(&self, private_key: String) -> Result<Vec<u8>, ChainError> {
         let key_str = private_key.trim();
         let hex_str = key_str.strip_prefix("0x").unwrap_or(key_str);
-        hex::decode(hex_str).map_err(|_| ChainError::InvalidPrivateKey)
+        let bytes = hex::decode(hex_str).map_err(|_| ChainError::InvalidPrivateKey)?;
+        if util::is_zero_key(&bytes) {
+            return Err(ChainError::InvalidPrivateKey);
+        }
+        Ok(bytes)
     }
     fn decode_public_key(&self, public_key: String) -> Result<Vec<u8>, ChainError> {
         let key_str = public_key.trim();
         let hex_str = key_str.strip_prefix("0x").unwrap_or(key_str);
-        hex::decode(hex_str).map_err(|_| ChainError::InvalidPublicKey)
+        let bytes = hex::decode(hex_str).map_err(|_| ChainError::InvalidPublicKey)?;
+        if util::is_zero_key(&bytes) {
+            return Err(ChainError::InvalidPublicKey);
+        }
+        Ok(bytes)
     }
     fn encode_private_key(&self, private_key: Vec<u8>) -> String {
         hex::encode(private_key)

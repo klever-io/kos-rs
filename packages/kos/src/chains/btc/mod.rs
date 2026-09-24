@@ -1,4 +1,4 @@
-use crate::chains::util::{private_key_from_vec, slice_from_vec};
+use crate::chains::util::{is_zero_key, private_key_from_vec, slice_from_vec};
 use crate::chains::Chain;
 use crate::chains::{ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::b58::b58enc;
@@ -69,7 +69,10 @@ impl BTC {
 
 impl BTC {
     fn get_addr_new(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
-        if public_key.len() != 33 {
+        if public_key.len() != 33
+            || is_zero_key(&public_key)
+            || (public_key[0] != 0x02 && public_key[0] != 0x03)
+        {
             return Err(ChainError::InvalidPublicKey);
         }
 
@@ -89,7 +92,10 @@ impl BTC {
     }
 
     pub fn get_addr_legacy(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
-        if public_key.len() != 33 {
+        if public_key.len() != 33
+            || is_zero_key(&public_key)
+            || (public_key[0] != 0x02 && public_key[0] != 0x03)
+        {
             return Err(ChainError::InvalidPublicKey);
         }
 
@@ -157,9 +163,7 @@ impl Chain for BTC {
         if private_key.len() != 32 {
             return Err(ChainError::InvalidPrivateKey);
         }
-
-        let mut pk_bytes: [u8; 32] = [0; 32];
-        pk_bytes.copy_from_slice(&private_key[..32]);
+        let pk_bytes: [u8; 32] = private_key_from_vec(&private_key)?;
 
         let pbk = Secp256K1::private_to_public_compressed(&pk_bytes)?;
         Ok(pbk.to_vec())
@@ -371,5 +375,31 @@ mod test {
         let signature = btc.sign_message(pvk, message, false).unwrap();
         assert_eq!(hex::encode(signature.clone()), "9d561a0ba6ea562e61606e7f3b6a92c889246eec2c05e86e3f465f43469ae9436d7e46accdcfaea848460e42c83c52238b6956c4bfb192e67023b6024e95bdcf01");
         assert_eq!(signature.len(), 65);
+    }
+
+    #[test]
+    fn test_btc_invalid_keys() {
+        let btc = BTC::new();
+
+        // Private key must be exactly 32 non-zero bytes
+        assert!(btc.get_pbk(vec![0u8; 32]).is_err());
+        assert!(btc.get_pbk(vec![1u8; 31]).is_err());
+        assert!(btc.get_pbk(vec![1u8; 33]).is_err());
+        assert!(btc.get_pbk(vec![1u8; 64]).is_err());
+
+        // Public key must be valid 33-byte compressed secp256k1 point
+        assert!(btc.get_address(vec![0u8; 33]).is_err());
+        assert!(btc.get_address(vec![1u8; 32]).is_err());
+        assert!(btc.get_address(vec![1u8; 65]).is_err());
+        // Invalid prefix 0x00 or 0x05
+        let mut invalid_pub = vec![0x05; 33];
+        assert!(btc.get_address(invalid_pub.clone()).is_err());
+        invalid_pub[0] = 0x00;
+        assert!(btc.get_address(invalid_pub).is_err());
+
+        // Same for legacy address
+        assert!(btc.get_addr_legacy(vec![0u8; 33]).is_err());
+        assert!(btc.get_addr_legacy(vec![1u8; 32]).is_err());
+        assert!(btc.get_addr_legacy(vec![0x05; 33]).is_err());
     }
 }

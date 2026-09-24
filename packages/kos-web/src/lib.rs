@@ -186,13 +186,14 @@ pub fn generate_wallet_from_private_key(
     let chain = get_chain_by_params(chain_params)
         .ok_or_else(|| KOSError::unsupported_chain(chain_id.to_string()))?;
 
-    let public_key = chain.get_pbk(hex::decode(private_key.clone())?)?;
+    let pvk_bytes = chain.decode_private_key(private_key.clone())?;
+    let public_key = chain.get_pbk(pvk_bytes)?;
     let address = chain.get_address(public_key.clone())?;
 
     Ok(KOSAccount {
         chain_id,
         private_key: private_key.clone(),
-        public_key: hex::encode(public_key.clone()),
+        public_key: chain.encode_public_key(public_key.clone()),
         address,
         path: String::new(),
         options,
@@ -270,7 +271,8 @@ pub fn sign_transaction(
     };
 
     let encoded = encode_for_signing(kos_codec_acc.clone(), transaction)?;
-    let signed_transaction = chain.sign_tx(hex::decode(account.private_key.clone())?, encoded)?;
+    let pvk_bytes = chain.decode_private_key(account.private_key.clone())?;
+    let signed_transaction = chain.sign_tx(pvk_bytes, encoded)?;
     let encoded_to_broadcast = encode_for_broadcast(kos_codec_acc, signed_transaction)?;
 
     Ok(KOSTransaction {
@@ -296,8 +298,8 @@ pub fn sign_message(account: KOSAccount, hex: String, legacy: bool) -> Result<Ve
 
     let message_encoded = kos_codec::encode_for_sign_message(kos_codec_acc, message)?;
 
-    let signature =
-        chain.sign_message(hex::decode(account.private_key)?, message_encoded, legacy)?;
+    let pvk_bytes = chain.decode_private_key(account.private_key)?;
+    let signature = chain.sign_message(pvk_bytes, message_encoded, legacy)?;
     Ok(signature)
 }
 
@@ -463,6 +465,35 @@ mod tests {
             ),
             Err(e) => assert_eq!(e, KOSError::kos_delegate("Invalid private key".to_string())),
         }
+    }
+
+    #[test]
+    fn should_fail_to_get_account_from_zero_private_key_kusama() {
+        let chain_id = 27; // Kusama
+        let zero_64_hex =
+            "0000000000000000000000000000000000000000000000000000000000000000".to_string();
+        let zero_128_hex = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string();
+        let zero_0x_hex = "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string();
+
+        assert!(generate_wallet_from_private_key(chain_id, zero_64_hex, None).is_err());
+        assert!(generate_wallet_from_private_key(chain_id, zero_128_hex, None).is_err());
+        assert!(generate_wallet_from_private_key(chain_id, zero_0x_hex, None).is_err());
+    }
+
+    #[test]
+    fn should_fail_to_get_account_from_zero_private_key_other_chains() {
+        let zero_64_hex =
+            "0000000000000000000000000000000000000000000000000000000000000000".to_string();
+
+        // KLV (38)
+        assert!(generate_wallet_from_private_key(38, zero_64_hex.clone(), None).is_err());
+        // SOL (29 authoritative ID, 40 base ID)
+        assert!(generate_wallet_from_private_key(29, zero_64_hex.clone(), None).is_err());
+        assert!(generate_wallet_from_private_key(40, zero_64_hex.clone(), None).is_err());
+        // ETH (3)
+        assert!(generate_wallet_from_private_key(3, zero_64_hex.clone(), None).is_err());
+        // TRX (1)
+        assert!(generate_wallet_from_private_key(1, zero_64_hex, None).is_err());
     }
 
     #[test]

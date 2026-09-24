@@ -176,6 +176,10 @@ fn generate_address_from_public_key(
         id: chain_id.to_string(),
     })?;
 
+    if public_key.is_empty() || public_key.iter().all(|&b| b == 0) {
+        return Err(ChainError::InvalidPublicKey.into());
+    }
+
     let address = chain.get_address(public_key.to_vec())?;
 
     Ok(address)
@@ -192,6 +196,10 @@ fn encode_private_key(
     let chain = get_chain_by_params(chain_params).ok_or_else(|| KOSError::UnsupportedChain {
         id: chain_id.to_string(),
     })?;
+
+    if private_key.is_empty() || private_key.iter().all(|&b| b == 0) {
+        return Err(ChainError::InvalidPrivateKey.into());
+    }
 
     let private_key_str = chain.encode_private_key(private_key.to_vec());
 
@@ -793,6 +801,71 @@ mod tests {
             ),
             Err(e) => assert!(matches!(e, KOSError::KOSDelegate(..)), " Invalid error"),
         }
+    }
+
+    #[test]
+    fn should_fail_to_get_account_from_zero_private_key_sr25519() {
+        let zero_64_hex =
+            "0000000000000000000000000000000000000000000000000000000000000000".to_string();
+        let zero_128_hex = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string();
+        let zero_0x_hex = "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string();
+        let zero_scalar_with_nonce = "00000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000".to_string();
+
+        for chain_id in [27 /* KSM */, 21 /* DOT */] {
+            assert!(generate_wallet_from_private_key(chain_id, zero_64_hex.clone(), None).is_err());
+            assert!(
+                generate_wallet_from_private_key(chain_id, zero_128_hex.clone(), None).is_err()
+            );
+            assert!(generate_wallet_from_private_key(chain_id, zero_0x_hex.clone(), None).is_err());
+            assert!(generate_wallet_from_private_key(
+                chain_id,
+                zero_scalar_with_nonce.clone(),
+                None
+            )
+            .is_err());
+
+            assert!(decode_private_key(chain_id, zero_64_hex.clone(), None).is_err());
+            assert!(decode_private_key(chain_id, zero_128_hex.clone(), None).is_err());
+        }
+    }
+
+    #[test]
+    fn should_fail_sign_message_with_zero_private_key() {
+        let account = KOSAccount {
+            chain_id: 27, // KSM
+            private_key: "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string(),
+            public_key: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+            address: "CaKWz5omakTK7ovp4m3koXrHyHb7NG3Nt7GENHbviByZpKp".to_string(),
+            path: String::new(),
+            options: None,
+        };
+        let message = hex::encode("Hello World".as_bytes());
+        assert!(sign_message(account, message, false).is_err());
+    }
+
+    #[test]
+    fn should_fail_to_get_account_from_zero_private_key_other_chains() {
+        let zero_64_hex =
+            "0000000000000000000000000000000000000000000000000000000000000000".to_string();
+
+        // KLV (38)
+        assert!(generate_wallet_from_private_key(38, zero_64_hex.clone(), None).is_err());
+        // SOL (29 authoritative ID, 40 base ID)
+        assert!(generate_wallet_from_private_key(29, zero_64_hex.clone(), None).is_err());
+        assert!(generate_wallet_from_private_key(40, zero_64_hex.clone(), None).is_err());
+        // ETH (3)
+        assert!(generate_wallet_from_private_key(3, zero_64_hex.clone(), None).is_err());
+        // TRX (1)
+        assert!(generate_wallet_from_private_key(1, zero_64_hex.clone(), None).is_err());
+
+        // Zero public key should fail to generate address
+        assert!(generate_address_from_public_key(27, &[0u8; 32], None).is_err()); // KSM
+        assert!(generate_address_from_public_key(38, &[0u8; 32], None).is_err()); // KLV
+        assert!(generate_address_from_public_key(29, &[0u8; 32], None).is_err()); // SOL (29)
+        assert!(generate_address_from_public_key(40, &[0u8; 32], None).is_err()); // SOL (40)
+        assert!(generate_address_from_public_key(3, &[0u8; 65], None).is_err()); // ETH (3)
+        assert!(generate_address_from_public_key(1, &[0u8; 65], None).is_err());
+        // TRX (1)
     }
 
     #[test]

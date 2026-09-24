@@ -11,9 +11,21 @@ pub fn slice_from_vec<const N: usize>(vec: &[u8]) -> Result<[u8; N], ChainError>
     Ok(arr)
 }
 
+pub fn is_zero_key(bytes: &[u8]) -> bool {
+    bytes.is_empty() || bytes.iter().all(|&b| b == 0)
+}
+
 pub fn private_key_from_vec<const N: usize>(vec: &[u8]) -> Result<[u8; N], ChainError> {
+    if is_zero_key(vec) {
+        return Err(ChainError::InvalidPrivateKey);
+    }
+
     // If input is longer than N, take first N bytes
     let slice = if vec.len() > N { &vec[..N] } else { vec };
+
+    if is_zero_key(slice) {
+        return Err(ChainError::InvalidPrivateKey);
+    }
 
     slice_from_vec::<N>(slice).map_err(|_| ChainError::InvalidPrivateKey)
 }
@@ -92,5 +104,44 @@ mod tests {
 
         let decoded = bytes_to_byte_vectors(result).unwrap();
         assert_eq!(hex_strings, decoded);
+    }
+
+    #[test]
+    fn test_is_zero_key() {
+        assert!(is_zero_key(&[]));
+        assert!(is_zero_key(&[0u8; 32]));
+        assert!(is_zero_key(&[0u8; 64]));
+        assert!(!is_zero_key(&[1u8; 32]));
+        let mut mixed = [0u8; 32];
+        mixed[31] = 1;
+        assert!(!is_zero_key(&mixed));
+    }
+
+    #[test]
+    fn test_private_key_from_vec_rejects_zeros() {
+        // All zeros 32 bytes
+        let zero_32 = vec![0u8; 32];
+        assert!(matches!(
+            private_key_from_vec::<32>(&zero_32),
+            Err(ChainError::InvalidPrivateKey)
+        ));
+
+        // All zeros 64 bytes
+        let zero_64 = vec![0u8; 64];
+        assert!(matches!(
+            private_key_from_vec::<64>(&zero_64),
+            Err(ChainError::InvalidPrivateKey)
+        ));
+
+        // Empty vec
+        assert!(matches!(
+            private_key_from_vec::<32>(&[]),
+            Err(ChainError::InvalidPrivateKey)
+        ));
+
+        // Valid 32-byte key
+        let mut valid_32 = vec![0u8; 32];
+        valid_32[0] = 1;
+        assert!(private_key_from_vec::<32>(&valid_32).is_ok());
     }
 }
