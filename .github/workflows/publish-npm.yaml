@@ -1,0 +1,85 @@
+name: Publish NPM
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag or version to publish (optional, defaults to latest git tag)'
+        required: false
+        default: ''
+
+jobs:
+  publish-npm:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && !github.event.release.prerelease)
+    runs-on: ubuntu-latest
+    env:
+      USER: ${{ secrets.GIT_USER }}
+      TOKEN: ${{ secrets.GIT_PASS }}
+
+    steps:
+      - name: Validate and resolve ref
+        id: resolve_ref
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${INPUT_TAG:-}" ]; then
+            TAG="${INPUT_TAG}"
+            [[ "$TAG" =~ ^v ]] || TAG="v$TAG"
+            if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+              echo "Error: Invalid tag format '$INPUT_TAG'. Expected (v)X.Y.Z" >&2
+              exit 1
+            fi
+            echo "ref=$TAG" >> "$GITHUB_OUTPUT"
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${{ github.ref }}" >> "$GITHUB_OUTPUT"
+            echo "version=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve_ref.outputs.ref }}
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: RustUp
+        uses: klever-io/kos-rs/.github/actions/rustup@develop
+        with:
+          with_cache: true
+
+      - name: Restore .env file
+        if: env.NODES_ENV != ''
+        run: printf '%s' "$NODES_ENV" | base64 -d > packages/kos-web/.env.nodes
+        env:
+          NODES_ENV: ${{ secrets.NODES_ENV }}
+
+      - name: Build
+        run: make webpack-npm
+
+      - name: Set NPM package release version
+        env:
+          RESOLVED_VERSION: ${{ steps.resolve_ref.outputs.version }}
+        run: |
+          if [ -n "${RESOLVED_VERSION:-}" ]; then
+            echo "Setting version to $RESOLVED_VERSION from validated input"
+            TMP_FILE=$(mktemp)
+            jq --arg v "$RESOLVED_VERSION" '.version = $v' packages/kos-web/demo/kos/package.json > "$TMP_FILE"
+            mv "$TMP_FILE" packages/kos-web/demo/kos/package.json
+          else
+            bash .github/actions/npm-package-version.sh packages/kos-web/demo/kos
+          fi
+
+      - name: Setup npm module
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org/'
+          scope: '@klever'
+
+      - name: Publish npm module
+        run: npm publish ./packages/kos-web/demo/kos --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

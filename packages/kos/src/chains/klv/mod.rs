@@ -7,7 +7,7 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use bech32::{u5, Variant};
 
-use crate::chains::util::private_key_from_vec;
+use crate::chains::util::{is_zero_key, private_key_from_vec};
 
 const KLEVER_MESSAGE_PREFIX: &str = "\x17Klever Signed Message:\n";
 
@@ -64,6 +64,9 @@ impl Chain for KLV {
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
+        if public_key.len() != 32 || is_zero_key(&public_key) {
+            return Err(ChainError::InvalidPublicKey);
+        }
         let add_encoded = bech32::convert_bits(public_key.as_ref(), 8, 5, true)?;
         let mut addr_u5: Vec<u5> = Vec::new();
         for i in add_encoded {

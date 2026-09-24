@@ -1,4 +1,4 @@
-use crate::chains::util::{private_key_from_vec, slice_from_vec};
+use crate::chains::util::{is_zero_key, private_key_from_vec, slice_from_vec};
 use crate::chains::{Chain, ChainError, ChainType, Transaction, TxInfo};
 use crate::crypto::b58::custom_b58enc;
 use crate::crypto::bip32;
@@ -106,16 +106,14 @@ impl Chain for XRP {
         if private_key.len() != 32 {
             return Err(ChainError::InvalidPrivateKey);
         }
-
-        let mut pk_bytes: [u8; 32] = [0; 32];
-        pk_bytes.copy_from_slice(&private_key[..32]);
+        let pk_bytes: [u8; 32] = private_key_from_vec(&private_key)?;
 
         let pbk = Secp256K1::private_to_public_compressed(&pk_bytes)?;
         Ok(pbk.to_vec())
     }
 
     fn get_address(&self, public_key: Vec<u8>) -> Result<String, ChainError> {
-        if public_key.len() != 33 {
+        if public_key.len() != 33 || is_zero_key(&public_key) {
             return Err(ChainError::InvalidPublicKey);
         }
 
@@ -244,5 +242,21 @@ mod test {
         );
 
         assert_eq!(hex::encode(tx_signed.signature).to_uppercase(), "304502210092EF95EDA6B8ECD483B750F1F1078DD81B992ECFC233E98141771071E712424202202741B9E6AE86B80E9FD3D92FCF74D65175B67BC6AC1308B44962AB1E40FF8CAE");
+    }
+
+    #[test]
+    fn test_xrp_invalid_keys() {
+        let xrp = super::XRP::new();
+
+        // Private key must be exactly 32 non-zero bytes
+        assert!(xrp.get_pbk(vec![0u8; 32]).is_err());
+        assert!(xrp.get_pbk(vec![1u8; 31]).is_err());
+        assert!(xrp.get_pbk(vec![1u8; 33]).is_err());
+        assert!(xrp.get_pbk(vec![1u8; 64]).is_err());
+
+        // Public key must be valid 33-byte compressed secp256k1 point
+        assert!(xrp.get_address(vec![0u8; 33]).is_err());
+        assert!(xrp.get_address(vec![1u8; 32]).is_err());
+        assert!(xrp.get_address(vec![1u8; 65]).is_err());
     }
 }

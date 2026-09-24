@@ -12,7 +12,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
@@ -23,6 +23,7 @@ jobs:
           with_cache: true
 
       - name: Restore .env file
+        if: env.NODES_ENV != ''
         run: printf '%s' "$NODES_ENV" | base64 -d > packages/kos-web/.env.nodes
         env:
           NODES_ENV: ${{ secrets.NODES_ENV }}
@@ -31,15 +32,14 @@ jobs:
         run: make webpack-npm
 
       - name: Set NPM package release version
-        run: bash .github/actions/npm-package-version.sh
+        run: bash .github/actions/npm-package-version.sh packages/kos-web/demo/kos --dev
 
       - name: Setup npm module
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18.x'
           registry-url: 'https://registry.npmjs.org/'
           scope: '@klever'
-          always-auth: true
 
       - name: Publish npm module
         run: npm publish ./packages/kos-web/demo/kos --access public --tag dev

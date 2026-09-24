@@ -32,15 +32,27 @@ pub struct Sr25519 {}
 
 impl Sr25519Trait for Sr25519 {
     fn public_from_private(pvk: &[u8; 64]) -> Result<Vec<u8>, Sr25519Error> {
-        let pvk = schnorrkel::SecretKey::from_bytes(pvk).unwrap();
+        if pvk[..32].iter().all(|&b| b == 0) {
+            return Err(Sr25519Error::ErrDerive);
+        }
+        let pvk = schnorrkel::SecretKey::from_bytes(pvk).map_err(|_| Sr25519Error::ErrDerive)?;
 
         let pbk = pvk.to_public().to_bytes().to_vec();
+        if pbk.iter().all(|&b| b == 0) {
+            return Err(Sr25519Error::ErrDerive);
+        }
         Ok(pbk)
     }
 
     fn sign(msg: &[u8], pvk: &[u8; 64]) -> Result<Vec<u8>, Sr25519Error> {
+        if pvk[..32].iter().all(|&b| b == 0) {
+            return Err(Sr25519Error::ErrDerive);
+        }
         let pvk = schnorrkel::SecretKey::from_bytes(pvk).map_err(|_| Sr25519Error::ErrDerive)?;
         let pbk = pvk.to_public();
+        if pbk.to_bytes().iter().all(|&b| b == 0) {
+            return Err(Sr25519Error::ErrDerive);
+        }
         let ctx = SigningContext::new(SUBSTRATE_CTX).bytes(msg);
         let ctx = schnorrkel::context::attach_rng(ctx, crate::crypto::rng::getrandom_or_panic());
         let sig = pvk.sign(ctx, &pbk);
@@ -52,6 +64,9 @@ impl Sr25519Trait for Sr25519 {
         seed: &[u8; 32],
         chaincode: &[u8; 32],
     ) -> Result<[u8; 32], Sr25519Error> {
+        if seed.iter().all(|&b| b == 0) {
+            return Err(Sr25519Error::ErrDerive);
+        }
         let seed =
             schnorrkel::MiniSecretKey::from_bytes(seed).map_err(|_| Sr25519Error::ErrDerive)?;
         let chaincode = ChainCode(chaincode.clone());
@@ -64,6 +79,9 @@ impl Sr25519Trait for Sr25519 {
     }
 
     fn expand_secret_key(mini_secret: &[u8; 32]) -> Result<([u8; 32], [u8; 32]), Sr25519Error> {
+        if mini_secret.iter().all(|&b| b == 0) {
+            return Err(Sr25519Error::ErrDerive);
+        }
         let mini_secret = schnorrkel::MiniSecretKey::from_bytes(mini_secret)
             .map_err(|_| Sr25519Error::ErrDerive)?;
         let secret = mini_secret.expand(schnorrkel::ExpansionMode::Ed25519);
@@ -102,5 +120,15 @@ mod tests {
         assert!(public
             .verify_simple(SUBSTRATE_CTX, message, &signature)
             .is_ok());
+    }
+
+    #[test]
+    fn test_sr25519_zero_key_rejected() {
+        let zero_pvk = [0u8; 64];
+        assert!(Sr25519::public_from_private(&zero_pvk).is_err());
+        assert!(Sr25519::sign(b"msg", &zero_pvk).is_err());
+        let zero_32 = [0u8; 32];
+        assert!(Sr25519::expand_secret_key(&zero_32).is_err());
+        assert!(Sr25519::hard_derive_mini_sk(&zero_32, &zero_32).is_err());
     }
 }
