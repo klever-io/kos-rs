@@ -18,7 +18,9 @@ error() {
 }
 
 cleanup() {
-    [[ -f "${TMP_FILE:-}" ]] && rm -f "$TMP_FILE"
+    if [[ -n "${TMP_FILE:-}" && -f "$TMP_FILE" ]]; then
+        rm -f "$TMP_FILE"
+    fi
 }
 trap cleanup EXIT
 
